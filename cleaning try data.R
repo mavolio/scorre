@@ -29,10 +29,37 @@ key<-read.csv("corre2trykey.csv")%>%
 
 length(unique(key$species_matched))
 
+splist<-key%>%
+  select(species_matched)%>%
+  unique
+
 dat3<-dat2%>%
   right_join(key)%>%
   select(-ErrorRisk, -ErrorRisk2)
 
+##how many traits for sp?
+sdivtrt_con<-read.csv("TRY_traits_type_11252019.csv")%>%
+  filter(trait_type=="con")
+
+####how many speices have at least 2 observed continouous trait?
+sptrait<-dat3%>%
+  right_join(sdivtrt_con)%>%
+  select(TraitID, species_matched)%>%
+  unique()%>%
+  group_by(species_matched)%>%
+  summarize(n=length(TraitID))%>%
+  full_join(splist)
+  
+#have 2 or more traits
+two_or_more<-sptrait%>%
+  filter(n>1)
+
+one<-sptrait%>%
+  filter(n==1)
+
+none<-sptrait%>%
+  filter(is.na(n))
+ 
 
 ##how many traits for sp?
 sdivtrt<-read.csv("TRY_traits_type_11252019.csv")%>%
