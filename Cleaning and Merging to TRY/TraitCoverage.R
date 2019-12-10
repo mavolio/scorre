@@ -57,4 +57,11 @@ mult <- abund_mat %*% trait_mat
 mult <- cbind(abundcov[,c(1:8)], mult)
 
 long.mult <- gather(mult, trait, coverage, allelopathic:stomata_conductance)
+<<<<<<< HEAD
 ## USE this df to look at subsets of interest. 
+=======
+
+ggplot(aes(x = site_code, y = coverage), data = long.mult) + 
+  geom_boxplot() + 
+  facet_grid(~trait)
+>>>>>>> dd9161a5b754edbf6fa639c1d741e636c4742f43
