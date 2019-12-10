@@ -60,10 +60,10 @@ one<-sptrait%>%
 none<-sptrait%>%
   filter(is.na(n))
  
+write.csv(none, "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/CoRRE data/species_no_traits.csv")
 
-##how many traits for sp?
-sdivtrt<-read.csv("TRY_traits_type_11252019.csv")%>%
-  filter(sdiv_trait==1)
+##how many traits for sp
+sdivtrt<-read.csv("TRY_traits_type_11252019.csv")
 
 traitnum<-dat3%>%
   select(species_matched, TraitID)%>%
@@ -73,7 +73,8 @@ traitnum<-dat3%>%
   right_join(sdivtrt)
 
 # write.csv(traitnum, "try_traits_export_nov2019.csv", row.names=F)
-
+trait_test<-dat3%>%
+  filter(TraitID==2809)
 
 
 ###cleaning life history traits
