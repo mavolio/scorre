@@ -4,13 +4,13 @@ library(V.PhyloMaker)
 library(Taxonstand)
 
 #read data:
-spp<-read.table("CoRRE_TRY_species_list.csv", header=T, sep=",", fill = TRUE)
+spp<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_TRY_species_list.csv", header=T, sep=",", fill = TRUE)
 spp<-unique(spp$species_matched) #get unique names of species
 
 #check species list against taxonstand to get families:
 sppt<-TPL(spp)
-#write.table(sppt, "TPL_spp_scorre.csv") #save output
-#sppt <- read.table("TPL_spp_scorre.csv") #save output
+#write.table(sppt, "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/TPL_spp_scorre.csv") #save output
+sppt <- read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/TPL_spp_scorre.csv") #save output
 
 #rearrange dataset:
 sppt2<-sppt[c(1,13)]
@@ -28,6 +28,7 @@ spp.not.tree <- setdiff((gsub(" ", "_", sppt2$species)), tips.info$species)
 EVA.tree <- phylo.maker(sp.list = sppt2, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S3")
 
 #ups! looks like some species have wrong family names. We fix it manually:
+sppt2$family <- as.character(sppt2$family)
 sppt2$family[sppt2$family == "Compositae"] <- "Asteraceae"
 sppt2$family[sppt2$family == "Leguminosae"] <- "Fabaceae"
 sppt2$family[sppt2$family == "Xanthorrhoeaceae"] <- "Asphodelaceae"
@@ -58,12 +59,12 @@ non.vascular <-  c("Anthelia_juratzkana", "Cyrtomnium_hymenophyllum", "Distichiu
 non.vascular<-gsub("_", " ", non.vascular)
 sppt2 <- sppt2[!sppt2$species %in% non.vascular, ] #remove
 
-#get list of species not included in the phylogeny: about 26%
+#get list of species not included in the phylogeny: about 28%
 spp.not.tree <- setdiff((gsub(" ", "_", sppt2$species)), tips.info$species)
 
 #build phylo tree:
 scorre.tree <- phylo.maker(sp.list = sppt2, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S3")
 
 #save tree:
-write.tree(scorre.tree$scenario.3,"scorre.tree.tre")
+write.tree(scorre.tree$scenario.3,"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.tree.tre")
 #rm(scorre.tree, spp, sppt, sppt2)
