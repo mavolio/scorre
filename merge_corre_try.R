@@ -22,7 +22,7 @@ taxdat$species_matched[ii] <- taxdat$species[ii]
 taxdat %>%
   select(species, species_matched) -> taxdat
 
-#load corre - not sure we have to do this, because the orgi
+#load corre
 corre <- read_csv("CoRRE_SpList_Sept2019.csv")
 #preprocessing to utf8
 corre %>%
