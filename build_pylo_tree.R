@@ -36,30 +36,27 @@ sppt2[1888,3]<-"Montiaceae"
 sppt2[1057,3]<-"Asphodelaceae"
 sppt2[1414,3]<-"Mazaceae"
 
-#create list of non vascular plants and subset from original:
-non.vascular <-  c("Anthelia_juratzkana",        "Cyrtomnium_hymenophyllum",    "Distichium_capillaceum",     
-"Dicranum_brevifolium",        "Dicranum_elongatum",          "Dicranum_fuscescens",        
-"Dicranum_groenlandicum",      "Dicranum_scoparium",          "Gymnomitrion_concinnatum",   
-"Hylocomium_splendens",        "Kiaeria_starkei",             "Leiocolea_heterocolpos",     
-"Marsupella_brevissima",       "Aulacomnium_turgidum",        "Pleurozium_schreberi",       
-"Pogonatum_urnigerum",         "Pohlia_cruda",                "Pohlia_nutans",              
-"Polytrichastrum_alpinum",     "Polytrichum_juniperinum",     "Polytrichum_piliferum",      
-"Polytrichum_strictum",        "Ptilidium_ciliare",           "Racomitrium_lanuginosum",    
-"Rhytidium_rugosum",           "Tomentypnum_nitens",          "Tritomaria_quinquedentata",  
-"Barbilophozia_hatcheri",      "Barbilophozia_kunzeana",      "Blepharostoma_trichophyllum",
-"Bryum_pseudotriquetrum",      "Hypnum_cupressiforme",        "Andreaea_obovata",          
-"Hamatocaulis_vernicosus",     "Hypnum_hamulosum",            "Isopterygiopsis_pulchella",  
-"Oncophorus_virens",           "Schistidium_apocarpum",       "Syntrichia_ruralis",         
-"Bryum_arcticum",             "Dicranoweisia_crispula",      "Preissia_quadrata",         
-"Marchantia_polymorpha",       "Brachythecium_albicans",      "Campylium_stellatum",        
-"Ditrichum_flexicaule",        "Meesia_uliginosa",            "Myurella_tenerrima",         
-"Oncophorus_wahlenbergii",     "Saelania_glaucescens",        "Sanionia_uncinata",          
-"Tortella_tortuosa",           "Homalothecium_pinnatifidum")
+#create list of briophytes to exclude from original list of species:
+non.vascular <-  c("Anthelia_juratzkana", "Cyrtomnium_hymenophyllum", "Distichium_capillaceum",     
+"Dicranum_brevifolium", "Dicranum_elongatum", "Dicranum_fuscescens",        
+"Dicranum_groenlandicum", "Dicranum_scoparium", "Gymnomitrion_concinnatum",   
+"Hylocomium_splendens",        "Kiaeria_starkei", "Leiocolea_heterocolpos",     
+"Marsupella_brevissima",       "Aulacomnium_turgidum", "Pleurozium_schreberi",       
+"Pogonatum_urnigerum",         "Pohlia_cruda", "Pohlia_nutans",              
+"Polytrichastrum_alpinum",     "Polytrichum_juniperinum", "Polytrichum_piliferum",      
+"Polytrichum_strictum",        "Ptilidium_ciliare", "Racomitrium_lanuginosum",    
+"Rhytidium_rugosum",           "Tomentypnum_nitens", "Tritomaria_quinquedentata",  
+"Barbilophozia_hatcheri",      "Barbilophozia_kunzeana", "Blepharostoma_trichophyllum",
+"Bryum_pseudotriquetrum",      "Hypnum_cupressiforme", "Andreaea_obovata",          
+"Hamatocaulis_vernicosus",     "Hypnum_hamulosum", "Isopterygiopsis_pulchella",  
+"Oncophorus_virens",           "Schistidium_apocarpum", "Syntrichia_ruralis",         
+"Bryum_arcticum",             "Dicranoweisia_crispula", "Preissia_quadrata",         
+"Marchantia_polymorpha",       "Brachythecium_albicans", "Campylium_stellatum",        
+"Ditrichum_flexicaule",        "Meesia_uliginosa", "Myurella_tenerrima",         
+"Oncophorus_wahlenbergii",     "Saelania_glaucescens", "Sanionia_uncinata",          
+"Tortella_tortuosa", "Homalothecium_pinnatifidum")
 non.vascular<-gsub("_", " ", non.vascular)
 sppt2 <- sppt2[!sppt2$species %in% non.vascular, ] #remove
-
-non.vascular<-c("Selaginellaceae", "Lycopodiaceae", "Ophioglossaceae", "Aspleniaceae", "Equisetaceae")
-sppt2 <- sppt2[!sppt2$family %in% non.vascular, ] #remove
 
 #get list of species not included in the phylogeny: about 26%
 spp.not.tree <- setdiff((gsub(" ", "_", sppt2$species)), tips.info$species)
