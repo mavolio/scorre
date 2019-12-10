@@ -10,7 +10,7 @@ spp<-unique(spp$species_matched) #get unique names of species
 #check species list against taxonstand to get families:
 sppt<-TPL(spp)
 #write.table(sppt, "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/TPL_spp_scorre.csv") #save output
-sppt <- read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/TPL_spp_scorre.csv") #save output
+sppt <- read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/TPL_spp_scorre.csv")
 
 #rearrange dataset:
 sppt2<-sppt[c(1,13)]
