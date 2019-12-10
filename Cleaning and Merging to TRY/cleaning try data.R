@@ -17,10 +17,33 @@ dat<-fread("7764.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,str
 
 #removing trait outliers
 dat2<-dat%>%
-  select(DatasetID,ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
+  select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
   mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
   filter(ErrorRisk2<8)%>%
-  filter(!is.na(TraitID))
+  ilter(!is.na(TraitID))
+exposition<-dat%>%
+  select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
+  mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
+  filter(ErrorRisk2<8)%>%
+   filter(DataID==327)
+
+table(unique(exposition$OrigValueStr))
+
+develop<-dat%>%
+  select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
+  mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
+  filter(ErrorRisk2<8)%>%
+  filter(DataID==413)
+
+table(unique(develop$OrigValueStr))
+
+health<-dat%>%
+  select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
+  mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
+  filter(ErrorRisk2<8)%>%
+  filter(DataID==1961)
+
+table(health$OrigValueStr)
 
 #mering corre with try
 key<-read.csv("corre2trykey.csv")%>%
