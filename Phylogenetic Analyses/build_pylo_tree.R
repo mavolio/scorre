@@ -58,6 +58,7 @@ non.vascular <-  c("Anthelia_juratzkana", "Cyrtomnium_hymenophyllum", "Distichiu
                    "Tortella_tortuosa", "Homalothecium_pinnatifidum")
 non.vascular<-gsub("_", " ", non.vascular)
 sppt2 <- sppt2[!sppt2$species %in% non.vascular, ] #remove
+write.table(sppt2, "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_tax_rank.csv") #save output
 
 #get list of species not included in the phylogeny: about 28%
 spp.not.tree <- setdiff((gsub(" ", "_", sppt2$species)), tips.info$species)
