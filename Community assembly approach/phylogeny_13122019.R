@@ -60,7 +60,7 @@ colnames <- rownames <- my.tree$tip.label
 
 
 #calculate mpd with null model per community
-my.mpd <- ses.mpd(wide.my.data, my.tree.matrix)
+my.mpd <- ses.mpd(wide.my.data, my.tree.matrix, abundance.weighted=T)
 
 new_columns <- t(sapply(rownames(my.mpd), function(x){
   z <- strsplit(x, split="_")
