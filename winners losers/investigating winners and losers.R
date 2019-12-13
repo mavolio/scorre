@@ -3,7 +3,11 @@
 library(tidyverse)
 library(gridExtra)
 
-dat<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE_raw_abundance_Nov2019.csv")
+
+my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
+
+dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE_raw_abundance_Nov2019.csv",sep=""))
 
 pplots<-dat%>%
   filter(site_code=="KNZ"&project_name=="pplots")%>%
