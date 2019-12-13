@@ -63,7 +63,8 @@ try <- left_join(try,taxdat, by = c("AccSpeciesName"="species"))%>%
   select(-species)
 
 #join corre to try
-corre2try <- left_join(corre2,try, by="species_matched")
+corre2try <- left_join(corre2,try, by="species_matched")%>%
+  unique()
 
 # write_csv(corre2try, path = "corre2trykey.csv")
 
@@ -86,5 +87,6 @@ taxcorreAll <- read.csv("Species_to_check_cleaned_2.csv")%>%
 #join corre to updated taxonomy
 correTaxonomyAll <- left_join(corre, taxcorreAll)%>%
   select(-species)%>%
-  na.omit()
+  na.omit()%>%
+  unique()
 # write.csv(correTaxonomyAll, 'CoRRE_TRY_species_list.csv')
