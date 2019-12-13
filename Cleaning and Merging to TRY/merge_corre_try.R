@@ -78,7 +78,7 @@ try_list <- corre2try[["AccSpeciesID"]][!is.na(corre2try$AccSpeciesID)]
 
 ###generating list for phylogeney
 #want to include all columns, and indicate where a moss/lichen, plus include anything that is identified to genera
-taxcorreAll <- read_csv("Species_to_check_cleaned_2.csv")%>%
+taxcorreAll <- read.csv("Species_to_check_cleaned_2.csv")%>%
   filter(remove!=3)%>% #this filters out unknowns, but keeps mosses/lichens and anything that was IDed to genus.
   select(species, species_matched, remove)%>%
   mutate(type=ifelse(remove==2, 'moss/lichen', ifelse(remove==1, 'identified genus', 'identified species')))%>%
