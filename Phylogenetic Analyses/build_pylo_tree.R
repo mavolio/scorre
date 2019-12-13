@@ -43,7 +43,10 @@ non.vascular <-  c("Andreaea_obovata",            "Anthelia_juratzkana" ,       
                    "Preissia_quadrata",           "Ptilidium_ciliare",           "Racomitrium_lanuginosum",    
                    "Rhytidium_rugosum",           "Saelania_glaucescens",        "Sanionia_uncinata",          
                    "Schistidium_apocarpum",       "Syntrichia_ruralis",          "Tomentypnum_nitens",         
-                   "Tortella_tortuosa",           "Tritomaria_quinquedentata")
+                   "Tortella_tortuosa",           "Tritomaria_quinquedentata", "Barbilophozia_sp.",
+                   "Cynodontium_sp.",   "Dicranella_sp.",    "Encalypta_sp.",     "Hypnum_sp.",       
+                   "Pohlia_sp.",        "Polytrichum_sp.",   "Racomitrium_sp.",   "Scapania_sp.",
+                   "Syntrichia_sp.")
 non.vascular<-gsub("_", " ", non.vascular)
 spp <- spp[!spp$species_matched %in% non.vascular, ] #remove
 
