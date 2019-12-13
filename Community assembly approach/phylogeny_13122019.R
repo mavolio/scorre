@@ -1,4 +1,7 @@
 library(picante)
+library(tidyverse)
+library(gridExtra)
+library(data.table)
 
 my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
@@ -42,12 +45,20 @@ length(matches) == length(my.species)
 # analyses
 #--------------------------------
 
+head(my.data)
+unique(my.data$community_type)
+my.data$community <- paste(my.data$treatment_year, my.data$treatment, my.data$plot_id, sep="_")
+#shift from long to wide data.table format
 
+wide.my.data <- dcast(my.data, community ~ species_match, value.var = "abundance")
+rownames(wide.my.data) <- wide.my.data$community
+wide.my.data <- wide.my.data[,-1]
+my.tree.matrix <- cophenetic(my.tree)
+mpd(wide.my.data[1:3,], my.tree.matrix)
 
+colSums(!is.na(wide.my.data[1:3,]))
 
-
-
-
+head(my.tree.matrix)
 
 
 
