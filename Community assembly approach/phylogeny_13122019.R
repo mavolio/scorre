@@ -74,4 +74,6 @@ my.results$treatment_year <- factor(my.results$treatment_year, levels = as.chara
 ggplot(data=my.results, aes(x=treatment_year , y=mpd.obs.z)) +
   geom_boxplot(aes(color = as.factor(treatment))) 
 
+ggplot(data=my.results, aes(x=treatment_year , y=mpd.obs.z)) +
+  geom_violin(aes(fill = as.factor(treatment))) 
 
