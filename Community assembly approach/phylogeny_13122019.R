@@ -67,6 +67,7 @@ new_columns <- t(sapply(rownames(my.mpd), function(x){
   c(treatment_year=z[[1]][1], treatment=z[[1]][2], plot_id=z[[1]][3])
 }))
 my.results <- cbind(new_columns, my.mpd)
+my.results$treatment_year <- factor(my.results$treatment_year, levels = as.character(0:12))
 
 
 #plot results (all communities are phylogenetically clustered)
