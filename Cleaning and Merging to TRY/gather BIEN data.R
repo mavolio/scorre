@@ -79,7 +79,7 @@ continuous_for_corre <- subset(bien_data,
                          trait_name ==  "leaf dry mass"|
                          trait_name ==   "leaf carbon content per leaf dry mass"|
                          trait_name ==   "leaf thickness"|
-                         trait_name ==   "leaf compoundness"|
+                         
                          trait_name ==  "root dry mass"|
                          trait_name ==  "seed length")
 continuous_for_corre$trait_value <- as.numeric(continuous_for_corre$trait_value)
@@ -90,27 +90,57 @@ categorical_for_corre <- subset(bien_data,
                                  trait_name =="whole plant vegetative phenology"|
                                  trait_name ==  "flower pollination syndrome"|
                                  trait_name ==  "whole plant sexual system"|
+                                  trait_name ==   "leaf compoundness"|
                                  trait_name ==  "whole plant dispersal syndrome")
 
 
 
 #standardize methods to fit TRY
     #convert LDMC (BIEN mg/g    TRY g/g)
+     #leaf N per area (BIEN kg/m2  g/m2)
     #figure out stomatal conductance
 continuous_for_corre$cleaned_trait_value <- ifelse(
   continuous_for_corre$trait_name == "leaf dry mass per leaf fresh mass", continuous_for_corre$trait_value*0.001, continuous_for_corre$trait_value)
     
     
-    
+  
 
 #Change BIEN trait names to fit TRY trait names
   #categorical
-    #"whole plant growth form"
-    #"whole plant vegetative phenology"
-    #"flower pollination syndrome"
-    #"whole plant sexual system"
-    #"whole plant dispersal syndrome"
+    #"whole plant growth form" -> 
+    #"whole plant vegetative phenology" -> 
+    #"flower pollination syndrome" -> Pollination syndrome
+    #"whole plant sexual system" -> 
+    #"whole plant dispersal syndrome" -> Dispersal syndrome
+    #  "leaf compoundness" -> Leaf compoundness
 
+
+
+
+
+  #continuous
+    #"seed mass"     -> Seed dry mass
+ #"maximum whole plant height" -> Plant height generative
+  # "leaf carbon content per leaf nitrogen content" -> Leaf carbon/nitrogen (C/N) ratio
+  #  "leaf photosythetic rate per leaf dry mass" -> Leaf photosynthesis rate per leaf dry mass
+  #  "leaf phosphorus content per leaf dry mass" -> 
+  # "leaf area" -> Leaf area (in case of compound leaves: leaf, undefined if petiole in- or excluded)
+  #  "leaf carbon content per leaf dry mass" -> Leaf carbon (C) content per leaf dry mass
+  # "leaf life span" -> Leaf lifespan (longevity)
+  #"leaf stomatal conductance for H2O per leaf area" -> 
+  # "leaf nitrogen content per leaf area" -> Leaf nitrogen (N) content per leaf area
+  # "leaf photosythetic rate per leaf area" -> Leaf photosynthesis rate per leaf area
+  # "leaf nitrogen content per leaf dry mass" -> Leaf nitrogen (N) content per leaf dry mass
+  # "leaf phosphorus content per leaf area" -> Leaf phosphorus (P) content per leaf area
+  # "leaf area per leaf dry mass" -> Leaf area per leaf dry mass (specific leaf area, SLA or 1/LMA): undefined if petiole is in- or excluded
+  # "whole plant height" -> Plant height generative
+   # "leaf dry mass per leaf fresh mass" -> Leaf dry mass per leaf fresh mass (leaf dry matter content, LDMC)
+   # "leaf dry mass" -> Leaf dry mass (single leaf)
+  #  "leaf carbon content per leaf dry mass" -> 
+  #  "leaf thickness" -> 
+  
+  # "root dry mass" -> 
+  # "seed length" -> Seed length
 
 
 
