@@ -14,6 +14,12 @@ setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_
 
 dat<-fread("7764.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,strip.white = TRUE)
 
+#generate list of units for ALL TRY traits
+units <- dat%>%
+  select(OriglName, OrigUnitStr, TraitName, UnitName)%>%
+  unique()
+# write.csv(units, 'TRY_all traits_units.csv')
+
 
 #removing trait outliers
 dat2<-dat%>%
