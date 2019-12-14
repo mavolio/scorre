@@ -20,7 +20,7 @@ dat2<-dat%>%
   select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
   mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
   filter(ErrorRisk2<8)%>%
-  ilter(!is.na(TraitID))
+  filter(!is.na(TraitID))
 exposition<-dat%>%
   select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
   mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
@@ -97,7 +97,7 @@ traitnum<-dat3%>%
 
 # write.csv(traitnum, "try_traits_export_nov2019.csv", row.names=F)
 trait_test<-dat3%>%
-  filter(TraitID==2809)
+  filter(TraitID==159)
 
 
 ###cleaning life history traits
