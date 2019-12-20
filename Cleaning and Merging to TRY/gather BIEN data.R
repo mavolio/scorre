@@ -79,7 +79,6 @@ continuous_for_corre <- subset(bien_data,
                          trait_name ==  "leaf dry mass"|
                          trait_name ==   "leaf carbon content per leaf dry mass"|
                          trait_name ==   "leaf thickness"|
-                         
                          trait_name ==  "root dry mass"|
                          trait_name ==  "seed length")
 continuous_for_corre$trait_value <- as.numeric(continuous_for_corre$trait_value)
@@ -94,53 +93,58 @@ categorical_for_corre <- subset(bien_data,
                                  trait_name ==  "whole plant dispersal syndrome")
 
 
-
 #standardize methods to fit TRY
     #convert LDMC (BIEN mg/g    TRY g/g)
      #leaf N per area (BIEN kg/m2  g/m2)
+    #leaf C per area (BIEN kg/m2  g/m2)
+    #leaf P per area (BIEN kg/m2  g/m2)
     #figure out stomatal conductance
 continuous_for_corre$cleaned_trait_value <- ifelse(
-  continuous_for_corre$trait_name == "leaf dry mass per leaf fresh mass", continuous_for_corre$trait_value*0.001, continuous_for_corre$trait_value)
+  continuous_for_corre$trait_name == "leaf dry mass per leaf fresh mass", continuous_for_corre$trait_value*1000, 
+  ifelse(
+    continuous_for_corre$trait_name == "leaf nitrogen content per area", continuous_for_corre$trait_value*0.001, 
+    ifelse(continuous_for_corre$trait_name == "leaf carbon content per area", continuous_for_corre$trait_value*0.001,
+           ifelse(continuous_for_corre$trait_name == "leaf phosphorous content per area", continuous_for_corre$trait_value*0.001,
+      continuous_for_corre$trait_value))))
     
     
   
 
 #Change BIEN trait names to fit TRY trait names
   #categorical
-    #"whole plant growth form" -> 
-    #"whole plant vegetative phenology" -> 
-    #"flower pollination syndrome" -> Pollination syndrome
-    #"whole plant sexual system" -> 
-    #"whole plant dispersal syndrome" -> Dispersal syndrome
-    #  "leaf compoundness" -> Leaf compoundness
+    #"whole plant growth form" -> lifeform (? don't know if this is the correct try name)
+    #"whole plant vegetative phenology" -> (must find try name)
+    #"flower pollination syndrome" -> Pollination syndrome (must find try name)
+    #"whole plant sexual system" -> (mst find try name)
+    #"whole plant dispersal syndrome" -> dispersal_mode
+    #  "leaf compoundness" -> Leaf compoundness (must find try name)
 
 
 
 
 
   #continuous
-    #"seed mass"     -> Seed dry mass
- #"maximum whole plant height" -> Plant height generative
-  # "leaf carbon content per leaf nitrogen content" -> Leaf carbon/nitrogen (C/N) ratio
-  #  "leaf photosythetic rate per leaf dry mass" -> Leaf photosynthesis rate per leaf dry mass
-  #  "leaf phosphorus content per leaf dry mass" -> 
-  # "leaf area" -> Leaf area (in case of compound leaves: leaf, undefined if petiole in- or excluded)
-  #  "leaf carbon content per leaf dry mass" -> Leaf carbon (C) content per leaf dry mass
-  # "leaf life span" -> Leaf lifespan (longevity)
-  #"leaf stomatal conductance for H2O per leaf area" -> 
-  # "leaf nitrogen content per leaf area" -> Leaf nitrogen (N) content per leaf area
-  # "leaf photosythetic rate per leaf area" -> Leaf photosynthesis rate per leaf area
-  # "leaf nitrogen content per leaf dry mass" -> Leaf nitrogen (N) content per leaf dry mass
-  # "leaf phosphorus content per leaf area" -> Leaf phosphorus (P) content per leaf area
-  # "leaf area per leaf dry mass" -> Leaf area per leaf dry mass (specific leaf area, SLA or 1/LMA): undefined if petiole is in- or excluded
-  # "whole plant height" -> Plant height generative
-   # "leaf dry mass per leaf fresh mass" -> Leaf dry mass per leaf fresh mass (leaf dry matter content, LDMC)
-   # "leaf dry mass" -> Leaf dry mass (single leaf)
-  #  "leaf carbon content per leaf dry mass" -> 
-  #  "leaf thickness" -> 
-  
-  # "root dry mass" -> 
-  # "seed length" -> Seed length
+    #"seed mass"     -> seed_dry_mass
+ #"maximum whole plant height" -> plant_height_regenerative
+  # "leaf carbon content per leaf nitrogen content" -> leaf_C:N
+  #  "leaf photosythetic rate per leaf dry mass" -> Leaf photosynthesis rate per leaf dry mass (must find try name)
+  #  "leaf phosphorus content per leaf dry mass" -> (must find try name)
+  # "leaf area" -> leaf_area
+  #  "leaf carbon content per leaf dry mass" -> Leaf carbon (C) content per leaf dry mass (must find try name)
+  # "leaf life span" -> leaf_longevity
+  #"leaf stomatal conductance for H2O per leaf area" -> stomata_conductance
+  # "leaf nitrogen content per leaf area" -> Leaf nitrogen (N) content per leaf area (must find try name)
+  # "leaf photosythetic rate per leaf area" -> Leaf photosynthesis rate per leaf area (must find try name)
+  # "leaf nitrogen content per leaf dry mass" -> Leaf nitrogen (N) content per leaf dry mass (must find try name)
+  # "leaf phosphorus content per leaf area" -> Leaf phosphorus (P) content per leaf area (must find try name)
+  # "leaf area per leaf dry mass" -> SLA
+  # "whole plant height" -> plant_height_regenerative
+   # "leaf dry mass per leaf fresh mass" -> LDMC
+   # "leaf dry mass" -> leaf_dry_mass
+  #  "leaf carbon content per leaf dry mass" -> (must find try name)
+  #  "leaf thickness" -> leaf_thickness
+  # "root dry mass" -> root_dry_mass
+  # "seed length" -> Seed length (must find try name)
 
 
 
