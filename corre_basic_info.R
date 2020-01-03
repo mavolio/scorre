@@ -54,5 +54,19 @@ cont_dat<-species%>%
   filter(n!=1)
 
 length(unique(cont_dat$Name_matched))
-  
 
+species_occurances_trt<-species%>%
+  select(site_proj_comm, treatment, Name_matched)%>%
+  unique()%>%
+  group_by(site_proj_comm, Name_matched)%>%
+  summarize(num_trts=length(treatment))
+
+write.csv(species_occurances_trt, "basic dataset info/species_occurances_treatments.csv", row.names=F)
+  
+species_occurances_sites<-species%>%
+  select(site_code, Name_matched)%>%
+  unique()%>%
+  group_by(Name_matched)%>%
+  summarize(num_sites=length(site_code))
+
+write.csv(species_occurances_sites, "basic dataset info/species_occurances_sites.csv", row.names=F)
