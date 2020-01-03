@@ -1,10 +1,17 @@
 library(tidyverse)
 
 setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data')
+setwd('C:\\Users\\megha\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data')
 
 correProjectInfo <- read.csv('CoRRE_project_summary.csv')
 correTrtInfo <- read.csv('CoRRE_treatment_summary.csv')
-correRelAbund <- read.csv('CoRRE_relative_abundance_Nov2019.csv')
+correRelAbund <- read.csv('CoRRE_relative_abundance_Nov2019.csv')%>%
+  select(-X)
+correCleanNames<-read.csv("sCoRRE_tnrs_matching.csv")%>%
+  select(-X, -AccSpeciesName)%>%
+  rename(genus_species=genus.species)%>%
+  unique()
+  
 
 #number of total plots, species, observations (plot*years)
 all <- correRelAbund%>%
@@ -25,5 +32,27 @@ summary(correProjectInfo$experiment_length)
 
 #list of treatment types and number of experiments for which they are present
 trtTypes <- correTrtInfo%>%
-  select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip, temp, mow_clip, burn, herb_removal, management, other_trt, plant_mani)%>%
-  unique()
+  select(site_code, project_name, community_type, trt_type)%>%
+  unique()%>%
+  filter(trt_type!="control")%>%
+  group_by(trt_type)%>%
+  summarize(n=length(trt_type))
+
+write.csv(trtTypes,"trt_type.csv", row.names=F)
+
+#list of species and how often they occur in the dataset
+species<-correRelAbund%>%
+  left_join(correCleanNames)%>%
+  filter(!is.na(Name_matched))%>%
+  mutate(site_proj_comm=paste(site_code, project_name, community_type))
+
+cont_dat<-species%>%
+  select(site_proj_comm, Name_matched, calendar_year)%>%
+  unique()%>%
+  group_by(site_proj_comm, Name_matched)%>%
+  summarize(n=length(calendar_year))%>%
+  filter(n!=1)
+
+length(unique(cont_dat$Name_matched))
+  
+
