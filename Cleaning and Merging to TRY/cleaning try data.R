@@ -27,13 +27,17 @@ dat2<-dat%>%
   mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
   filter(ErrorRisk2<8)%>%
   filter(!is.na(TraitID))
+
 exposition<-dat%>%
   select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
   mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
   filter(ErrorRisk2<8)%>%
-   filter(DataID==327)
+  filter(DataID==327)%>%
+  mutate(drop=ifelse(OrigValueStr=="Botanical garden"|OrigValueStr=="botanical garden (Bergius Botanical Garden, Stockholm, Sweden)"|OrigValueStr=="Botanical gardens, greenhouses and other atypical habitats"|OrigValueStr=="Chamber"|OrigValueStr=="climate chamber"|OrigValueStr=="Climate chamber"|OrigValueStr=="Climate Chamber"|OrigValueStr=="Climate chamber, non-limiting conditions, (cf. dataset reference)"|OrigValueStr=="climate chambers"|OrigValueStr=="Common Garden"|OrigValueStr=="Controlled climate chamber"|OrigValueStr=="controlled environment room"|OrigValueStr=="drought treatment"|OrigValueStr=="FACE"|OrigValueStr=="FE"|OrigValueStr=="C"|OrigValueStr=="Field Experiment"|OrigValueStr=="FW"|OrigValueStr=="G"|OrigValueStr=="GH"|OrigValueStr=="Glasshouse"|OrigValueStr=="Greehouse"|OrigValueStr=="Green house"|OrigValueStr=="greenhouse"|OrigValueStr=="Greenhouse"|OrigValueStr=="Greenhouse, grrowth container"|OrigValueStr=="groth chamber"|OrigValueStr=="growth-chamber"|OrigValueStr=="growth chamber"|OrigValueStr=="Growth chamber"|OrigValueStr=="Growth Chamber"|OrigValueStr=="growth chambers"|OrigValueStr=="Growth chambers"|OrigValueStr=="Growth exp"|OrigValueStr=="hydroponic"|OrigValueStr=="Irrigation"|OrigValueStr=="Irrigation and N fertilisation (100 kg/ha)"|OrigValueStr=="LAU_Ploughed/mown"|OrigValueStr=="LAU_Ploughed/mown and fertilized"|OrigValueStr=="mesocosm"|OrigValueStr=="mini-ecosystem"|OrigValueStr=="N"|OrigValueStr=="natural environment, high warming +4C, preccipitation ambient"|OrigValueStr=="natural environment, high warming +4C, preccipitation ambient -50%"|OrigValueStr=="natural environment, high warming +4C, preccipitation ambient +50%"|OrigValueStr=="natural environment, low warming +1.5C, preccipitation ambient"|OrigValueStr=="natural environment, low warming +1.5C, preccipitation ambient -50%"|OrigValueStr=="natural environment, low warming +1.5C, preccipitation ambient +50%"|OrigValueStr=="natural environment, medium warming +2.5C, preccipitation ambient"|OrigValueStr=="natural environment, medium warming +2.5C, preccipitation ambient -50%"|OrigValueStr=="natural environment, medium warming +2.5C, preccipitation ambient +50%"|OrigValueStr=="natural environment, no warming, preccipitation ambient -50%"|OrigValueStr=="natural environment, no warming, preccipitation ambient +50%"|OrigValueStr=="natural grassland, experimental nutrient NP addition"|OrigValueStr=="nutrient addition experiment"|OrigValueStr=="Open Top"|OrigValueStr=="open-top chamber"|OrigValueStr=="Open top chambers"|OrigValueStr=="OTC"|OrigValueStr=="plantation"|OrigValueStr=="PM"|OrigValueStr=="pot"|OrigValueStr=="Pot-grown"|OrigValueStr=="Pots outside"|OrigValueStr=="pots, outside in natural environment"|OrigValueStr=="shade houses"|OrigValueStr=="university campus"|OrigValueStr=="Uzbekistan: Irrigated desert land"|OrigValueStr=="VER_permanent extensively mown meadow"|OrigValueStr=="VER_permanent meadow mown and fertilized"|OrigValueStr=="VER_permanent meadows mown and fertilized"|OrigValueStr=="water stress experiment"|OrigValueStr=="water treatment", 1, 0))%>%
+  select(ObsDataID, drop)%>%
+  unique()
 
-table(unique(exposition$OrigValueStr))
+table(exposition$drop)
 
 develop<-dat%>%
   select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
@@ -47,9 +51,14 @@ health<-dat%>%
   select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
   mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
   filter(ErrorRisk2<8)%>%
-  filter(DataID==1961)
+  filter(DataID==1961)%>%
+  mutate(drop=ifelse(OrigValueStr=="Dead", 1, 0))%>%
+  select(ObsDataID, drop)%>%
+  unique()
 
 table(health$OrigValueStr)
+
+
 
 #mering corre with try
 key<-read.csv("corre2trykey.csv")%>%
