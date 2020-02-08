@@ -103,14 +103,16 @@ continuous_for_corre$TRY_trait <- revalue(continuous_for_corre$trait_name, c(
 #re-attach to CoRRE species names
 #merge each dataframe with corre_species
 final_categorical <- merge(categorical_for_corre, corre_species, by.x="scrubbed_species_binomial",by.y="Name_matched",all.x = TRUE)
+#trim unnecessary columns to simplify the spreadsheets before uploading to Dropbox
+final_categorical <- final_categorical[,c("trait_value","method","id","TRY_trait","genus species")]
 
 final_continuous <- merge(continuous_for_corre, corre_species, by.x="scrubbed_species_binomial",by.y="Name_matched",all.x = TRUE)
+#trim unnecessary columns to simplify the spreadsheets before uploading to Dropbox
+final_continuous <- final_continuous[,c("trait_value","method","id","TRY_trait","genus species")]
 
 
-#format so it can be easily combined with TRY data for CoRRE
-
-
-
+#write.csv(final_categorical,"BIEN_categorical_traits_1-18-20.csv")
+#write.csv(final_continuous,"BIEN_continuous_traits_1-18-20.csv")
 
 
 
