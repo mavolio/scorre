@@ -104,15 +104,42 @@ continuous_for_corre$TRY_trait <- revalue(continuous_for_corre$trait_name, c(
 #merge each dataframe with corre_species
 final_categorical <- merge(categorical_for_corre, corre_species, by.x="scrubbed_species_binomial",by.y="Name_matched",all.x = TRUE)
 #trim unnecessary columns to simplify the spreadsheets before uploading to Dropbox
-final_categorical <- final_categorical[,c("trait_value","method","id","TRY_trait","genus species")]
+final_categorical <- final_categorical[,c("trait_value","method",#"id",
+        "TRY_trait","genus species")]
+final_categorical <- unique(final_categorical)
+
+
+
 
 final_continuous <- merge(continuous_for_corre, corre_species, by.x="scrubbed_species_binomial",by.y="Name_matched",all.x = TRUE)
 #trim unnecessary columns to simplify the spreadsheets before uploading to Dropbox
-final_continuous <- final_continuous[,c("trait_value","method","id","TRY_trait","genus species")]
+final_continuous <- final_continuous[,c("cleaned_trait_value","method",#"project_pi",#"id","unit",
+                                        "TRY_trait","genus species")]
+final_continuous <- unique(final_continuous)
+
+#write.csv(final_categorical,"BIEN_categorical_traits_2-20-20.csv")
+#write.csv(final_continuous,"BIEN_continuous_traits_2-20-20.csv")
 
 
-#write.csv(final_categorical,"BIEN_categorical_traits_1-18-20.csv")
-#write.csv(final_continuous,"BIEN_continuous_traits_1-18-20.csv")
+
+x <- data.frame(final_continuous$id[duplicated(final_continuous$id)])
+
+y <- subset(bien_data, id == 13699987 | id ==13875237 | id==13717490)
+
+
+
+
+BIEN_continuous_traits_1_18_20 <- read_csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/TRY/BIEN_continuous_traits_1-18-20.csv")
+
+trial <- BIEN_continuous_traits_1_18_20[,c("trait_value","method","TRY_trait","genus species")]
+trial.1 <- unique(trial)
+
+
+
+
+
+
+
 
 
 
