@@ -103,9 +103,11 @@ cont_traits<-dat3%>%
 #testing consistent units for each trait
 Traits_Units<-cont_traits%>%
   select(TraitID, TraitName, CleanTraitName, UnitName)%>%
-  unique
+  unique%>%
+  mutate(Units=ifelse(CleanTraitName==3121, "g(W)/g(DM)", ifelse(CleanTraitName==3122, "g(W)/g(DM)", UnitName)))%>%
+  select(-UnitName)
 
-#unit for 3121 and 3122 is gH2O/g dry mass call it what 3120 is.
+write.csv(Traits_Units, "For Franzi/ContTraitUnits.csv", row.names = F)
 
 #ranking traits by proirity
 priority<-read.csv("trait_priority.csv")%>%
@@ -134,7 +136,7 @@ healthy<-cont_traits2%>%
 ##drop out trees that not seedlings
 #read in which species are trees
 treesp<-read.csv("species_families_trees_compelete.csv")%>%
-  rename(AccSpeciesName=species_matched)
+  mutate(AccSpeciesName=species_matched)
 
 #get list of tree observations that were made on seedlings
 develop<-dat%>%
@@ -182,16 +184,18 @@ splist<-key%>%
   unique%>%
   left_join(fam)%>%
   separate(remove=F, species_matched, into=c("genus", "species"), sep=" ")%>%
-  select(family, genus, species_matched)
+  select(family, genus, species_matched)%>%
+  left_join(treesp)
 
 cont_traits3<-cont_traits2%>%
-  left_join(splist)
+  left_join(splist)%>%
+  filter(tree.non.tree=="non-tree")%>%
+  select(-tree.non.tree)
 
 ###getting dataset to give to Frazni
 cont_traits4<-cont_traits3%>%
   group_by(ObservationID, AccSpeciesName, family, genus, species_matched, CleanTraitName) %>%
-  summarize(ave=mean(StdValue), sdev=sd(StdValue))%>%
-  mutate(diff=ave/sdev)
+  summarize(ave=mean(StdValue), sdev=sd(StdValue))
   #spread(CleanTraitName, StdValue)
 
 
