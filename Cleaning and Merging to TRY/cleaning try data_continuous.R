@@ -45,9 +45,9 @@ dat3<-dat2%>%
 ####selecting desired continuous traits
 #figuring out how clean traits are
 tests<-dat3%>%
-  filter(TraitID %in% c(3120))%>%
-  select(TraitID, OrigUnitStr, UnitName)%>%
-  unique()
+  filter(TraitID %in% c(1781))%>%
+  #select(TraitID, OrigUnitStr, UnitName)%>%
+  #unique()
   select(TraitID, UnitName, TraitName)%>%
   #filter(UnitName!="g/m2/d")%>%
   group_by(TraitID, UnitName, TraitName)%>%
