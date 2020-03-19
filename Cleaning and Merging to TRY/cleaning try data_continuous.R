@@ -55,7 +55,7 @@ tests<-dat3%>%
 
 #subsetting out traits and naming them
 cont_traits<-dat3%>%
-  filter(TraitID %in% c(4, 6, 9, 12, 13, 14, 15, 26, 27, 40, 41, 44, 45, 46, 47, 48, 50, 51, 52, 53, 55, 56, 57, 58, 66, 77, 80, 82, 83, 84, 106, 111, 138, 145, 146, 185, 186, 269, 270, 363, 475, 570, 614, 683, 1080, 1104, 2809, 3106,3107, 3108, 3109, 3110, 3111, 3112, 3113, 3114, 3115, 3116, 3117,3120, 3121, 3122))%>%
+  filter(TraitID %in% c(4, 6, 9, 12, 13, 14, 15, 26, 27, 40, 41, 44, 45, 46, 47, 48, 50, 51, 52, 53, 55, 56, 57, 58, 66, 77, 80, 82, 83, 84, 106, 111, 138, 145, 146, 185, 186, 269, 270, 363, 475, 570, 614, 683, 1080, 1104, 1781, 2809, 3106, 3107, 3108, 3109, 3110, 3111, 3112, 3113, 3114, 3115, 3116, 3117,3120, 3121, 3122))%>%
   mutate(remove=ifelse(TraitID==48&UnitName=='', 1, ifelse(TraitID==3107&UnitName=='cm', 1, ifelse(TraitID==53&UnitName=='g/m2/d',1, ifelse(TraitID==4&UnitName=='', 1, ifelse(TraitID==3116&UnitName=='', 1, ifelse(TraitID==3122&UnitName=='', 1, ifelse(TraitID==3121&UnitName=='', 1, 0))))))))%>%#remove problem data
   filter(remove==0)%>%
   select(-remove)%>%
@@ -91,7 +91,7 @@ cont_traits<-dat3%>%
                         ifelse(TraitID==269, 'J_max',
                         ifelse(TraitID==363, 'root_dry_mass',
                         ifelse(TraitID==683, 'root_P', 
-                        ifelse(TraitID==1080, 'root_len_mass_SRL',
+                        ifelse(TraitID==1080, 'SRL',
                         ifelse(TraitID==2809, 'seedbank_duration',
                         ifelse(TraitID==3106, 'plant_height_vegetative', 
                         ifelse(TraitID==3107, 'plant_height_generative', 
