@@ -24,7 +24,7 @@ units <- dat%>%
 
 #removing trait outliers
 dat2<-dat%>%
-  select(DatasetID,DataID, ObsDataID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
+  select(DatasetID,DataID, ObsDataID, ObservationID, AccSpeciesID, AccSpeciesName, TraitID, OriglName, TraitName, OrigValueStr, OrigUnitStr, StdValue, UnitName, ErrorRisk)%>%
   mutate(ErrorRisk2=ifelse(is.na(ErrorRisk), 0, ErrorRisk))%>%
   filter(ErrorRisk2<8)%>%
   filter(!is.na(TraitID))
@@ -45,18 +45,18 @@ dat3<-dat2%>%
 ####selecting desired continuous traits
 #figuring out how clean traits are
 tests<-dat3%>%
-  filter(TraitID %in% c(1781))%>%
+  filter(TraitID %in% c(3120))%>%
   #select(TraitID, OrigUnitStr, UnitName)%>%
   #unique()
-  select(TraitID, UnitName, TraitName)%>%
+  select(TraitID, UnitName, OrigUnitStr, OriglName, TraitName)%>%
   #filter(UnitName!="g/m2/d")%>%
-  group_by(TraitID, UnitName, TraitName)%>%
+  group_by(TraitID, UnitName, OrigUnitStr, OriglName, TraitName)%>%
    summarize(n=length(TraitID))
 
 #subsetting out traits and naming them
 cont_traits<-dat3%>%
   filter(TraitID %in% c(4, 6, 9, 12, 13, 14, 15, 26, 27, 40, 41, 44, 45, 46, 47, 48, 50, 51, 52, 53, 55, 56, 57, 58, 66, 77, 80, 82, 83, 84, 106, 111, 138, 145, 146, 185, 186, 269, 270, 363, 475, 570, 614, 683, 1080, 1104, 1781, 2809, 3106, 3107, 3108, 3109, 3110, 3111, 3112, 3113, 3114, 3115, 3116, 3117,3120, 3121, 3122))%>%
-  mutate(remove=ifelse(TraitID==48&UnitName=='', 1, ifelse(TraitID==3107&UnitName=='cm', 1, ifelse(TraitID==53&UnitName=='g/m2/d',1, ifelse(TraitID==4&UnitName=='', 1, ifelse(TraitID==3116&UnitName=='', 1, ifelse(TraitID==3122&UnitName=='', 1, ifelse(TraitID==3121&UnitName=='', 1, 0))))))))%>%#remove problem data
+  mutate(remove=ifelse(TraitID==48&UnitName=='', 1, ifelse(TraitID==3107&UnitName=='cm', 1, ifelse(TraitID==53&UnitName=='g/m2/d',1, ifelse(TraitID==4&UnitName=='', 1, ifelse(TraitID==3116&UnitName=='', 1, ifelse(TraitID==3122&OriglName=='WCt', 1, ifelse(TraitID==3121&OriglName=='WCs', 1, 0))))))))%>%#remove problem data
   filter(remove==0)%>%
   select(-remove)%>%
   mutate(CleanTraitName=ifelse(TraitID==4, 'stem_spec_density', 
@@ -101,9 +101,11 @@ cont_traits<-dat3%>%
                         TraitID))))))))))))))))))))))))))))))))))))))))
 
 #testing consistent units for each trait
-test2<-cont_traits%>%
+Traits_Units<-cont_traits%>%
   select(TraitID, TraitName, CleanTraitName, UnitName)%>%
   unique
+
+#unit for 3121 and 3122 is gH2O/g dry mass call it what 3120 is.
 
 #ranking traits by proirity
 priority<-read.csv("trait_priority.csv")%>%
@@ -127,7 +129,7 @@ table(health$OrigValueStr)
 
 #merge with our list, there is no overalp
 healthy<-cont_traits2%>%
-  right_join(health)
+  full_join(health)
 
 ##drop out trees that not seedlings
 #read in which species are trees
@@ -150,7 +152,7 @@ table(unique(develop$drop))
 
 #merge to drop tree obseravtions that are not seedlings - none were.
 developed<-cont_traits2%>%
-  right_join(develop)
+  full_join(develop)
 
 ##drop out plant that were not measured in natural conditions - there is no overlap
 
@@ -169,7 +171,7 @@ table(setting$drop)
 
 #merge with out traits - there is no overalp
 settings<-cont_traits2%>%
-  right_join(setting)
+  full_join(setting)
 
 
 #add info on genus family
@@ -187,8 +189,10 @@ cont_traits3<-cont_traits2%>%
 
 ###getting dataset to give to Frazni
 cont_traits4<-cont_traits3%>%
-  select(ObservationID, AccSpeciesName, family, genus, species_matched, CleanTraitName, StdValue)%>%
-  spread(CleanTraitName, StdValue)
+  group_by(ObservationID, AccSpeciesName, family, genus, species_matched, CleanTraitName) %>%
+  summarize(ave=mean(StdValue), sdev=sd(StdValue))%>%
+  mutate(diff=ave/sdev)
+  #spread(CleanTraitName, StdValue)
 
 
 write.csv(traits_cont, "C://Users/mavolio2/Dropbox/SDiv_sCoRRE_shared/CoRRE - community and anpp data/TRY_trait_data_continuous.csv", row.names = F)
