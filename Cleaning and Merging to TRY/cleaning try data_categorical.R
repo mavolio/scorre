@@ -6,9 +6,9 @@ theme_set(theme_bw(12))
 #meghan's
 setwd("C://Users/mavolio2/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
 setwd("C://Users/megha/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
+
 #kim's desktop
 setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
-
 #kim's laptop
 setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
 
@@ -43,30 +43,6 @@ dat3<-dat2%>%
   right_join(key)%>%
   select(-ErrorRisk, -ErrorRisk2)
 
-##how many traits for sp?
-sdivtrt_con<-read.csv("TRY_traits_type_11252019.csv")%>%
-  filter(trait_type=="con")
-
-####how many speices have at least 2 observed continouous trait?
-sptrait<-dat3%>%
-  right_join(sdivtrt_con)%>%
-  select(TraitID, species_matched)%>%
-  unique()%>%
-  group_by(species_matched)%>%
-  summarize(n=length(TraitID))%>%
-  full_join(splist)
-  
-#have 2 or more traits
-two_or_more<-sptrait%>%
-  filter(n>1)
-
-one<-sptrait%>%
-  filter(n==1)
-
-none<-sptrait%>%
-  filter(is.na(n))
- 
-write.csv(none, "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/CoRRE data/species_no_traits.csv")
 
 ##how many traits for sp
 sdivtrt<-read.csv("TRY_traits_type_11252019.csv")
