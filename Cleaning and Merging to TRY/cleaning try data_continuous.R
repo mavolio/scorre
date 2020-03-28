@@ -45,7 +45,7 @@ dat3<-dat2%>%
 ####selecting desired continuous traits
 #figuring out how clean traits are
 tests<-dat3%>%
-  filter(TraitID %in% c(3120))%>%
+  filter(TraitID %in% c(3109))%>%
   #select(TraitID, OrigUnitStr, UnitName)%>%
   #unique()
   select(TraitID, UnitName, OrigUnitStr, OriglName, TraitName)%>%
@@ -54,11 +54,113 @@ tests<-dat3%>%
    summarize(n=length(TraitID))
 
 #subsetting out traits and naming them
+#if origlname or unit is blank but there are no duplicates we are keepping it.
 cont_traits<-dat3%>%
   filter(TraitID %in% c(4, 6, 9, 12, 13, 14, 15, 26, 27, 40, 41, 44, 45, 46, 47, 48, 50, 51, 52, 53, 55, 56, 57, 58, 66, 77, 80, 82, 83, 84, 106, 111, 138, 145, 146, 185, 186, 269, 270, 363, 475, 570, 614, 683, 1080, 1104, 1781, 2809, 3106, 3107, 3108, 3109, 3110, 3111, 3112, 3113, 3114, 3115, 3116, 3117,3120, 3121, 3122))%>%
-  mutate(remove=ifelse(TraitID==48&UnitName=='', 1, ifelse(TraitID==3107&UnitName=='cm', 1, ifelse(TraitID==53&UnitName=='g/m2/d',1, ifelse(TraitID==4&UnitName=='', 1, ifelse(TraitID==3116&UnitName=='', 1, ifelse(TraitID==3122&OriglName=='WCt', 1, ifelse(TraitID==3121&OriglName=='WCs', 1, 0))))))))%>%#remove problem data
+  mutate(remove=ifelse(TraitID==48&UnitName=='', 1, 
+                ifelse(TraitID==3107&UnitName=='cm', 1, 
+                ifelse(TraitID==53&UnitName=='g/m2/d', 1, 
+                ifelse(TraitID==4&UnitName=='', 1, 
+                ifelse(TraitID==3116&UnitName=='', 1, 
+                ifelse(TraitID==3122&OriglName=='WCt', 1, 
+                ifelse(TraitID==3121&OriglName=='WCs', 1,
+                ifelse(TraitID==77&OriglName=="Ra", 1, 
+                ifelse(TraitID==77&OriglName=="RGRh relative growth rate in height)", 1, 
+                ifelse(TraitID==106&OriglName=="", 1,	
+                ifelse(TraitID==1781&OriglName=="Min_Root tissue density (RTD)", 1,
+                ifelse(TraitID==1781&OriglName=="Max_Root tissue density (RTD)", 1,
+                ifelse(TraitID==1781&OriglName=="Upper quartile_Root tissue density (RTD)", 1,
+                ifelse(TraitID==1781&OriglName=="Lower quartile_Root tissue density (RTD)", 1,
+                ifelse(TraitID==185&OriglName=="", 1, 
+                ifelse(TraitID==3109&OriglName=="Area (dry) cm2", 1, 
+                ifelse(TraitID==3109&OriglName=="Dry.area.cm2", 1,
+                ifelse(TraitID==3117&OriglName=="LMA", 1,
+                ifelse(TraitID==40&OriglName=="A500 mass", 1,
+                ifelse(TraitID==614&OriglName=="Min_Specific root length (SRL)", 1,
+                ifelse(TraitID==614&OriglName=="Max_Specific root length (SRL)", 1, 
+                ifelse(TraitID==41&OriglName=="Rdarkm_25C_FixedQ10", 1,
+                ifelse(TraitID==41&OriglName=="Rdarkm_25C_varQ10", 1,
+                ifelse(TraitID==41&OriglName=="Rdarkm_MeasMonth.T_varQ10", 1,
+                ifelse(TraitID==41&OriglName=="Rdarkm_TWQ.T_varQ10", 1, 
+                ifelse(TraitID==41&OriglName=="Leaf Rdark mass 18C", 1,
+                ifelse(TraitID==41&OriglName=="Rm_adj_gst", 1, 
+                ifelse(TraitID==41&OriglName=="Rm25", 1, 
+                ifelse(TraitID==41&OriglName=="Rm_amb", 1, 
+                ifelse(TraitID==41&OriglName=="Leaf Rdark mass 28C", 1, 
+                ifelse(TraitID==269&OriglName=="Jmax25_Bern", 1, 
+                ifelse(TraitID==269&OriglName=="Jmax_25_Rog", 1,
+                ifelse(TraitID==269&OriglName=="Jmax_reported", 1, 
+                ifelse(TraitID==47&OriglName=="LDMC_min", 1, 
+                ifelse(TraitID==47&OriglName=="LDMC_max", 1, 
+                ifelse(TraitID==47&OriglName=="WCf", 1,
+                ifelse(TraitID==47&OriglName=="Leaf dry matter concentration predicted from NIRS", 1,
+                ifelse(TraitID==3110&OriglName=="Leaf_area_min", 1, 
+                ifelse(TraitID==3110&OriglName=="Leaf_area_max", 1, 
+                ifelse(TraitID==13&OriglName=="C amount%", 1, 
+                ifelse(TraitID==13&OriglName=="C_senesced_leaf", 1, 
+                ifelse(TraitID==55&OriglName=="WLfMass", 1, 
+                ifelse(TraitID==55&OriglName=="Mass_senesced_leaf", 1,
+                ifelse(TraitID==44&OriglName=="K_senesced_leaf", 1, 
+                ifelse(TraitID==14&OriglName=="N amount%", 1, 
+                ifelse(TraitID==14&OriglName=="N_senesced_leaf", 1,
+                ifelse(TraitID==15&OriglName=="P_senesced_leaf", 1, 
+                ifelse(TraitID==111&OriglName=="Asat_E  (mmol/m2/s)", 1, 
+                ifelse(TraitID==145&OriglName=="LaminaWidthMaxExtremeCm", 1, 0))))))))))))))))))))))))))))))))))))))))))))))))))%>%
+  mutate(remove2=ifelse(TraitID==145&OriglName=="LaminaWidthMinCm", 1,
+                 ifelse(TraitID==145&OriglName=="LaminaWidthMinExtremeCm", 1,
+                 ifelse(TraitID==145&OriglName=="LeafWidth_max", 1,
+                 ifelse(TraitID==53&OriglName=="A500 area", 1, 
+                 ifelse(TraitID==53&OriglName=="Net photosynthesis at turgor loss point", 1, 
+                 ifelse(TraitID==53&OriglName=="Asat_Photo (umol/m2/s)", 1, 
+                 ifelse(TraitID==3107&OriglName=="Plant_height_generative_max", 1,
+                 ifelse(TraitID==3108&OriglName=="Flowering plant height, heighest leaf elongated", 1, 
+                 ifelse(TraitID==3108&OriglName=="Flowering plant height, heighest leaf not elongated", 1, 
+                 ifelse(TraitID==3106&OriglName=="Flowering plant height, heighest leaf elongated", 1, 
+                 ifelse(TraitID==3106&OriglName=="Flowering plant height, heighest leaf not elongated", 1, 
+                 ifelse(TraitID==3106&OriglName=="Height at 20 Years", 1, 
+                 ifelse(TraitID==3106&OriglName=="MaximumHeightMinM", 1, 
+                 ifelse(TraitID==3106&OriglName=="MaximumHeightExtremeM", 1, 
+                 ifelse(TraitID==3106&OriglName=="Maximum Height", 1, 
+                 ifelse(TraitID==3106&OriglName=="Plant_height_vegetative_min", 1, 
+                 ifelse(TraitID==3106&OriglName=="Plant_height_vegetative_mean", 1,
+                 ifelse(TraitID==3106&OriglName=="Length (aquatic)", 1, 
+                 ifelse(TraitID==3106&OriglName=="Height (seedling)", 1,
+                 ifelse(TraitID==3106&OriglName=="Height max (m)", 1,
+                 ifelse(TraitID==3106&OriglName=="strechedPlantHight", 1,
+                 ifelse(TraitID==3106&OriglName=="MaximumHeightM", 1,
+                 ifelse(TraitID==9&OriglName=="Root / shoot ratio seedlings", 1, 
+                 ifelse(TraitID==363&OriglName=="Root dry mass below 15 cm", 1,
+                 ifelse(TraitID==363&OriglName=="Root dry mass 0-15 cm", 1,
+                 ifelse(TraitID==80&OriglName=="Upper quartile_Root N content", 1,
+                 ifelse(TraitID==80&OriglName=="Lower quartile_Root N content", 1,
+                 ifelse(TraitID==80&OriglName=="Min_Root N content", 1,
+                 ifelse(TraitID==80&OriglName=="Max_Root N content", 1,
+                 ifelse(TraitID==66&OriglName=="single value [m/s^2]", 1,
+                 ifelse(TraitID==66&OriglName=="maximum TV [m/s^2]", 1,
+                 ifelse(TraitID==66&OriglName=="minimum TV [m/s^2]", 1,
+                 ifelse(TraitID==66&OriglName=="median TV [m/s^2]", 1,
+                 ifelse(TraitID==26&OriglName=="original seed mass (mg)", 1,
+                 ifelse(TraitID==26&OriglName=="OriginalSeedMassMean", 1,
+                 ifelse(TraitID==6&OriglName=="Rooting depth_min", 1,
+                 ifelse(TraitID==27&OriglName=="SeedsCurvedLength", 1, 
+                 ifelse(TraitID==3116&OriglName=="SLA_min", 1, 
+                 ifelse(TraitID==3116&OriglName=="SLA_max", 1, 
+                 ifelse(TraitID==1080&OriglName=="SRL roots >2mm diam (cm/g)", 1,
+                 ifelse(TraitID==45&OriglName=="LeafConductivityDorsal", 1, 
+                 ifelse(TraitID==45&OriglName=="LeadConductivityVentral", 1,
+                 ifelse(TraitID==45&OriglName=="Minimal stomatal conductance", 1, 
+                 ifelse(TraitID==45&OriglName=="Asat_Gs (mol/m2/s)", 1, 
+                 ifelse(TraitID==186&OriglName=="Vcmax25_Bern", 1,
+                 ifelse(TraitID==186&OriglName=="Vcmax_25_Rog", 1,
+                 ifelse(TraitID==186&OriglName=="Vcmax_reported", 1,
+                 ifelse(TraitID==186&OriglName=="", 1,
+                 ifelse(TraitID==186&OriglName=="Vcmax_a_25", 1, 0))))))))))))))))))))))))))))))))))))))))))))))))))%>%
+  mutate(remove3=ifelse(TraitID==186&OriglName=="Vcmax25Rog", 1,
+                 ifelse(TraitID==3120&OrigUnitStr=="mmol/g", 1, 0)))%>%#remove problem data where there are replicates for ObservationID
   filter(remove==0)%>%
-  select(-remove)%>%
+  filter(remove2==0)%>%
+  filter(remove3==0)%>%
+  select(-remove, -remove2, -remove3)%>%
   mutate(CleanTraitName=ifelse(TraitID==4, 'stem_spec_density', 
                         ifelse(TraitID==6, 'rooting_depth', 
                         ifelse(TraitID==9, 'root:shoot', 
@@ -98,23 +200,21 @@ cont_traits<-dat3%>%
                         ifelse(TraitID==3116, 'SLA', 
                         ifelse(TraitID==3110, 'leaf_area',
                         ifelse(TraitID==3120, 'water_content', 
-                        TraitID))))))))))))))))))))))))))))))))))))))))
+                        TraitID))))))))))))))))))))))))))))))))))))))))%>%
+  filter(!is.na(StdValue))
 
-#testing consistent units for each trait
+#testing consistent units for each trait and ranking traits by proirity
+priority<-read.csv("trait_priority.csv")%>%
+  rename(TraitID=TRY.trait.ID)
+
 Traits_Units<-cont_traits%>%
   select(TraitID, TraitName, CleanTraitName, UnitName)%>%
   unique%>%
   mutate(Units=ifelse(CleanTraitName==3121, "g(W)/g(DM)", ifelse(CleanTraitName==3122, "g(W)/g(DM)", UnitName)))%>%
-  select(-UnitName)
+  select(-UnitName)%>%
+  left_join(priority)
 
 write.csv(Traits_Units, "For Franzi/ContTraitUnits.csv", row.names = F)
-
-#ranking traits by proirity
-priority<-read.csv("trait_priority.csv")%>%
-  rename(TraitID=TRY.trait.ID)
-
-cont_traits2<-cont_traits%>%
-  left_join(priority)
 
 #subset out dead plants
 #get list of dead plants
@@ -187,16 +287,53 @@ splist<-key%>%
   select(family, genus, species_matched)%>%
   left_join(treesp)
 
-cont_traits3<-cont_traits2%>%
+cont_traits2<-cont_traits%>%
   left_join(splist)%>%
   filter(tree.non.tree=="non-tree")%>%
   select(-tree.non.tree)
 
+
+cont_traits3<-cont_traits2%>%
+  select(DatasetID, ObservationID, family, genus, species_matched, CleanTraitName, StdValue)
 ###getting dataset to give to Frazni
+
+#investigating problem traits
+d453<-cont_traits3%>%#this dataset has 3 obs per plant, but no way to link leaves so we are averaging
+  filter(DatasetID==453)%>%
+  group_by(DatasetID, ObservationID, species_matched, CleanTraitName, family, genus)%>%
+  summarise(StdValue=mean(StdValue))
+
+d428<-cont_traits3%>% #this dataset has two height values per plant, we are taking the largest
+  filter(DatasetID==428&CleanTraitName=="plant_height_vegetative"|DatasetID==428&CleanTraitName=="root_P")%>%
+  group_by(DatasetID, ObservationID, species_matched, CleanTraitName, family, genus)%>%
+  summarise(StdValue=max(StdValue))
+
+
 cont_traits4<-cont_traits3%>%
-  group_by(ObservationID, AccSpeciesName, family, genus, species_matched, CleanTraitName) %>%
-  summarize(ave=mean(StdValue), sdev=sd(StdValue))
+  filter(DatasetID!=453)%>%
+  mutate(remove=ifelse(DatasetID==428&CleanTraitName=="plant_height_vegetative", 1, 
+                ifelse(DatasetID==428&CleanTraitName=="root_P", 1, 0)))%>%
+  filter(remove==0)%>%
+  select(-remove)%>%
+  bind_rows(d453)%>%
+  bind_rows(d428)
+  
+cont_traits5<-cont_traits4%>%
+  mutate(present=1)%>%
+  group_by(DatasetID, ObservationID, species_matched, CleanTraitName)%>%
+  summarize(n=sum(present))
+
+probtraits<-subset(cont_traits5, n>1)%>%
+  ungroup()%>%
+  select(CleanTraitName, n)%>%
+  unique()
   #spread(CleanTraitName, StdValue)
 
+ttraits<-cont_traits4%>%
+  ungroup()%>%
+  group_by(DatasetID, ObservationID, family, genus, species_matched)%>%
+  spread(CleanTraitName, StdValue, fill=NA)
+  
 
-write.csv(traits_cont, "C://Users/mavolio2/Dropbox/SDiv_sCoRRE_shared/CoRRE - community and anpp data/TRY_trait_data_continuous.csv", row.names = F)
+write.csv(ttraits, "For Franzi/TRY_trait_data_continuous.csv", row.names = F)
+write.csv(cont_traits4, "For Franzi/TRY_trait_data_continuous_long.csv", row.names = F)
