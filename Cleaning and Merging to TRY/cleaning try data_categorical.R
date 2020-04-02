@@ -98,7 +98,7 @@ trait42_fern<-trait42%>%
   select(species_matched, CleanTraitValue)%>%
   unique()%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
-  mutate(CleanTraitValue=ifelse(Fern=="Fern", "Fern", 999))%>%
+  mutate(CleanTraitValue=ifelse(Fern=="Fern", "fern", 999))%>%
   filter(CleanTraitValue!=999)%>%
   select(species_matched, CleanTraitValue)
 
@@ -106,7 +106,7 @@ trait42_forb<-trait42%>%
   select(species_matched, CleanTraitValue)%>%
   unique()%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
-  mutate(CleanTraitValue=ifelse(Forb=="Forb"&is.na(Graminoid)&is.na(Fern)&is.na(Woody)&is.na(Vine), "Forb", 999))%>%
+  mutate(CleanTraitValue=ifelse(Forb=="Forb"&is.na(Graminoid)&is.na(Fern)&is.na(Woody)&is.na(Vine), "forb", 999))%>%
   filter(CleanTraitValue!=999)%>%
   select(species_matched, CleanTraitValue)
 
@@ -114,7 +114,7 @@ trait42_gram<-trait42%>%
   select(species_matched, CleanTraitValue)%>%
   unique()%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
-  mutate(CleanTraitValue=ifelse(Graminoid=="Graminoid"&is.na(Forb)&is.na(Woody)&is.na(Vine)&is.na(Fern),"Graminiod", 999))%>%
+  mutate(CleanTraitValue=ifelse(Graminoid=="Graminoid"&is.na(Forb)&is.na(Woody)&is.na(Vine)&is.na(Fern),"graminiod", 999))%>%
   filter(CleanTraitValue!=999)%>%
   select(species_matched, CleanTraitValue)
 
@@ -122,7 +122,7 @@ trait42_vine<-trait42%>%
   select(species_matched, CleanTraitValue)%>%
   unique()%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
-  mutate(CleanTraitValue=ifelse(Vine=="Vine"&is.na(Forb)&is.na(Woody)&is.na(Graminoid)&is.na(Fern),"Vine", 999))%>%
+  mutate(CleanTraitValue=ifelse(Vine=="Vine"&is.na(Forb)&is.na(Woody)&is.na(Graminoid)&is.na(Fern),"vine", 999))%>%
   filter(CleanTraitValue!=999)%>%
   select(species_matched, CleanTraitValue)
 
@@ -130,7 +130,7 @@ trait42_woody<-trait42%>%
   select(species_matched, CleanTraitValue)%>%
   unique()%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
-  mutate(CleanTraitValue=ifelse(Woody=="Woody"&is.na(Forb)&is.na(Vine)&is.na(Graminoid)&is.na(Fern),"Woody", 999))%>%
+  mutate(CleanTraitValue=ifelse(Woody=="Woody"&is.na(Forb)&is.na(Vine)&is.na(Graminoid)&is.na(Fern),"woody", 999))%>%
   filter(CleanTraitValue!=999)%>%
   select(species_matched, CleanTraitValue)
 
@@ -143,79 +143,79 @@ trait42_problem<-trait42%>%
   select(-n)
 
 trait42_probelm3<-trait42_problem[c(1:40),]%>%
-  mutate(CleanTraitValue=ifelse(species_matched=="Amorpha canescens", "Woody",
-                          ifelse(species_matched=="Artemisia annua", "Forb",
-                          ifelse(species_matched=="Artemisia frigida", "Forb",
-                          ifelse(species_matched=="Artemisia gmelinii", "Forb",
-                          ifelse(species_matched=="Asparagus officinalis", "Forb",
-                          ifelse(species_matched=="Atriplex canescens", "Woody",
-                          ifelse(species_matched=="Atriplex patula", "Forb",
-                          ifelse(species_matched=="Chenopodium glaucum", "Forb",
-                          ifelse(species_matched=="Chrysocephalum apiculatum", "Forb",
-                          ifelse(species_matched=="Comandra umbellata", "Forb",
-                          ifelse(species_matched=="Convolvulus arvensis", "Vine",
-                          ifelse(species_matched=="Convolvulus erubescens", "Vine",
-                          ifelse(species_matched=="Coreopsis lanceolata", "Forb",
-                          ifelse(species_matched=="Crataegus monogyna", "Woody",
-                          ifelse(species_matched=="Cuscuta glomerata", "Vine",
-                          ifelse(species_matched=="Cyrilla racemiflora","Woody",
-                          ifelse(species_matched=="Dalea purpurea", "Forb",
-                          ifelse(species_matched=="Dryas integrifolia", "Woody",
-                          ifelse(species_matched=="Dryas octopetala", "Woody",
-                          ifelse(species_matched=="Dryopteris carthusiana", "Fern",
-                          ifelse(species_matched=="Elymus repens", "Graminiod",
-                          ifelse(species_matched=="Equisetum arvense", "Fern",
-                          ifelse(species_matched=="Erigeron canadensis", "Forb",
-                          ifelse(species_matched=="Euphorbia corollata", "Forb",
-                          ifelse(species_matched=="Euphorbia dentata", "Forb",
-                          ifelse(species_matched=="Fallopia convolvulus", "Vine",
-                          ifelse(species_matched=="Fallopia scandens", "Vine",
-                          ifelse(species_matched=="Galium aparine", "Forb",
-                          ifelse(species_matched=="Galium verum", "Forb",
-                          ifelse(species_matched=="Gutierrezia sarothrae", "Woody",
-                          ifelse(species_matched=="Harrimanella hypnoides", "Forb",
-                          ifelse(species_matched=="Helianthemum nummularium", "Woody",
-                          ifelse(species_matched=="Hypochaeris radicata", "Forb",
-                          ifelse(species_matched=="Krascheninnikovia ceratoides", "Woody",
-                          ifelse(species_matched=="Lathyrus pratensis", "Forb",
-                          ifelse(species_matched=="Lespedeza capitata", "Forb",
-                          ifelse(species_matched=="Lespedeza juncea", "Woody",
-                          ifelse(species_matched=="Linnaea borealis","Woody",
-                          ifelse(species_matched=="Lonicera japonica", "Vine",
-                          ifelse(species_matched=="Lonicera periclymenum", "Vine", 999)))))))))))))))))))))))))))))))))))))))))
+  mutate(CleanTraitValue=ifelse(species_matched=="Amorpha canescens", "woody",
+                          ifelse(species_matched=="Artemisia annua", "forb",
+                          ifelse(species_matched=="Artemisia frigida", "forb",
+                          ifelse(species_matched=="Artemisia gmelinii", "forb",
+                          ifelse(species_matched=="Asparagus officinalis", "forb",
+                          ifelse(species_matched=="Atriplex canescens", "woody",
+                          ifelse(species_matched=="Atriplex patula", "forb",
+                          ifelse(species_matched=="Chenopodium glaucum", "forb",
+                          ifelse(species_matched=="Chrysocephalum apiculatum", "forb",
+                          ifelse(species_matched=="Comandra umbellata", "forb",
+                          ifelse(species_matched=="Convolvulus arvensis", "vine",
+                          ifelse(species_matched=="Convolvulus erubescens", "vine",
+                          ifelse(species_matched=="Coreopsis lanceolata", "forb",
+                          ifelse(species_matched=="Crataegus monogyna", "woody",
+                          ifelse(species_matched=="Cuscuta glomerata", "vine",
+                          ifelse(species_matched=="Cyrilla racemiflora","woody",
+                          ifelse(species_matched=="Dalea purpurea", "forb",
+                          ifelse(species_matched=="Dryas integrifolia", "woody",
+                          ifelse(species_matched=="Dryas octopetala", "woody",
+                          ifelse(species_matched=="Dryopteris carthusiana", "fern",
+                          ifelse(species_matched=="Elymus repens", "graminoid",
+                          ifelse(species_matched=="Equisetum arvense", "fern",
+                          ifelse(species_matched=="Erigeron canadensis", "forb",
+                          ifelse(species_matched=="Euphorbia corollata", "forb",
+                          ifelse(species_matched=="Euphorbia dentata", "forb",
+                          ifelse(species_matched=="Fallopia convolvulus", "vine",
+                          ifelse(species_matched=="Fallopia scandens", "vine",
+                          ifelse(species_matched=="Galium aparine", "forb",
+                          ifelse(species_matched=="Galium verum", "forb",
+                          ifelse(species_matched=="Gutierrezia sarothrae", "woody",
+                          ifelse(species_matched=="Harrimanella hypnoides", "forb",
+                          ifelse(species_matched=="Helianthemum nummularium", "woody",
+                          ifelse(species_matched=="Hypochaeris radicata", "forb",
+                          ifelse(species_matched=="Krascheninnikovia ceratoides", "woody",
+                          ifelse(species_matched=="Lathyrus pratensis", "forb",
+                          ifelse(species_matched=="Lespedeza capitata", "forb",
+                          ifelse(species_matched=="Lespedeza juncea", "woody",
+                          ifelse(species_matched=="Linnaea borealis","woody",
+                          ifelse(species_matched=="Lonicera japonica", "vine",
+                          ifelse(species_matched=="Lonicera periclymenum", "vine", 999)))))))))))))))))))))))))))))))))))))))))
 
 trait42_probelm4<-trait42_problem[c(41:72),]%>%
-  mutate(CleanTraitValue=ifelse(species_matched=="Mollugo verticillata", "Vine",
-                          ifelse(species_matched=="Moneses uniflora", "Woody",
-                          ifelse(species_matched=="Oenothera biennis", "Forb",
-                          ifelse(species_matched=="Orthilia secunda", "Woody",
-                          ifelse(species_matched=="Parthenocissus inserta", "Vine",
-                          ifelse(species_matched=="Parthenocissus quinquefolia", "Vine",
-                          ifelse(species_matched=="Phryma leptostachya", "Forb",
-                          ifelse(species_matched=="Phytolacca americana", "Forb",
-                          ifelse(species_matched=="Pimelea trichostachya", "Woody",
-                          ifelse(species_matched=="Plantago coronopus", "Forb",
-                          ifelse(species_matched=="Portulaca oleracea", "Forb",
-                          ifelse(species_matched=="Pyrola elliptica", "Forb",
-                          ifelse(species_matched=="Rosa multiflora", "Woody",
-                          ifelse(species_matched=="Rubus idaeus", "Woody",
-                          ifelse(species_matched=="Rubus vestitus", "Woody",
-                          ifelse(species_matched=="Salix repens", "Woody",
-                          ifelse(species_matched=="Salsola kali", 'Woody',
-                          ifelse(species_matched=="Solanum americanum", "Forb",
-                          ifelse(species_matched=="Solanum dulcamara", "Vine",
-                          ifelse(species_matched=="Stellaria media", "Forb",
-                          ifelse(species_matched=="Talinum polygaloides", "Forb",
-                          ifelse(species_matched=="Thymus praecox", "Woody",
-                          ifelse(species_matched=="Tofieldia pusilla", "Forb",
-                          ifelse(species_matched=="Toxicodendron diversilobum", "Vine",
-                          ifelse(species_matched=="Tribulus terrestris","Forb",
-                          ifelse(species_matched=="Typha angustifolia", "Forb",
-                          ifelse(species_matched=="Typha latifolia", "Forb",
-                          ifelse(species_matched=="Vicia americana", "Vine",
-                          ifelse(species_matched=="Vicia cracca", "Vine",
-                          ifelse(species_matched=="Vicia tetrasperma", "Vine",
-                          ifelse(species_matched=="Vicia villosa", "Vine", NA))))))))))))))))))))))))))))))))
+  mutate(CleanTraitValue=ifelse(species_matched=="Mollugo verticillata", "vine",
+                          ifelse(species_matched=="Moneses uniflora", "woody",
+                          ifelse(species_matched=="Oenothera biennis", "forb",
+                          ifelse(species_matched=="Orthilia secunda", "woody",
+                          ifelse(species_matched=="Parthenocissus inserta", "vine",
+                          ifelse(species_matched=="Parthenocissus quinquefolia", "vine",
+                          ifelse(species_matched=="Phryma leptostachya", "forb",
+                          ifelse(species_matched=="Phytolacca americana", "forb",
+                          ifelse(species_matched=="Pimelea trichostachya", "woody",
+                          ifelse(species_matched=="Plantago coronopus", "forb",
+                          ifelse(species_matched=="Portulaca oleracea", "forb",
+                          ifelse(species_matched=="Pyrola elliptica", "forb",
+                          ifelse(species_matched=="Rosa multiflora", "woody",
+                          ifelse(species_matched=="Rubus idaeus", "woody",
+                          ifelse(species_matched=="Rubus vestitus", "woody",
+                          ifelse(species_matched=="Salix repens", "woody",
+                          ifelse(species_matched=="Salsola kali", 'woody',
+                          ifelse(species_matched=="Solanum americanum", "forb",
+                          ifelse(species_matched=="Solanum dulcamara", "vine",
+                          ifelse(species_matched=="Stellaria media", "forb",
+                          ifelse(species_matched=="Talinum polygaloides", "forb",
+                          ifelse(species_matched=="Thymus praecox", "woody",
+                          ifelse(species_matched=="Tofieldia pusilla", "forb",
+                          ifelse(species_matched=="Toxicodendron diversilobum", "vine",
+                          ifelse(species_matched=="Tribulus terrestris","forb",
+                          ifelse(species_matched=="Typha angustifolia", "forb",
+                          ifelse(species_matched=="Typha latifolia", "forb",
+                          ifelse(species_matched=="Vicia americana", "vine",
+                          ifelse(species_matched=="Vicia cracca", "vine",
+                          ifelse(species_matched=="Vicia tetrasperma", "vine",
+                          ifelse(species_matched=="Vicia villosa", "vine", NA))))))))))))))))))))))))))))))))
               
 trait42_probelm2<-trait42%>%
   right_join(trait42_problem)%>%
@@ -248,30 +248,6 @@ trait22<-dat3%>%
   select(species_matched, CleanTraitValue)%>%
   mutate(CleanTraitName="photo_pathway", CleanTraitUnit=NA, source='TRY_22')
 
-##mycorrhizal traits
-trait_1433_1030_clean<-dat3%>%
-  filter(TraitID==1433|TraitID==1030)%>%
-  group_by(species_matched)%>%
-  summarise(CleanTraitValue=mean(StdValue))%>%
-  mutate(CleanTraitName="mycorrhizal_percent_colonization", CleanTraitUnit="%")
-
-#all these species are in trait7
-# trait_1433_1030_sp<-trait_1433_1030%>%
-#   filter(CleanTriatValue!=0)%>%
-#   select(species_matched)
-
-trait7<-dat3%>%
-  filter(TraitID==7)%>%
-  mutate(CleanTraitValue=ifelse(OriglName=="Stable_AM_loss_likelihood"|OriglName=="AM_Stable_likelihood"|OriglName=="AM_retained_likelihood"|OriglName=="Labile_likelihood"|OriglName=="AM_lost_likelihood"|OrigValueStr=="non-ectomycorrhizal"|OrigValueStr=="?va", NA, 
-        ifelse(OrigValueStr=="absent"|OrigValueStr=="0"|OrigValueStr=="Absent"|OrigValueStr=="Non"|OrigValueStr=="no"|OrigValueStr=="No"|OrigValueStr=="Non Mycorr"|OrigValueStr=="N", "no", "yes")))%>%
-  filter(!is.na(CleanTraitValue))%>%
-  select(species_matched, CleanTraitValue)%>%
-  unique()%>%
-  spread(CleanTraitValue, CleanTraitValue)%>%
-  mutate(CleanTraitValue=ifelse(yes=="yes", "yes", NA))%>%
-  filter(!is.na(CleanTraitValue))%>%
-  select(species_matched, CleanTraitValue)%>%
-  mutate(CleanTraitName="mycorrhizal", CleanTraitUnit=NA, source='TRY_7')
 
 
 ##stem support
@@ -465,8 +441,53 @@ trait29 <- dat3%>%
   select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
 
 
+
+##mycorrhizal traits
+mycorr<-read.csv('mycorr_Species_match_for_Kim.csv')%>%
+  select(species_matched, Mycorrhizal.type)%>%
+  unique()%>%
+  mutate(CleanTraitValue=ifelse(Mycorrhizal.type %in% c('AM', 'EcM', 'ErM', 'OM', 'EcM-AM', 'double_AM_EcM', 'NM-AM', 'NM-AM, rarely EcM'), 'yes', ifelse(Mycorrhizal.type=='NM', 'no', ifelse(Mycorrhizal.type=='uncertain', 'uncertain', ''))))%>%
+  mutate(CleanTraitName="mycorrhizal", CleanTraitUnit="", source='FungalRoot')%>%
+  select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)%>%
+  # spread(CleanTraitValue, CleanTraitValue)%>%
+  # mutate(CleanTraitValue=ifelse(yes=="yes"&is.na(no)&is.na(uncertain), "yes",
+  #                               ifelse(is.na(yes)&no=='no'&is.na(uncertain), "no",
+  #                                      ifelse(is.na(yes)&is.na(no)&uncertain=='uncertain', "uncertain",
+  #                                             'check'))))%>% #a few were double listed as NA and either yes, no, or uncertain
+  filter(!is.na(CleanTraitValue))%>%
+  select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
+
+mycorrType<-read.csv('mycorr_Species_match_for_Kim.csv')%>%
+  select(species_matched, Mycorrhizal.type)%>%
+  unique()%>%
+  mutate(CleanTraitValue=ifelse(Mycorrhizal.type=='AM', 'arbuscular', ifelse(Mycorrhizal.type=='EcM', 'ecto', ifelse(Mycorrhizal.type=='ErM', 'ericaceous', ifelse(Mycorrhizal.type=='OM', 'orchidaceous', ifelse(Mycorrhizal.type=='EcM-AM', 'double_AM_EcM', ifelse(Mycorrhizal.type=='NM', 'none', ifelse(Mycorrhizal.type=='NM-AM', 'facultative_AM', ifelse(Mycorrhizal.type=='NM-AM, rarely EcM', 'facultative_AM_EcM', ifelse(Mycorrhizal.type=='uncertain', 'uncertain', ''))))))))))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  mutate(CleanTraitName="mycorrhizal_type", CleanTraitUnit="", source='FungalRoot')%>%
+  select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
+
+#n-fixation
+nFix <- read.csv('CoRRE_TRY_species_list_N-fixers.csv')%>%
+  select(species_matched, fixer)%>%
+  mutate(CleanTraitValue=ifelse(fixer==1, 'yes', 'no'))%>%
+  mutate(CleanTraitName="n_fixation", CleanTraitUnit="", source='Werner 2014')%>%
+  select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
+
+rhizobial <- read.csv('CoRRE_TRY_species_list_N-fixers.csv')%>%
+  select(species_matched, fixer, act)%>%
+  mutate(CleanTraitValue=ifelse(fixer==1 & act==0, 'yes', 'no'))%>%
+  mutate(CleanTraitName="rhizobial", CleanTraitUnit="", source='Werner 2014')%>%
+  select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
+
+actinorhizal <- read.csv('CoRRE_TRY_species_list_N-fixers.csv')%>%
+  select(species_matched, act)%>%
+  mutate(CleanTraitValue=ifelse(act==1, 'yes', 'no'))%>%
+  mutate(CleanTraitName="actinorhizal", CleanTraitUnit="", source='Werner 2014')%>%
+  select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
+  
+
+
 ###combine traits
-traitsCat <- rbind(trait59, trait42_clean, trait22, trait7, trait1188_clean, clonality, trait28, trait17, trait29)%>%
+traitsCat <- rbind(trait59, trait42_clean, trait22, mycorr, mycorrType, trait1188_clean, clonality, trait28, trait17, trait29, nFix, rhizobial, actinorhizal)%>%
   mutate(trait_source=paste(CleanTraitValue, source, sep='::'))%>%
   unique()%>%
   select(-CleanTraitUnit, -source, -CleanTraitValue)%>%
@@ -477,10 +498,15 @@ traitsCat <- rbind(trait59, trait42_clean, trait22, trait7, trait1188_clean, clo
   separate(dispersal_mode, c('dispersal_mode', 'dispersal_mode_source'), sep='::')%>%
   separate(leaf_compoundness, c('leaf_compoundness', 'leaf_compoundness_source'), sep='::')%>%
   separate(mycorrhizal, c('mycorrhizal', 'mycorrhizal_source'), sep='::')%>%
+  separate(mycorrhizal_type, c('mycorrhizal_type', 'mycorrhizal_type_source'), sep='::')%>%
   separate(photo_pathway, c('photo_pathway', 'photo_pathway_source'), sep='::')%>%
   separate(pollination, c('pollination', 'pollination_source'), sep='::')%>%
   separate(stem_support, c('stem_support', 'stem_support_source'), sep='::')%>%
-  full_join(splist)
+  separate(n_fixation, c('n_fixation', 'n_fixation_source'), sep='::')%>%
+  separate(rhizobial, c('rhizobial', 'rhizobial_source'), sep='::')%>%
+  separate(actinorhizal, c('actinorhizal', 'actinorhizal_source'), sep='::')%>%
+  full_join(splist)%>%
+  left_join(read.csv('species_families.csv'))
 
 
 # write.csv(traitsCat, 'categorical_traits_tofillin.csv', row.names=F)
