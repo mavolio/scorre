@@ -369,9 +369,12 @@ trait28<-dat3%>%
   unique()%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
   mutate(CleanTraitValue=ifelse(Animal=="Animal"&is.na(Wind)&is.na(Unassisted)&is.na(Water), "animal",
+                         ifelse(Animal=='Animal'&is.na(Water)&is.na(Wind)&Unassisted=="Unassisted", "animal",
                          ifelse(Wind=="Wind"&is.na(Animal)&is.na(Unassisted)&is.na(Water),"wind",
-                         ifelse(Unassisted=="Unassisted"&is.na(Animal)&is.na(Wind)&is.na(Water), "unassisted",
-                         ifelse(Water=="Water"&is.na(Animal)&is.na(Wind)&is.na(Unassisted), "water", "combination")))))%>%
+                         ifelse(Wind=='Wind'&is.na(Water)&is.na(Animal)&Unassisted=="Unassisted", "wind",
+                         ifelse(Water=="Water"&is.na(Animal)&is.na(Wind)&is.na(Unassisted), "water", 
+                         ifelse(Water=='Water'&is.na(Animal)&is.na(Wind)&Unassisted=="Unassisted", "water",
+                         ifelse(Unassisted=="Unassisted"&is.na(Animal)&is.na(Wind)&is.na(Water), "unassisted", "combination"))))))))%>%
   select(species_matched, CleanTraitValue)%>%
   mutate(CleanTraitName="dispersal_mode", CleanTraitUnit="NA", source='TRY_28')
 
