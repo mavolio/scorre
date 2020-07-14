@@ -148,18 +148,25 @@ species_families_trees_compelete <- read.csv("C:/Users/ohler/Downloads/species_f
 
 with_tree <- merge(final_continuous, species_families_trees_compelete, by.x="scrubbed_species_binomial",by.y = "species_matched", all.x=TRUE)
 
-without_tree <- subset
+without_tree <- subset(with_tree, tree.non.tree != "tree")
 
 
 
 #make a genus column
-
-
+without_tree <- separate(without_tree, col = "scrubbed_species_binomial", into = c("genus","species"), " ",remove=FALSE)
+without_tree <- without_tree[,c("scrubbed_species_binomial","genus","TRY_trait","cleaned_trait_value","id","family")]
 
 
 
 #make wide form
+without_tree <- unique(without_tree)
+wide <- spread(without_tree, key="TRY_trait",value="cleaned_trait_value")
+wide <- subset(wide, select = -c(id) )
 
+
+
+#remove duplicate rows
+wide <- unique(wide)
 
 
 
