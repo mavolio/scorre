@@ -68,14 +68,14 @@ write.tree(scorre.tree$scenario.3, "/Users/padulles/Documents/PD_MasarykU/sCoRRE
 # Question 2) Produce a X number of trees randomly placing tips on the phylogeny. Scenario 2.
 
 #This operation might be time consuming. In my laptop, creating 1 tree takes about 76 seconds.
-#This means that 1000 trees would take 21 hours. I'm setting it to 3 trees, but we'll have to change it accordingly.
+#This means that 100 trees would take 2 hours. I'm setting it to 3 trees, but we'll have to change it accordingly.
 spp1<-spp
 names(spp1)[1]<-paste("species")
 spp1<-spp1[c(1,6,5,7,8)] #rearrange
 spp1<-unique(spp1) #remove duplicated rows
 
 #note that some taxa might not be included because their families are not included in the tree.
-for (i in 1:3) #replace 3 by 1000 to produce 1000 trees.
+for (i in 1:3) #replace 3 by 100 to produce 100 trees.
 {
   scorre.trees[[i]] <- phylo.maker(sp.list = spp1, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S2")
 }
