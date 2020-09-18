@@ -9,6 +9,7 @@ library(reshape2)
 library(PhyloMeasures) #reference paper: https://onlinelibrary.wiley.com/doi/10.1111/ecog.01814
 library(V.PhyloMaker) #reference paper: https://doi.org/10.1111/ecog.04434
 library(rlist)
+library(matrixStats)
 
 #read data:
 comm<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_relative_abundance_Nov2019.csv", header=T, sep=",", fill = TRUE)
@@ -57,6 +58,9 @@ comm<-comm[complete.cases(comm), ] #by now, we remove cases with NA to get rid o
 comm <- comm %>% mutate(plot_id2 = paste(site_code, project_name, community_type,
                                          treatment_year, plot_id, sep = "_"))
 
+#remove sites with only 1 species:
+comm <- comm[comm$plot_id2 %in% comm$plot_id2[duplicated(comm$plot_id2) | duplicated(comm$plot_id2, fromLast=TRUE)], ]
+
 #create list of sites:
 sites <- unique(comm$site_code)
 
@@ -76,7 +80,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   comm2 <- dcast(comm2, plot_id2 ~ species_matched, value=relcov) # apply dcast to turn into community matrix
   rownames(comm2)<-comm2$plot_id2 #assign rownames
   comm2$plot_id2 <-NULL #and detele original columns
-  comm2[is.na(comm2)]<-0
+  comm2[is.na(comm2)]<-0 #turn NAs into 0s
   colnames(comm2)<-gsub(" ", "_", colnames(comm2))
   
   #create vector for abundances:
@@ -89,7 +93,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   mpd.pval<-data.frame(matrix(nrow = nrow(comm2)))
   mntd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
   mntd.pval<-data.frame(matrix(nrow = nrow(comm2)))
-  for (j in 1:3) #replace 3 by 100 when the 100 trees are ready
+  for (j in 1:length(scorre.trees))
   {
     #Prune tree with only species in our site:
     tree<-keep.tip(scorre.trees[[j]]$scenario.2$run.1, colnames(comm2))
@@ -112,12 +116,12 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
     mntdp<-as.data.frame(1-(mntd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
     mntd.pval<-cbind(mntd.pval, mntdp)
   }
-  pd.ses<-data.frame(plot_id2=rownames(comm2), pd.ses=rowMeans(pd.ses[,-1])) # create data frame with all values.
-  pd.ses$pd.pval <- rowMeans(pd.pval[,-1])
-  pd.ses$mpd.ses <- rowMeans(mpd.ses[,-1])
-  pd.ses$mpd.pval <- rowMeans(mpd.pval[,-1])
-  pd.ses$mntd.ses <- rowMeans(mntd.ses[,-1])
-  pd.ses$mntd.pval <- rowMeans(mntd.pval[,-1])
+  pd.ses<-data.frame(plot_id2=rownames(comm2), pd.ses=rowMedians(as.matrix(pd.ses[,-1]))) # create data frame with all values.
+  pd.ses$pd.pval <- rowMedians(as.matrix(pd.pval[,-1]))
+  pd.ses$mpd.ses <- rowMedians(as.matrix(mpd.ses[,-1]))
+  pd.ses$mpd.pval <- rowMedians(as.matrix(mpd.pval[,-1]))
+  pd.ses$mntd.ses <- rowMedians(as.matrix(mntd.ses[,-1]))
+  pd.ses$mntd.pval <- rowMedians(as.matrix(mntd.pval[,-1]))
   pd.all<-rbind(pd.all, pd.ses)
 }
 
