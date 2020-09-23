@@ -56,6 +56,9 @@ names(spp1)[1]<-paste("species")
 spp1<-spp1[c(1,6,5,7,8)] #rearrange
 spp1<-unique(spp1) #remove duplicated rows
 
+#get list of species not included in the tree:
+spp.not.tree <- setdiff((gsub(" ", "_", spp1$species)), tips.info$species)
+
 #build phylo tree based on Scenario 3. Check pag 4 in https://doi.org/10.1111/ecog.04434 for further details.
 #this approach produces the same phylogenetic tree every time. This might be useful for Question 1, where we
 #need to plot "winners" and "losers" to a fix phylogeny.
