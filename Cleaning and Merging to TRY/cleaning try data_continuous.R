@@ -3,6 +3,9 @@ library(data.table)
 
 theme_set(theme_bw(12))
 
+##update Feb 2021
+##we are adding new species with the CoRRE database 2.0 update
+
 #meghan's
 setwd("C://Users/mavolio2/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
 setwd("C://Users/megha/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
