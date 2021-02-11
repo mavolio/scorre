@@ -10,6 +10,8 @@ library(PhyloMeasures) #reference paper: https://onlinelibrary.wiley.com/doi/10.
 library(V.PhyloMaker) #reference paper: https://doi.org/10.1111/ecog.04434
 library(rlist)
 library(matrixStats)
+library(magrittr)
+library(dplyr)
 
 #read data:
 comm<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_relative_abundance_Nov2019.csv", header=T, sep=",", fill = TRUE)
