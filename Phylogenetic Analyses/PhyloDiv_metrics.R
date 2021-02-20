@@ -19,6 +19,10 @@ spp<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_TRY_s
 
 #reduce spp to original and new name:
 spp<-subset(spp, type != "moss/lichen") #filter out mosses and lichens
+#spp<-subset(spp, type == "identified species") #OPTIONAL: select only species identified at the species level.
+
+#fix tiny mistake on a species name:
+spp$species_matched[spp$species_matched=="Aronia x"] <- "Aronia x prunifolia"
 
 #Some species that could not be matched to the phylogeny still need to be removed.
 #They are all briophytes. I will send the list to Kim. Meanwhile, I remove them manually.
@@ -42,7 +46,7 @@ non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       
                    "Tortella tortuosa",           "Tritomaria quinquedentata", "Barbilophozia sp.",
                    "Cynodontium sp.",   "Dicranella sp.",    "Encalypta sp.",     "Hypnum sp.",       
                    "Pohlia sp.",        "Polytrichum sp.",   "Racomitrium sp.",   "Scapania sp.",
-                   "Syntrichia sp.")
+                   "Syntrichia sp.", "Nephroma arcticum", "Unknown NA")
 spp <- spp[!spp$species_matched %in% non.vascular, ] #remove
 spp<-unique(spp[c(2,3)])
 
@@ -66,8 +70,10 @@ comm <- comm[comm$plot_id2 %in% comm$plot_id2[duplicated(comm$plot_id2) | duplic
 #create list of sites:
 sites <- unique(comm$site_code)
 
+
+
 ####
-#Example to calculate phylogenetic diversity metrics:
+#Example to calculate phylogenetic diversity metrics using trees from Scenario 2:
 
 #load trees:
 scorre.trees<-list.load("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.tree.S2.rdata")
@@ -95,6 +101,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   mpd.pval<-data.frame(matrix(nrow = nrow(comm2)))
   mntd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
   mntd.pval<-data.frame(matrix(nrow = nrow(comm2)))
+  
   for (j in 1:length(scorre.trees))
   {
     #Prune tree with only species in our site:
@@ -118,6 +125,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
     mntdp<-as.data.frame(1-(mntd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
     mntd.pval<-cbind(mntd.pval, mntdp)
   }
+  
   pd.ses<-data.frame(plot_id2=rownames(comm2), pd.ses=rowMedians(as.matrix(pd.ses[,-1]))) # create data frame with all values.
   pd.ses$pd.pval <- rowMedians(as.matrix(pd.pval[,-1]))
   pd.ses$mpd.ses <- rowMedians(as.matrix(mpd.ses[,-1]))
@@ -128,7 +136,74 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
 }
 
 #save output:
-write.table(pd.all,"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_pd_metrics.csv")
-rm(pd.ses, pd.all, pd.pval, mpd.ses, mpd.pval, mntd.ses, mntd.pval, comm, comm2, i, j, weights, scorre.trees, tree)
+write.table(pd.all,"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_pd_metrics_scenario2.csv")
+
+
+
+
+
+
+####
+#Example to calculate phylogenetic diversity metrics using trees from Scenario 3:
+
+#load trees:
+scorre.trees<-read.tree("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.tree.S3.tre")
+
+pd.all<-NULL
+for (i in 1:length(sites)) #loop to calculate metrics for each site independently
+{
+  print((i/length(sites)*100)) #this will return the & of studies over the total
+  comm2<-subset(comm, site_code == sites[i]) #subset plot within each site
+  comm2<-comm2[c(13,12,11)] #reorder table
+  comm2<-comm2[!duplicated(comm2[c(1,2)]),] #remove duplicated rows
+  comm2 <- dcast(comm2, plot_id2 ~ species_matched, value=relcov) # apply dcast to turn into community matrix
+  rownames(comm2)<-comm2$plot_id2 #assign rownames
+  comm2$plot_id2 <-NULL #and detele original columns
+  comm2[is.na(comm2)]<-0 #turn NAs into 0s
+  colnames(comm2)<-gsub(" ", "_", colnames(comm2))
+  
+  #create vector for abundances:
+  weights <- colSums(comm2)
+  comm2[comm2>0]<-1
+  
+  pd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
+  pd.pval<-data.frame(matrix(nrow = nrow(comm2)))
+  mpd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
+  mpd.pval<-data.frame(matrix(nrow = nrow(comm2)))
+  mntd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
+  mntd.pval<-data.frame(matrix(nrow = nrow(comm2)))
+  
+  #Prune tree with only species in our site:
+  tree<-keep.tip(scorre.trees, colnames(comm2))
+  
+  #calculate Faith's diversity (PD):
+  pd<-as.data.frame(pd.query(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000, standardize = T))
+  pd.ses<-cbind(pd.ses, pd)
+  pdp<-as.data.frame(1-(pd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
+  pd.pval<-cbind(pd.pval, pdp)
+  
+  #calculate Mean Pairwise Distances (MPD):
+  mpd<-as.data.frame(mpd.query(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000, standardize = T))
+  mpd.ses<-cbind(mpd.ses, mpd)
+  mpdp<-as.data.frame(1-(mpd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
+  mpd.pval<-cbind(mpd.pval, mpdp)
+  
+  #calculate Mean Nearest Taxon Distances (MNTD):
+  mntd<-as.data.frame(mntd.query(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000, standardize = T))
+  mntd.ses<-cbind(mntd.ses, mntd)
+  mntdp<-as.data.frame(1-(mntd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
+  mntd.pval<-cbind(mntd.pval, mntdp)
+  
+  pd.ses<-data.frame(plot_id2=rownames(comm2), pd.ses=pd.ses[,-1], pd.pval=pd.pval[,1],
+                     mpd.ses=mpd.ses[,-1], mpd.pval=mpd.pval[,1],
+                     mntd.ses=mntd.ses[,-1], mntd.pval=mntd.pval[,1]) # create data frame with all values.
+  pd.all<-rbind(pd.all, pd.ses)
+}
+
+#save output:
+write.table(pd.all,"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_pd_metrics_scenario3.csv")
+
+#clean-up:
+rm(list = ls())
 
 #end of code

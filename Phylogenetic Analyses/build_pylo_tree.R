@@ -13,6 +13,9 @@ spp<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_TRY_s
 spp<-subset(spp, type != "moss/lichen") #filter out mosses and lichens
 spp$species_matched <- trimws(spp$species_matched, which="right") #delete empty spaces to the right of plant names
 
+#fix tiny mistake on a species name:
+spp$species_matched[spp$species_matched=="Aronia x"] <- "Aronia x prunifolia"
+
 #Some species that could not be matched to the phylogeny still need to be removed.
 #They are all briophytes. I will send the list to Kim. Meanwhile, I remove them manually.
 non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       "Aulacomnium turgidum",       
@@ -35,23 +38,31 @@ non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       
                    "Tortella tortuosa",           "Tritomaria quinquedentata", "Barbilophozia sp.",
                    "Cynodontium sp.",   "Dicranella sp.",    "Encalypta sp.",     "Hypnum sp.",       
                    "Pohlia sp.",        "Polytrichum sp.",   "Racomitrium sp.",   "Scapania sp.",
-                   "Syntrichia sp.")
+                   "Syntrichia sp.", "Nephroma arcticum", "Unknown NA")
 non.vascular<-gsub("_", " ", non.vascular)
 spp <- spp[!spp$species_matched %in% non.vascular, ] #remove
 
 #get families for species and rearrange to create necessary fields for the phylogenies:
-fam<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/species_families.csv", header=T, sep=";", fill = TRUE)
+fam<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/species_families_2021.csv", header=T, sep=",", fill = TRUE)
+
+#unify family names:
+fam$family[fam$family=="Compositae"]<-"Asteraceae"
+fam$family[fam$family=="Leguminosae"]<-"Fabaceae"
+
+#merge with species table:
 spp<-merge(spp, fam, by="species_matched", all.x=T)
 spp$genus <- gsub("([A-Za-z]+).*", "\\1", spp$species) #column with genus
 spp$species.relative <- rep(NA, nrow(spp))
 spp$genus.relative <- rep(NA, nrow(spp))
 
 
+
 #########
 #We create different phylogenies for questions 1 and 2.
 
 # Question 1) Using Scenario 3.
-spp1<-subset(spp, type == "identified species") #remove species recorded at the genus level.
+#spp1<-subset(spp, type == "identified species") #OPTIONAL: remove species recorded at the genus level.
+spp1<-spp
 names(spp1)[1]<-paste("species")
 spp1<-spp1[c(1,6,5,7,8)] #rearrange
 spp1<-unique(spp1) #remove duplicated rows
@@ -72,18 +83,18 @@ write.tree(scorre.tree$scenario.3, "/Users/padulles/Documents/PD_MasarykU/sCoRRE
 
 #This operation might be time consuming. In my laptop, creating 1 tree takes about 76 seconds.
 #This means that 100 trees would take 2 hours. I'm setting it to 10 trees, but we'll have to change it accordingly.
-spp1<-spp
-names(spp1)[1]<-paste("species")
-spp1<-spp1[c(1,6,5,7,8)] #rearrange
-spp1<-unique(spp1) #remove duplicated rows
 
 #note that some taxa might not be included because their families are not included in the tree.
+scorre.trees<-list()
 for (i in 1:10) #replace 10 by 100 to produce 100 trees.
 {
+  print(i)
   scorre.trees[[i]] <- phylo.maker(sp.list = spp1, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S2")
 }
 list.save(scorre.trees, '/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.tree.S2.rdata')
 scorre.trees<-list.load("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.tree.S2.rdata")
-#rm(trees, sppt2, i)
+
+#clean-up:
+rm(list = ls())
 
 #end of code
