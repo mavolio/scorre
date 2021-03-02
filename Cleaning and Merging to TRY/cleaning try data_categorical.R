@@ -469,25 +469,32 @@ mycorrType<-read.csv('mycorr_Species_match_for_Kim.csv')%>%
   select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
 
 #n-fixation
-nFix <- read.csv('CoRRE_TRY_species_list_N-fixers.csv')%>%
+nFix <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\TRYCoRREMerge\\CORRE-TRY N Fixers\\CoRRE_TRY_species_list_N-fixers_update.csv')%>%
   select(species_matched, fixer)%>%
   mutate(CleanTraitValue=ifelse(fixer==1, 'yes', 'no'))%>%
   mutate(CleanTraitName="n_fixation", CleanTraitUnit="", source='Werner 2014')%>%
   select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
 
-rhizobial <- read.csv('CoRRE_TRY_species_list_N-fixers.csv')%>%
+rhizobial <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\TRYCoRREMerge\\CORRE-TRY N Fixers\\CoRRE_TRY_species_list_N-fixers_update.csv')%>%
   select(species_matched, fixer, act)%>%
   mutate(CleanTraitValue=ifelse(fixer==1 & act==0, 'yes', 'no'))%>%
   mutate(CleanTraitName="rhizobial", CleanTraitUnit="", source='Werner 2014')%>%
   select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
 
-actinorhizal <- read.csv('CoRRE_TRY_species_list_N-fixers.csv')%>%
+actinorhizal <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\TRYCoRREMerge\\CORRE-TRY N Fixers\\CoRRE_TRY_species_list_N-fixers_update.csv')%>%
   select(species_matched, act)%>%
   mutate(CleanTraitValue=ifelse(act==1, 'yes', 'no'))%>%
   mutate(CleanTraitName="actinorhizal", CleanTraitUnit="", source='Werner 2014')%>%
   select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
   
+nFixAll <- rbind(nFix, rhizobial,actinorhizal)%>%
+  select(-CleanTraitUnit, -source)%>%
+  spread(key=CleanTraitName, value=CleanTraitValue)
 
+orderNfix <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\TRYCoRREMerge\\CORRE-TRY N Fixers\\CoRRE_new spp.csv')%>%
+  left_join(nFixAll)
+
+# write.csv(nFixAll, 'C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\TRYCoRREMerge\\CORRE-TRY N Fixers\\CoRRE_TRY_species_list_N-fixers_update2.csv')
 
 ###combine traits
 traitsCat <- rbind(trait59, trait42_clean, trait22, mycorr, mycorrType, trait1188_clean, clonality, trait28, trait17, trait29, nFix, rhizobial, actinorhizal)%>%
