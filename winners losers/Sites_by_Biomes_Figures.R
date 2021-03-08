@@ -63,17 +63,6 @@ Lat_long_carbon<-Lat_long_fun(experimental_data_unique_wLatLong, "carbon")
 Lat_long_water<-Lat_long_fun(experimental_data_unique_wLatLong, "water")
 Lat_long_multi<-Lat_long_fun(experimental_data_unique_wLatLong, "multiple")
 
-
-# Fake dat for legend 
-x = c(-121.3, -121.3)
-y = c(39.25, 39.25)
-Temp = c(9, 9)
-Prec = c(75, 75)
-Root_Trait = c("Dependent", "Independent")
-
-Fake_dat2<-as.data.frame(cbind(x,y,Temp,Prec,Root_Trait))
-Fake_dat2[,1:4] = apply(Fake_dat2[,1:4], 2, function(x) as.numeric(as.character(x)))
-
 # Make plot 
 
 plot_1 <- ggplot() +
