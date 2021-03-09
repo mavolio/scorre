@@ -8,14 +8,16 @@ library(gawdis)
 library(data.table)
 library(magrittr)
 
+my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+
 #load continuous traits & clean-up:
-cont<-fread("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/TRY_sCorre.csv", dec=",")
+cont<-fread(paste(my.wd, "TRY_sCorre.csv", sep=""), dec=",")
 cont %<>% dplyr::select( -X, -ObservationID, -Genus, -Family) %>% unique
 cont <- aggregate(cont[, 3:34], list(cont$Species), mean, na.rm=T) #aggregate by species
 names(cont)[1]<-paste("species_matched")
 
 #load categorical traits & clean-up:
-cate<-fread("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/sCoRRE categorical trait data - traits_complete_pre spot check_03082021.csv", sep=",")
+cate<-fread(paste(my.wd, "sCoRRE categorical trait data - traits_complete_pre spot check_03082021.csv", sep=""), sep=",")
 cate <- cate[-c(2386:2389), ] #remove empty rows
 cate %<>% dplyr::select( -spotcheck_assignment, -done, -assigned, -family, -leaf_type_source, -leaf_compoundness_source,
                          -growth_form_source, -photosynthetic_pathway_source, -lifespan_source, -stem_support_source,
@@ -39,8 +41,7 @@ trait.dis<-gawdis(trait) #can take a while
 ftree<-as.phylo(hclust(trait.dis, method="ward.D2"))
 
 #save output:
-write.tree(ftree, "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/ftree.scorre.tre")
+write.tree(ftree, paste(my.wd, "ftree.scorre.tre", sep=""))
 
 #clean-up:
 rm(list = ls())
-
