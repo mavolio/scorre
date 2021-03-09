@@ -66,4 +66,3 @@ png("phylo_ring2.png",
     res=300,height=25,width=25,units="in"); 
 p
 dev.off()
-
