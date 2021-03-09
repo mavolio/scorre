@@ -17,8 +17,9 @@ library(stringr)
 #load species data:
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 
-species.data<-read.table(paste(my.wd,"Species_DCiDiff.csv",sep=""), header=T, sep=",")
+species.data<-read.table(paste(my.wd,"WinnersLosers paper/data/Species_DCiDiff.csv",sep=""), header=T, sep=",")
 species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
 
 #Decide for focal treatment
