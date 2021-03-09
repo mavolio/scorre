@@ -12,10 +12,18 @@ library(stringr)
 library(plyr)
 library(ape)
 library(scico)
+library(stringr)
 
 #load species data:
-species.data<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/Species_DCiDiff.csv", header=T, sep=",")
+my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
+my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+
+species.data<-read.table(paste(my.wd,"Species_DCiDiff.csv",sep=""), header=T, sep=",")
 species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
+
+#Decide for focal treatment
+#unique(species.data$trt_type2)
+#species.data<-subset(species.data, trt_type2=="irr")
 species.data<-subset(species.data, trt_type2=="N") #subset one treatment to make it easier (here N addition).
 
 #create table for the tree:
@@ -24,7 +32,7 @@ names(spp)[1]<-paste("species")
 spp$genus<-word(spp$species, 1)
 
 #load families for species and rearrange to create necessary fields for the phylogenies:
-fam<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/species_families_2021.csv", header=T, sep=",", fill = TRUE)
+fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE)
 names(fam)[1]<-paste("species")
 names(fam)[2]<-paste("family")
 spp<-merge(spp, fam, by="species", all.x=T)
