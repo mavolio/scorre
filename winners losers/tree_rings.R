@@ -14,7 +14,10 @@ library(ape)
 library(scico)
 
 #load species data:
-species.data<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/Species_DCiDiff.csv", header=T, sep=",")
+my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+
+species.data<-read.table(paste(my.wd,"Species_DCiDiff.csv",sep=""), header=T, sep=",")
 species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
 species.data<-subset(species.data, trt_type2=="N") #subset treatment to make it easier.
 
