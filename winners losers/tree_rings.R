@@ -20,6 +20,10 @@ my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 
 species.data<-read.table(paste(my.wd,"Species_DCiDiff.csv",sep=""), header=T, sep=",")
 species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
+
+#Decide for focal treatment
+#unique(species.data$trt_type2)
+#species.data<-subset(species.data, trt_type2=="irr")
 species.data<-subset(species.data, trt_type2=="N") #subset one treatment to make it easier (here N addition).
 
 #create table for the tree:
