@@ -56,7 +56,7 @@ p <- ggtree(scorre.tree$scenario.3, layout="circular", size=1.5, branch.length="
         legend.key.size = unit(1, "cm"),
         legend.position="none")
 
-#Add heatmap for "overall" treatments:
+#Add heatmap for treatment:
 p <- gheatmap(p, df, offset=0.03, width=.05,colnames = F,
               colnames_angle=90, colnames_offset_y = .25) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(df$ave_diff)))
