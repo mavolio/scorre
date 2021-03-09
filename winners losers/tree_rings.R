@@ -16,7 +16,7 @@ library(scico)
 #load species data:
 species.data<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/Species_DCiDiff.csv", header=T, sep=",")
 species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
-species.data<-subset(species.data, trt_type2=="N") #subset treatment to make it easier.
+species.data<-subset(species.data, trt_type2=="N") #subset one treatment to make it easier (here N addition).
 
 #create table for the tree:
 spp<-as.data.frame(unique(species.data$species_matched))
@@ -41,8 +41,7 @@ scorre.tree <- phylo.maker(sp.list = spp, tree = GBOTB.extended, nodes = nodes.i
 #remove from the original table non-vascular plants that couldn't be added to the tree:
 species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 in.data.not.tree <- setdiff(unique(species.data$species_matched), scorre.tree$scenario.3$tip.label)
-species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),]
-
+species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),] #only works if some species from the data are not in the tree
 
 #rearrange original table:
 df<-unique(species.data[,c(1,5)])
@@ -57,14 +56,13 @@ p <- ggtree(scorre.tree$scenario.3, layout="circular", size=1.5, branch.length="
         legend.key.size = unit(1, "cm"),
         legend.position="none")
 
-#Add heatmap for "overall" treatments:
+#Add heatmap for treatment:
 p <- gheatmap(p, df, offset=0.03, width=.05,colnames = F,
               colnames_angle=90, colnames_offset_y = .25) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(df$ave_diff)))
 
 #plot:
-png("phylo_ring.png",
-    res=600,height=25,width=25,units="in"); 
+png("phylo_ring2.png",
+    res=300,height=25,width=25,units="in"); 
 p
 dev.off()
-
