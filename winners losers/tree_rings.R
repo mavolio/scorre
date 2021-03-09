@@ -12,9 +12,10 @@ library(stringr)
 library(plyr)
 library(ape)
 library(scico)
+library(stringr)
 
 #load species data:
-my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 
 species.data<-read.table(paste(my.wd,"Species_DCiDiff.csv",sep=""), header=T, sep=",")
@@ -27,7 +28,7 @@ names(spp)[1]<-paste("species")
 spp$genus<-word(spp$species, 1)
 
 #load families for species and rearrange to create necessary fields for the phylogenies:
-fam<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/species_families_2021.csv", header=T, sep=",", fill = TRUE)
+fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE)
 names(fam)[1]<-paste("species")
 names(fam)[2]<-paste("family")
 spp<-merge(spp, fam, by="species", all.x=T)
