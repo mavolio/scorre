@@ -99,14 +99,6 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   #Prune tree with only species in our site:
   tree<-keep.tip(scorre.tree, colnames(comm2))
   
-  pd.raw<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
-  pd.ses<-data.frame(matrix(nrow = nrow(comm2)))
-  pd.pval<-data.frame(matrix(nrow = nrow(comm2)))
-  mpd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
-  mpd.pval<-data.frame(matrix(nrow = nrow(comm2)))
-  mntd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
-  mntd.pval<-data.frame(matrix(nrow = nrow(comm2)))
-  
   #calculate Faith's diversity (PD):
   pd.raw<-as.data.frame(pd.query(tree, comm2,  standardize = F))
   pd.ses<-as.data.frame(pd.query(tree, comm2,  null.model="uniform", reps=1000, standardize = T))
@@ -165,14 +157,6 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
 
   #Prune tree with only species in our site:
   tree<-keep.tip(scorre.tree, colnames(comm2))
-
-  pd.raw<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
-  pd.ses<-data.frame(matrix(nrow = nrow(comm2)))
-  pd.pval<-data.frame(matrix(nrow = nrow(comm2)))
-  mpd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
-  mpd.pval<-data.frame(matrix(nrow = nrow(comm2)))
-  mntd.ses<-data.frame(matrix(nrow = nrow(comm2))) #create empty dataframe to bind results from all trees.
-  mntd.pval<-data.frame(matrix(nrow = nrow(comm2)))
   
   #calculate Faith's diversity (PD):
   pd.raw<-as.data.frame(pd.query(tree, comm2,  abundance.weights=weights, standardize = F))
