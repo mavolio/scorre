@@ -9,8 +9,11 @@ library(Taxonstand)
 library(rlist)
 library(plyr)
 
+#set directory:
+my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+
 #read data:
-spp<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_TRY_species_list.csv", header=T, sep=",", fill = TRUE)
+spp<-read.table(paste(my.wd, "CoRRE_TRY_species_list.csv", sep=""), header=T, sep=",", fill = TRUE)
 spp<-subset(spp, type != "moss/lichen") #filter out mosses and lichens
 spp$species_matched <- trimws(spp$species_matched, which="right") #delete empty spaces to the right of plant names
 
@@ -44,7 +47,7 @@ non.vascular<-gsub("_", " ", non.vascular)
 spp <- spp[!spp$species_matched %in% non.vascular, ] #remove
 
 #get families for species and rearrange to create necessary fields for the phylogenies:
-fam<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/species_families_2021.csv", header=T, sep=",", fill = TRUE)
+fam<-read.table(paste(my.wd, "species_families_2021.csv", sep=""), header=T, sep=",", fill = TRUE)
 spp<-merge(spp, fam, by="species_matched", all.x=T)
 spp$genus <- gsub("([A-Za-z]+).*", "\\1", spp$species) #column with genus
 spp$species.relative <- rep(NA, nrow(spp))
@@ -73,7 +76,7 @@ spp1$family[spp1$family=="Leguminosae"]<-"Fabaceae"
 scorre.tree <- phylo.maker(sp.list = spp1, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S3")
 
 #save tree:
-write.tree(scorre.tree$scenario.3, "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.phylo.tree.S3.tre")
+write.tree(scorre.tree$scenario.3, paste(my.wd, "scorre.phylo.tree.S3.tre", sep=""))
 #rm(scorre.tree, spp, sppt, sppt2)
 
 # Question 2) Produce a X number of trees randomly placing tips on the phylogeny. Scenario 2.
@@ -88,8 +91,8 @@ for (i in 1:10) #replace 10 by 100 to produce 100 trees.
   print(i)
   scorre.trees[[i]] <- phylo.maker(sp.list = spp1, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S2")
 }
-list.save(scorre.trees, '/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.tree.S2.rdata')
-scorre.trees<-list.load("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/scorre.tree.S2.rdata")
+list.save(scorre.trees, paste(my.wd, 'scorre.tree.S2.rdata', sep=""))
+
 #rm(trees, sppt2, i)
 
 #end of code
