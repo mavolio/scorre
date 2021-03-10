@@ -29,35 +29,47 @@ traits <- read.csv('CoRRE data\\CoRRE data\\trait data\\sCoRRE categorical trait
   full_join(contTraitsSubset) %>%
   drop_na()
 
-species_to_keep <- unique(traits$species_matched)
+traitsOutliersRemoved <- traits %>%
+  filter(!leaf_type %in% c("microphyll","frond")) %>%
+  filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
+
+traitsScaled <- traitsOutliersRemoved %>% ## only scales continuous traits
+  mutate_at(vars(ssd:SRL), scale)
+
 
 # Create Gower trait disimilarity matrix
-traitMatrix <- distance(traits[,15:34], method='gower') #ignoring all categorical traits
+traitMatrix <- distance(traitsScaled[,15:34], method='gower') #ignoring all categorical traits
 
 # Run PCoA
 traitPCO <- pco(traitMatrix)
 
 # Create matrix of first two axes from PCoA
 PCOOutMatrix <- traitPCO$vectors[,1:2]
+PCOOutMatrix_3and4 <- traitPCO$vectors[,3:4]
 
 # Create vector fitting object (for overlaying trait vectors on top of PCoA plot) -- should probably up the permutations to 1000
-trait_vf <- vf(PCOOutMatrix, traits[,15:34], nperm=100)
+trait_vf <- vf(PCOOutMatrix, traitsScaled[,15:34], nperm=100)
+trait_vf_3and4 <- vf(PCOOutMatrix_3and4, traitsScaled[,15:34], nperm=100)
 
 ### Plotting
 # plot(PCOOutMatrix, col=1:length(traits$species_matched),
 #       pch=1:length(traits$species_matched), main="PCO", xlab="PCO 1", ylab="PCO 2")
-plot(PCOOutMatrix, main="PCO", xlab="PCO 1", ylab="PCO 2")
+plot(PCOOutMatrix, main="PCO", xlab="PCO 1", ylab="PCO 2", col="grey")
 plot(trait_vf)
 
+plot(PCOOutMatrix_3and4, main="PCO", xlab="PCO 3", ylab="PCO 4", col="grey")
+plot(trait_vf_3and4)
 
-
-PCO <- data.frame(traitPCO$vectors[,1:2], species_matched=traits$species_matched)
-names(traitPCO)
-traitPCO$values
+# Plot with species names
+PCO <- data.frame(traitPCO$vectors[,1:2], species_matched=traitsScaled$species_matched)
+PCO_3and4 <- data.frame(traitPCO$vectors[,3:4], species_matched=traitsScaled$species_matched)
 
 ggplot(data=PCO, aes(x=X1, y=X2, label=species_matched)) +
 #  geom_point() +
   geom_text()
+ggplot(data=PCO_3and4, aes(x=X1, y=X2, label=species_matched)) +
+#  geom_point() +
+  geom_text()
 
 
-chart.Correlation(traits[,15:34], histogram=TRUE, pch=19)
+chart.Correlation(traitsScaled[,15:34], histogram=TRUE, pch=19)
