@@ -9,7 +9,7 @@
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
-BiocManager::install("ggtree")
+#BiocManager::install("ggtree")
 
 library(ggtree)
 library(ggplot2)
@@ -20,21 +20,16 @@ library(scico)
 
 #for V.PhyloMaker
 library(devtools)
-devtools::install_github("jinyizju/V.PhyloMaker")
+#devtools::install_github("jinyizju/V.PhyloMaker")
 library(V.PhyloMaker)
 
 #set directory:
-my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
+#my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
-my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
+#my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 
-species.data<-read.table(paste(my.wd,"WinnersLosers paper/data/Species_DCiDiff.csv",sep=""), header=T, sep=",")
-species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
-
-#Decide for focal treatment:
-#unique(species.data$trt_type2)
-#species.data<-subset(species.data, trt_type2=="irr")
-species.data<-subset(species.data, trt_type2=="overall") #subset one treatment to make it easier (here N addition).
+#load data.
+species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts.csv",sep=""), header=T, sep=",")
 
 #create table for the tree:
 spp<-as.data.frame(unique(species.data$species_matched))
@@ -62,13 +57,22 @@ in.data.not.tree <- setdiff(unique(species.data$species_matched), scorre.tree$sc
 species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),] #only works if some species from the data are not in the tree
 
 #rearrange original table:
-df<-unique(species.data[,c(1,5)])
-rownames(df)<-df$species_matched
-df$species_matched<-NULL
-df$difs<-df$ave_diff
+trts<-levels(species.data$trt_type2)
+final.trt<-as.data.frame(unique(species.data$species_matched))
+names(final.trt)[1]<-paste("species_matched")
+
+for (i in 1:length(trts))
+{
+  sub.trt<-subset(species.data, trt_type2==trts[i])[,c(1,4)]
+  final.trt<-merge(final.trt, sub.trt, by="species_matched", all.x=T)
+  colnames(final.trt)[i+1]<-trts[i]
+}
+rownames(final.trt)<-final.trt$species_matched
+final.trt$species_matched<-NULL
 
 #Plot tree:
-p <- ggtree(scorre.tree$scenario.3, layout="circular", size=1.5, branch.length="none")+
+p <- ggtree(scorre.tree$scenario.3, size=1.5, branch.length="none")+
+  #geom_tiplab() +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_text(size=20, face="bold"), 
         legend.text=element_text(size=17.5),
@@ -76,12 +80,12 @@ p <- ggtree(scorre.tree$scenario.3, layout="circular", size=1.5, branch.length="
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, df, offset=0.03, width=.05, colnames = F,
-              colnames_angle=90, colnames_offset_y = .25) +
-  scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(df$ave_diff)))
+p <- gheatmap(p, final.trt, offset=0.03, width=.5, colnames = T,
+              colnames_angle=90) +
+  scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(final.trt), na.rm = T), na.value="white")
 
 #plot:
-png("phylo_ring3.png",
-    res=300,height=25,width=25,units="in"); 
+png("phylo_ring.png",
+    res=300,height=30,width=20,units="in"); 
 p
 dev.off()
