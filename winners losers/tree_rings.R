@@ -31,7 +31,7 @@ my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 species.data<-read.table(paste(my.wd,"WinnersLosers paper/data/Species_DCiDiff.csv",sep=""), header=T, sep=",")
 species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
 
-#Decide for focal treatment
+#Decide for focal treatment:
 #unique(species.data$trt_type2)
 #species.data<-subset(species.data, trt_type2=="irr")
 species.data<-subset(species.data, trt_type2=="overall") #subset one treatment to make it easier (here N addition).
