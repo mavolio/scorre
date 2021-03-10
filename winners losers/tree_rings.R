@@ -5,14 +5,23 @@
 #####
 
 #load packages:
+#for ggtree if you have r version 4 or above
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("ggtree")
+
 library(ggtree)
 library(ggplot2)
-library(V.PhyloMaker)
 library(stringr)
 library(plyr)
 library(ape)
 library(scico)
-library(stringr)
+
+#for V.PhyloMaker
+library(devtools)
+devtools::install_github("jinyizju/V.PhyloMaker")
+library(V.PhyloMaker)
 
 #load species data:
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
