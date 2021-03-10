@@ -12,11 +12,14 @@ library(rlist)
 library(matrixStats)
 
 #read data:
-comm<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_relative_abundance_Nov2019.csv", header=T, sep=",", fill = TRUE)
+comm<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_relative_abundance_Feb2021.csv", header=T, sep=",", fill = TRUE)
 spp<-read.table("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/CoRRE_TRY_species_list.csv", header=T, sep=",", fill = TRUE)
 
 #reduce spp to original and new name:
 spp<-subset(spp, type != "moss/lichen") #filter out mosses and lichens
+
+#manually correct one mistake:
+spp$species_matched <- revalue(spp$species_matched, c("Aronia x"="Aronia x prunifolia"))
 
 #Some species that could not be matched to the phylogeny still need to be removed.
 #They are all briophytes. I will send the list to Kim. Meanwhile, I remove them manually.
