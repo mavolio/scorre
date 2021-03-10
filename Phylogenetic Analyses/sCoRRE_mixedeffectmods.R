@@ -1,14 +1,17 @@
-#investigate winners losers
+#mixed effects models for everything?
 
 library(tidyverse)
 library(gridExtra)
 library(nlme)
 library(lmerTest)
+library(lme4)
+library(ggplot2)
+
 ###read in data
 
-#my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 #my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
-my.wd <- "C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/"
+#my.wd <- "C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/"
 
 #read in the data
 
@@ -69,27 +72,65 @@ newdf <- merge(pd, sites)
 newdf1 <- merge(newdf, trt)
 newdf2 <- merge(newdf1,trt_analysis)
 newdf2$experimentid <- paste(newdf2$site_code, newdf2$project_name, newdf2$community_type, sep = ",")
+newdf2$treatment_year<-as.numeric(newdf2$treatment_year)
+
+create_exp_list<-function(df, trt_type_name){
+  test <- df%>%
+    subset(trt_type == trt_type_name)
+  expvector <- unique(test$experimentid)
+  test2 <- df%>%
+    subset(trt_type == "control" & experimentid %in% expvector)
+  test3 <- rbind(test, test2)
+  test3
+}
+
+Drought_data<-create_exp_list(newdf2, "drought")
+
+Drought_data_exp_list<-split(Drought_data, Drought_data$experimentid)
+
+mod_function_drought <- function(df){
+  mod<-lmer(pd.raw ~ trt_type * treatment_year + (1|plot_id), df)
+  aov_out<-anova (mod)
+  summary_out<-summary(mod)   
+  #print(aov_out)
+  effects_out<-as.data.frame(summary_out$coefficients[c(2,3,4),c(1,5)])
+  effects_out$estimate_type<-rownames(summary_out$coefficients)[c(2,3,4)]
+  effects_out$experimentid<-paste(df[1,40]) # this is sketchy
+  effects_out
+}
+
+out<-lapply(Drought_data_exp_list, mod_function_drought)
+
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
 
 
-test <- newdf2%>%
-  subset(trt_type == "N")
 
-expvector <- unique(test$experimentid)
-test2 <- newdf2%>%
-  subset(trt_type == "control" & experimentid %in% expvector)
+# Figure 
 
-test3 <- rbind(test, test2)
+g1 <- ggplot(aes(x = treatment_year, y = mntd.raw), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
+  geom_point(aes (color = trt_type))+
+  geom_smooth(aes (color = trt_type), method = "lm")
+g2 <- ggplot(aes(x = treatment_year, y = mntd.ses), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
+  geom_point(aes (color = trt_type))+
+  geom_smooth(aes (color = trt_type), method = "lm")
+g3 <- ggplot(aes(x = treatment_year, y = mpd.raw), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
+  geom_point(aes (color = trt_type))+
+  geom_smooth(aes (color = trt_type), method = "lm")
+g4 <- ggplot(aes(x = treatment_year, y = mpd.ses), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
+  geom_point(aes (color = trt_type))+
+  geom_smooth(aes (color = trt_type), method = "lm")
+g5 <- ggplot(aes(x = treatment_year, y = pd.raw), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
+  geom_point(aes (color = trt_type))+
+  geom_smooth(aes (color = trt_type), method = "lm")
+g6 <- ggplot(aes(x = treatment_year, y = pd.ses), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
+  geom_point(aes (color = trt_type))+
+  geom_smooth(aes (color = trt_type), method = "lm")
 
+png(paste(my.wd, "paper 2_PD and FD responses/sample_fig.png", sep = ""), width = 6, height = 9, units = "in", res = 300)
+ggpubr::ggarrange(plotlist = list(g1,g2,g3,g4,g5,g6),ncol = 2,nrow =3, legend = "top", common.legend = TRUE)
+dev.off()
 
-
-
-
-
-mod <- lmer(pd.raw ~ treatment + (1|treatment_year) + (1|plot_id), test)
-  summary(mod)   
-     
-     
-mod <- lme(pd ~ treatment, data = df, random = 1/plot.id)
-
-
-
+# Of the 18 models for "drought" three are "boudary (singular) fit" 
+# check out https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1 
