@@ -21,8 +21,10 @@ contTraits <- read.csv('Trait Data\\TRY Data\\Gap_Filled\\TRY_new.csv')%>%
   ungroup()
 
 traits <- read.csv('CoRRE data\\CoRRE data\\trait data\\sCoRRE categorical trait data - traits_complete_pre spot check_03102021.csv')%>%
-  full_join(contTraits)%>%
+  full_join(contTraits) %>%
   drop_na()
+
+species_to_keep <- unique(traits$species_matched)
 
 # Create Gower trait disimilarity matrix
 traitMatrix <- distance(traits[,15:47], method='gower') #ignoring all categorical traits
