@@ -42,7 +42,7 @@ non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       
                    "Tortella tortuosa",           "Tritomaria quinquedentata", "Barbilophozia sp.",
                    "Cynodontium sp.",   "Dicranella sp.",    "Encalypta sp.",     "Hypnum sp.",       
                    "Pohlia sp.",        "Polytrichum sp.",   "Racomitrium sp.",   "Scapania sp.",
-                   "Syntrichia sp.", "Nephroma_arcticum")
+                   "Syntrichia sp.", "Nephroma arcticum" ,"Unknown NA")
 non.vascular<-gsub("_", " ", non.vascular)
 spp <- spp[!spp$species_matched %in% non.vascular, ] #remove
 
@@ -58,7 +58,8 @@ spp$genus.relative <- rep(NA, nrow(spp))
 #We create different phylogenies for questions 1 and 2.
 
 # Question 1) Using Scenario 3.
-spp1<-subset(spp, type == "identified species") #remove species recorded at the genus level.
+spp1<-spp
+#spp1<-subset(spp, type == "identified species") #remove species recorded at the genus level.
 names(spp1)[1]<-paste("species")
 spp1<-spp1[c(1,6,5,7,8)] #rearrange
 spp1<-unique(spp1) #remove duplicated rows
@@ -93,6 +94,5 @@ for (i in 1:10) #replace 10 by 100 to produce 100 trees.
 }
 list.save(scorre.trees, paste(my.wd, 'scorre.tree.S2.rdata', sep=""))
 
-#rm(trees, sppt2, i)
-
-#end of code
+#clean-up:
+#rm(list = ls())
