@@ -5,26 +5,36 @@
 #####
 
 #load packages:
+#for ggtree if you have r version 4 or above
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("ggtree")
+
 library(ggtree)
 library(ggplot2)
-library(V.PhyloMaker)
 library(stringr)
 library(plyr)
 library(ape)
 library(scico)
-library(stringr)
+
+#for V.PhyloMaker
+library(devtools)
+devtools::install_github("jinyizju/V.PhyloMaker")
+library(V.PhyloMaker)
 
 #load species data:
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 
-species.data<-read.table(paste(my.wd,"Species_DCiDiff.csv",sep=""), header=T, sep=",")
+species.data<-read.table(paste(my.wd,"WinnersLosers paper/data/Species_DCiDiff.csv",sep=""), header=T, sep=",")
 species.data$species_matched <- revalue(species.data$species_matched, c("Aronia x"="Aronia x prunifolia"))
 
 #Decide for focal treatment:
 #unique(species.data$trt_type2)
 #species.data<-subset(species.data, trt_type2=="irr")
-species.data<-subset(species.data, trt_type2=="N") #subset one treatment to make it easier (here N addition).
+species.data<-subset(species.data, trt_type2=="overall") #subset one treatment to make it easier (here N addition).
 
 #create table for the tree:
 spp<-as.data.frame(unique(species.data$species_matched))
@@ -55,6 +65,7 @@ species.data <- species.data[-which(species.data$species_matched %in% in.data.no
 df<-unique(species.data[,c(1,5)])
 rownames(df)<-df$species_matched
 df$species_matched<-NULL
+df$difs<-df$ave_diff
 
 #Plot tree:
 p <- ggtree(scorre.tree$scenario.3, layout="circular", size=1.5, branch.length="none")+
@@ -65,12 +76,12 @@ p <- ggtree(scorre.tree$scenario.3, layout="circular", size=1.5, branch.length="
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, df, offset=0.03, width=.05,colnames = F,
+p <- gheatmap(p, df, offset=0.03, width=.05, colnames = F,
               colnames_angle=90, colnames_offset_y = .25) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(df$ave_diff)))
 
 #plot:
-png("phylo_ring2.png",
+png("phylo_ring3.png",
     res=300,height=25,width=25,units="in"); 
 p
 dev.off()
