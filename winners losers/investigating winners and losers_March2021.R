@@ -18,7 +18,7 @@ dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_Ra
 reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeAbundance_Feb2021.csv",sep=""))
 
 #info on treatments
-trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/ExperimentInfo.csv", sep=""))%>%
+trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfoMar2021.csv", sep=""))%>%
   select(-X)
 
 #cleaned species names
