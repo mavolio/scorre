@@ -83,7 +83,7 @@ rownames(final.trt)<-final.trt$species_matched
 final.trt$species_matched<-NULL
 
 #Plot tree:
-p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
+p <- ggtree(tree, layout="circular", size=0.5, branch.length="none")+
   #geom_tiplab() +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_text(size=20, face="bold"), 
@@ -92,13 +92,13 @@ p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = T,
+p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = F,
               colnames_angle=90) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(final.trt), na.rm = T), na.value="white")
 
 #plot:
 png("phylo_ring_all_mult.png",
-    res=300,height=25,width=25,units="in"); 
+    res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
@@ -134,7 +134,7 @@ rownames(final.trt)<-final.trt$species_matched
 final.trt$species_matched<-NULL
 
 #Plot tree:
-p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
+p <- ggtree(tree, layout="circular", size=0.5, branch.length="none")+
   #geom_tiplab() +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_text(size=20, face="bold"), 
@@ -143,13 +143,13 @@ p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = T,
+p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = F,
               colnames_angle=90) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(final.trt), na.rm = T), na.value="white")
 
 #plot:
 png("phylo_ring_co2.png",
-    res=300,height=25,width=25,units="in"); 
+    res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
@@ -184,7 +184,7 @@ rownames(final.trt)<-final.trt$species_matched
 final.trt$species_matched<-NULL
 
 #Plot tree:
-p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
+p <- ggtree(tree, layout="circular", size=0.5, branch.length="none")+
   #geom_tiplab() +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_text(size=20, face="bold"), 
@@ -193,13 +193,13 @@ p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, final.trt, offset=0.03, width=.1, colnames = T,
+p <- gheatmap(p, final.trt, offset=0.03, width=.1, colnames = F,
               colnames_angle=90) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(final.trt), na.rm = T), na.value="white")
 
 #plot:
 png("phylo_ring_drought_irrigation.png",
-    res=300,height=25,width=25,units="in"); 
+    res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
@@ -234,7 +234,7 @@ rownames(final.trt)<-final.trt$species_matched
 final.trt$species_matched<-NULL
 
 #Plot tree:
-p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
+p <- ggtree(tree, layout="circular", size=0.5, branch.length="none")+
   #geom_tiplab() +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_text(size=20, face="bold"), 
@@ -243,13 +243,13 @@ p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, final.trt, offset=0.03, width=.1, colnames = T,
+p <- gheatmap(p, final.trt, offset=0.03, width=.1, colnames = F,
               colnames_angle=90) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(final.trt), na.rm = T), na.value="white")
 
 #plot:
 png("phylo_ring_disturbance.png",
-    res=300,height=25,width=25,units="in"); 
+    res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
@@ -286,7 +286,7 @@ rownames(final.trt)<-final.trt$species_matched
 final.trt$species_matched<-NULL
 
 #Plot tree:
-p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
+p <- ggtree(tree, layout="circular", size=0.5, branch.length="none")+
   #geom_tiplab() +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_text(size=20, face="bold"), 
@@ -295,13 +295,13 @@ p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = T,
+p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = F,
               colnames_angle=90) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(final.trt), na.rm = T), na.value="white")
 
 #plot:
 png("phylo_ring_temp.png",
-    res=300,height=25,width=25,units="in"); 
+    res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
@@ -335,7 +335,7 @@ rownames(final.trt)<-final.trt$species_matched
 final.trt$species_matched<-NULL
 
 #Plot tree:
-p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
+p <- ggtree(tree, layout="circular", size=0.5, branch.length="none")+
   #geom_tiplab() +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_text(size=20, face="bold"), 
@@ -344,12 +344,12 @@ p <- ggtree(tree, layout="circular", size=1.5, branch.length="none")+
         legend.position="none")
 
 #Add heatmap for treatment:
-p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = T,
+p <- gheatmap(p, final.trt, offset=0.03, width=.05, colnames = F,
               colnames_angle=90) +
   scale_fill_scico(palette = "vik", limits = c(-1, 1) * max(abs(final.trt), na.rm = T), na.value="white")
 
 #plot:
 png("phylo_ring_nuts.png",
-    res=300,height=25,width=25,units="in"); 
+    res=300,height=8,width=8,units="in"); 
 p
 dev.off()
