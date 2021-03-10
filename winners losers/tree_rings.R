@@ -23,7 +23,7 @@ library(devtools)
 devtools::install_github("jinyizju/V.PhyloMaker")
 library(V.PhyloMaker)
 
-#load species data:
+#set directory:
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
