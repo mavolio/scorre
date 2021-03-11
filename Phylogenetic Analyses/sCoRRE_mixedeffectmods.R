@@ -11,9 +11,9 @@ library(fixest)
 
 ###read in data
 
-#my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 #my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
-my.wd <- "C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/"
+#my.wd <- "C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/"
 
 #read in the data
 
@@ -336,14 +336,70 @@ ggplot(data = test) +
 
 ##############################
 
-View(nutrient_data)
-mod <- lme(pd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data) 
-mod1 <- lme(pd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)
-mod2 <- lme(mpd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
-mod3 <- lme(mpd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)
-mod4 <- lme(mntd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
-mod5 <- lme(mntd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
+mod <- lme(pd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot_id, data = nutrient_data) 
+mod1 <- lme(pd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot_id, data = nutrient_data)
+mod2 <- lme(mpd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot_id, data = nutrient_data)  
+mod3 <- lme(mpd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot_id, data = nutrient_data)
+mod4 <- lme(mntd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot_id, data = nutrient_data)  
+mod5 <- lme(mntd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot_id, data = nutrient_data)  
 
 testmod <- feols(pd.raw ~ nuts *treatment_year  | experimentid, nutrient_data) 
-testmod <- feols(pd.ses ~ nuts *treatment_year  | experimentid, nutrient_data) 
+testmod <- feols(pd.ses ~ nuts *treatment_year  | experimentid, nutrient_data)
+
+mod6 <- lme(pd.raw ~ experimentid + drought*treatment_year, random = ~1|experimentid/plot_id, data = Drought_data) 
+mod7 <- lme(pd.ses ~ experimentid + drought*treatment_year, random = ~1|experimentid/plot_id, data = Drought_data)
+mod8 <- lme(mpd.raw ~ experimentid + drought*treatment_year, random = ~1|experimentid/plot_id, data = Drought_data)  
+mod9 <- lme(mpd.ses ~ experimentid + drought*treatment_year, random = ~1|experimentid/plot_id, data = Drought_data)
+mod10 <- lme(mntd.raw ~ experimentid + drought*treatment_year, random = ~1|experimentid/plot_id, data = Drought_data)  
+mod11 <- lme(mntd.ses ~ experimentid + drought*treatment_year, random = ~1|experimentid/plot_id, data = Drought_data)
+mod12 <- lme(pd.raw ~ experimentid + CO2*treatment_year, random = ~1|experimentid/plot_id, data = CO2_data)
+mod13 <- lme(pd.ses ~ experimentid + CO2*treatment_year, random = ~1|experimentid/plot_id, data = CO2_data)
+mod14 <- lme(mpd.raw ~ experimentid + CO2*treatment_year, random = ~1|experimentid/plot_id, data = CO2_data)
+mod15 <- lme(mpd.ses ~ experimentid + CO2*treatment_year, random = ~1|experimentid/plot_id, data = CO2_data)
+mod16 <- lme(mntd.raw ~ experimentid + CO2*treatment_year, random = ~1|experimentid/plot_id, data = CO2_data)
+mod17 <- lme(mntd.ses ~ experimentid + CO2*treatment_year, random = ~1|experimentid/plot_id, data = CO2_data)
+View(dist_data)
+mod18 <- lme(pd.raw ~ experimentid + dist*treatment_year, random = ~1|experimentid/plot_id, data = dist_data )
+mod19 <- lme(pd.ses ~ experimentid + dist*treatment_year, random = ~1|experimentid/plot_id, data = dist_data)
+mod20 <- lme(mpd.raw ~ experimentid + dist*treatment_year, random = ~1|experimentid/plot_id, data = dist_data)
+mod21 <- lme(mpd.ses ~ experimentid + dist*treatment_year, random = ~1|experimentid/plot_id, data = dist_data)
+mod22 <- lme(mntd.raw ~ experimentid + dist*treatment_year, random = ~1|experimentid/plot_id, data = dist_data)
+mod23 <- lme(mntd.ses ~ experimentid + dist*treatment_year, random = ~1|experimentid/plot_id, data = dist_data)
+
+mod24 <- lme(pd.raw ~ experimentid + irg*treatment_year, random = ~1|experimentid/plot_id, data = irg_data) 
+mod25 <- lme(pd.ses ~ experimentid + irg*treatment_year, random = ~1|experimentid/plot_id, data = irg_data)
+mod26 <- lme(mpd.raw ~ experimentid + irg*treatment_year, random = ~1|experimentid/plot_id, data = irg_data)  
+mod27 <- lme(mpd.ses ~ experimentid + irg*treatment_year, random = ~1|experimentid/plot_id, data = irg_data)
+mod28 <- lme(mntd.raw ~ experimentid + irg*treatment_year, random = ~1|experimentid/plot_id, data = irg_data)  
+mod29 <- lme(mntd.ses ~ experimentid + irg*treatment_year, random = ~1|experimentid/plot_id, data = irg_data)
+
+mod30 <- lme(pd.raw ~ experimentid + herb_removal*treatment_year, random = ~1|experimentid/plot_id, data = herb_data)
+mod31 <- lme(pd.ses ~ experimentid + herb_removal*treatment_year, random = ~1|experimentid/plot_id, data = herb_data)
+mod32 <- lme(mpd.raw ~ experimentid + herb_removal*treatment_year, random = ~1|experimentid/plot_id, data = herb_data)
+mod33 <- lme(mpd.ses ~ experimentid + herb_removal*treatment_year, random = ~1|experimentid/plot_id, data = herb_data)
+mod34 <- lme(mntd.raw ~ experimentid + herb_removal*treatment_year, random = ~1|experimentid/plot_id, data = herb_data)
+mod35 <- lme(mntd.ses ~ experimentid + herb_removal*treatment_year, random = ~1|experimentid/plot_id, data = herb_data)
+mod36 <- lme(pd.raw ~ experimentid + temp*treatment_year, random = ~1|experimentid/plot_id, data = temp_data)
+mod37 <- lme(pd.ses ~ experimentid + temp*treatment_year, random = ~1|experimentid/plot_id, data = temp_data)
+mod38 <- lme(mpd.raw ~ experimentid + temp*treatment_year, random = ~1|experimentid/plot_id, data = temp_data)
+mod39 <- lme(mpd.ses ~ experimentid + temp*treatment_year, random = ~1|experimentid/plot_id, data = temp_data)
+mod40 <- lme(mntd.raw ~ experimentid + temp*treatment_year, random = ~1|experimentid/plot_id, data = temp_data)
+mod41 <- lme(mntd.ses ~ experimentid + temp*treatment_year, random = ~1|experimentid/plot_id, data = temp_data)
+modlist <- list(mod, mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10, mod11, mod12, mod13, mod14, mod15, mod16, mod17, mod18, mod19, mod20, mod21, mod22, mod23, mod24, mod25, mod26, mod27, mod28, mod29, mod30, mod31, mod32, mod33, mod34, mod35,mod36, mod37,mod38,mod39,mod40,mod41)
+
+coef.fun <- function(mod.no){
+  x <- summary(mod.no)
+  df1 <- as.data.frame(x$tTable[c(nrow(x$tTable)-2, nrow(x$tTable)-1, nrow(x$tTable)),c(1,2,5)])
+  rownames(df1) <- NULL
+  df1$effect <- c("main", "time", "interaction")
+  df1
+  }
+
+test <- lapply(modlist,coef.fun)
+out_2<-as.data.frame(do.call(rbind, test))
+out_2$trt_type<- c(rep("nut",6),rep("drought",6), rep("CO2",6), rep("dist",6), rep("irg",6), rep("herb_removal",6), rep("temp",6))
+out_2$pd.metric <- rep(c("pd.raw", "pd.ses", "mdp.raw", "mpd.ses", "mntd.raw", "mntd.ses"),7)
+
+
+
 
