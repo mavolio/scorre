@@ -128,10 +128,15 @@ mod_function<- function(df,category){
   effects_out6$experimentid<-paste(df[1,40]) # this is sketchy
   effects_out6$measure <- "mntd.ses"
   effects_out <- rbind(effects_out, effects_out2, effects_out3, effects_out4, effects_out5, effects_out6)
+<<<<<<< HEAD
   effects_out$pval.cor <- p.adjust(p = effects_out$`Pr(>|t|)`, method = "fdr")
   effects_out
   }
 
+=======
+  effects_out
+  }
+>>>>>>> 1325ff5f1a10b6da7046bc3440c0d9e7b704c4ce
 mod_function(Drought_data_exp_list$`BUX,PQ,0`, "drought")
 
 out<-lapply(Drought_data_exp_list, mod_function, category = "drought")
@@ -139,8 +144,12 @@ out_2<-do.call(rbind, out)
 out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
 out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
 names(out_2)[2] <- "p.val"
+<<<<<<< HEAD
 count.drought <- out_2 %>% 
   mutate(cutoff = ifelse(p.val <0.05,  "sig", "non")) %>%
+=======
+count.drought <- out_2 %>% mutate(cutoff = ifelse(p.val <0.05, "sig", "non")) %>% 
+>>>>>>> 1325ff5f1a10b6da7046bc3440c0d9e7b704c4ce
   count(estimate_type, measure, cutoff)
 
 # think about double counting 
@@ -149,6 +158,7 @@ count.drought <- out_2 %>%
 ## nutrients #####
 #################
 
+<<<<<<< HEAD
 nutrient_data<-create_exp_list(newdf2, "nuts")
 nutrient_data_exp_list<-split(nutrient_data, nutrient_data$experimentid)
 out<-lapply(nutrient_data_exp_list, mod_function, category = "nuts")
@@ -159,6 +169,9 @@ names(out_2)[2] <- "p.val"
 count.drought <- out_2 %>% 
   mutate(cutoff = ifelse(p.val <0.05,  "sig", "non")) %>%
   count(estimate_type, measure, cutoff)
+=======
+nutrient_data<-create_exp_list(newdf2, )
+>>>>>>> 1325ff5f1a10b6da7046bc3440c0d9e7b704c4ce
 
 
 # Of the 18 models for "drought" three are "boudary (singular) fit" 
