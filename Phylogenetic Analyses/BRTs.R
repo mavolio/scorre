@@ -58,12 +58,11 @@ dev.off()
 dat$treatment <- as.factor(dat$treatment)
 mod2 <-  gbm.step(data=dat, gbm.x = c("treatment", "MAP", "MAT", "rrich", "anpp", "n", "p", "k", "CO2", "precip", "temp", "herb_removal"), 
                  gbm.y = "pd_diff_avg", family = "gaussian",
-                 tree.complexity = 5, learning.rate = 0.001, 
+                 tree.complexity = 5, learning.rate = 0.0001, 
                  bag.fraction = 0.5, step.size=100, max.trees = 20000)
 
 mod2$contributions
 cor(dat$pd_diff_avg, mod2$fitted)^2 #pseudo-R2
-
 
 ##################### from Elith paper: Interrogate and plot the interactions
 # This code assesses the extent to which pairwise interactions exist in the data.
@@ -74,8 +73,20 @@ find.int <- gbm.interactions(mod2)
 # The returned object, here named test.int, is a list. The first 2 components summarise the results, first as a ranked list of the 5 most important pairwise interactions, and the second tabulating all pairwise interactions. The variable index numbers in $rank.list can be used for plotting.
 # You can plot pairwise interactions like this:
 
-gbm.perspec(mod2,2,1 y.range = c(15,20), z.range=c(0,0.6))
+gbm.perspec(mod,2,1, y.range = c(15,20), z.range=c(0,0.6))
 
+#only treatment & MAP
+
+mod3 <-  gbm.step(data=dat, gbm.x = c("treatment", "MAP"), 
+                  gbm.y = "pd_diff_avg", family = "gaussian",
+                  tree.complexity = 5, learning.rate = 0.0001, 
+                  bag.fraction = 0.5, step.size=100, max.trees = 20000)
+
+mod3$contributions
+
+cor(dat$pd_diff_avg, mod3$fitted)^2 #pseudo-R2
+
+find.int <- gbm.interactions(mod3)
 
 
 
