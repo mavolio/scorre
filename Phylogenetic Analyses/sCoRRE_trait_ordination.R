@@ -35,6 +35,13 @@ play<-dat%>%
 
 with(subset(play, SRL>00&root_density>0), plot(SRL, rooting_density))
      
+# Read in relative abundance data
+sp_name_key <- read.csv("CoRRE data\\CoRRE data\\trait data\\corre2trykey.csv")
+rel_abun_df <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeAbundanceMar2021.csv") %>%
+  left_join(dplyr::select(sp_name_key, genus_species, species_matched), by="genus_species") %>%
+  drop_na(species_matched)
+
+abund_species_vector <- unique(rel_abun_df$species_matched)
 
 
 #read in data
