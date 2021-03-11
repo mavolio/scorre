@@ -9,9 +9,9 @@ library(ggplot2)
 
 ###read in data
 
-my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
+#my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 #my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
-#my.wd <- "C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/"
 
 #read in the data
 
@@ -132,18 +132,22 @@ mod_function<- function(df,category){
   effects_out
   }
 
-mod_function(Drought_data_exp_list$`BUX,PQ,0`, "drought")
+#mod_function(Drought_data_exp_list$`BUX,PQ,0`, "drought")
 
 out<-lapply(Drought_data_exp_list, mod_function, category = "drought")
 out_2<-do.call(rbind, out)
 out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
 out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
 names(out_2)[2] <- "p.val"
-count.drought <- out_2 %>% 
-  mutate(cutoff = ifelse(p.val <0.05,  "sig", "non")) %>%
 
-count.drought <- out_2 %>% mutate(cutoff = ifelse(p.val <0.05, "sig", "non")) %>% 
-  count(estimate_type, measure, cutoff)
+count.drought <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                                  time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                                  main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "drought")
+
+
 
 # think about double counting 
 
@@ -152,16 +156,166 @@ count.drought <- out_2 %>% mutate(cutoff = ifelse(p.val <0.05, "sig", "non")) %>
 #################
 
 nutrient_data<-create_exp_list(newdf2, "nuts")
+nutrient_data <- nutrient_data[which(nutrient_data$site_code != "YMN"),]
+
 nutrient_data_exp_list<-split(nutrient_data, nutrient_data$experimentid)
 out<-lapply(nutrient_data_exp_list, mod_function, category = "nuts")
 out_2<-do.call(rbind, out)
 out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
 out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
 names(out_2)[2] <- "p.val"
-count.drought <- out_2 %>% 
-  mutate(cutoff = ifelse(p.val <0.05,  "sig", "non")) %>%
-  count(estimate_type, measure, cutoff)
+count.nut <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                                            time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                                            main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "nuts")
 
 
 # Of the 18 models for "drought" three are "boudary (singular) fit" 
 # check out https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1 
+
+
+
+
+#####################
+## CO2 data ####
+###################
+CO2_data<-create_exp_list(newdf2, "CO2")
+
+CO2_data_exp_list<-split(CO2_data, CO2_data$experimentid)
+
+
+out<-lapply(CO2_data_exp_list, mod_function, category = "CO2")
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.CO2 <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                              time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                              main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "CO2")
+
+
+
+
+
+
+#####################
+## dist data #### 
+###################
+dist_data<-create_exp_list(newdf2, "dist")
+
+dist_data_exp_list<-split(dist_data, dist_data$experimentid)
+
+
+out<-lapply(dist_data_exp_list, mod_function, category = "dist")
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.dist <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                               time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                               main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "dist")
+
+
+
+
+
+
+#####################
+## herb_removal data ####
+###################
+herb_data<-create_exp_list(newdf2, "herb_removal")
+
+herb_data_exp_list<-split(herb_data, herb_data$experimentid)
+
+
+out<-lapply(herb_data_exp_list, mod_function, category = "herb_removal")
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.herb <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                               time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                               main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "herb_removal")
+
+
+
+
+#####################
+## irg data #### 
+###################
+irg_data<-create_exp_list(newdf2, "irg")
+
+irg_data_exp_list<-split(irg_data, irg_data$experimentid)
+
+
+out<-lapply(irg_data_exp_list, mod_function, category = "irg")
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.irg <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                              time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                              main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "irg")
+
+
+
+#####################
+## temp data ####
+###################
+temp_data<-create_exp_list(newdf2, "temp")
+
+temp_data_exp_list<-split(temp_data, temp_data$experimentid)
+
+
+out<-lapply(temp_data_exp_list, mod_function, category = "temp")
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.temp <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                               time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                               main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "temp")
+
+
+
+#####################
+## multtrts data ####  
+###################
+multtrts_data<-create_exp_list(newdf2, "multtrts")
+
+multtrts_data_exp_list<-split(multtrts_data, multtrts_data$experimentid)
+
+
+out<-lapply(multtrts_data_exp_list, mod_function, category = "multtrts")
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.multtrts <- out_2 %>% mutate(mainef = ifelse(pval.cor <0.05 & estimate_type == "df[, category]", "sig", "non"),
+                                   time = ifelse(pval.cor <0.05 & estimate_type == "treatment_year", "sig", "non"),
+                                   main.time = ifelse(pval.cor <0.05 & estimate_type == "df[, category]:treatment_year", "sig","non")) %>%
+  mutate (double = ifelse(mainef == "sig" & main.time == "sig", 1, 0)) %>%
+  count(mainef, time, main.time,double, measure) %>%
+  mutate(trt_type = "multtrts")
+
+
+##Bind all the vote counting together
+test <- rbind(count.CO2, count.dist, count.drought, count.herb, count.irg, count.multtrts, count.nut, count.temp)
+
