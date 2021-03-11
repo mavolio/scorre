@@ -34,8 +34,7 @@ play<-dat%>%
   filter(seed_number<3e+08)
 
 with(subset(play, SRL>00&root_density>0), plot(SRL, root_density))
-     
-x<-play$seed_number
+    
 
 #read in data
 contTraits <- read.csv('Trait Data\\TRY Data\\Gap_Filled\\TRY_new.csv')%>%
