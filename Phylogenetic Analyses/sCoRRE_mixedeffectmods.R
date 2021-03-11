@@ -7,6 +7,7 @@ library(lmerTest)
 library(lme4)
 library(ggplot2)
 library(colorspace)
+library(fixest)
 
 ###read in data
 
@@ -342,4 +343,7 @@ mod2 <- lme(mpd.raw ~ experimentid + nuts*treatment_year, random = ~1|experiment
 mod3 <- lme(mpd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)
 mod4 <- lme(mntd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
 mod5 <- lme(mntd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
+
+testmod <- feols(pd.raw ~ nuts *treatment_year  | experimentid, nutrient_data) 
+testmod <- feols(pd.ses ~ nuts *treatment_year  | experimentid, nutrient_data) 
 
