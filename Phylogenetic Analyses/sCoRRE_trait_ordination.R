@@ -12,6 +12,30 @@ library(tidyverse)
 
 setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared')
 setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\")
+setwd('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared')
+
+#our traits to determine how much data we are missing
+
+dat<-read.csv("Trait Data\\TRY Data\\Try Continuous data\\TRY_trait_data_continuous_long.csv")
+
+length(unique(dat$species_matched))
+
+numsp<-dat%>%
+  group_by(species_matched, CleanTraitName)%>%
+  summarize(ave=mean(StdValue))%>%
+  group_by(CleanTraitName)%>%
+  summarize(n=length(ave))%>%
+  mutate(pct=n/2400)
+  
+play<-dat%>%
+  group_by(species_matched, CleanTraitName)%>%
+  summarize(ave=mean(StdValue))%>%
+  spread(CleanTraitName, ave, fill=0)%>%
+  filter(seed_number<3e+08)
+
+with(subset(play, SRL>00&root_density>0), plot(SRL, root_density))
+     
+x<-play$seed_number
 
 #read in data
 contTraits <- read.csv('Trait Data\\TRY Data\\Gap_Filled\\TRY_new.csv')%>%
