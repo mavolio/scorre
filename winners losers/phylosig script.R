@@ -3,17 +3,18 @@
 #Clear work space
 rm(list=ls())
 
-#Set working directory
-setwd("~/Dropbox (iDiv)/My Mac (idivmac32.local)/Documents/Project sCorre/winners_losers")
-setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/")
+#set directory:
+#my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
+my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+#my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 
 #Load library()
 library(geiger)
 library(ape)
 
 #Load data
-tree<-read.tree("scorre.tree.S3.tre") #you can find in the Dropbox (Phylogenetic data)
-dd<-read.csv("Species_DCiDiff.csv")
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre", sep="")) #load tree
+dd<-read.table(paste(my.wd,"Species_DCiDiff_newtrts.csv",sep=""), header=T, sep=",")
 str(dd)
 str(tree)
 
@@ -30,89 +31,56 @@ library(plyr)
 library(ape)
 library(scico)
 
-
-
-#data manupulation:
-dd$species_matched <- revalue(dd$species_matched, c("Aronia x"="Aronia x prunifolia"))
-species.data<-subset(dd, trt_type2=="drought") #subset treatment to make it easier.
-
-#Treatments:
-#"overall"       "N"             "mult_nutrient" "irr"           "drought"
-
-
 #remove from the original table non-vascular plants that couldn't be added to the tree:
-species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
-in.data.not.tree <- setdiff(unique(species.data$species_matched), tree$tip.label)
+dd$species_matched<-gsub(" ", "_", dd$species_matched) #unify nomenclature
+in.data.not.tree <- setdiff(unique(dd$species_matched), tree$tip.label)
+dd <- dd[-which(dd$species_matched %in% in.data.not.tree),]
 
-#unlock the following line if "in.data.not.tree" is not empty (only applies to "drought").
-#species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),] 
+#get levels of treatments:
+trt<-levels(dd$trt_type2)
 
-#rearrange original table:
-df<-unique(species.data[,c(1,5)])
-rownames(df)<-df$species_matched
-df$species_matched<-NULL
+#[1] "all mult"       "co2"            "co2_other"      "dist_other"     "disturbance"    "drought"       
+#[7] "drt_other"      "herb_rem_other" "herb_removal"   "irg_other"      "irrigation"     "nutrients"     
+#[13] "nuts_other"     "temp"           "temp_other" 
 
-x<-name.check(tree, df)
-tree2<-drop.tip(tree,c(x$tree_not_data))
-x<-name.check(tree2, df)
-scorre.tree<-tree2
+#re-arrange table:
+final.dd<-as.data.frame(unique(dd$species_matched))
+names(final.dd)[1]<-paste("species_matched")
 
-################################################
+for (i in 1:length(trt))
+{
+  sub.dd<-subset(dd, trt_type2==trt[i])[,c(1,4)]
+  final.dd<-merge(final.dd, sub.dd, by="species_matched", all.x=T)
+  colnames(final.dd)[i+1]<-trt[i]
+}
+rownames(final.dd)<-final.dd$species_matched
+final.dd$species_matched<-NULL
 
-#Plot on the tree
-tree2<-ladderize(tree2)
-plotTree.barplot(tree2,df[,1,drop=FALSE],
-                 args.plotTree=list(ftype="off"),
-                 args.barplot=list(xlab="DCiDiff",space=0.5))
 
 
-df2<-df[,1]
-names(df2)<-row.names(df)
+######
+#calculate phylogenetic signal:
 
-#Phylosignal with Blombergs K
-phylosig(tree2, df2, method="K", test=TRUE, nsim=1000, se=NULL, start=NULL,
-         control=list())
+#prepare data:
+treat<-tree$tip.label
+treat<-final.dd[match(treat, rownames(final.dd)),]
+rownames(treat)<-NULL
 
-#Phylosignal with lambda
-phylosig(tree2, df2, method="lambda", test=TRUE, nsim=1000, se=NULL, start=NULL,
-         control=list())
+output<-data.frame(treatment=trt, blombergK =rep(NA, length(trt)), blombergK_pval=rep(NA, length(trt)),
+                   lambda =rep(NA, length(trt)), lambda_pval=rep(NA, length(trt)))
+for (i in 1:length(trt))
+{
+  blomb<-phylosig(tree, treat[,i], method="K", test=TRUE, nsim=1000, se=NULL, start=NULL,
+                  control=list())
+  output[i,2]<-blomb$K
+  output[i,3]<-blomb$P
+  blomb<-phylosig(tree, treat[,i], method="lambda", test=TRUE, nsim=1000, se=NULL, start=NULL,
+                  control=list())
+  output[i,4]<-blomb$lambda
+  output[i,5]<-blomb$P
+}
 
-#Treatment overall
-Phylogenetic signal K : 0.00295202 
-P-value (based on 1000 randomizations) : 0.445 
-Phylogenetic signal lambda : 0.139708 
-logL(lambda) : 1979.19 
-LR(lambda=0) : 8.50465 
-P-value (based on LR test) : 0.0035424 
+write.table(output, "phylo_signal.csv")
 
-#Treatment N
-Phylogenetic signal K : 0.00214985 
-P-value (based on 1000 randomizations) : 0.923 
-Phylogenetic signal lambda : 0.399009 
-logL(lambda) : 910.299 
-LR(lambda=0) : 28.2253 
-P-value (based on LR test) : 1.07986e-07
-
-#Treatment mult_nutrient
-Phylogenetic signal K : 0.00422832 
-P-value (based on 1000 randomizations) : 0.161 
-Phylogenetic signal lambda : 0.239786 
-logL(lambda) : 901.218 
-LR(lambda=0) : 14.529 
-P-value (based on LR test) : 0.000138019 
-
-#Treatment irr
-Phylogenetic signal K : 0.0132178 
-P-value (based on 1000 randomizations) : 0.675 
-Phylogenetic signal lambda : 6.13209e-05 
-logL(lambda) : 438.909 
-LR(lambda=0) : -0.0230268 
-P-value (based on LR test) : 1 
-
-#Treatment drought
-Phylogenetic signal K : 0.00690762 
-P-value (based on 1000 randomizations) : 0.96 
-Phylogenetic signal lambda : 0.0252875 
-logL(lambda) : 437.882 
-LR(lambda=0) : 1.19607 
-P-value (based on LR test) : 0.274108
+#clean-up:
+rm(list = ls())
