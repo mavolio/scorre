@@ -329,4 +329,17 @@ ggplot(data = test) +
   facet_wrap( ~ measure) +
   scale_fill_discrete_sequential(palette = "Plasma")+
   theme_classic()
-  
+
+
+
+
+##############################
+
+View(nutrient_data)
+mod <- lme(pd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data) 
+mod1 <- lme(pd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)
+mod2 <- lme(mpd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
+mod3 <- lme(mpd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)
+mod4 <- lme(mntd.raw ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
+mod5 <- lme(mntd.ses ~ experimentid + nuts*treatment_year, random = ~1|experimentid/plot.id, data = nutrient_data)  
+
