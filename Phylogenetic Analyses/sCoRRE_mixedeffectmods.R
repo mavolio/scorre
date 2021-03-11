@@ -75,8 +75,7 @@ newdf2$experimentid <- paste(newdf2$site_code, newdf2$project_name, newdf2$commu
 newdf2$treatment_year<-as.numeric(newdf2$treatment_year)
 
 create_exp_list<-function(df, trt_type_name){
-  test <- df%>%
-    subset(trt_type == trt_type_name)
+  test <- newdf2[which(newdf2[,trt_type_name] ==1),]
   expvector <- unique(test$experimentid)
   test2 <- df%>%
     subset(trt_type == "control" & experimentid %in% expvector)
@@ -84,53 +83,83 @@ create_exp_list<-function(df, trt_type_name){
   test3
 }
 
+#####################
+## Drought data ####
+###################
 Drought_data<-create_exp_list(newdf2, "drought")
 
 Drought_data_exp_list<-split(Drought_data, Drought_data$experimentid)
 
-mod_function_drought <- function(df){
-  mod<-lmer(pd.raw ~ trt_type * treatment_year + (1|plot_id), df)
-  aov_out<-anova (mod)
-  summary_out<-summary(mod)   
-  #print(aov_out)
+mod_function<- function(df,category){
+  mod1<-lmer(pd.raw ~ df[,category] * treatment_year + (1|plot_id), df)
+  mod2<-lmer(pd.ses ~ df[,category] * treatment_year + (1|plot_id), df)
+  mod3<-lmer(mpd.raw ~ df[,category] * treatment_year + (1|plot_id), df)
+  mod4<-lmer(mpd.ses ~ df[,category] * treatment_year + (1|plot_id), df)
+  mod5<-lmer(mntd.raw ~ df[,category] * treatment_year + (1|plot_id), df)
+  mod6<-lmer(mntd.ses ~ df[,category] * treatment_year + (1|plot_id), df)
+  summary_out<-summary(mod1)
+  summary_out2<-summary(mod2) 
+  summary_out3<-summary(mod3) 
+  summary_out4<-summary(mod4) 
+  summary_out5<-summary(mod5) 
+  summary_out6<-summary(mod6) 
   effects_out<-as.data.frame(summary_out$coefficients[c(2,3,4),c(1,5)])
   effects_out$estimate_type<-rownames(summary_out$coefficients)[c(2,3,4)]
   effects_out$experimentid<-paste(df[1,40]) # this is sketchy
+  effects_out$measure <- "pd.raw"
+  effects_out2<-as.data.frame(summary_out2$coefficients[c(2,3,4),c(1,5)])
+  effects_out2$estimate_type<-rownames(summary_out2$coefficients)[c(2,3,4)]
+  effects_out2$experimentid<-paste(df[1,40]) # this is sketchy
+  effects_out2$measure <- "pd.ses"
+  effects_out3<-as.data.frame(summary_out3$coefficients[c(2,3,4),c(1,5)])
+  effects_out3$estimate_type<-rownames(summary_out3$coefficients)[c(2,3,4)]
+  effects_out3$experimentid<-paste(df[1,40]) # this is sketchy
+  effects_out3$measure <- "mpd.raw"
+  effects_out4<-as.data.frame(summary_out4$coefficients[c(2,3,4),c(1,5)])
+  effects_out4$estimate_type<-rownames(summary_out4$coefficients)[c(2,3,4)]
+  effects_out4$experimentid<-paste(df[1,40]) # this is sketchy
+  effects_out4$measure <- "mpd.ses"
+  effects_out5<-as.data.frame(summary_out5$coefficients[c(2,3,4),c(1,5)])
+  effects_out5$estimate_type<-rownames(summary_out5$coefficients)[c(2,3,4)]
+  effects_out5$experimentid<-paste(df[1,40]) # this is sketchy
+  effects_out5$measure <- "mntd.raw"
+  effects_out6<-as.data.frame(summary_out6$coefficients[c(2,3,4),c(1,5)])
+  effects_out6$estimate_type<-rownames(summary_out6$coefficients)[c(2,3,4)]
+  effects_out6$experimentid<-paste(df[1,40]) # this is sketchy
+  effects_out6$measure <- "mntd.ses"
+  effects_out <- rbind(effects_out, effects_out2, effects_out3, effects_out4, effects_out5, effects_out6)
+  effects_out$pval.cor <- p.adjust(p = effects_out$`Pr(>|t|)`, method = "fdr")
   effects_out
-}
+  }
 
-out<-lapply(Drought_data_exp_list, mod_function_drought)
+mod_function(Drought_data_exp_list$`BUX,PQ,0`, "drought")
 
+out<-lapply(Drought_data_exp_list, mod_function, category = "drought")
 out_2<-do.call(rbind, out)
 out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
 out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.drought <- out_2 %>% 
+  mutate(cutoff = ifelse(p.val <0.05,  "sig", "non")) %>%
+  count(estimate_type, measure, cutoff)
 
+# think about double counting 
 
+###################
+## nutrients #####
+#################
 
-# Figure 
+nutrient_data<-create_exp_list(newdf2, "nuts")
+nutrient_data_exp_list<-split(nutrient_data, nutrient_data$experimentid)
+out<-lapply(nutrient_data_exp_list, mod_function, category = "nuts")
+out_2<-do.call(rbind, out)
+out_2[,2]<-as.numeric(format(out_2[,2], scientific = FALSE))
+out_2[,c(1,2)]<-round(out_2[,c(1,2)], 4)
+names(out_2)[2] <- "p.val"
+count.drought <- out_2 %>% 
+  mutate(cutoff = ifelse(p.val <0.05,  "sig", "non")) %>%
+  count(estimate_type, measure, cutoff)
 
-g1 <- ggplot(aes(x = treatment_year, y = mntd.raw), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
-  geom_point(aes (color = trt_type))+
-  geom_smooth(aes (color = trt_type), method = "lm")
-g2 <- ggplot(aes(x = treatment_year, y = mntd.ses), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
-  geom_point(aes (color = trt_type))+
-  geom_smooth(aes (color = trt_type), method = "lm")
-g3 <- ggplot(aes(x = treatment_year, y = mpd.raw), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
-  geom_point(aes (color = trt_type))+
-  geom_smooth(aes (color = trt_type), method = "lm")
-g4 <- ggplot(aes(x = treatment_year, y = mpd.ses), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
-  geom_point(aes (color = trt_type))+
-  geom_smooth(aes (color = trt_type), method = "lm")
-g5 <- ggplot(aes(x = treatment_year, y = pd.raw), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
-  geom_point(aes (color = trt_type))+
-  geom_smooth(aes (color = trt_type), method = "lm")
-g6 <- ggplot(aes(x = treatment_year, y = pd.ses), data = Drought_data_exp_list$`SEV,EDGE,blue_gramma`) +
-  geom_point(aes (color = trt_type))+
-  geom_smooth(aes (color = trt_type), method = "lm")
-
-png(paste(my.wd, "paper 2_PD and FD responses/sample_fig.png", sep = ""), width = 6, height = 9, units = "in", res = 300)
-ggpubr::ggarrange(plotlist = list(g1,g2,g3,g4,g5,g6),ncol = 2,nrow =3, legend = "top", common.legend = TRUE)
-dev.off()
 
 # Of the 18 models for "drought" three are "boudary (singular) fit" 
 # check out https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1 
