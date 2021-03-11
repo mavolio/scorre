@@ -27,7 +27,8 @@ contTraitsSubset <- contTraits%>%
 
 traits <- read.csv('CoRRE data\\CoRRE data\\trait data\\sCoRRE categorical trait data - traits_complete_pre spot check_03102021.csv')%>%
   full_join(contTraitsSubset) %>%
-  drop_na()
+  drop_na()%>%
+  filter(leaf_P_mass<20, stem_diameter<0.5, seed_mass<50, seed_number<10000, leaf_width<40, stem_conduit_density<1000, stem_conduit_diameter<200)
 
 traitsOutliersRemoved <- traits %>%
   filter(!leaf_type %in% c("microphyll","frond")) %>%
@@ -70,6 +71,5 @@ ggplot(data=PCO, aes(x=X1, y=X2, label=species_matched)) +
 ggplot(data=PCO_3and4, aes(x=X1, y=X2, label=species_matched)) +
 #  geom_point() +
   geom_text()
-
 
 chart.Correlation(traitsScaled[,15:34], histogram=TRUE, pch=19)
