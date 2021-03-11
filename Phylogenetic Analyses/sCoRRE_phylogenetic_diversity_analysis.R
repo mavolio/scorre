@@ -13,7 +13,7 @@ library(performance)
 library(tidyverse)
 
 #laptop
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data')
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared')
 
 
 #functions
@@ -45,13 +45,13 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
              legend.title=element_blank(), legend.text=element_text(size=20))
 
 ###read in data
-trt <- read.csv('CoRRE_raw_abundance_Nov2019.csv')%>%
+trt <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundanceMar2021.csv')%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id)%>%
   unique()%>%
-  left_join(read.csv('CoRRE_project_summary.csv'))%>%
-  left_join(read.csv('CoRRE_treatment_summary.csv'))
+  left_join(read.csv('CoRRE data\\CoRRE data\\CoRRE_project_summary.csv'))%>%
+  left_join(read.csv('CoRRE data\\CoRRE data\\basic dataset info\\ExperimentInfo.csv'))
 
-pDiv <- read.csv('CoRRE_pd_metrics.csv')%>%
+pDiv <- read.csv('paper 2_PD and FD responses\\data\\CoRRE_pd_metrics_weighted_kjk.csv')%>%
   separate(plot_id2, c('site_code', 'project_name', 'community_type', 'treatment_year', 'plot_id'), sep='::')%>%
   mutate(treatment_year=as.integer(treatment_year))%>%
   left_join(trt)
@@ -61,41 +61,45 @@ pDiv <- read.csv('CoRRE_pd_metrics.csv')%>%
 
 control <- pDiv%>%
   filter(trt_type=='control')%>%
-  rename(pd.ses_ctl=pd.ses, pd.pval_ctl=pd.pval, mpd.ses_ctl=mpd.ses, mpd.pval_ctl=mpd.pval, mntd.ses_ctl=mntd.ses, mntd.pval_ctl=mntd.pval)%>%
-  select(site_code, project_name, community_type, treatment_year, pd.ses_ctl, pd.pval_ctl, mpd.ses_ctl, mpd.pval_ctl, mntd.ses_ctl, mntd.pval_ctl)
+  rename(pd.ses_ctl=pd.ses, mpd.ses_ctl=mpd.ses, mntd.ses_ctl=mntd.ses)%>%
+  select(site_code, project_name, community_type, treatment_year, pd.ses_ctl, mpd.ses_ctl, mntd.ses_ctl)
 
 pDivRR <- pDiv%>%
   filter(trt_type!='control')%>%
   left_join(control)%>%
   mutate(pd_diff=(pd.ses-pd.ses_ctl), mpd_diff=(mpd.ses-mpd.ses_ctl), mntd_diff=(mntd.ses-mntd.ses_ctl))
 
-pDivMaxYr <- pDivRR%>%
-  group_by(site_code, project_name, community_type)%>%
-  summarise(max_year=max(treatment_year))%>%
-  ungroup()%>%
-  left_join(pDivRR)%>%
-  filter(treatment_year==max_year)
+pDivAvg <- pDivRR%>%
+  group_by(site_code, project_name, community_type, treatment, MAP, MAT, rrich, experiment_length, anpp, trt_type, n, p, k, CO2, precip, temp, herb_removal)%>%
+  summarise(pd_diff_avg=mean(pd_diff), mpd_diff_avg=mean(mpd_diff), mntd_diff_avg=mean(mntd_diff))%>%
+  ungroup()
+
+pDivAvgTrt <- pDivAvg%>%
+  filter(trt_type %in% c('mult_nutrient', 'N', 'P', 'N*P','irr', 'drought', 'herb_removal', 'temp', 'mow_clip', 'CO2'))
+
+# write.csv(pDivAvgTrt, 'paper 2_PD and FD responses\\data\\PD_mean_effectsizes.csv')
+
 
 
 
 ###figures
 
 #by trt type
-PDfig <- ggplot(data=subset(pDivMaxYr, trt_type %in% c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient')), aes(x=trt_type, y=pd_diff)) +
+PDfig <- ggplot(data=subset(pDivAvgTrt, trt_type %in% c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient')), aes(x=trt_type, y=pd_diff)) +
   geom_boxplot() +
   xlab('') + ylab('PD.SES difference (trt-ctl)') +
   geom_hline(yintercept=0) +
   scale_x_discrete(limits=c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient'),
                    labels=c('CO2', 'drought', 'irrigation', 'N', 'N*P', 'many nuts.')) +
   ylim(-10,8)
-MPDfig <- ggplot(data=subset(pDivMaxYr, trt_type %in% c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient')), aes(x=trt_type, y=mpd_diff)) +
+MPDfig <- ggplot(data=subset(pDivAvgTrt, trt_type %in% c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient')), aes(x=trt_type, y=mpd_diff)) +
   geom_boxplot() +
   xlab('') + ylab('MPD.SES difference (trt-ctl)') +
   geom_hline(yintercept=0) +
   scale_x_discrete(limits=c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient'),
                    labels=c('CO2', 'drought', 'irrigation', 'N', 'N*P', 'many nuts.')) +
   ylim(-10,8)
-MNTDfig <- ggplot(data=subset(pDivMaxYr, trt_type %in% c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient')), aes(x=trt_type, y=mntd_diff)) +
+MNTDfig <- ggplot(data=subset(pDivAvgTrt, trt_type %in% c('CO2', 'drought', 'irr', 'N', 'N*P', 'mult_nutrient')), aes(x=trt_type, y=mntd_diff)) +
   geom_boxplot() +
   xlab('') + ylab('MNTD.SES difference (trt-ctl)') +
   geom_hline(yintercept=0) +
