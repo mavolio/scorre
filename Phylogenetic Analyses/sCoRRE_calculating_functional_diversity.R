@@ -2,6 +2,14 @@
 ### Calculate Functional dispersion for CoRRE data
 ### 
 
+### Set up workspace
+rm(list=ls())
+
+setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\")
+library(FD)
+library(tidyverse)
+memory.limit(size=50000)
+
 ### Trait data
 #read in data
 contTraits <- read.csv('Trait Data\\TRY Data\\Gap_Filled\\TRY_new.csv')%>%
@@ -26,19 +34,71 @@ traitsOutliersRemoved <- traits %>%
 traitsScaled <- traitsOutliersRemoved %>% ## only scales continuous traits
   mutate_at(vars(ssd:SRL), scale)
 
+# Read in relative abundance data
+sp_name_key <- read.csv("CoRRE data\\CoRRE data\\trait data\\corre2trykey.csv") %>%
+  dplyr::select(genus_species, species_matched) %>%
+  unique(.)
 
-# Read in relative abund
+rel_abun_df_raw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeAbundanceMar2021.csv") %>%
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block,
+           plot_id, data_type, version, genus_species) %>%
+  summarize(relcov=max(relcov))
+
+rel_abun_df <- rel_abun_df_raw %>%
+  left_join(sp_name_key, by="genus_species") %>%
+  filter(!is.na(species_matched)) %>%
+  dplyr::select(-genus_species) %>%
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block,
+           plot_id, data_type, version, species_matched) %>%
+  summarize(relcov=sum(relcov))
+  
 
 
+# filter(rel_abun_df, site_code=="SIU" & plot_id==48 & treatment_year==5 & genus_species=="acalypha virginica")
+# abund_species_vector <- unique(rel_abun_df$species_matched)
+rel_abun_df[c(13080, 13081),]
+rel_abun_env_df <- rel_abun_df %>%
+  spread(key=species_matched, value=relcov) %>%
+  dplyr::select(site_code:version)
 
-C:\Users\wilco\Dropbox\shared working groups\sDiv_sCoRRE_shared\CoRRE data\CoRRE data\community composition\CoRRE_RelativeAbundanceMar2021.csv
+rel_abun_sp_wide <- rel_abun_df %>%
+  spread(key=species_matched, value=relcov) %>%
+  dplyr::select(-site_code:-version)
 
-#Experimental information
+pplot_sp_wide <- pplot_abun_df %>%
+  dplyr::select(-genus_species) %>%
+  spread(key=species_matched, value=relcov) %>%
+  dplyr::select(-site_code:-version)
+
+pplot_env_df <- pplot_abun_df %>%
+  dplyr::select(-genus_species) %>%
+  spread(key=species_matched, value=relcov) %>%
+  dplyr::select(site_code:version)
+
+write.csv(pplot_sp_wide, file="paper 2_PD and FD responses\\data\\pplots species abundance wide.csv")
+write.csv(pplot_env_df, file="paper 2_PD and FD responses\\data\\pplots environmental data.csv")
+
+dups <- rel_abun_df %>% 
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block,
+                                 plot_id, data_type, version, genus_species) %>%
+  summarize(length=length(relcov)) %>%
+  filter(length==2)
+  
+write.csv(dups, file="paper 2_PD and FD responses\\data\\duplicates.csv")
+  
+  
+  #Experimental information
 # C:\Users\wilco\Dropbox\shared working groups\sDiv_sCoRRE_shared\CoRRE data\CoRRE data\community composition\CoRRE_ExperimentInfoMar2021.csv
 
 # for matched_names (key for matching CORRE and TRY species names)
 #C:\Users\wilco\Dropbox\shared working groups\sDiv_sCoRRE_shared\CoRRE data\CoRRE data\trait data\corre2trykey.csv
 
+### 
+
+pplot_abun_df <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeAbundanceMar2021.csv") %>%
+  filter(project_name=="pplots") %>%
+  left_join(sp_name_key, by="genus_species") %>%
+  drop_na(species_matched)
 
 
 
