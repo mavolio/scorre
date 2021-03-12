@@ -70,11 +70,15 @@ rownames(trait)<-trait$species_matched
 trait$species_matched<-NULL
 trait <- trait[complete.cases(trait), ] # get only complete cases
 
+#log transform continous variables:
+vars <- colnames(trait[,c(1:10)])
+trait[vars] <- lapply(trait[vars], log)
+
 #save for later:
 #write.table(trait, paste(my.wd, "trait_data_filtered.csv", sep=""))
 
 #calculate functional dissimilarities between species using GAWDIS:
-trait.dis<-gawdis(trait, w.type="optimized") #can take a while
+trait.dis<-gawdis(trait) #can take a while
 
 #or calculate functional dissimilarities between species using Gower distances:
 trait.dis<-cluster::daisy(trait, metric="gower") #can take a while
@@ -83,7 +87,7 @@ trait.dis<-cluster::daisy(trait, metric="gower") #can take a while
 ftree<-as.phylo(hclust(trait.dis, method="ward.D2"))
 
 #save output:
-write.tree(ftree, paste(my.wd, "ftree.scorre.tre", sep=""))
+write.tree(ftree, paste(my.wd, "ftree.scorre.gawdis.log.tre", sep=""))
 
 #clean-up:
 rm(list = ls())
