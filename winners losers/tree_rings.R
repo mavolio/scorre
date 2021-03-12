@@ -56,9 +56,9 @@ species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unif
 in.data.not.tree <- setdiff(unique(species.data$species_matched), scorre.tree$scenario.3$tip.label)
 species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),] #only works if some species from the data are not in the tree
 
-#save tree:
+#save tree and subset table:
 write.tree(scorre.tree$scenario.3, paste(my.wd, "scorre.tree.win.los.tre", sep=""))
-
+write.table(species.data, paste(my.wd, "Species_DCiDiff_newtrts_filtered.csv", sep=""))
 
 
 
