@@ -191,7 +191,7 @@ CT$treatDCi[is.na(CT$treatDCi)] <- 0
 #add treatments to plots were was only in control
 CT_diff_control<-CT%>%
   mutate(diff=treatDCi-DCi)%>%
-  filter(is.na(treatment))%>%
+  filter(is.na(treatment))%>%#dropping control only plots
   ungroup()%>%
   select(-treatment)%>%
   left_join(trt_analysis)%>%
