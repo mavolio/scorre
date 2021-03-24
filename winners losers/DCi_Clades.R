@@ -22,9 +22,6 @@ species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_filtered.csv",sep=
 tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre", sep=""))
 
 
-
-
-
 ###
 # Filter by treatment
 ###
