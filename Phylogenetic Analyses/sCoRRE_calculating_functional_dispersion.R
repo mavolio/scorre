@@ -80,17 +80,11 @@ pplots_knz[is.na(pplots_knz)] <- 0
 
 test <- dbFD(knz_trait_sps_complete, pplots_knz) # I think this worked?
 
-# Next to do: 
-# (1) Check how best to deal with categorical traits 
-# (2) Merge back with plot treatments
-# (3) Do this for the whole dataset 
-# (4) Plot to see what is going on
-
 test_FDis<-as.data.frame(test$FDis)
 
 test_FDis_w_trt<-cbind(environmental_knz, test_FDis) # make sure these line up - plot ID's not available in datasets 
 
-#drop some treatments 
+# drop some treatments 
 test_FDis_w_trt_1<-as.data.frame(test_FDis_w_trt[!(test_FDis_w_trt$treatment %in% c("NCP0", "NCP1", "NCP2", "NCP3", "NNP0", "NNP1", "NNP2", "NNP3")),])
 names(test_FDis_w_trt_1)[12] <- "FDis"
 
@@ -98,3 +92,7 @@ ggplot(test_FDis_w_trt_1, aes(x = treatment, y = FDis)) +
   geom_boxplot() + 
   theme(axis.text.x = element_text(angle = 90)) + 
   facet_wrap(~calendar_year)
+
+# To do next: 
+# (1) Check how best to deal with categorical traits 
+# (2) Do this for the whole dataset 
