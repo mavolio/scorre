@@ -19,7 +19,7 @@ my.wd<-"C:\\Users\\megha\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data
 species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_filtered.csv",sep=""), header=T, sep=" ")
 
 #load phylogenetic tree:
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre", sep=""))
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los_USEApril9.tre", sep=""))
 
 
 ###
@@ -27,7 +27,7 @@ tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre", sep=""))
 ###
 
 dat<-subset(species.data, trt_type2=="all mult")[,c(1,4)] #select "all mult" treatment from original data
-dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
+dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
 dat$Group.1<-NULL #and delete column with species names
@@ -105,7 +105,7 @@ famf<-join(famf,list.nod)
 ###
 
 #get vector with names of families containing more species:
-toplot<-as.character(head(famf$Var1, n=50)) #select the top 48 families
+toplot<-as.character(head(famf$Var1, n=50)) #select the top 50 families
 
 #Plot tree 
 #remember to change angle = "auto" everywheree to avoid overlap in names. Consider also unifying "barsize" (to 0.1, for example):
