@@ -37,11 +37,11 @@ tree2<-keep.tip(tree, rownames(dat))
 
 
 ###
-# Run function to calculate if each node has significantly higher or lower median DCi than
+# Run function to calculate if each node has significantly higher or lower mean DCi than
 # expected if phylogenetic relationships were at random (laod function in the "DCi_nodes_scorre.R" script)
 ###
 
-res<-node.median(tree2, dat, 999)
+res<-node.mean(tree2, dat, 999)
 write.table(res, paste(my.wd, "res_phylo_all_mult.csv", sep="")) #save the result
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
@@ -204,11 +204,11 @@ tree2<-keep.tip(tree, rownames(dat))
 
 
 ###
-# Run function to calculate if each node has significantly higher or lower median DCi than
+# Run function to calculate if each node has significantly higher or lower mean DCi than
 # expected if phylogenetic relationships were at random (laod function in the "DCi_nodes_scorre.R" script)
 ###
 
-res<-node.median(tree2, dat, 999)
+res<-node.mean(tree2, dat, 999)
 write.table(res, paste(my.wd, "res_phylo_n.csv", sep="")) #save the result
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
