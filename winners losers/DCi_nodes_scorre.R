@@ -14,7 +14,7 @@
 ## Input data requires:
 ## tree: an object of class "phylo"
 ## samp: a dataframe object with 1 single column with the trait. Rownames are species names
-##       The nomenclature between "tree" and "samp" must matc
+##       The nomenclature between "tree" and "samp" must match
 ## N: number of randomizations to perform
 
 library(geiger)
