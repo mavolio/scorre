@@ -53,13 +53,11 @@ write.table(res, paste(my.wd, "res_phylo_all_mult.csv", sep="")) #save the resul
 significant<-res #create a copy of the main result
 significant$P_value[significant$P_value>0.05 | significant$SD_Exp<0.001]<-NA #replace non-significant with NA
 significant$P_value[significant$SR<3]<-NA #assign NA to nodes with 2 or less species
-significant$P_value  <- with(significant, ifelse(Obs>significant$Mean_Exp & P_value<0.01, "pos.01", P_value)) #identify significantly higher at alpha < .01
 significant$P_value  <- with(significant, ifelse(Obs>significant$Mean_Exp & P_value<0.05, "pos.05", P_value)) #identify significantly higher at alpha < .05
-significant$P_value  <- with(significant, ifelse(Obs<significant$Mean_Exp & P_value<0.01, "neg.01", P_value)) #identify significantly lower at alpha < .01
 significant$P_value  <- with(significant, ifelse(Obs<significant$Mean_Exp & P_value<0.05, "neg.05", P_value)) #identify significantly lower at alpha < .05
 significant<-c(rep(NA, length(tree2$tip.label)), significant$P_value) #merge "tip nodes" with "inner" tree nodes
 significant<-as.factor(significant) #convert values into factors
-significant<-factor(significant, levels = c("neg.01", "neg.05", "pos.05", "pos.01")) #change order of factors
+significant<-factor(significant, levels = c("neg.05", "pos.05")) #change order of factors
 
 
 ###
@@ -109,12 +107,10 @@ toplot<-as.character(head(famf$Var1, n=48)) #select the top 48 families
 #remember to change angle = "auto" everywheree to avoid overlap in names. Consider also unifying "barsize" (to 0.1, for example):
 p <- ggtree(tree2, layout="circular", size=0.5, branch.letngth="none")+ # build circular tree
   geom_point(aes(colour=as.factor(significant)), size=2, alpha=1, show.legend = TRUE) + # highlight nodes
-  scale_colour_manual(values=c("brown4", "red", "deepskyblue", "dodgerblue4"), labels=c(expression(atop("Lower DCi", italic("(P<0.01)"))),
-                                                                                        expression(atop("Lower DCi", italic("(P<0.05)"))),
-                                                                                        expression(atop("Higher DCi", italic("(P<0.05)"))),
-                                                                                        expression(atop("Higher DCi", italic("(P<0.01)")))),
+  scale_colour_manual(values=c("red", "deepskyblue"), labels=c(expression(atop("Lower DCi", italic("(P<0.05)"))),
+                                                                                        expression(atop("Higher DCi", italic("(P<0.05)")))),
                       na.translate=FALSE)+ # set aesthetics for highlighted nodes
-  geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1],  fontsize=2.5, barsize = 0.1, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], fontsize=2.5, barsize = 0.1, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], fontsize=2.5, barsize = 0.1, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[3])$num, label=toplot[3], fontsize=2.5, barsize=0.5, hjust= 1, angle = 16) +
   geom_cladelabel(node=subset(famf, Var1==toplot[4])$num, label=toplot[4], fontsize=2.5, barsize = 0.5,  angle = "auto") +
