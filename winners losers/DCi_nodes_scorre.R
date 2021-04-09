@@ -4,18 +4,18 @@
 ## across the phylogeny.
 ## 
 ## It returns 6 columns:
-## Node: the number of the node in the phylogeny.
-## SR: the number of taxa in each node.
+## Node: the number of the node in the phylogeny
+## SR: the number of taxa in each node
 ## Obs: observed mean trait value for that clade
 ## Mean_Exp: mean expected mean trait value after randomizations
 ## SD_Exp: standard deviation of mean trait value after randomizations
 ## P_value: associated P-value
 ##
 ## Input data requires:
-## tree: an object of clas "phylo".
-## samp: a dataframe object with 1 single column with the trait. Rownames are species names.
-##       The nomenclature between "tree" and "samp" must match.
-## N: number of randomizations.
+## tree: an object of class "phylo"
+## samp: a dataframe object with 1 single column with the trait. Rownames are species names
+##       The nomenclature between "tree" and "samp" must matc
+## N: number of randomizations to perform
 
 library(geiger)
 
