@@ -35,7 +35,7 @@ names(result)[1]<-paste("species") #change name of first column
 ####
 
 trt<-levels(species.data$trt_type2) #get list of treatments
-
+k<-3
 for(k in 1:length(trt)){
   print(k/length(trt)) #keep track of the process
   
@@ -52,11 +52,10 @@ for(k in 1:length(trt)){
   # Run function to calculate if each node has significantly higher or lower median DCi than
   # expected if phylogenetic relationships were at random (laod function in the "DCi_nodes_scorre.R" script)
   res<-node.mean(tree2, dat, 999)
-  
+ 
   # Create table of significant nodes with direction of the effect
   significant<-res #create a copy of the main result
-  significant$P_value[significant$P_value>0.05 | significant$SD_Exp<0.001]<-NA #replace non-significant with NA
-  significant$P_value[1]<-NA #set the first node (the root node) to NA
+  significant$P_value[significant$P_value>0.05 | significant$SD_Exp<0.001]<-NA #replace non-significant with NA (and remove cases with very low SD; basal nodes)
   significant$P_value  <- with(significant, ifelse(Obs>significant$Mean_Exp & P_value<0.05, "pos.05", P_value)) #identify significantly higher at alpha < .05
   significant$P_value  <- with(significant, ifelse(Obs<significant$Mean_Exp & P_value<0.05, "neg.05", P_value)) #identify significantly lower at alpha < .05
   significant<-significant[complete.cases(significant), ] #remove non-significant nodes
@@ -88,7 +87,7 @@ write.table(result, "species_sig_dci2.csv")
 # Re-load result
 ##
 
-result<-read.table("species_sig_dci.csv") #re-load result
+result<-read.table("species_sig_dci2.csv") #re-load result
 rownames(result)<-result$species #set species as rownames
 result$species<-NULL #and delete column
 colnames(result)<-c("All treatments", "+ CO2", "Disturbance", "Drought", "Herb removal", "Irrigation",

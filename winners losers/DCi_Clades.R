@@ -53,7 +53,6 @@ write.table(res, paste(my.wd, "res_phylo_all_mult.csv", sep="")) #save the resul
 significant<-res #create a copy of the main result
 significant$P_value[significant$P_value>0.05 | significant$SD_Exp<0.001]<-NA #replace non-significant with NA
 significant$P_value[significant$SR<3]<-NA #assign NA to nodes with 2 or less species
-significant$P_value[1]<-NA #set the first node (the root node) to NA
 significant$P_value  <- with(significant, ifelse(Obs>significant$Mean_Exp & P_value<0.01, "pos.01", P_value)) #identify significantly higher at alpha < .01
 significant$P_value  <- with(significant, ifelse(Obs>significant$Mean_Exp & P_value<0.05, "pos.05", P_value)) #identify significantly higher at alpha < .05
 significant$P_value  <- with(significant, ifelse(Obs<significant$Mean_Exp & P_value<0.01, "neg.01", P_value)) #identify significantly lower at alpha < .01
