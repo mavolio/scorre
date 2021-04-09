@@ -55,7 +55,7 @@ for(k in 1:length(trt)){
   
   # Create table of significant nodes with direction of the effect
   significant<-res #create a copy of the main result
-  significant$P_value[significant$P_value>0.05]<-NA #replace non-significant with NA
+  significant$P_value[significant$P_value>0.05 | significant$SD_Exp<0.001]<-NA #replace non-significant with NA
   significant$P_value[1]<-NA #set the first node (the root node) to NA
   significant$P_value  <- with(significant, ifelse(Obs>significant$Mean_Exp & P_value<0.05, "pos.05", P_value)) #identify significantly higher at alpha < .05
   significant$P_value  <- with(significant, ifelse(Obs<significant$Mean_Exp & P_value<0.05, "neg.05", P_value)) #identify significantly lower at alpha < .05
@@ -80,7 +80,7 @@ for(k in 1:length(trt)){
   # Merge with result
   result<-merge(result, spp, by="species", all.x=T)
 }
-write.table(result, "species_sig_dci.csv")
+write.table(result, "species_sig_dci2.csv")
 
 
 
