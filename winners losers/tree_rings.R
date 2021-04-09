@@ -36,6 +36,26 @@ spp<-as.data.frame(unique(species.data$species_matched))
 names(spp)[1]<-paste("species")
 spp$genus<-word(spp$species, 1)
 
+non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       "Aulacomnium turgidum",       
+                   "Barbilophozia hatcheri",      "Barbilophozia kunzeana" ,     "Blepharostoma trichophyllum",
+                   "Brachythecium albicans",      "Bryum arcticum"   ,           "Bryum pseudotriquetrum",     
+                   "Campylium stellatum",         "Cyrtomnium hymenophyllum" ,   "Dicranoweisia crispula",     
+                   "Dicranum brevifolium",        "Dicranum elongatum"  ,        "Dicranum fuscescens",        
+                   "Dicranum groenlandicum",      "Dicranum scoparium" ,         "Distichium capillaceum",     
+                   "Ditrichum flexicaule",        "Gymnomitrion concinnatum" ,   "Hamatocaulis vernicosus",    
+                   "Homalothecium pinnatifidum",  "Hylocomium splendens",        "Hypnum cupressiforme",       
+                   "Hypnum hamulosum",            "Isopterygiopsis pulchella",   "Kiaeria starkei",            
+                   "Leiocolea heterocolpos",      "Marchantia polymorpha",       "Marsupella brevissima",      
+                   "Meesia uliginosa",            "Myurella tenerrima",          "Oncophorus virens",         
+                   "Oncophorus wahlenbergii",     "Pleurozium schreberi",        "Pogonatum urnigerum" ,       
+                   "Pohlia cruda" ,               "Pohlia nutans",               "Polytrichastrum alpinum",    
+                   "Polytrichum juniperinum",     "Polytrichum piliferum",       "Polytrichum strictum",       
+                   "Preissia quadrata",           "Ptilidium ciliare",           "Racomitrium lanuginosum",    
+                   "Rhytidium rugosum",           "Saelania glaucescens",        "Sanionia uncinata",          
+                   "Schistidium apocarpum",       "Syntrichia ruralis",          "Tomentypnum nitens",         
+                   "Tortella tortuosa",           "Tritomaria quinquedentata")
+spp <- spp[!spp$species %in% non.vascular, ] #remove
+
 #load families for species and rearrange to create necessary fields for the phylogenies:
 fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE)
 names(fam)[1]<-paste("species")
