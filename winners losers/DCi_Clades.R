@@ -110,7 +110,7 @@ toplot<-as.character(head(famf$Var1, n=50)) #select the top 48 families
 #Plot tree 
 #remember to change angle = "auto" everywheree to avoid overlap in names. Consider also unifying "barsize" (to 0.1, for example):
 p <- 
-  ggtree(tree2, layout="circular", size=0.5, branch.length="none")+ # build circular tree
+  ggtree(tree2, layout="circular", size=0.5)+ # build circular tree
   geom_point(aes(colour=as.factor(significant)), size=2, alpha=1, show.legend = TRUE) + # highlight nodes
   scale_colour_manual(values=c("red", "deepskyblue"), labels=c(                                                                                       expression(atop("Lower DCi", italic("(P<0.05)"))),
                                                                                         expression(atop("Higher DCi", italic("(P<0.05)")))),
@@ -274,7 +274,7 @@ toplot<-as.character(head(famf$Var1, n=38)) #select the top 38 families with 5 o
 #Plot tree 
 #remember to change angle = "auto" everywheree to avoid overlap in names. Consider also unifying "barsize" (to 0.1, for example):
 p <- 
-ggtree(tree2, layout="circular", size=0.5, branch.length="none")+ # build circular tree
+ggtree(tree2, layout="circular", size=0.5)+ # build circular tree
   geom_point(aes(colour=as.factor(significant)), size=2, alpha=1, show.legend = TRUE) + # highlight nodes
   scale_colour_manual(values=c("red", "deepskyblue"), labels=c(                                                                                       expression(atop("Lower DCi", italic("(P<0.05)"))),
                                                                                                                                                       expression(atop("Higher DCi", italic("(P<0.05)")))),
