@@ -7,7 +7,7 @@ library(gridExtra)
 ###read in data
 
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
-my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
 
 #read in the data
 
@@ -207,7 +207,7 @@ CT_diff<-CT%>%
   mutate(drop=ifelse(site_code=="Sil"&resource_mani==0, 1, ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1, ifelse(pulse==1, 1, 0))))%>%
   filter(drop==0)
 
-#dataset of treatment responses, ave, se, min, max, and how often species is found
+#dataset of treatment responses, ave, se, min, max, and how often species is found for phylogenetic analyses.
 
 ##
 CT_Sp_herb<-CT_diff%>%
@@ -264,6 +264,7 @@ CT_Sp_co2<-CT_diff%>%
             max=max(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="co2")
+ 
 
 CT_Sp_co2_other<-CT_diff%>%
   filter(CO2_other==1)%>%
@@ -385,8 +386,6 @@ CT_Sp_allint<-CT_diff%>%
             max=max(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="all mult")
-
-
 
 Fulldataset<-CT_Sp_allint%>%
   bind_rows(CT_Sp_co2, CT_Sp_dist, CT_Sp_drt, CT_Sp_herb, CT_Sp_irg, CT_Sp_N, CT_Sp_P, CT_Sp_temp)%>%
@@ -789,3 +788,77 @@ ggplot(data=koma, aes(x=treatment_year, y=diff, color=treatment))+
   geom_smooth(method="lm")+
   facet_wrap(~trt_type, scales="free")+
   theme(legend.position = "none")
+
+
+####
+###dataset of all responses for trait mixed models
+CT_Sp_herb<-CT_diff%>%
+  filter(herb_removal==1)%>%
+  mutate(trt_type2="herb_removal")
+
+CT_Sp_herb_other<-CT_diff%>%
+  filter(herb_removal_other==1)%>%
+  mutate(trt_type2="herb_rem_other")
+
+CT_Sp_temp<-CT_diff%>%
+  filter(temp==1)%>%
+  mutate(trt_type2="temp")
+
+CT_Sp_temp_other<-CT_diff%>%
+  filter(temp_other==1)%>%
+  mutate(trt_type2="temp_other")
+
+CT_Sp_co2<-CT_diff%>%
+  filter(CO2==1)%>%
+  mutate(trt_type2="co2")
+
+
+CT_Sp_co2_other<-CT_diff%>%
+  filter(CO2_other==1)%>%
+  mutate(trt_type2="co2_other")
+
+CT_Sp_dist<-CT_diff%>%
+  filter(dist==1)%>%
+  mutate(trt_type2="disturbance")
+
+CT_Sp_dist_other<-CT_diff%>%
+  filter(dist_other==1)%>%
+  mutate(trt_type2="dist_other")
+
+CT_Sp_irg<-CT_diff%>%
+  filter(irg==1)%>%
+  mutate(trt_type2="irrigation")
+
+CT_Sp_irg_other<-CT_diff%>%
+  filter(irg_other==1)%>%
+  mutate(trt_type2="irg_other")
+
+CT_Sp_drt<-CT_diff%>%
+  filter(drought==1)%>%
+  mutate(trt_type2="drought")
+
+CT_Sp_drt_other<-CT_diff%>%
+  filter(drought_other==1)%>%
+  mutate(trt_type2="drt_other")
+
+CT_Sp_N<-CT_diff%>%
+  filter(n==1)%>%
+  mutate(trt_type2="n")
+
+CT_Sp_P<-CT_diff%>%
+  filter(p==1)%>%
+  mutate(trt_type2="p")
+
+CT_Sp_nuts_other<-CT_diff%>%
+  filter(nuts_other==1)%>%
+  mutate(trt_type2="nuts_other")
+
+CT_Sp_allint<-CT_diff%>%
+  filter(multtrts==1)%>%
+  mutate(trt_type2="all mult")
+
+Fulldataset_mixedmodels<-CT_Sp_allint%>%
+  bind_rows(CT_Sp_co2, CT_Sp_dist, CT_Sp_drt, CT_Sp_herb, CT_Sp_irg, CT_Sp_N, CT_Sp_P, CT_Sp_temp)%>%
+  select(site_code, project_name, community_type, species_matched, trt_type2, diff)
+
+write.csv(Fulldataset_mixedmodels, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_formixedmodels.csv", sep=""), row.names=F)
