@@ -26,7 +26,7 @@ library(V.PhyloMaker)
 #set directory:
 #my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
-#my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 
 #load data.
 species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts.csv",sep=""), header=T, sep=",")
