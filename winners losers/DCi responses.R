@@ -23,6 +23,8 @@ trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_E
   select(site_code, project_name, community_type, treatment, trt_type, pulse, plot_mani,resource_mani)%>%
   unique()
 
+#for N and P other, do I include multiple nutrients or not?
+
 trt_analysis<-trts%>%
   mutate(alltrts=ifelse(trt_type %in% c("CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0))%>%
   filter(alltrts==1)%>%
@@ -43,6 +45,7 @@ trt_analysis<-trts%>%
          n=ifelse(trt_type=="N", 1, 0),
          n_other=ifelse(trt_type %in% c("N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze","N*irr*CO2*tempN*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","N*drought","N*herb_removal","N*irr","N*irr*temp","N*temp","N*P*temp","N*burn*mow_clip","N*P*burn","N*P*mow_clip"), 1, 0),
          p=ifelse(trt_type=="P", 1, 0),
+         p_other=ifelse(trt_type %in% c("N*P*burn*graze","mult_nutrient*irr","P*burn*graze","P*burn*mow_clip","P*herb_removal","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal*mow_clip"), 1, 0),
          multtrts=ifelse(trt_type %in% c("mult_nutrient","N*P","CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp"),1,0))
 
 #cleaned species names
@@ -388,8 +391,19 @@ CT_Sp_n_other<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="n_other")
 
+allmul_subset<-CT_diff%>%
+  filter(multtrts==1)%>%
+  ungroup()%>%
+  select(species_matched, trt_type)%>%
+  unique()%>%
+  group_by(species_matched)%>%
+  summarize(n=length(trt_type))%>%
+  filter(n>2)%>%
+  select(-n)
+
 CT_Sp_allint<-CT_diff%>%
   filter(multtrts==1)%>%
+  right_join(allmul_subset)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -399,8 +413,9 @@ CT_Sp_allint<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="all mult")
 
+
 Fulldataset<-CT_Sp_allint%>%
-  bind_rows(CT_Sp_co2, CT_Sp_dist, CT_Sp_drt, CT_Sp_herb, CT_Sp_irg, CT_Sp_N,CT_Sp_n_other, CT_Sp_P, CT_Sp_temp)%>%
+  bind_rows(CT_Sp_co2, CT_Sp_co2_other, CT_Sp_dist, CT_Sp_dist_other, CT_Sp_drt,CT_Sp_drt_other,  CT_Sp_herb, CT_Sp_herb_other, CT_Sp_irg, CT_Sp_irg_other, CT_Sp_N, CT_Sp_n_other, CT_Sp_P, CT_Sp_temp)%>%
   select(species_matched, trt_type2, nobs, ave_diff, min, max, se)
 
 write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_newtrts.csv", sep=""), row.names=F)
