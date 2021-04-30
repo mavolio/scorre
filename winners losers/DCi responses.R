@@ -8,6 +8,7 @@ library(gridExtra)
 
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 
 #read in the data
 
