@@ -6,23 +6,23 @@ theme_set(theme_bw(12))
 
 ### Trait data
 
-#barGraphStats(data=, variable="", byFactorNames=c(""))
-barGraphStats <- function(data, variable, byFactorNames) {
-  count <- length(byFactorNames)
-  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
-  names(N)[1:count] <- byFactorNames
-  names(N) <- sub("^x$", "N", names(N))
-  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
-  names(mean)[1:count] <- byFactorNames
-  names(mean) <- sub("^x$", "mean", names(mean))
-  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
-  names(sd)[1:count] <- byFactorNames
-  names(sd) <- sub("^x$", "sd", names(sd))
-  preSummaryStats <- merge(N, mean, by=byFactorNames)
-  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
-  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
-  return(finalSummaryStats)
-}  
+# #barGraphStats(data=, variable="", byFactorNames=c(""))
+# barGraphStats <- function(data, variable, byFactorNames) {
+#   count <- length(byFactorNames)
+#   N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+#   names(N)[1:count] <- byFactorNames
+#   names(N) <- sub("^x$", "N", names(N))
+#   mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+#   names(mean)[1:count] <- byFactorNames
+#   names(mean) <- sub("^x$", "mean", names(mean))
+#   sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+#   names(sd)[1:count] <- byFactorNames
+#   names(sd) <- sub("^x$", "sd", names(sd))
+#   preSummaryStats <- merge(N, mean, by=byFactorNames)
+#   finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+#   finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+#   return(finalSummaryStats)
+# }  
 
 #read in data
 contTraits <- read.csv('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/Trait Data/TRY Data/Gap_Filled/TRY_new.csv')%>%
