@@ -61,8 +61,7 @@ alldat_cont<-dcidiff_models%>%
   filter(seed_mass<4, seed_number<3) %>%
   gather(ssd:SRL, key="trait", value="value")%>%
   na.omit()%>%
-  filter(trait %in% c("seed_mass", "seed_number", "rooting_depth", "SRL", "LDMC", "SLA"))%>%
-  filter(trait=="SRL")
+  filter(trait %in% c("seed_mass", "seed_number", "rooting_depth", "SRL", "LDMC", "SLA"))
 
 # ggplot(data=alldat_cont, aes(x=value, y=ave_diff))+
 #   geom_point()+
@@ -78,35 +77,100 @@ alldat_cont<-dcidiff_models%>%
 #(1|species matches) = each species can have a different ave regardless of trt type
 #fixef(m1) #should give fixed effects of model
 
-
-mSLA<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=alldat_cont)
+##SLA
+mSLA<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SLA"))
 summary(mSLA)
 
 plot.sla<-as.data.frame(summary(mSLA)$coefficients)%>%
-  mutate(fixedef=row.names(plot))
+  mutate(fixedef=row.names(plot.sla))
 
-toplot.SLA<-plot%>%
+toplot.SLA<-plot.sla%>%
   separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
   filter(!is.na(interaction))%>%
   separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
   select(-interaction, -drop)%>%
   mutate(trait="SLA")
 
-mSRL<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=alldat_cont)
+###SRL
+
+mSRL<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SRL"))
 summary(mSRL)
 
 plot.srl<-as.data.frame(summary(mSRL)$coefficients)%>%
-  mutate(fixedef=row.names(plot))
+  mutate(fixedef=row.names(plot.srl))
 
-toplot.SRL<-plot%>%
+toplot.SRL<-plot.srl%>%
   separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
   filter(!is.na(interaction))%>%
   separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
   select(-interaction, -drop)%>%
   mutate(trait="SRL")
 
+###seed mass
+
+mSM<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="seed_mass"))
+summary(mSM)
+
+plot.sm<-as.data.frame(summary(mSM)$coefficients)%>%
+  mutate(fixedef=row.names(plot.sm))
+
+toplot.SM<-plot.sm%>%
+  separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
+  filter(!is.na(interaction))%>%
+  separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
+  select(-interaction, -drop)%>%
+  mutate(trait="Seed Mass")
+
+
+###seed number
+
+mSN<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="seed_number"))
+summary(mSN)
+
+plot.sn<-as.data.frame(summary(mSN)$coefficients)%>%
+  mutate(fixedef=row.names(plot.sn))
+
+toplot.SN<-plot.sn%>%
+  separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
+  filter(!is.na(interaction))%>%
+  separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
+  select(-interaction, -drop)%>%
+  mutate(trait="Seed Number")
+
+###rooting depth
+
+mRD<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="rooting_depth"))
+summary(mRD)
+
+plot.rd<-as.data.frame(summary(mRD)$coefficients)%>%
+  mutate(fixedef=row.names(plot.rd))
+
+toplot.RD<-plot.rd%>%
+  separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
+  filter(!is.na(interaction))%>%
+  separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
+  select(-interaction, -drop)%>%
+  mutate(trait="Rooting Depth")
+
+###LDMC
+
+mLDMC<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="LDMC"))
+summary(mLDMC)
+
+plot.ldmc<-as.data.frame(summary(mLDMC)$coefficients)%>%
+  mutate(fixedef=row.names(plot.ldmc))
+
+toplot.LDMC<-plot.ldmc%>%
+  separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
+  filter(!is.na(interaction))%>%
+  separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
+  select(-interaction, -drop)%>%
+  mutate(trait="LDMC")
+
+
+
 toplot<-toplot.SLA%>%
-  bind_rows(toplot.SRL)
+  bind_rows(toplot.SRL, toplot.SN, toplot.SM, toplot.RD, toplot.LDMC)
 
 colnames(toplot)[2] <- "SE"
 
@@ -118,7 +182,7 @@ ggplot(data=toplot, aes(y=Estimate, x=1))+
   xlab("")+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
-  facet_grid(trait~trt_type)
+  facet_grid(trait~trt_type, scales="free")
 
 
 
@@ -127,17 +191,67 @@ alldat_cat<-dcidiff_models%>%
   right_join(traitsScaled)%>%
   select(species_matched, trt_type2, site_code, diff, leaf_type, leaf_compoundness, growth_form, photosynthetic_pathway, lifespan, stem_support, clonal,mycorrhizal, mycorrhizal_type, n_fixation, rhizobial,actinorhizal)%>%
   gather(leaf_type:actinorhizal, key="trait", value="value")%>%
-  na.omit()%>%
-  filter(trait=="photosynthetic_pathway")
+  na.omit()
+
+#photo path
+mpp<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="photosynthetic_pathway"))
+summary(mpp)
+
+plot.mpp<-as.data.frame(emmeans(mpp, ~ value*trt_type2))%>%
+  filter(value!="CAM")
+
+#lifespan
+ml<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="lifespan"))
+summary(ml)
+
+plot.ml<-as.data.frame(emmeans(ml, ~ value*trt_type2))%>%
+  filter(value!="biennial")
+
+###clonaltiy
+mc<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="clonal"))
+
+plot.mc<-as.data.frame(emmeans(mc, ~ value*trt_type2))%>%
+  mutate(trait="Clonal")%>%
+  rename(v=value)%>%
+  mutate(value=paste(trait, v, sep=" "))
+
+##nfixer
+mnf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="n_fixation"))
+
+plot.nf<-as.data.frame(emmeans(mnf, ~ value*trt_type2))%>%
+  mutate(trait="Nfix")%>%
+  rename(v=value)%>%
+  mutate(value=paste(trait, v, sep=" "))
 
 
-m2<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=alldat_cat)
+##mycorhizal
+mmyc<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="mycorrhizal"))
 
-emmeans(m2, ~ value*trt_type2)
+plot.myc<-as.data.frame(emmeans(mmyc, ~ value*trt_type2))%>%
+  mutate(trait="Myc")%>%
+  rename(v=value)%>%
+  mutate(value=paste(trait, v, sep=" "))%>%
+  filter(v!="", v!="uncertain")
 
-m2_b = lmer(diff ~ -1 + trt_type2 +  (trt_type2|species_matched) + (trt_type2|site_code), data=alldat_cat)
+
+toplot.cat<-plot.mpp%>%
+  bind_rows(plot.ml, plot.mc, plot.nf, plot.myc)
+
+ggplot(data=toplot.cat, aes(y=emmean, x=1))+
+  geom_point()+
+  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.05)+
+  coord_flip()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank())+
+  xlab("")+
+  scale_x_continuous(limits=c(0, 2))+
+  geom_hline(yintercept=0, linetype="dashed")+
+  facet_grid(value~trt_type2, scales="free")
 
 
+
+
+
+####old code here.
 #ways to try to get the estimates easily from the categorical models.
 anova.lme()
 
