@@ -1,0 +1,26 @@
+Step 1. DCi Responses
+
+Code to Calculate DCi Diff we are using.
+
+this will export a file for phylogentic analyses: Species_DCiDiff_newtrts.csv
+this will also export a file for the mixed model trait analyses: Species_DCiDiff_formixedmodels.csv
+
+Phylogentic Analyses.
+Step 1. Tree_ring
+
+this will trim a tree for all the species that will be used and to remove non vascular plants
+
+This exports:
+scorre.tree.win.los.tre
+Species_DCiDiff_newtrts_filtered.csv
+
+Step 2. Phylosig script
+
+run this and store the funciton to determine significant clades
+
+Step 3. DCi_Clades
+
+this creates all the trees with labeled nodes that are significant.
+
+Trait analyses
+Step 1. Traits - mixed models
