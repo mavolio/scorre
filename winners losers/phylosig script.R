@@ -7,14 +7,15 @@ rm(list=ls())
 #my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 #my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 
 #Load library()
 library(geiger)
 library(ape)
 
 #Load data
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre", sep="")) #load tree
-dd<-read.table(paste(my.wd,"Species_DCiDiff_newtrts.csv",sep=""), header=T, sep=",")
+tree<-read.tree(paste(my.wd, "scorre.tree.overall.tre", sep="")) #load tree
+dd<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_Jul2021.csv",sep=""), header=T, sep=",")
 str(dd)
 str(tree)
 
@@ -84,3 +85,4 @@ write.table(output, "phylo_signal.csv")
 
 #clean-up:
 rm(list = ls())
+
