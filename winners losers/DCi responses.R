@@ -430,7 +430,7 @@ Fulldataset<-CT_Sp_allint%>%
   bind_rows(CT_Sp_co2, CT_Sp_co2_other, CT_Sp_dist, CT_Sp_dist_other, CT_Sp_drt,CT_Sp_drt_other,  CT_Sp_herb, CT_Sp_herb_other, CT_Sp_irg, CT_Sp_irg_other, CT_Sp_N, CT_Sp_n_other, CT_Sp_P, CT_Sp_P_other, CT_Sp_temp, CT_Sp_temp_other)%>%
   select(species_matched, trt_type2, nobs, ave_diff, min, max, se)
 
-write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_newtrts.csv", sep=""), row.names=F)
+write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_newtrts_Jul2021.csv", sep=""), row.names=F)
 
 #figure
 aves<-Fulldataset%>%
