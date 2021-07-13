@@ -14,6 +14,7 @@ This exports:
 scorre.tree.win.los.tre
 Species_DCiDiff_newtrts_filtered.csv
 
+##not sure this is right.
 Step 2. Phylosig script
 
 run this and store the funciton to determine significant clades
