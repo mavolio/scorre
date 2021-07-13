@@ -29,7 +29,7 @@ my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 
 #load data.
-species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts.csv",sep=""), header=T, sep=",")
+species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_Jul2021.csv",sep=""), header=T, sep=",")
 
 #create table for the tree:
 spp<-as.data.frame(unique(species.data$species_matched))
@@ -78,7 +78,7 @@ species.data <- species.data[-which(species.data$species_matched %in% in.data.no
 
 #save tree and subset table:
 write.tree(scorre.tree$scenario.3, paste(my.wd, "scorre.tree.win.los.tre", sep=""))
-write.table(species.data, paste(my.wd, "Species_DCiDiff_newtrts_filtered.csv", sep=""))
+write.table(species.data, paste(my.wd, "Species_DCiDiff_newtrts_filtered_Jul2021.csv", sep=""))
 
 
 
