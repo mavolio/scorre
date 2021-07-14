@@ -174,7 +174,12 @@ toplot<-toplot.SLA%>%
 
 colnames(toplot)[2] <- "SE"
 
-ggplot(data=toplot, aes(y=Estimate, x=1))+
+toplotESA<-toplot%>%
+  filter(trt_type=="n"|trt_type=="all mult",
+         trait=="SLA"|trait=="Rooting Depth"|trait=="Seed Mass")%>%
+  mutate(Trt=ifelse(trt_type=="all mult", "Multiple Trts.", "N"))
+
+ggplot(data=toplotESA, aes(y=Estimate, x=1))+
   geom_point()+
   geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
   coord_flip()+
@@ -182,7 +187,7 @@ ggplot(data=toplot, aes(y=Estimate, x=1))+
   xlab("")+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
-  facet_grid(trait~trt_type, scales="free")
+  facet_grid(trait~Trt, scales="free")
 
 
 
@@ -237,7 +242,15 @@ plot.myc<-as.data.frame(emmeans(mmyc, ~ value*trt_type2))%>%
 toplot.cat<-plot.mpp%>%
   bind_rows(plot.ml, plot.mc, plot.nf, plot.myc)
 
-ggplot(data=toplot.cat, aes(y=emmean, x=1))+
+toplotesacat<-toplot.cat%>%
+  filter(trt_type2=="n"|trt_type2=="all mult",
+         value=="C3"|value=="C4"|value=="annual"|value=="Nfix yes")%>%
+  mutate(Trt=ifelse(trt_type2=="all mult", "Multiple Trts.", "N"),
+         trait=ifelse(value=="C3", "C3", ifelse(value=="C4", "C4", ifelse(value=="annual", "Annual", "N-fixer"))))%>%
+  rename(Estimate=emmean)%>%
+  select(trait, Trt, Estimate, SE)
+
+ggplot(data=toplotesacat, aes(y=emmean, x=1))+
   geom_point()+
   geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.05)+
   coord_flip()+
@@ -245,10 +258,23 @@ ggplot(data=toplot.cat, aes(y=emmean, x=1))+
   xlab("")+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
-  facet_grid(value~trt_type2, scales="free")
+  facet_grid(trait~Trt, scales="free")
 
 
+ESA<-toplotESA%>%
+  select(trait, Trt, Estimate, SE)%>%
+  bind_rows(toplotesacat)
 
+
+ggplot(data=ESA, aes(y=Estimate, x=1))+
+  geom_point()+
+  geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
+  coord_flip()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank())+
+  xlab("")+
+  scale_x_continuous(limits=c(0, 2))+
+  geom_hline(yintercept=0, linetype="dashed")+
+  facet_grid(Trt~trait, scales="free")
 
 
 ####old code here.
