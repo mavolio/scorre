@@ -7,10 +7,14 @@
 
 setwd("C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\TRYCoRREMerge\\CORRE-TRY N Fixers")
 
+library(tidyverse)
+
 ### CORRE-TRY DATABASE ###
-ct<-ct_orig<-read.csv("CoRRE_new spp.csv")#makes two objects (ct and 
-  #ct_orig) - one is the copy that we'll manipulate. The other is the original
-ct.nms<-as.data.frame(unique(ct[,2])) #isolates just the scientific names for matching
+ct_orig<-read.csv("CoRRE_new spp.csv")%>%
+  rbind(read.csv("CoRRE_new spp_2021add.csv"))
+
+ct<-ct_orig
+ct.nms<-as.data.frame(unique(ct[,1])) #isolates just the scientific names for matching
 names(ct.nms)[1]<-"scientific_name" #renames the species column to match other dataframes
 
 ################################################################################
@@ -65,6 +69,16 @@ ct_orig$grin<-ifelse(ct_orig$species_matched%in%grn.fix.nms, yes=1,no=0) #Includ
 ct_orig$wern<-ifelse(ct_orig$species_matched%in%wern.fix.nms, yes=1,no=0) #Includes a 1 for N-fixers from WERNER
 
 write.csv(ct_orig, file="CoRRE_TRY_species_list_N-fixers.csv", row.names=F) #write file to .csv
+
+#find just new species from 2021 update to CoRRE 2.0
+
+new<-read.csv("CoRRE_new spp_2021add.csv")%>%
+  select(species_matched)%>%
+  mutate(version=2)%>%
+  full_join(ct_orig)%>%
+  filter(version==2)
+write.csv(new, file="CoRRE_TRY_species_list_N-fixers_2021add.csv", row.names=F)
+
 
 ################################################################################
 ### Simple Summary Stats ###
