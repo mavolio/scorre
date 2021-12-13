@@ -1,6 +1,7 @@
 ### 
 ### Calculate Functional dispersion for CoRRE data
 ### 
+### Last updated Dec 13, 2021
 
 ### Set up workspace
 rm(list=ls())
