@@ -17,8 +17,8 @@ library(magrittr)
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 
 #read data:
-comm<-read.table(paste(my.wd, "CoRRE_relative_abundance_Feb2021.csv", sep=""), header=T, sep=",", fill = TRUE)
-spp<-read.table(paste(my.wd, "CoRRE_TRY_species_list.csv", sep=""), header=T, sep=",", fill = TRUE)
+comm<-read.table(paste(my.wd, "CoRRE_RelativeCover_Dec2021.csv", sep=""), header=T, sep=",", fill = TRUE)
+spp<-read.table(paste(my.wd, "FullList_Nov2021.csv", sep=""), header=T, sep=",", fill = TRUE)
 
 #reduce spp to original and new name:
 spp<-subset(spp, type != "moss/lichen") #filter out mosses and lichens
@@ -45,12 +45,13 @@ non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       
                    "Preissia quadrata",           "Ptilidium ciliare",           "Racomitrium lanuginosum",    
                    "Rhytidium rugosum",           "Saelania glaucescens",        "Sanionia uncinata",          
                    "Schistidium apocarpum",       "Syntrichia ruralis",          "Tomentypnum nitens",         
-                   "Tortella tortuosa",           "Tritomaria quinquedentata", "Barbilophozia sp.",
-                   "Cynodontium sp.",   "Dicranella sp.",    "Encalypta sp.",     "Hypnum sp.",       
-                   "Pohlia sp.",        "Polytrichum sp.",   "Racomitrium sp.",   "Scapania sp.",
-                   "Syntrichia sp.", "Nephroma arcticum", "Unknown NA")
+                   "Tortella tortuosa",           "Tritomaria quinquedentata", "Nephroma arcticum" ,"Unknown NA",
+                   "Campylopus flexuosus",       "Hypnum jutlandicum",         "Plagiothecium undulatum",    
+                   "Polytrichum commune",  "Pseudoscleropodium purum",   "Rhytidiadelphus loreus",
+                   "Rhytidiadelphus triquetrus", "Thuidium tamariscinum")
+spp<-subset(spp, !grepl("(sp.)$", species_matched)) #remove species identified at the genus level
 spp <- spp[!spp$species_matched %in% non.vascular, ] #remove
-spp<-unique(spp[c(2,3)]) #get unique list of species
+spp<-unique(spp[c(2,5)]) #get unique list of species
 
 #do some preliminary cleaning to remove empty spaces on names:
 comm$genus_species <- trimws(comm$genus_species, which="right")
@@ -86,7 +87,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
 {
   print(i*100/length(sites))
   comm2<-subset(comm, site_code == sites[i]) #subset plot within each site
-  comm2<-comm2[c(16,15,14)] #reorder table
+  comm2<-comm2[c(14,13,12)] #reorder table
   comm2<-comm2[!duplicated(comm2[c(1,2)]),] #remove duplicated rows
   comm2<-subset(comm2, relcov>0) #remove species with zero cover
   comm2 <- dcast(comm2, plot_id2 ~ species_matched, value.var="relcov") # apply dcast to turn into community matrix
@@ -142,7 +143,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
 {
   print(i*100/length(sites))
   comm2<-subset(comm, site_code == sites[i]) #subset plot within each site
-  comm2<-comm2[c(16,15,14)] #reorder table
+  comm2<-comm2[c(14,13,12)] #reorder table
   comm2<-comm2[!duplicated(comm2[c(1,2)]),] #remove duplicated rows
   comm2<-subset(comm2, relcov>0) #remove species with zero cover
   comm2 <- dcast(comm2, plot_id2 ~ species_matched, value.var="relcov") # apply dcast to turn into community matrix

@@ -4,13 +4,9 @@ library(data.table)
 theme_set(theme_bw(12))
 
 #meghan's
-setwd("C://Users/mavolio2/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
-setwd("C://Users/megha/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
+setwd("C:\\Users\\mavolio2\\Dropbox\\CoRRE_database\\Data\\OriginalData\\Traits\\Try Data Nov 2019")
 
 #kim's desktop
-setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
-#kim's laptop
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
 
 dat<-fread("7764.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,strip.white = TRUE)
 
@@ -58,6 +54,7 @@ traitnum<-dat3%>%
 
 
 ###lifespan
+###notes 9/3/21 - we realize that the many enteries in TRY are errors and our rule of using the most longest lived is the wrong approach. We are not take the list of 275 that have conflicting entries and fixing them in our spreadsheet.
 trait59<-dat3%>%
   filter(TraitID==59&OrigValueStr!="")%>%
   mutate(CleanTraitValue=ifelse(OrigValueStr=="1"|OrigValueStr=="always annual"|OrigValueStr=="ann"|OrigValueStr=="annual"|OrigValueStr=="Annual"|OrigValueStr=="annual-winter annual"|OrigValueStr=="annuals"|OrigValueStr=="winter annual"|OrigValueStr=="winter annuals"|OriglName=="Plant phenology: Annual"&OrigValueStr=="yes"|OriglName=="Plant phenology: Perennial"&OrigValueStr=="no"|OrigValueStr=="summer annuals", "Annual", 
@@ -66,10 +63,16 @@ trait59<-dat3%>%
   filter(!is.na(CleanTraitValue))%>%
   select(species_matched, CleanTraitValue)%>%
   unique()%>%
-  spread(CleanTraitValue, CleanTraitValue)%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%#stop here to export conflicting entries
   mutate(CleanTraitValue=ifelse(is.na(Biennial)&is.na(Perennial), "annual", ifelse(is.na(Annual)&is.na(Perennial)|Annual=="Annual"&Biennial=="Biennial"&is.na(Perennial), "biennial", "perennial")))%>%
   select(species_matched, CleanTraitValue)%>%
   mutate(CleanTraitName="lifespan", CleanTraitUnit=NA, source='TRY_59')
+
+#run the above step to the spread step, not afterwards
+listtocheck<-trait59%>%
+  mutate(fix=ifelse(!is.na(Annual)&!is.na(Biennial), 1, ifelse(!is.na(Annual)&!is.na(Perennial), 1, ifelse(!is.na(Perennial)&!is.na(Biennial),1 , 0))))%>%
+  filter(fix==1)
+write.csv(listtocheck, "lifespancheck.csv", row.names=F)
 
 table(trait59$CleanTraitValue)
 
@@ -345,15 +348,21 @@ trait613 <- dat3%>%
   mutate(CleanTraitValue=ifelse(is.na(Rapid)&is.na(Moderate)&is.na(Slow), 'no', 'yes'))%>%
   select(species_matched, CleanTraitValue)
 
+##Update 9/3/21 we are exportign species for which there is a conflict of clonality and fixing these. 
 clonality <- rbind(trait208, trait329, trait341, trait334, trait344, trait357, trait609, trait613)%>%
   unique()%>%
-  spread(key=CleanTraitValue, value=CleanTraitValue)%>%
+  spread(key=CleanTraitValue, value=CleanTraitValue)%>%#run to here to fix conflicting clonality
   mutate(CleanTraitValue=ifelse(yes=='yes', 'yes', 'no'))%>%
   mutate(CleanTraitName='clonal', CleanTraitUnit=NA, source='TRY_208:329:334:341:344:357:609:613')%>%
   filter(!is.na(CleanTraitValue))%>%
   select(CleanTraitName, species_matched, CleanTraitValue, source, CleanTraitUnit)
 
+#clonality fix  - to do this run up to the spread in teh above step
+clonelisttocheck<-clonality%>%
+  mutate(fix=ifelse(!is.na(no)&!is.na(yes), 1, 0))%>%
+  filter(fix==1)
 
+write.csv(clonelisttocheck, "clonaltocheck.csv", row.names=F)
 
 ##dispersal
 trait28<-dat3%>%

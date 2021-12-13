@@ -127,15 +127,19 @@ submult<-pDivAvgTrt%>%
   mutate(trt_type2="mult_trts")
 
 alldat<-submult%>%
-  bind_rows(subco2, subtemp, subdist, subdrought, subirg, subn, subp, subherbr)
-
+  bind_rows(subco2, subtemp, subdist, subdrought, subirg, subn, subp, subherbr)%>%
+  mutate(mdiff=abs(mpd_diff_avg))
+  
+  
 ###figures
 
 #by trt type
-ggplot(data=alldat, aes(x=trt_type2, y=mpd_diff_avg)) +
-  geom_boxplot() +
+ggplot(data=barGraphStats(data=subset(alldat, !is.na(mpd_diff_avg)), variable="mpd_diff_avg", byFactorNames=c("trt_type2")), aes(x=trt_type2, y=mean, label=N)) +
+  geom_bar(stat="identity") +
+  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se), width=0.2)+
   xlab('') + ylab('MPD.SES difference (trt-ctl)') +
   geom_hline(yintercept=0) +
+  geom_text(aes(y=0.2))+
   scale_x_discrete(limits=c('n', 'p', 'co2', "drought", 'irg', 'dist', 'herbr', 'mult_trts'),
                    labels=c('N', 'P', 'CO2', "Drought", 'Irrigation', 'Disturbance', 'Herb_removal','mult_trts'))+
   theme(axis.text.x = element_text(angle = 90))
