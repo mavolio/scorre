@@ -27,6 +27,7 @@ library(V.PhyloMaker)
 #my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 #my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
+my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 
 #load data.
 species.data<-read.table(paste(my.wd,"Species_DCiDiff_Dec2021.csv",sep=""), header=T, sep=",")
@@ -87,7 +88,7 @@ species.data <- species.data[-which(species.data$species_matched %in% in.data.no
 
 #save tree and subset table:
 write.tree(scorre.tree$scenario.3, paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep=""))
-write.table(species.data, paste(my.wd, "Species_DCiDiff_newtrts_filtered_Dec2021.csv", sep=""))
+write.table(species.data, paste(my.wd, "Species_DCiDiff_filtered_Dec2021.csv", sep=""))
 
 
 
