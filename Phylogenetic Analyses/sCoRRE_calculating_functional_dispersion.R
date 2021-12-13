@@ -1,15 +1,174 @@
-
-#####################################################
-### Working to get functional dispersion estimate ###
-#####################################################
+### Calculating functional diversity and dispersion using categorical and continuous traits
+### Last updated: Dec 13, 2021
+### R version: 4.1.1
 
 library(FD)
 library(tidyverse)
+# install.packages("mFD")
+# library("mFD")
 
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
+setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
 
-# Working with just pplot from KNZ to start
+### Start with PPlots to get things going
 
+### Species relative cover data
+pplots_raw <- read.csv("CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv") %>%
+  filter(project_name=="pplots") %>%
+  mutate(genus_species = replace(genus_species, genus_species == "baptisia brachteata", "baptisia bracteata"))
+
+corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
+  dplyr::select(genus_species, species_matched) %>%
+  unique(.)
+
+pplots_long <- pplots_raw %>%
+  dplyr::left_join(corre_to_try, by="genus_species")
+
+###
+### Get species vector for pulling traits from pplots relative cover
+###
+pplots_sp_df <- data.frame(genus_species = unique(pplots_raw$genus_species), dummy=1) %>%
+  left_join(corre_to_try, by="genus_species") %>%
+  unique(.) 
+
+pplots_sp_vec <- pplots_sp_df %>%
+  pull(species_matched)
+
+###
+### Read in and clean trait data
+###
+all_traits_raw <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sCoRRE categorical trait data_final_20211209.csv") %>%
+  dplyr::select(species_matched, growth_form, photosynthetic_pathway, lifespan,  clonal, mycorrhizal_type, n_fixation) %>%
+  mutate(photosynthetic_pathway = replace(photosynthetic_pathway, grep("possible", photosynthetic_pathway), NA)) %>%
+  mutate(clonal = replace(clonal, clonal=="uncertain", NA)) %>%
+  mutate(mycorrhizal_type = replace(mycorrhizal_type, mycorrhizal_type=="uncertain", NA)) %>%
+  mutate(lifespan = replace(lifespan, lifespan=="uncertain", NA)) %>%
+  filter(lifespan != "moss")
+  
+  
+#### NOTES
+###
+### Continuous traits to include: LDMC, SLA, Vegetative_height, seed dry mass, seed number, rooting density, rooting depth 
+###
+###
+### Categorical traits to include: growth_form, life_span, mycorrhizal_type, n_fixation, clonal, photosynthetic_pathway 
+###
+#########
+
+### Checking trait categories -- THEY LOOK GOOD NOW!
+with(all_traits_raw, unique(growth_form))  
+with(all_traits_raw, unique(photosynthetic_pathway))  
+with(all_traits_raw, unique(lifespan))  
+with(all_traits_raw, unique(clonal))  
+with(all_traits_raw, unique(mycorrhizal_type))   
+with(all_traits_raw, unique(n_fixation)) 
+
+### Subset trait data to just include the species present in the pplots relative cover data
+pplots_traits <- all_traits_raw %>%
+  filter(species_matched %in% pplots_sp_vec)
+
+### Get data frame with species in trait data base and in pplots abundance data base
+species_in_trait_data <- data.frame(species_matched = unique(pplots_traits$species_matched),
+                                    dummy_traits=2) ## there are less species in the unique trait dataset than in the species comp data because they're things like "unknown forb"
+
+### Get vector of species not in trait database (but in pplots relative abundance data) to remove from species abundance data
+pplots_sp_to_remove <- pplots_sp_df %>%
+  full_join(species_in_trait_data, by="species_matched") %>%
+  filter(is.na(species_matched)) %>%
+  pull(genus_species)
+
+### Abundance data set with species removed that do not have trait information
+pplots_relcov_unkn_sp_rm <- pplots_long %>%
+  filter(!genus_species %in% pplots_sp_to_remove) # removing species without trait information
+
+### get abundance data wide format
+pplots_wide <- pplots_relcov_unkn_sp_rm %>%
+  dplyr::select(-genus_species) %>%
+  spread(key=species_matched, value=relcov) %>%
+  replace(is.na(.), 0)
+
+pplots_plot_info <- pplots_wide %>%
+  dplyr::select(site_code:version)
+
+pplots_relcov <- pplots_wide %>%
+  dplyr::select(-site_code:-version) 
+
+row.names(pplots_relcov) <- paste(pplots_plot_info$calendar_year, pplots_plot_info$plot_id, sep="_")
+
+### dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
+pplots_traits <- pplots_traits %>%
+  arrange(species_matched) %>%
+  column_to_rownames("species_matched")
+
+### Changing all traits to factors
+pplots_traits$growth_form <- as.factor(pplots_traits$growth_form)
+pplots_traits$photosynthetic_pathway <- as.factor(pplots_traits$photosynthetic_pathway)
+pplots_traits$lifespan <- as.factor(pplots_traits$lifespan)
+pplots_traits$clonal <- as.factor(pplots_traits$clonal)
+pplots_traits$mycorrhizal_type <- as.factor(pplots_traits$mycorrhizal_type)
+pplots_traits$n_fixation <- as.factor(pplots_traits$n_fixation)
+
+### create distance matrix for incorporation into dbFD function
+pplots_gowdis <- gowdis(pplots_traits)
+
+### NOT WORKING, ARG
+FD_full <- dbFD(x=pplots_gowdis, a=pplots_relcov)
+
+FD_full <- dbFD(x=pplots_traits, a=pplots_relcov)
+
+### Trouble getting species by species distance matrix in Euclidean form... here's the error message:
+# Error in dbFD(x = pplots_traits, a = pplots_relcov) : 
+#   Species x species distance matrix was still is not Euclidean after 'sqrt' correction. Use another correction method.
+# In addition: Warning messages:
+#   1: In is.euclid(x.dist) : Zero distance(s)
+# 2: In is.euclid(x.dist) : Zero distance(s)
+# 3: In is.euclid(x.dist2) : Zero distance(s)
+
+
+################## End of current script ##########################
+
+
+
+
+
+### check abundance data
+with(pplots_abun, table(calendar_year, plot_id)) ### one plot id per year, looking good!
+
+
+####################
+####################
+####################
+
+#### Running example
+test_traits <- data.frame(trt1=runif(4, 0, 10),
+                          trt2=runif(4, 0, 1),
+                          trt3=runif(4, 0, 1),
+                          trt4=runif(4, 0, 50),
+                          trt5=as.factor(c("a","a","b","a")))
+rownames(test_traits) <- c("sp1","sp2","sp3","sp4")
+
+test_abun <- data.frame(sp1=runif(5, 0, 1),
+                        sp2=runif(5, 0, 1),
+                        sp3=runif(5, 0, 1),
+                        sp4=runif(5, 0, 1))
+rownames(test_abun) <- c("plot1","plot2","plot3","plot4","plot5")
+
+ex1 <- dbFD(test_traits, test_abun)
+cbind(ex1$FDiv, ex1$FEve)
+
+# mixed trait types, NA's
+data(dummy)
+print(dummy)
+ex1 <- dbFD(dummy$trait, dummy$abun)
+ex1
+# add variable weights
+# 'cailliez' correction is used because 'sqrt' does not work
+w<-c(1, 5, 3, 2, 5, 2, 6, 1)
+ex2 <- dbFD(dummy$trait, dummy$abun, w, corr="cailliez")
+
+
+
+# Working with just pplot from KNZ to splot.window()# Working with just pplot from KNZ to start
 pplots_knz<-read.csv("paper 2_PD and FD responses/data/pplots species abundance wide.csv")
 environmental_knz<-read.csv("paper 2_PD and FD responses/data/pplots environmental data.csv")
 
