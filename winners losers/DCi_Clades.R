@@ -12,15 +12,16 @@ library(phytools)
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 ###
 # Load data
 ###
 
 #load species data (filtered after removing mosses and species missing from the phylogeny):
-species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_filtered_Jul2021.csv",sep=""), header=T, sep=" ")
+species.data<-read.table(paste(my.wd,"Species_DCiDiff_filtered_Dec2021.csv",sep=""), header=T, sep=" ")
 
 #load phylogenetic tree:
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre", sep=""))
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep=""))
 
 
 ###
