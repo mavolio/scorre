@@ -47,69 +47,59 @@ myreldat_filled=NULL
 
 for (j in 1:length(spc)) {
   dat.filled=myreldat[myreldat$site_project_comm==as.character(spc[j]),] %>% 
-    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, data_type, version, genus_species, relcov, trt_type, pulse, resource_mani, species_matched, site_project_comm) %>% 
+    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, relcov, trt_type, species_matched, site_project_comm) %>% 
     pivot_wider(names_from="species_matched", values_from="relcov", values_fill=0)
   dat.keep=dat.filled %>% 
-    pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "data_type", "version", "genus_species", "trt_type", "pulse", "resource_mani", "site_project_comm"), names_to="species.matched", values_to="relcov")
+    pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "trt_type", "site_project_comm"), names_to="species_matched", values_to="relcov")
   myreldat_filled=rbind(myreldat_filled, dat.keep)
 }
 
-
 #get average relative cover for each species in a treatment, over all plots
-relave<-allreldat%>%
-  group_by(site_code, project_name, community_type, treatment, trt_type, species_matched, calendar_year, treatment_year)%>%
+relave<-myreldat_filled%>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year)%>%
   summarize(mean.relabund=mean(relcov))
 
 #getting frequency of each plot type
-allplots<-allreldat%>%
-  select(site_code, project_name, community_type, treatment, trt_type, plot_id, calendar_year, treatment_year)%>%
+myplots<-myreldat_filled%>%
+  select(site_code, project_name, community_type, site_project_comm, treatment, block, trt_type, plot_id, calendar_year, treatment_year)%>%
   unique()%>%
-  group_by(site_code, project_name, community_type, treatment, trt_type, calendar_year, treatment_year)%>%
-  summarize(ntplots=length(plot_id))
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, calendar_year, treatment_year)%>%
+  summarize(ntotplots=length(plot_id))
 
-freq<-allreldat%>%
-  select(site_code, project_name, community_type, treatment, trt_type, species_matched, plot_id, calendar_year, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, treatment, trt_type, species_matched, calendar_year, treatment_year)%>%
-  summarize(nplots=length(plot_id))%>%
-  left_join(allplots)%>%
-  mutate(freq=nplots/ntplots)
+#getting number of plots of each type in which a species was present
+freq<-myreldat_filled %>%
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, block, plot_id, calendar_year, treatment_year, relcov) %>%
+  unique() %>%
+  filter(relcov>0) %>% 
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year) %>%
+  summarize(nplots=length(plot_id)) %>%
+  left_join(myplots) %>%
+  mutate(freq=nplots/ntotplots)
 
-DCi.through.time<-freq%>%
-  left_join(relave)%>%
-  mutate(DCi=(mean.relabund+freq)/2)%>%
-  select(site_code, project_name, community_type, treatment, trt_type, species_matched, calendar_year, treatment_year, mean.relabund, freq, DCi)
+DCi.through.time<-relave %>%
+  left_join(freq) %>%
+  mutate(freq=replace_na(freq, 0)) %>%
+  mutate(nplots=replace_na(nplots, 0)) %>%
+  mutate(DCi=(mean.relabund+freq)/2) %>%
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, mean.relabund, nplots, freq, DCi)
 
 #add handy labels
-DCi.through.time$site_project_comm=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, sep="::"))
-DCi.through.time$year=as.factor(paste(DCi.through.time$calendar_year, DCi.through.time$treatment_year, sep="::")) #combine calendar year and treatment year columns into one to save this info to split out later
-DCi.through.time$treatment_year=NULL
-DCi.through.time$calendar_year=NULL
+DCi.through.time$site_project_comm=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, sep="_")); spc=unique(DCi.through.time$site_project_comm); length(spc)
 
+DCi.through.time$site_project_comm_trt=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$treatment, sep="::")); spct=unique(DCi.through.time$site_project_comm_trt); length(spct)
 
-#assign DCi of zero when a species was absent from all replicate plots of a treatment or control (within a site/project/community/treatment)
-spc=unique(DCi.through.time$site_project_comm)
-DCi.through.time_filled=NULL
+DCi.through.time$site_project_comm_sp=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, sep="::")); spcs=unique(DCi.through.time$site_project_comm_sp); length(spcs)
 
-for (j in 1:length(spc)) {
-  dat.filled=DCi.through.time[DCi.through.time$site_project_comm==as.character(spc[j]),] %>% 
-    select(site_code, project_name, community_type, treatment, trt_type, site_project_comm, species_matched, year, DCi) %>% 
-    pivot_wider(names_from="year", values_from="DCi", values_fill=0)
-  dat.keep=dat.filled %>% 
-    pivot_longer(!c("site_code", "project_name", "community_type", "treatment", "trt_type", "site_project_comm_trt", "species_matched"), names_to="year", values_to="DCi") %>% 
-    separate(year, c("calendar_year", "treatment_year"))
-  DCi.through.time_filled=rbind(DCi.through.time_filled, dat.keep)
-}
+DCi.through.time$site_project_comm_sp_yr=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$calendar_year, sep="::")); spcsy=unique(DCi.through.time$site_project_comm_sp_yr); length(spcsy)
 
-#add handy labels
+DCi.through.time$site_project_comm_sp_trt_yr=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$treatment, DCi.through.time$calendar_year, sep="::")); spcsty=unique(DCi.through.time$site_project_comm_sp_trt_yr); length(spcsty)
 
-DCi.through.time_filled$site_project_comm=as.factor(paste(DCi.through.time_filled$site_code, DCi.through.time_filled$project_name, DCi.through.time_filled$community_type, sep="::"))
-DCi.through.time_filled$site_project_comm_sp=as.factor(paste(DCi.through.time_filled$site_project_comm, DCi.through.time_filled$species_matched, sep="::"))
+DCi.through.time$site_project_comm_sp_trt=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$treatment, sep="::")); spcst=unique(DCi.through.time$site_project_comm_sp_trt); length(spct)
 
 
 #plot
-for (i in 1:length(spcs)) {
-  qplot(treatment_year, DCi, data=DCi.through.time_filled[DCi.through.time_filled$site_project_comm_sp==as.character(spcs[i]),], color=treatment, shape=TorC, main=spcs[i]) + geom_smooth(method="lm", se=F, aes(group=treatment))
-  
-  
+for (i in 1:length(spc)) {
+  qplot(treatment_year, DCi, data=DCi.through.time[DCi.through.time$site_project_comm==as.character(spc[i]),], color=treatment, main=spc[i]) + geom_smooth(method="lm", se=F, aes(group=treatment)) + facet_wrap(~species_matched)
+  filename=paste(my.wd, "/WinnersLosers paper/DCi trends through time/", as.character(spc[i]), ".pdf", sep="")
+  ggsave(filename, width=20, height=20)
 }
