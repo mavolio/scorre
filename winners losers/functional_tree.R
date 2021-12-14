@@ -1,4 +1,4 @@
-
+#test
 ######
 # Script to produce trait dendrogram
 ######
@@ -84,10 +84,10 @@ trait.dis<-gawdis(trait) #can take a while
 trait.dis<-cluster::daisy(trait, metric="gower") #can take a while
 
 #convert distance object into phylotree using the Ward's algorithm (https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/hclust):
-ftree<-as.phylo(hclust(trait.dis, method="ward.D2"))
+ftree<-as.phylo(hclust(trait.dis, method="average"))
 
 #save output:
-write.tree(ftree, paste(my.wd, "ftree.scorre.gawdis.log.tre", sep=""))
+write.tree(ftree, paste(my.wd, "ftree.scorre.gowdis.log.upgma.tre", sep=""))
 
 #clean-up:
 rm(list = ls())

@@ -1,14 +1,14 @@
 
-## funtion to compute median trait values for each clade in the phylogeny and
+## funtion to compute mean trait values for each clade in the phylogeny and
 ## compare it to a random expectation in which observed values are shuffled 
 ## across the phylogeny.
 ## 
 ## It returns 6 columns:
 ## Node: the number of the node in the phylogeny.
 ## SR: the number of taxa in each node.
-## Obs: observed median trait value for that clade
-## Mean_Exp: mean expected median trait value after randomizations
-## SD_Exp: standard deviation of median trait value after randomizations
+## Obs: observed mean trait value for that clade
+## Mean_Exp: mean expected mean trait value after randomizations
+## SD_Exp: standard deviation of mean trait value after randomizations
 ## P_value: associated P-value
 ##
 ## Input data requires:
@@ -19,7 +19,7 @@
 
 library(geiger)
 
-node.median <- function(tree, samp, N) {
+node.mean <- function(tree, samp, N) {
   n.internal.nodes <- tree$Nnode # number of nodes in tree
   n.tips <- length(tree$tip.label) # number of tips in tree
   
@@ -27,16 +27,16 @@ node.median <- function(tree, samp, N) {
   out<-as.data.frame(matrix(ncol = N+1, nrow = n.internal.nodes)) #create object to store results
   rownames(out)<-seq((n.tips+1), (n.tips+n.internal.nodes)) #rownames are the names (numbers) of internal nodes
 
-  ## calculating median observed value for each node:
+  ## calculating mean observed value for each node:
   sr.node<-list() #create object to store the number of species  found in each node.
   for(i in (n.tips+1):(n.tips+n.internal.nodes)){
     node <- i
-    spp.node <- tips(tree, node) # get taxa in node
-    out[i-n.tips,1] <- median(samp[rownames(samp) %in% spp.node, ], na.rm = T) # subset taxa and get the median
+    spp.node <- geiger::tips(tree, node) # get taxa in node
+    out[i-n.tips,1] <- mean(samp[rownames(samp) %in% spp.node, ], na.rm = T) # subset taxa and get the mean
     sr.node[[i]]<-length(samp[rownames(samp) %in% spp.node, ])
   }
   
-  ## calculating median expected values for each node:
+  ## calculating mean expected values for each node:
   for(j in 1:N){
     tree2<-tree #create copy of the tree
     set.seed(123+j) #for reproducibility
@@ -45,7 +45,7 @@ node.median <- function(tree, samp, N) {
     for(i in (n.tips+1):(n.tips+n.internal.nodes)){
       node <- i
       spp.node <- tips(tree2, node) # get taxa in node
-      out[i-n.tips, j+1] <- median(samp[rownames(samp) %in% spp.node, ], na.rm = T) # subset taxa and get the median
+      out[i-n.tips, j+1] <- mean(samp[rownames(samp) %in% spp.node, ], na.rm = T) # subset taxa and get the mean
     }
   }
   

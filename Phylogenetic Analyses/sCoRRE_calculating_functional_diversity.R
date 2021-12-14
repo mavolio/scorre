@@ -1,6 +1,7 @@
 ### 
 ### Calculate Functional dispersion for CoRRE data
 ### 
+### Last updated Dec 13, 2021
 
 ### Set up workspace
 rm(list=ls())
@@ -11,7 +12,7 @@ library(tidyverse)
 memory.limit(size=50000)
 
 ### Trait data
-#read in data
+# Read in data
 contTraits <- read.csv('Trait Data\\TRY Data\\Gap_Filled\\TRY_new.csv')%>%
   rename(species_matched=Species)%>%
   select(-X.1, -X, -Family, -Genus, -ObservationID)%>%

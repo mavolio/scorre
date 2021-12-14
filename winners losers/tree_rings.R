@@ -26,27 +26,57 @@ library(V.PhyloMaker)
 #set directory:
 #my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
-#my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
+#my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
+my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 
 #load data.
-species.data<-read.table(paste(my.wd,"Species_DCiDiff_newtrts.csv",sep=""), header=T, sep=",")
+species.data<-read.table(paste(my.wd,"Species_DCiDiff_Dec2021.csv",sep=""), header=T, sep=",")
 
 #create table for the tree:
 spp<-as.data.frame(unique(species.data$species_matched))
 names(spp)[1]<-paste("species")
 spp$genus<-word(spp$species, 1)
 
+non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       "Aulacomnium turgidum",       
+                   "Barbilophozia hatcheri",      "Barbilophozia kunzeana" ,     "Blepharostoma trichophyllum",
+                   "Brachythecium albicans",      "Bryum arcticum"   ,           "Bryum pseudotriquetrum",     
+                   "Campylium stellatum",         "Cyrtomnium hymenophyllum" ,   "Dicranoweisia crispula",     
+                   "Dicranum brevifolium",        "Dicranum elongatum"  ,        "Dicranum fuscescens",        
+                   "Dicranum groenlandicum",      "Dicranum scoparium" ,         "Distichium capillaceum",     
+                   "Ditrichum flexicaule",        "Gymnomitrion concinnatum" ,   "Hamatocaulis vernicosus",    
+                   "Homalothecium pinnatifidum",  "Hylocomium splendens",        "Hypnum cupressiforme",       
+                   "Hypnum hamulosum",            "Isopterygiopsis pulchella",   "Kiaeria starkei",            
+                   "Leiocolea heterocolpos",      "Marchantia polymorpha",       "Marsupella brevissima",      
+                   "Meesia uliginosa",            "Myurella tenerrima",          "Oncophorus virens",         
+                   "Oncophorus wahlenbergii",     "Pleurozium schreberi",        "Pogonatum urnigerum" ,       
+                   "Pohlia cruda" ,               "Pohlia nutans",               "Polytrichastrum alpinum",    
+                   "Polytrichum juniperinum",     "Polytrichum piliferum",       "Polytrichum strictum",       
+                   "Preissia quadrata",           "Ptilidium ciliare",           "Racomitrium lanuginosum",    
+                   "Rhytidium rugosum",           "Saelania glaucescens",        "Sanionia uncinata",          
+                   "Schistidium apocarpum",       "Syntrichia ruralis",          "Tomentypnum nitens",         
+                   "Tortella tortuosa",           "Tritomaria quinquedentata",   "Nephroma arcticum" , "Unknown NA",
+                   "Campylopus flexuosus",        "Hypnum jutlandicum",          "Plagiothecium undulatum",    
+                   "Polytrichum commune",         "Pseudoscleropodium purum",    "Rhytidiadelphus loreus",
+                   "Rhytidiadelphus triquetrus",  "Thuidium tamariscinum")
+spp <- spp[!spp$species %in% non.vascular, ] #remove
+
 #load families for species and rearrange to create necessary fields for the phylogenies:
-fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE)
+fam<-read.table(paste(my.wd, "species_families_trees_2021.csv",sep=""), header=T, sep=",", fill = TRUE)
 names(fam)[1]<-paste("species")
 names(fam)[2]<-paste("family")
 spp<-merge(spp, fam, by="species", all.x=T)
 spp$species.relative <-  rep("",length(nrow(spp)))
 spp$genus.relative <-  rep("",length(nrow(spp)))
+spp$tree.non.tree<-NULL
 
 #unify family names:
 spp$family[spp$family=="Compositae"]<-"Asteraceae"
 spp$family[spp$family=="Leguminosae"]<-"Fabaceae"
+spp$family[spp$family=="Viburnaceae"]<-"Adoxaceae"
+spp$family[spp$family=="Polypodiaceae"]<-"Dryopteridaceae"
+spp$family[spp$genus=="Blechnum"]<-"Blechnaceae"
+spp$family[spp$genus=="Onoclea"]<-"Onocleaceae"
+spp$family[spp$genus=="Thelypteris"]<-"Thelypteridaceae"
 
 #get phylogenetic tree:
 scorre.tree <- phylo.maker(sp.list = spp, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S3")
@@ -57,8 +87,8 @@ in.data.not.tree <- setdiff(unique(species.data$species_matched), scorre.tree$sc
 species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),] #only works if some species from the data are not in the tree
 
 #save tree and subset table:
-write.tree(scorre.tree$scenario.3, paste(my.wd, "scorre.tree.win.los.tre", sep=""))
-write.table(species.data, paste(my.wd, "Species_DCiDiff_newtrts_filtered.csv", sep=""))
+write.tree(scorre.tree$scenario.3, paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep=""))
+write.table(species.data, paste(my.wd, "Species_DCiDiff_filtered_Dec2021.csv", sep=""))
 
 
 
