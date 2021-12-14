@@ -1,6 +1,7 @@
 # sCoRRE - Covariance in community-level traits 
 # Key question: Do environmental change drivers increase covariance in community traits?
 # Based on Dwyer and Laughlin 2017, Ecology Letters 
+# 
 
 library(ggplot2)
 library(gridExtra)
