@@ -1,3 +1,5 @@
+rm(list=ls())
+
 #investigate winners losers
 
 library(tidyverse)
@@ -10,10 +12,8 @@ my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "/Users/egrman/Dropbox/sDiv_sCoRRE_shared/"
 
-#read in the data
-
 #raw abundance data
-dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundance_Dec2021.csv", sep=""))
+dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundance_Dec2021.csv",sep=""))
 
 #relative abundance data
 reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv", sep=""))
@@ -23,13 +23,34 @@ trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_E
   select(site_code, project_name, community_type, treatment, trt_type, pulse, resource_mani)%>%
   unique()
 
-#DCi
+#cleaned species names
+sp <-read.csv(paste(my.wd,"CoRRE data/CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
+  select(genus_species, species_matched)%>%
+  unique
 
-#combine relative abundance data with treatment and cleaned species names
-allreldat<-reldat%>%
+#combine relative abundance data with treatment and cleaned species names, drop mosses
+myreldat<-reldat%>%
   left_join(trts)%>%
   left_join(sp)%>% #this drops the unknowns
-  na.omit()
+  na.omit() %>% 
+  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum",  "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
+  filter(drop==0) %>% 
+  mutate(site_project_comm=as.factor(paste(site_code, project_name, community_type, sep="::")))
+
+#adding in zeros for species that were absent from a plot
+
+spc=unique(myreldat$site_project_comm)
+myreldat_filled=NULL
+
+for (j in 1:length(spc)) {
+  dat.filled=myreldat[myreldat$site_project_comm==as.character(spc[j]),] %>% 
+    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, data_type, version, genus_species, relcov, trt_type, pulse, resource_mani, species_matched, site_project_comm) %>% 
+    pivot_wider(names_from="species_matched", values_from="relcov", values_fill=0)
+  dat.keep=dat.filled %>% 
+    pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "data_type", "version", "genus_species", "trt_type", "pulse", "resource_mani", "site_project_comm"), names_to="species.matched", values_to="relcov")
+  myreldat_filled=rbind(myreldat_filled, dat.keep)
+}
+
 
 #get average relative cover for each species in a treatment, over all plots
 relave<-allreldat%>%
