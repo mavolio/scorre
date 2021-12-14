@@ -8,16 +8,18 @@ library(tidyverse)
 # library("mFD")
 
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
-my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #Padu's address
+setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
 setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
 
 ### Start with PPlots to get things going
 
 ### Species relative cover data
+#pplots_raw <- read.csv("CoRRE_RelativeCover_Dec2021.csv") %>% #
 pplots_raw <- read.csv("CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv") %>%
   filter(project_name=="pplots") %>%
   mutate(genus_species = replace(genus_species, genus_species == "baptisia brachteata", "baptisia bracteata"))
 
+#corre_to_try <- read.csv("corre2trykey_2021.csv") %>%
 corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
   dplyr::select(genus_species, species_matched) %>%
   unique(.)
@@ -38,6 +40,7 @@ pplots_sp_vec <- pplots_sp_df %>%
 ###
 ### Read in and clean trait data
 ###
+#all_traits_raw <- openxlsx::read.xlsx("sCoRRE categorical trait data_final_20211209.xlsx", sheet=1) %>%
 all_traits_raw <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sCoRRE categorical trait data_final_20211209.csv") %>%
   dplyr::select(species_matched, growth_form, photosynthetic_pathway, lifespan,  clonal, mycorrhizal_type, n_fixation) %>%
   mutate(photosynthetic_pathway = replace(photosynthetic_pathway, grep("possible", photosynthetic_pathway), NA)) %>%
@@ -100,6 +103,8 @@ row.names(pplots_relcov) <- paste(pplots_plot_info$calendar_year, pplots_plot_in
 pplots_traits <- pplots_traits %>%
   arrange(species_matched) %>%
   column_to_rownames("species_matched")
+
+
 
 ### Changing all traits to factors
 pplots_traits$growth_form <- as.factor(pplots_traits$growth_form)
