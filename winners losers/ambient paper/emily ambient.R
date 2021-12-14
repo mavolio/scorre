@@ -20,10 +20,10 @@ reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE
 
 #info on treatments
 trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
-  select(site_code, project_name, community_type, treatment, trt_type, pulse, plot_mani,resource_mani)%>%
+  select(site_code, project_name, community_type, treatment, trt_type, pulse, plot_mani, resource_mani)%>%
   unique()
 
-#for N and P other, do I include multiple nutrients or not?
+{#for N and P other, do I include multiple nutrients or not?
 
 trt_analysis<-trts%>%
   mutate(alltrts=ifelse(trt_type %in% c("CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0))%>%
@@ -47,6 +47,7 @@ trt_analysis<-trts%>%
          p=ifelse(trt_type=="P", 1, 0),
          p_other=ifelse(trt_type %in% c("N*P*burn*graze","mult_nutrient*irr","P*burn*graze","P*burn*mow_clip","P*herb_removal","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal*mow_clip"), 1, 0),
          multtrts=ifelse(trt_type %in% c("mult_nutrient","N*P","CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp"),1,0))
+  }
 
 #cleaned species names
 sp <-read.csv(paste(my.wd,"CoRRE data/CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
@@ -63,7 +64,7 @@ allreldat<-reldat%>%
 
 #get average relative cover for each species in a treatment, over all plots
 relave<-allreldat%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani, species_matched, calendar_year, treatment_year)%>%
+  group_by(site_code, project_name, community_type, treatment, trt_type, plot_mani, species_matched, calendar_year, treatment_year)%>%
   summarize(mean=mean(relcov))
 
 
@@ -86,9 +87,9 @@ controlplots<-allreldat%>%
 #to get relative frequency, determine number of control plots a species is found in, merge in total number of plots and calculate relative frequency  
 control_freq<-allreldat%>%
   filter(plot_mani==0)%>%
-  select(site_code, project_name, community_type, species_matched, treatment, plot_id, calendar_year, treatment_year)%>%
+  select(site_code, project_name, community_type, species_matched, treatment, trt_type, plot_id, calendar_year, treatment_year)%>%
   unique()%>%
-  group_by(site_code, project_name, community_type, species_matched, treatment, calendar_year, treatment_year)%>%
+  group_by(site_code, project_name, community_type, species_matched, treatment, trt_type, calendar_year, treatment_year)%>%
   summarize(nplots=length(plot_id))%>%
   left_join(controlplots)%>%
   mutate(freq=nplots/ncplots)
@@ -97,7 +98,7 @@ control_freq<-allreldat%>%
 control_dom<-control_freq%>%
   left_join(Crelave)%>%
   mutate(DCi=(mean+freq)/2)%>%
-  select(site_code, project_name, community_type, treatment, species_matched, calendar_year, treatment_year, mean, freq, DCi)%>%
+  select(site_code, project_name, community_type, treatment, trt_type, species_matched, calendar_year, treatment_year, mean, freq, DCi)%>%
   mutate(TorC="C")
 
 
@@ -113,16 +114,16 @@ Trelave<-relave%>%
 #getting frequency of treated plots, same code as above but for treated plots
 treatplots<-allreldat%>%
   filter(plot_mani!=0)%>%
-  select(site_code, project_name, community_type, treatment, plot_id, calendar_year, treatment_year)%>%
+  select(site_code, project_name, community_type, treatment, trt_type, plot_id, calendar_year, treatment_year)%>%
   unique()%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
+  group_by(site_code, project_name, community_type, treatment, trt_type, calendar_year, treatment_year)%>%
   summarize(ntplots=length(plot_id))
 
 treat_freq<-allreldat%>%
   filter(plot_mani!=0)%>%
-  select(site_code, project_name, community_type, treatment, species_matched, plot_id, calendar_year, treatment_year)%>%
+  select(site_code, project_name, community_type, treatment, trt_type, species_matched, plot_id, calendar_year, treatment_year)%>%
   unique()%>%
-  group_by(site_code, project_name, community_type, treatment, species_matched, calendar_year, treatment_year)%>%
+  group_by(site_code, project_name, community_type, treatment, trt_type, species_matched, calendar_year, treatment_year)%>%
   summarize(nplots=length(plot_id))%>%
   left_join(treatplots)%>%
   mutate(freq=nplots/ntplots)
@@ -130,59 +131,42 @@ treat_freq<-allreldat%>%
 treat_dom<-treat_freq%>%
   left_join(Trelave)%>%
   mutate(DCi=(mean+freq)/2)%>%
-  select(site_code, project_name, community_type, treatment, species_matched, calendar_year, treatment_year, mean, freq, DCi)%>%
+  select(site_code, project_name, community_type, treatment, trt_type, species_matched, calendar_year, treatment_year, mean, freq, DCi)%>%
   mutate(TorC="T")
 
 
 #combine treatment and control plots:
 DCi.through.time=rbind(treat_dom, control_dom)
-DCi.through.time$site_project_comm=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, sep="::"))
-DCi.through.time$site_project_comm_sp=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, sep="::"))
-DCi.through.time$site_project_comm_trt=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$treatment, sep="::"))
-
-
-######        THIS IS WHERE IT STOPS WORKING!         #########
+DCi.through.time$site_project_comm_trt=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, DCi.through.time$trt_type, sep="::"))
+DCi.through.time$year=as.factor(paste(DCi.through.time$calendar_year, DCi.through.time$treatment_year, sep="::")) #combine calendar year and treatment year columns into one to save this info to split out later
+DCi.through.time$treatment_year=NULL
+DCi.through.time$calendar_year=NULL
 
 
 #assign DCi of zero when a species was absent from all replicate plots of a treatment or control (within a site/project/community/treatment)
-
 spct=unique(DCi.through.time$site_project_comm_trt)
-DCi.through.time_filled=numeric(0)
+DCi.through.time_filled=NULL
 
 for (j in 1:length(spct)) {
   dat=DCi.through.time[DCi.through.time$site_project_comm_trt==as.character(spct[j]),]
   dat.filled=dat %>% 
-    select(site_code, project_name, community_type, treatment, species_matched, calendar_year, DCi, TorC) %>% 
-    pivot_wider(names_from="calendar_year", values_from="DCi", values_fill=0)
+    select(site_code, project_name, community_type, treatment, trt_type, site_project_comm_trt, species_matched, year, DCi, TorC) %>% 
+    pivot_wider(names_from="year", values_from="DCi", values_fill=0)
   dat.keep=dat.filled %>% 
-    pivot_longer(!c("site_code", "project_name", "community_type", "treatment", "species_matched", "TorC"), names_to="calendar_year", values_to="DCi")
-  
+    pivot_longer(!c("site_code", "project_name", "community_type", "treatment", "trt_type", "site_project_comm_trt", "species_matched", "TorC"), names_to="year", values_to="DCi") %>% 
+    separate(year, c("calendar_year", "treatment_year"))
   DCi.through.time_filled=rbind(DCi.through.time_filled, dat.keep)
 }
 
+#add handy labels
 
-
-
-
-DCi.through.time_filled=DCi.through.time %>% 
-  select(site_code, project_name, community_type, treatment, species_matched, calendar_year, DCi, TorC) %>% 
-  pivot_wider(names_from="calendar_year", values_from="DCi", values_fill=0)
-
-
-
-spcs=unique(DCi.through.time$site_project_comm_sp)
-
-
+DCi.through.time_filled$site_project_comm=as.factor(paste(DCi.through.time_filled$site_code, DCi.through.time_filled$project_name, DCi.through.time_filled$community_type, sep="::"))
+DCi.through.time_filled$site_project_comm_sp=as.factor(paste(DCi.through.time_filled$site_project_comm, DCi.through.time_filled$species_matched, sep="::"))
 
 
 #plot
 for (i in 1:length(spcs)) {
-  qplot(treatment_year, DCi, data=DCi.through.time[DCi.through.time$site_project_comm_sp==as.character(spcs[i]),], color=TorC)
+  qplot(treatment_year, DCi, data=DCi.through.time_filled[DCi.through.time_filled$site_project_comm_sp==as.character(spcs[i]),], color=treatment, shape=TorC, main=spcs[i]) + geom_smooth(method="lm", se=F, aes(group=treatment))
   
   
 }
-
-
-
-
-DCi.through.time[DCi.through.time$site_project_comm_sp==as.character("Alberta::CCD::0::Cerastium arvense"),]
