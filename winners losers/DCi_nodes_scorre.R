@@ -31,7 +31,7 @@ node.mean <- function(tree, samp, N) {
   sr.node<-list() #create object to store the number of species  found in each node.
   for(i in (n.tips+1):(n.tips+n.internal.nodes)){
     node <- i
-    spp.node <- tips(tree, node) # get taxa in node
+    spp.node <- geiger::tips(tree, node) # get taxa in node
     out[i-n.tips,1] <- mean(samp[rownames(samp) %in% spp.node, ], na.rm = T) # subset taxa and get the mean
     sr.node[[i]]<-length(samp[rownames(samp) %in% spp.node, ])
   }
