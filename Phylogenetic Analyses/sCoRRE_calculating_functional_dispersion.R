@@ -13,6 +13,12 @@ setwd("~/Dropbox/sDiv_sCoRRE_shared/")
 setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
 setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
 
+# Standard Error Function:
+se <- function(x, na.rm=na.rm){
+  SE=sd(x,na.rm=TRUE)/sqrt(length(x))
+  return(SE)
+}
+
 ###
 ### Read in and prep all data
 ###
@@ -182,13 +188,25 @@ for(PROJ in 1:length(site_proj_comm_vector)){
 write.csv(FD_df_master, file=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\Functional diversity metrics_", Sys.Date(),".csv"),
                                     row.names=F)
 
-
-FD_df_means <- FD_df_master %>%
+ggplot(filter(FD_df_master, site_proj_comm == site_proj_comm_vector[3]), aes(x=treatment_year, y=FDis, col=treatment)) +
+  geom_point()
   
+FD_df_means <- FD_df_master %>%
+  group_by(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment) %>%
+  summarize_at(vars(FEve, FDis, RaoQ), list(mean=mean, se=se), na.rm=T)
 
 ### fun plotting
-ggplot(filter(FD_df_master, site_proj_comm == site_proj_comm_vector[2]), aes(x=treatment_year, y=FDis, col=treatment)) +
-  geom_point() 
+for(PROJ in 1:length(site_proj_comm_vector)){
+  ggplot(filter(FD_df_means, site_proj_comm == site_proj_comm_vector[PROJ]), aes(x=treatment_year, y=FDis_mean, col=treatment,
+                                                                              ymin=FDis_mean-FDis_se, ymax=FDis_mean+FDis_se)) +
+    geom_errorbar(width=0.1) +
+    geom_point() +
+    geom_path() +
+    ggtitle(site_proj_comm_vector[PROJ]) +
+    theme_bw()
+  ggsave(filename=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\figures\\",
+                         site_proj_comm_vector[PROJ], "FDis.jpg"))
+}
 
 
 ### Trouble getting species by species distance matrix in Euclidean form... here's the error message:

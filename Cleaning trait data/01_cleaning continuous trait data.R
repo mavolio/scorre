@@ -18,7 +18,7 @@ library(tidyverse)
 
 ### Read in trait data -- for now I'm just cleaning the traits identified above
 traits_cont_raw <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\Continuous_Traits\\Backtrans_GapFilled_sCorre.csv") %>%
-  dplyr::select(X:family, LDMC, SLA, plant_height_vegetative, seed_dry_mass, seed_number, rooting_depth, SRL) %>%
+  dplyr::select(X:family, LDMC, SLA, plant_height_vegetative, seed_dry_mass, seed_number, rooting_depth, SRL) %>% # NEED TO REMOVE SRL
   mutate(across(everything(), ~replace(., .<0, NA)))
 
 
@@ -50,9 +50,10 @@ traits_cont_clean <- traits_cont_raw %>%
   summarize_at(vars(LDMC:SRL), list(mean=mean, sd=sd), na.rm=T) %>%
   ungroup() %>%
   left_join(moss_key, by="species_matched") %>%
+  mutate(moss=ifelse(moss=="moss","moss","non-moss")) %>%
   filter(moss!="moss") %>%
   dplyr::select(-moss)
-  
+
 
 # hist(traits_cont_clean$LDMC_mean)
 # hist(traits_cont_clean$SLA_mean)
