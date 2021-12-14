@@ -65,7 +65,7 @@ comm<-comm[complete.cases(comm), ] #by now, we remove cases with NA to get rid o
 
 #create new column with unique plot identifier:
 comm <- comm %>% mutate(plot_id2 = paste(site_code, project_name, community_type,
-                                         treatment_year, plot_id, sep = "."))
+                                         treatment_year, plot_id, sep = "::"))
 
 #remove sites with only 1 species:
 comm <- comm[comm$plot_id2 %in% comm$plot_id2[duplicated(comm$plot_id2) | duplicated(comm$plot_id2, fromLast=TRUE)], ]
@@ -185,7 +185,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
 }
 
 #save output:
-write.table(pd.all, paste(my.wd, "CoRRE_pd_metrics_weighted.csv", sep=""))
+write.table(pd.all, paste(my.wd, "CoRRE_pd_metrics_weighted.csv", sep=","))
 
 #clean-up:
 #rm(list = ls())
