@@ -127,7 +127,7 @@ test <- test[c("site_code", "project_name", "community_type", "treatment_year", 
 
 df <- merge(test, traits, by.x = "genus_species", by.y = "species_matched", all.x = TRUE)
 
-df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = ".")
+df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "-")
 
 df$ok <- complete.cases(df[,c("seed_dry_mass", 
                              "stem_spec_density",
@@ -154,7 +154,7 @@ hv_func <- function(x) {
                        verbose = FALSE) 
   }
 
-hv_volumes <- lapply(hv_split,  hv_func)
+#hv_volumes <- lapply(hv_split,  hv_func)
 
 
 
@@ -195,7 +195,10 @@ evenness <- kernel.evenness(hvs_joined)
 dispersion <- kernel.dispersion(hvs_joined)
 
 
-hv_div <- separate(hv_div, rep_year, c("replicate", "year"), sep = "-")
+rep <- names(hv_volumes)
+hv_div <- data.frame(rep, alpha)
+
+hv_div <- separate(hv_div, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "-")
 
 
 
