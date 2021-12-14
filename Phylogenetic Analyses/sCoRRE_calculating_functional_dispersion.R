@@ -8,6 +8,7 @@ library(tidyverse)
 # library("mFD")
 
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
+my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #Padu's address
 setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
 
 ### Start with PPlots to get things going
