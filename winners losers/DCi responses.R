@@ -15,8 +15,15 @@ my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 #raw abundance data
 dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundance_Dec2021.csv",sep=""))
 
-#relative abundance data
-reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep=""))
+sp <-read.csv(paste(my.wd,"CoRRE data/CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
+  select(genus_species, species_matched)%>%
+  unique()
+
+dat_cleansp<-dat%>%
+  left_join(sp) %>% 
+  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana" , "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana" , "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum",  "Campylium stellatum",         "Cyrtomnium hymenophyllum" ,   "Dicranoweisia crispula",  "Dicranum brevifolium", "Dicranum elongatum",  "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium" , "Distichium capillaceum",  "Ditrichum flexicaule",        "Gymnomitrion concinnatum" ,   "Hamatocaulis vernicosus",   "Homalothecium pinnatifidum",  "Hylocomium splendens",        "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella",   "Kiaeria starkei", "Leiocolea heterocolpos",      "Marchantia polymorpha",       "Marsupella brevissima",  "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens",  "Oncophorus wahlenbergii", "Pleurozium schreberi","Pogonatum urnigerum" ,  "Pohlia cruda" , "Pohlia nutans","Polytrichastrum alpinum", "Polytrichum juniperinum",     "Polytrichum piliferum",  "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare",           "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",   "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa",           "Tritomaria quinquedentata",   "Nephroma arcticum" , "Unknown NA", "Campylopus flexuosus",        "Hypnum jutlandicum","Plagiothecium undulatum",   "Polytrichum commune","Pseudoscleropodium purum",    "Rhytidiadelphus loreus",  "Rhytidiadelphus triquetrus",  "Thuidium tamariscinum"), 1, 0)) %>% 
+  filter(drop==0)
+
 
 #info on treatments
 trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
@@ -142,7 +149,7 @@ allreldat<-reldat%>%
   left_join(sp)%>%# this drops the unknowns
   na.omit()
 
-#get average relative cover for each species in a treatment, over all years of the experiment over all plots
+#get average relative cover for each species in a treatment, over all years of the experiment over all plots. Need to add in zeros.
 relave<-allreldat%>%
   group_by(site_code, project_name, community_type, treatment, plot_mani, species_matched)%>%
   summarize(mean=mean(relcov))
