@@ -83,8 +83,10 @@ DCi.through.time<-relave %>%
   mutate(DCi=(mean.relabund+freq)/2) %>%
   select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, mean.relabund, nplots, freq, DCi)
 
-filename=(paste(my.wd, "/WinnersLosers paper/DCi trends through time/ DCi trends through time.csv", sep=""))
+filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi trends through time.csv", sep=""))
 write.csv(DCi.through.time, filename, row.names=F)
+
+#DCi.through.time=read.csv(paste(my.wd, "/WinnersLosers paper/DCi/ DCi trends through time.csv", sep=""))
 
 #add handy labels
 DCi.through.time$site_project_comm=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, sep="_")); spc=unique(DCi.through.time$site_project_comm); length(spc)
@@ -97,23 +99,78 @@ DCi.through.time$site_project_comm_sp_yr=as.factor(paste(DCi.through.time$site_p
 
 DCi.through.time$site_project_comm_sp_trt_yr=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$treatment, DCi.through.time$calendar_year, sep="::")); spcsty=unique(DCi.through.time$site_project_comm_sp_trt_yr); length(spcsty)
 
-DCi.through.time$site_project_comm_sp_trt=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$treatment, sep="::")); spcst=unique(DCi.through.time$site_project_comm_sp_trt); length(spct)
+DCi.through.time$site_project_comm_sp_trt=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$treatment, sep="::")); spcst=unique(DCi.through.time$site_project_comm_sp_trt); length(spcst)
 
 
 #plot
+
 for (i in 1:length(spc)) {
   qplot(treatment_year, DCi, data=DCi.through.time[DCi.through.time$site_project_comm==as.character(spc[i]),], color=treatment, main=spc[i]) + geom_smooth(method="lm", se=F, aes(group=treatment)) + facet_wrap(~species_matched)
-  filename=paste(my.wd, "/WinnersLosers paper/DCi trends through time/", as.character(spc[i]), ".pdf", sep="")
+  filename=paste(my.wd, "/WinnersLosers paper/DCi/species trends through time/", as.character(spc[i]), ".pdf", sep="")
   ggsave(filename, width=20, height=20)
 }
 
 
-####  how do we decide which species are rare enough to drop?  ###
+#averaging over time:
+DCi.averaged=DCi.through.time %>% 
+  group_by(site_code, project_name, community_type, site_project_comm, site_project_comm_trt, site_project_comm_sp, site_project_comm_sp_trt, treatment, trt_type, species_matched) %>% 
+  summarize(across(c(DCi, freq, mean.relabund, nplots), mean))
 
+filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi averaged through time.csv", sep=""))
+write.csv(DCi.averaged, filename, row.names=F)
+
+# how do we decide which species are rare enough to drop? 
 
 for (i in 1:length(spc)) {
-  ggplot(DCi.through.time[DCi.through.time$site_project_comm==as.character(spc[i]),], aes(treatment_year, DCi)) + geom_point() + geom_smooth(method="lm", se=F, aes(group=treatment)) + facet_wrap(~species_matched) + ggtitle(spc[i])
-  filename=paste(my.wd, "/WinnersLosers paper/DCi trends through time/", as.character(spc[i]), ".pdf", sep="")
-  ggsave(filename, width=20, height=20)
+  ggplot(DCi.averaged[DCi.averaged$site_project_comm==as.character(spc[i]),], aes(DCi)) + geom_histogram(aes(fill=treatment)) + ggtitle(spc[i])
+  filename=paste(my.wd, "/WinnersLosers paper/DCi/histograms to look at rarity/", as.character(spc[i]), ".pdf", sep="")
+  ggsave(filename, width=10, height=10)
 }
 
+
+#averaging again across treatments, leaving control plots out:
+
+DCi.av.control=DCi.averaged[DCi.averaged$trt_type=="control",]
+names(DCi.av.control)[names(DCi.av.control)=="DCi"]<-"DCi.control"
+names(DCi.av.control)[names(DCi.av.control)=="mean.relabund"]<-"mean.relabund.control"
+names(DCi.av.control)[names(DCi.av.control)=="freq"]<-"freq.control"
+
+DCi.av.trt=DCi.averaged[!DCi.averaged$trt_type=="control",]
+names(DCi.av.trt)[names(DCi.av.trt)=="DCi"]<-"DCi.trt"
+names(DCi.av.trt)[names(DCi.av.trt)=="mean.relabund"]<-"mean.relabund.trt"
+names(DCi.av.trt)[names(DCi.av.trt)=="freq"]<-"freq.trt"
+
+DCi.av=merge(DCi.av.trt, DCi.av.control, by=c("site_code", "project_name", "community_type", "site_project_comm", "site_project_comm_sp", "species_matched"))
+DCi.av$sp=ifelse(DCi.av$species_matched=="Andropogon gerardii", "Andropogon gerardii", ifelse(DCi.av$species_matched=="Ambrosia psilostachya", "Ambrosia psilostachya", ifelse(DCi.av$species_matched=="Triodanis perfoliata", "Triodanis perfoliata", "a")))
+
+ggplot(data=DCi.av, aes(DCi.control, DCi.trt)) + geom_point(color="lightgray") + geom_point(data=DCi.av[DCi.av$sp %in% c("Ambrosia psilostachya", "Andropogon gerardii", "Triodanis perfoliata"),], aes(color=sp)) + geom_abline(intercept=0, slope=1)
+filename=paste(my.wd, "/WinnersLosers paper/DCi/DCi correlation", ".pdf", sep=""); ggsave(filename, width=10, height=10)
+
+ggplot(data=DCi.av, aes(freq.control, freq.trt)) + geom_point(color="lightgray") + geom_point(data=DCi.av[DCi.av$sp %in% c("Ambrosia psilostachya", "Andropogon gerardii", "Triodanis perfoliata"),], aes(color=sp)) + geom_abline(intercept=0, slope=1)
+filename=paste(my.wd, "/WinnersLosers paper/DCi/freq correlation", ".pdf", sep=""); ggsave(filename, width=10, height=10)
+
+ggplot(data=DCi.av, aes(mean.relabund.control, mean.relabund.trt)) + geom_point(color="lightgray") + geom_point(data=DCi.av[DCi.av$sp %in% c("Ambrosia psilostachya", "Andropogon gerardii", "Triodanis perfoliata"),], aes(color=sp)) + geom_abline(intercept=0, slope=1)
+filename=paste(my.wd, "/WinnersLosers paper/DCi/mean relabund correlation", ".pdf", sep=""); ggsave(filename, width=10, height=10)
+
+
+
+#averaging again across treatments (including controls):
+
+DCi.averaged2=DCi.averaged %>% 
+  group_by(site_code, project_name, community_type, site_project_comm, site_project_comm_sp, species_matched) %>% 
+  summarize(across(c(DCi, freq, mean.relabund, nplots), mean))
+
+#how many site_project_comms is each species present in?
+
+sp.widespread=DCi.averaged2 %>% 
+  group_by(species_matched) %>% 
+  summarize(number.site_project_comm=length(site_project_comm))
+sp.widespread[sp.widespread$number.site_project_comm>20,]
+
+ggplot(DCi.averaged2, aes(site_project_comm, DCi)) + geom_violin() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+filename=paste(my.wd, "/WinnersLosers paper/DCi/violin plot of species mean DCi across all treatment all years", ".pdf", sep="")
+ggsave(filename, width=40, height=5)
+
+ggplot(DCi.averaged2, aes(site_project_comm, freq)) + geom_violin() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+filename=paste(my.wd, "/WinnersLosers paper/DCi/violin plot of species mean frequencies across all treatment all years", ".pdf", sep="")
+ggsave(filename, width=40, height=5)
