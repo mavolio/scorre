@@ -2,10 +2,12 @@ library(tidyverse)
 library(plyr)
 library(hypervolume)
 library(BAT)
+library(reshape2)
 
 
 
 
+#Read in data
 traits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/trait data/Final Cleaned Traits/Continuous_Traits/Backtrans_GapFilled_sCorre.csv")
 
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv")
@@ -13,7 +15,7 @@ cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE da
 experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")
 
 
-
+#create average trait values per species
 traits <- ddply(traits,.(species_matched),
       function(x)data.frame(
         seed_dry_mass = mean(x$seed_dry_mass),
@@ -33,6 +35,8 @@ traits <- ddply(traits,.(species_matched),
       ))
 
 
+
+#standardize the scale of all the traits
 cols <- c( "seed_dry_mass", 
             "stem_spec_density",
            "leaf_N",
@@ -50,19 +54,26 @@ cols <- c( "seed_dry_mass",
 
 traits[cols] <- scale(traits[cols])
 
+#make the species column merge-able
 traits$species_matched <- tolower(traits$species_matched)
 
 
 
 
-#Reduce cover data to focal data using a series of right merges
-
-    #Last year of experiment
-    #only certain manipulations
-    #minimum treatment length
-    #minimum number of replicates
+#Reduce cover data to focal data using a series of merges
 
 
+    #minimum number of replicates (I guess I still haven't figured this part out yet)
+repnum <- cover%>%
+  dplyr::select(site_code, project_name, community_type, treatment, plot_id)%>%
+  unique()%>%
+  #dplyr::mutate(present = 1)%>%
+  dplyr::group_by(site_code, project_name, community_type, treatment)%>%
+  dplyr::summarise(rep_num = length(plot_id))%>%
+  dplyr::ungroup()
+
+
+  #only certain manipulations
 foctrt <- experimentinfo[c("site_code", "project_name", "community_type", "trt_type")]%>%
           unique()%>%
           subset( trt_type == "N" | trt_type == "P" | trt_type == "irr" | trt_type == "drought")
@@ -71,15 +82,15 @@ foctrt$treats_wanted <- foctrt$trt_type
 foctrt <- foctrt[c("site_code", "project_name", "community_type", "treats_wanted")]
 
 
+
+  #Last year of experiment
 lastyear <- ddply(experimentinfo, .(site_code, project_name, community_type),
       function(x)data.frame(
         last_trt_yr = max(x$calendar_year)
       ))
 
 
-#temp <- experimentinfo[c("site_code", "project_name", "community_type", "treatment_year")]
-#unique(temp)
-
+  #minimum treatment length
 nyear <- experimentinfo[c("site_code", "project_name", "community_type", "treatment_year")] %>%
         unique()%>%
         subset(treatment_year != 0)%>%
@@ -90,38 +101,27 @@ nyear <- experimentinfo[c("site_code", "project_name", "community_type", "treatm
 
 
 
-
-temp <- experimentinfo[c("site_code", "project_name", "community_type", "trt_type")] %>%
-        unique()
-
-#temp <- cover[c("site_code", "project_name", "community_type", "plot_id")] %>%
-#        merge(experimentinfo, by = )
-#  unique()%>%
- 
-
-test <- cover %>%
-  #merge( temp, by = c("site_code", "project_name", "community_type"), all.y = TRUE)%>%
+#Merge all the datasets above to create columns so subset by
+crest <- cover %>%
   merge(nyear,by = c("site_code", "project_name", "community_type"))%>%
   merge(lastyear, by = c("site_code", "project_name", "community_type"))%>%
   merge( experimentinfo, by = c("site_code", "project_name", "community_type", "treatment", "calendar_year", "treatment_year"), all.x = TRUE)%>%
   merge(foctrt, by = c("site_code", "project_name", "community_type"), all.x = TRUE)%>%
-  subset(treats_wanted != "NA")
-#%>%
-#  subset(trt_type == "N" | trt_type == "P" | trt_type == "irr" | trt_type == "drought")
+  merge(repnum, by = c("site_code", "project_name", "community_type"), all.x = TRUE)
 
 
-
-
-
-
-test <- test %>%
-        subset( n.trt.yrs >=10)%>%
+#subset by criteria
+test <- crest %>%
+  subset(treats_wanted != "NA")%>%
+        subset( n.trt.yrs >=5)%>%
         subset(last_trt_yr == calendar_year)%>%
   subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
             trt_type == "drought")%>%
-  subset(site_code == "KNZ" | 
+  subset(rep_num >= 5)%>%
+  subset(#site_code == "KNZ" | 
     #site_code == "NWT" | 
-      site_code == "SEV"
+      #site_code == "SEV" |
+        project_name == "EDGE"
     )##THIS IS ONLY TO GET THE CODE TO RUN FASTER WHILE MAKING THE WORKFLOW
 
 test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "genus_species", "relcov", "trt_type")]%>%
@@ -229,35 +229,32 @@ distance.measures <- kernel.similarity(hvs_joined) #this takes a long time, but 
 
 #distance.centroids <- distance$Distance_centroids
 
-library(reshape2)
 
 distance.centroids.dat <- melt(as.matrix(distance.measures$Distance_centroids), varnames = c("rep1", "rep2"))
 
 
+scooby <- distance.centroids.dat%>%
+          merge(plot.treatment, by.x = "rep1", by.y = "rep")
 
-scooby <- merge(distance.centroids.dat, plot.treatment, by.x = "rep1", by.y = "rep")
-dooby <- scooby[c("rep1", "rep2", "value", "trt_type", "site_code", "project_name", "community_type")]
-dooby <- unite(dooby, expgroup1, c("site_code", "project_name", "community_type"))
+dooby <- scooby[c("rep1", "rep2", "value", "trt_type", "site_code", "project_name", "community_type")]%>%
+        unite( expgroup1, c("site_code", "project_name", "community_type"))
+
 dooby$trt_rep1 <- dooby$trt_type
 
-doo <- merge(dooby, plot.treatment, by.x = "rep2", by.y = "rep")
-doo <- unite(doo, expgroup2, c("site_code", "project_name", "community_type"))
+doo <- dooby%>%
+      merge( plot.treatment, by.x = "rep2", by.y = "rep")%>%
+      unite( expgroup2, c("site_code", "project_name", "community_type"))
+
 doo$trt_rep2 <- doo$trt_type.y
 
 doo <- doo[c("rep1", "rep2", "value", "trt_rep1", "trt_rep2", "expgroup1", "expgroup2")]
 
 
-credits <- unite(doo, trt_comp, c("trt_rep1", "trt_rep2"), sep = ".", remove = FALSE)
-
-goingon <- subset(credits, value != 0)
-
-last <- subset(goingon, trt_comp == "control.control" | trt_comp == "drought.drought")
-
-
-past <- last%>%
-  mutate( match = ifelse("expgroup1"=="expgroup2", TRUE, FALSE))
-
-blast <- subset(past, match == TRUE)
+last <- doo%>%
+          unite( trt_comp, c("trt_rep1", "trt_rep2"), sep = ".", remove = FALSE)%>%
+          subset( value != 0)%>%
+          subset( trt_comp == "control.control" | trt_comp == "drought.drought" | trt_comp == "N.N" | trt_comp == "P.P" | trt_comp == "irr.irr" )%>%
+          mutate( match = ifelse("expgroup1"=="expgroup2", TRUE, FALSE))
 
 ggplot(last, aes(trt_comp, value))+
   facet_wrap(~expgroup1)+
