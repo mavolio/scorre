@@ -33,7 +33,7 @@ myreldat<-reldat%>%
   left_join(trts)%>%
   left_join(sp)%>% #this drops the unknowns
   na.omit() %>% 
-  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum",  "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
+  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
   filter(drop==0) %>% 
   group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, trt_type, species_matched) %>% 
   summarize(relcov=sum(relcov)) %>% 
@@ -57,14 +57,16 @@ for (j in 1:length(spc)) {
 #get average relative cover for each species in a treatment, over all plots
 relave<-myreldat_filled%>%
   group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year)%>%
-  summarize(mean.relabund=mean(relcov))
+  summarize(mean.relabund=mean(relcov)) %>% 
+  ungroup()
 
 #getting frequency of each plot type
 myplots<-myreldat_filled%>%
   select(site_code, project_name, community_type, site_project_comm, treatment, block, trt_type, plot_id, calendar_year, treatment_year)%>%
   unique()%>%
   group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, calendar_year, treatment_year)%>%
-  summarize(ntotplots=length(plot_id))
+  summarize(ntotplots=length(plot_id)) %>% 
+  ungroup()
 
 #getting number of plots of each type in which a species was present
 freq<-myreldat_filled %>%
@@ -114,7 +116,8 @@ for (i in 1:length(spc)) {
 #averaging over time:
 DCi.averaged=DCi.through.time %>% 
   group_by(site_code, project_name, community_type, site_project_comm, site_project_comm_trt, site_project_comm_sp, site_project_comm_sp_trt, treatment, trt_type, species_matched) %>% 
-  summarize(across(c(DCi, freq, mean.relabund, nplots), mean))
+  summarize(across(c(DCi, freq, mean.relabund, nplots), mean)) %>% 
+  ungroup()
 
 filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi averaged through time.csv", sep=""))
 write.csv(DCi.averaged, filename, row.names=F)
@@ -126,6 +129,15 @@ for (i in 1:length(spc)) {
   filename=paste(my.wd, "/WinnersLosers paper/DCi/histograms to look at rarity/", as.character(spc[i]), ".pdf", sep="")
   ggsave(filename, width=10, height=10)
 }
+
+#exploring DCi cutoffs
+
+DCi_0.1=DCi.averaged %>% 
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, site_project_comm_trt, species_matched, site_project_comm_sp, site_project_comm_sp_trt, DCi, freq, mean.relabund, nplots) %>% 
+  filter(!DCi<0.1)
+
+
+
 
 
 #averaging again across treatments, leaving control plots out:
@@ -153,18 +165,19 @@ ggplot(data=DCi.av, aes(mean.relabund.control, mean.relabund.trt)) + geom_point(
 filename=paste(my.wd, "/WinnersLosers paper/DCi/mean relabund correlation", ".pdf", sep=""); ggsave(filename, width=10, height=10)
 
 
-
 #averaging again across treatments (including controls):
 
 DCi.averaged2=DCi.averaged %>% 
   group_by(site_code, project_name, community_type, site_project_comm, site_project_comm_sp, species_matched) %>% 
-  summarize(across(c(DCi, freq, mean.relabund, nplots), mean))
+  summarize(across(c(DCi, freq, mean.relabund, nplots), mean)) %>% 
+  ungroup()
 
 #how many site_project_comms is each species present in?
 
 sp.widespread=DCi.averaged2 %>% 
   group_by(species_matched) %>% 
-  summarize(number.site_project_comm=length(site_project_comm))
+  summarize(number.site_project_comm=length(site_project_comm)) %>% 
+  ungroup()
 sp.widespread[sp.widespread$number.site_project_comm>20,]
 
 ggplot(DCi.averaged2, aes(site_project_comm, DCi)) + geom_violin() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -174,3 +187,7 @@ ggsave(filename, width=40, height=5)
 ggplot(DCi.averaged2, aes(site_project_comm, freq)) + geom_violin() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 filename=paste(my.wd, "/WinnersLosers paper/DCi/violin plot of species mean frequencies across all treatment all years", ".pdf", sep="")
 ggsave(filename, width=40, height=5)
+
+
+
+
