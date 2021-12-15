@@ -13,18 +13,29 @@ my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 #read in the data
 
 #raw abundance data
-dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundance_Dec2021.csv",sep=""))
+dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep=""))
 
-#relative abundance data
-reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep=""))
+sp <-read.csv(paste(my.wd,"CoRRE data/CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
+  select(genus_species, species_matched)%>%
+  unique()
+
+#clean species names and sum over them, drop non-vascular plants, drop plants not IDd to species
+
+dat_cleansp<-dat%>%
+  left_join(sp) %>% 
+  na.omit()%>% ###get's rid of plants no identified to species
+  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana" , "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana" , "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum",  "Campylium stellatum",         "Cyrtomnium hymenophyllum" ,   "Dicranoweisia crispula",  "Dicranum brevifolium", "Dicranum elongatum",  "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium" , "Distichium capillaceum",  "Ditrichum flexicaule",        "Gymnomitrion concinnatum" ,   "Hamatocaulis vernicosus",   "Homalothecium pinnatifidum",  "Hylocomium splendens",        "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella",   "Kiaeria starkei", "Leiocolea heterocolpos",      "Marchantia polymorpha",       "Marsupella brevissima",  "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens",  "Oncophorus wahlenbergii", "Pleurozium schreberi","Pogonatum urnigerum" ,  "Pohlia cruda" , "Pohlia nutans","Polytrichastrum alpinum", "Polytrichum juniperinum",     "Polytrichum piliferum",  "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare",           "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",   "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa",           "Tritomaria quinquedentata",   "Nephroma arcticum" , "Unknown NA", "Campylopus flexuosus",        "Hypnum jutlandicum","Plagiothecium undulatum",   "Polytrichum commune","Pseudoscleropodium purum",    "Rhytidiadelphus loreus",  "Rhytidiadelphus triquetrus",  "Thuidium tamariscinum"), 1, 0)) %>% 
+  filter(drop==0)%>% #drops mosses
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, plot_id, species_matched)%>% #sums plants that were counted twice in the same plot but with different names that once cleaned were combined
+  summarize(relcov=sum(relcov))
+
 
 #info on treatments
 trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
   select(site_code, project_name, community_type, treatment, trt_type, pulse, plot_mani,resource_mani)%>%
   unique()
 
-#for N and P other, do I include multiple nutrients or not?
-
+#getting a list of all the treatments I want to focus on
 trt_analysis<-trts%>%
   mutate(alltrts=ifelse(trt_type %in% c("CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0))%>%
   filter(alltrts==1)%>%
@@ -40,115 +51,52 @@ trt_analysis<-trts%>%
          irg=ifelse(trt_type %in% c("irr"), 1, 0),
          irg_other=ifelse(trt_type %in% c("irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*irr*CO2","N*irr*mow_clip","mult_nutrient*irr","N*irr*CO2*temp","N*irr","N*irr*temp","irr*temp"), 1, 0),
          temp=ifelse(trt_type %in% c("temp"), 1, 0),
-         temp_other=ifelse(trt_type %in% c("control","CO2*temp","drought*CO2*temp","drought*temp*mow_clip","irr*CO2*temp","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2*temp","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","temp*mow_clip","drought*temp","irr*temp"), 1, 0),
-        # nuts_other=ifelse(trt_type %in% c("control","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze","mult_nutrient*irr","N*irr*CO2*tempN*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip"), 1, 0),
+         temp_other=ifelse(trt_type %in% c("CO2*temp","drought*CO2*temp","drought*temp*mow_clip","irr*CO2*temp","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2*temp","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","temp*mow_clip","drought*temp","irr*temp"), 1, 0),
+        # nuts_other=ifelse(trt_type %in% c("N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze","mult_nutrient*irr","N*irr*CO2*tempN*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip"), 1, 0),
          n=ifelse(trt_type=="N", 1, 0),
          n_other=ifelse(trt_type %in% c("N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze","N*irr*CO2*tempN*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","N*drought","N*herb_removal","N*irr","N*irr*temp","N*temp","N*P*temp","N*burn*mow_clip","N*P*burn","N*P*mow_clip"), 1, 0),
          p=ifelse(trt_type=="P", 1, 0),
          p_other=ifelse(trt_type %in% c("N*P*burn*graze","mult_nutrient*irr","P*burn*graze","P*burn*mow_clip","P*herb_removal","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal*mow_clip"), 1, 0),
          multtrts=ifelse(trt_type %in% c("mult_nutrient","N*P","CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp"),1,0))
 
-##overview of dataset we are using for this
-trt.summary<-trt_analysis %>% 
-  select(-treatment, -pulse, -plot_mani, -resource_mani, -alltrts)%>%
-  pivot_longer(dist:multtrts, names_to="trt_cat", values_to = "include")%>%
-  filter(include!=0)
 
-trt.exmpts<-trt.summary %>% 
-  group_by(trt_cat)%>%
-  summarize(n=length(trt_cat))
+##Getting DCI
 
-trt.sites<-trt.summary %>% 
-  group_by(site_code, trt_cat)%>%
-  summarize(include=sum(include))%>%
-  ungroup() %>% 
-  group_by(trt_cat)%>%
-  summarize(n=length(trt_cat))
-
-int.trt<-trt.summary %>% 
-  filter(trt_cat=="multtrts")%>%
-  group_by(trt_type)%>%
-  summarize(n=length(trt_type))
-
-#cleaned species names
-sp <-read.csv(paste(my.wd,"CoRRE data/CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
-  select(genus_species, species_matched)%>%
-  unique
-
-# #doing analsyes with logRR of abundance. We are not doing this and proceeding with DCi
-# #combine raw abundnace data with treatment and cleaned species names
-# alldat<-dat%>%
-#   left_join(trts)%>%
-#   left_join(sp)%>%#this drop unidentified species
-#   na.omit()
-#   
-# #get the average abundnace of each species in a treatment over all years of an experiment and all plots 
-# #plot mani column tells if a treatment is the control or treatment
-# ave<-alldat%>%
-#   group_by(site_code, project_name, community_type, treatment, plot_mani, species_matched)%>%
-#   summarize(mean=mean(abundance))
-# 
-# #subset out controls, plot_mani==0
-# ContCover<-ave%>%
-#   filter(plot_mani==0)%>%
-#   ungroup()%>%
-#   select(-treatment, -plot_mani)%>%
-#   rename(cmean=mean)
-# 
-# #subset out treatments, plot_mani!=0 
-# #join back in controls
-# TrtCover<-ave%>%
-#   filter(plot_mani!=0)%>%
-#   ungroup()%>%
-#   select(-treatment, -plot_mani)%>%
-#   full_join(ContCover)
-# 
-# #when a species is not in contorl or treated plots replacing with 0
-# TrtCover$cmean[is.na(test2$cmean)] <- 0
-# TrtCover$mean[is.na(test2$mean)] <- 0
-# 
-# #getting log RR for trt/control differences
-# LogRR<-TrtCover%>%
-#   mutate(logrr=log10((mean+1)/(cmean+1)))%>%
-#   mutate(spcolor=ifelse(species_matched=="Andropogon gerardii", "ag", ifelse(species_matched=="Ambrosia psilostachya", "ap", ifelse(species_matched=="Triodanis perfoliata", "tp", "a"))))
-# 
-# #how to deal with species that are not in BOTH treatment and control? 
-# #option 1, make thier abundance very low 
-# #-->option 2, add 1 to all values - we did this b/c we add 1 to everything.
-# #option 3 ???
-# ###want the x-axis to be one of dominace not just abundnace in controls and  to include frequency across the landscape
-# abundplot<-
-#   
-#   ggplot(data=LogRR, aes(x=log10(cmean+1), y=log10(mean+1), color=spcolor))+
-#   geom_point(data=subset(LogRR, spcolor=="a"))+
-#   geom_point(data=subset(LogRR, spcolor!="a"))+
-#   scale_color_manual(values=c("gray", "red", 'blue', "darkgreen"))+
-#   geom_abline(aes(intercept=0, slope=1))
-# 
-# log<-ggplot(data=test3, aes(x=log10(cmean+1), y=logrr, color=spcolor))+
-#   geom_point(data=subset(test3, spcolor=="a"))+
-#   geom_point(data=subset(test3, spcolor!="a"))+
-#   scale_color_manual(values=c("gray", "red", 'blue', "darkgreen"))+
-#   geom_hline(yintercept=0)
-# 
-# grid.arrange(abundplot, log, ncol=2)
-
-
-##now doing this with DCi 
-
-#combine relative abundance data with treatment and cleaned species names
-allreldat<-reldat%>%
+#combine relative abundance data with treatment na.omit removes unidentified species 
+alldat<-dat_cleansp%>%
   left_join(trts)%>%
-  left_join(sp)%>%# this drops the unknowns
-  na.omit()
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))
 
-#get average relative cover for each species in a treatment, over all years of the experiment over all plots
-relave<-allreldat%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani, species_matched)%>%
+## Need to add in zeros
+
+spc<-unique(alldat$site_project_comm)
+
+datfilled<-data.frame()
+
+for (i in 1:length(spc)){
+  
+  subset<-alldat%>%
+    filter(site_project_comm==spc[i])
+  
+  addzero<-subset %>% 
+    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, plot_id, trt_type, plot_mani, site_project_comm, species_matched, relcov)%>%
+    pivot_wider(names_from = "species_matched", values_from = "relcov", values_fill=0)
+  
+  datfill<-addzero %>% 
+    pivot_longer(11:ncol(addzero), names_to = "species_matched", values_to = "relcov")
+    
+  datfilled<-datfilled%>%
+    bind_rows(datfill)
+}
+
+###get relative cover averaged each species in a treatment, over all years of the experiment over all plots.
+
+relave<-datfilled%>%
+  group_by(site_code, project_name, community_type, species_matched, plot_mani, treatment, trt_type) %>% 
   summarize(mean=mean(relcov))
 
 #subset out control plots, plot_mani==0
-Crelave<-relave%>%
+Crelave<-alldat%>%
   filter(plot_mani==0)%>%
   ungroup()%>%
   select(-treatment, -plot_mani)
@@ -160,16 +108,18 @@ Trelave<-relave%>%
   select(-plot_mani)
 
 #to get relative frequency, determine number of control plots
-controlplots<-allreldat%>%
+controlplots<-alldat%>%
   filter(plot_mani==0)%>%
+  ungroup()%>%
   select(site_code, project_name, community_type, plot_id)%>%
   unique()%>%
   group_by(site_code, project_name, community_type)%>%
   summarize(ncplots=length(plot_id))
 
 #to get relative frequency, determine number of control plots a species is found in, merge in total number of plots and calculate relative frequency  
-control_freq<-allreldat%>%
+control_freq<-alldat%>%
   filter(plot_mani==0)%>%
+  ungroup() %>% 
   select(site_code, project_name, community_type, species_matched, plot_id)%>%
   unique()%>%
   group_by(site_code, project_name, community_type, species_matched)%>%
@@ -178,22 +128,25 @@ control_freq<-allreldat%>%
   mutate(freq=nplots/ncplots)
 
 #calculate DCi
-control_dom<-control_freq%>%
-  left_join(Crelave)%>%
+control_dom<-Crelave%>%
+  left_join(control_freq)%>%
+  mutate(freq=replace_na(freq, 0)) %>% 
   mutate(DCi=(mean+freq)/2)%>%
   select(site_code, project_name, community_type, species_matched, mean, freq, DCi)%>%
   rename(cmean=mean, cfreq=freq)
 
 #getting frequency of treated plots, same code as above but for treated plots
-treatplots<-allreldat%>%
+treatplots<-alldat%>%
   filter(plot_mani!=0)%>%
+  ungroup() %>% 
   select(site_code, project_name, community_type, treatment, plot_id)%>%
   unique()%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarize(ntplots=length(plot_id))
 
-treat_freq<-allreldat%>%
+treat_freq<-alldat%>%
   filter(plot_mani!=0)%>%
+  ungroup()%>%
   select(site_code, project_name, community_type, treatment, species_matched, plot_id)%>%
   unique()%>%
   group_by(site_code, project_name, community_type, treatment, species_matched)%>%
