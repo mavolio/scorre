@@ -1,5 +1,8 @@
 
 #load libraries:
+library(devtools)
+devtools::install_github("GuangchuangYu/ggtree")
+
 library(ggtree)
 library(ggplot2)
 library(stringr)
@@ -181,7 +184,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\phylo_ring_all_mult.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_all_mult.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -342,7 +345,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_n.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_n.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -368,7 +371,7 @@ tree2<-keep.tip(tree, rownames(dat))
 
 res<-node.mean(tree2, dat, 999)
 write.table(res, paste(my.wd, "res_phylo_n_other.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_n_other (3).csv", sep=""))
+#res<-read.table(paste(my.wd, "res_phylo_n_other (3).csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -428,10 +431,10 @@ famf<-join(famf,list.nod)
 ###
 
 #get vector with names of families containing more species:
-toplot<-as.character(head(famf$Var1, n=38)) #select the top 38 families with 5 or more species
+toplot<-as.character(head(famf$Var1, n=27)) #select the top 27 families with 5 or more species
 
 #Plot tree for N +other
-#remember to change angle = "auto" everywheree to avoid overlap in names. Consider also unifying "barsize" (to 0.1, for example):
+#remember to change angle = "auto" everywhere to avoid overlap in names. Consider also unifying "barsize" (to 0.1, for example):
 p <- 
   ggtree(tree2, layout="circular", size=0.5)+ # build circular tree
   geom_point(aes(colour=as.factor(significant)), size=2, alpha=1, show.legend = TRUE) + # highlight nodes
@@ -500,7 +503,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_n.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_n_other.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
