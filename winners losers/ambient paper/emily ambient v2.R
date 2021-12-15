@@ -106,3 +106,14 @@ for (i in 1:length(spc)) {
   filename=paste(my.wd, "/WinnersLosers paper/DCi trends through time/", as.character(spc[i]), ".pdf", sep="")
   ggsave(filename, width=20, height=20)
 }
+
+
+####  how do we decide which species are rare enough to drop?  ###
+
+
+for (i in 1:length(spc)) {
+  ggplot(DCi.through.time[DCi.through.time$site_project_comm==as.character(spc[i]),], aes(treatment_year, DCi)) + geom_point() + geom_smooth(method="lm", se=F, aes(group=treatment)) + facet_wrap(~species_matched) + ggtitle(spc[i])
+  filename=paste(my.wd, "/WinnersLosers paper/DCi trends through time/", as.character(spc[i]), ".pdf", sep="")
+  ggsave(filename, width=20, height=20)
+}
+
