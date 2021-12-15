@@ -165,6 +165,9 @@ DCi_dropped=DCi_0.1 %>%
   left_join(DCi.through.time) %>% 
   right_join(long_enough_studies)
 
+filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi through time dropping rare species and short studies.csv", sep=""))
+write.csv(DCi.averaged, filename, row.names=F)
+
 #plotting species trends through time
 spc.dropped=unique(DCi_dropped$site_project_comm)
 for (i in 1:length(spc.dropped)) {
