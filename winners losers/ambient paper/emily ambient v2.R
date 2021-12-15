@@ -83,6 +83,9 @@ DCi.through.time<-relave %>%
   mutate(DCi=(mean.relabund+freq)/2) %>%
   select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, mean.relabund, nplots, freq, DCi)
 
+filename=(paste(my.wd, "/WinnersLosers paper/DCi trends through time/ DCi trends through time.csv", sep=""))
+write.csv(DCi.through.time, filename, row.names=F)
+
 #add handy labels
 DCi.through.time$site_project_comm=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, sep="_")); spc=unique(DCi.through.time$site_project_comm); length(spc)
 
