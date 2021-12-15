@@ -43,7 +43,7 @@ traits_catag_clean <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sC
   mutate(lifespan = replace(lifespan, lifespan=="uncertain", NA)) %>%
   filter(lifespan != "moss")
 
-traits_all <- dplyr::select(traits_cont_clean, -LDMC_sd:-SRL_sd) %>%
+traits_all <- dplyr::select(traits_cont_clean, -LDMC_sd:-rooting_depth_sd) %>%
   full_join(traits_catag_clean, by="species_matched")
 
 # Find species that have continuous data but no categorical data -- 3 of these are mosses, so I will remove them from continuous data in that cleaning script
@@ -104,8 +104,6 @@ for(PROJ in 1:length(site_proj_comm_vector)){
     left_join(corre_to_try, by="genus_species") %>%
     unique(.) 
   
-  filter(sp_df_temp, species_matched=="Heracleum sphondylium")
-  
   sp_vec_temp <- sp_df_temp %>%
     pull(species_matched)
   
@@ -113,8 +111,8 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   traits_df_raw_temp <- traits_all %>%
     filter(species_matched %in% sp_vec_temp)
   
-  test1 <- sp_df_temp %>%
-    full_join(traits_df_raw_temp, by="species_matched")
+  # test1 <- sp_df_temp %>%
+  #   full_join(traits_df_raw_temp, by="species_matched")
   
   ### Get data frame with species in trait data base and in pplots abundance data base
   species_in_trait_data_temp <- data.frame(species_matched = unique(traits_df_raw_temp$species_matched),
@@ -150,7 +148,7 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   relcov_only_temp <- relcov_wide_temp %>%
     dplyr::select(-site_code:-version) 
   
-  row.names(relcov_only_temp) <- paste(plot_info_temp$calendar_year, plot_info_temp$plot_id, sep="_")
+  row.names(relcov_only_temp) <- paste(plot_info_temp$calendar_year, plot_info_temp$plot_id, sep="::")
   
   ### dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
   traits_df_temp <- traits_df_raw_temp %>%
@@ -175,7 +173,7 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   
   FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
     mutate(year_plotid = row.names(.)) %>%
-    separate(year_plotid, into=c("calendar_year","plot_id"), sep="_") %>%
+    separate(year_plotid, into=c("calendar_year","plot_id"), sep="::") %>%
     mutate(calendar_year = as.numeric(calendar_year)) %>%
     full_join(plot_info_temp, by=c("calendar_year","plot_id"))
   
@@ -185,9 +183,10 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   #beep(sound = 2, expr = NULL)
 }
 
+beep(sound=4)
 write.csv(FD_df_master, file=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\Functional diversity metrics_", Sys.Date(),".csv"),
                                     row.names=F)
-
+  xz
 ggplot(filter(FD_df_master, site_proj_comm == site_proj_comm_vector[3]), aes(x=treatment_year, y=FDis, col=treatment)) +
   geom_point()
   
@@ -196,6 +195,7 @@ FD_df_means <- FD_df_master %>%
   summarize_at(vars(FEve, FDis, RaoQ), list(mean=mean, se=se), na.rm=T)
 
 ### fun plotting
+# F div
 for(PROJ in 1:length(site_proj_comm_vector)){
   ggplot(filter(FD_df_means, site_proj_comm == site_proj_comm_vector[PROJ]), aes(x=treatment_year, y=FDis_mean, col=treatment,
                                                                               ymin=FDis_mean-FDis_se, ymax=FDis_mean+FDis_se)) +
@@ -204,10 +204,38 @@ for(PROJ in 1:length(site_proj_comm_vector)){
     geom_path() +
     ggtitle(site_proj_comm_vector[PROJ]) +
     theme_bw()
-  ggsave(filename=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\figures\\",
+  ggsave(filename=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\figures\\FDis\\",
                          site_proj_comm_vector[PROJ], "FDis.jpg"))
 }
 
+# F evenness
+for(PROJ in 1:length(site_proj_comm_vector)){
+  ggplot(filter(FD_df_means, site_proj_comm == site_proj_comm_vector[PROJ]), aes(x=treatment_year, y=FEve_mean, col=treatment,
+                                                                                 ymin=FEve_mean-FEve_se, ymax=FEve_mean+FEve_se)) +
+    geom_errorbar(width=0.1) +
+    geom_point() +
+    geom_path() +
+    ggtitle(site_proj_comm_vector[PROJ]) +
+    theme_bw()
+  ggsave(filename=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\figures\\FEve\\",
+                         site_proj_comm_vector[PROJ], "FEve.jpg"))
+}
+
+# F div versus species number
+for(PROJ in 1:length(site_proj_comm_vector)){
+  ggplot(filter(FD_df_master, site_proj_comm == site_proj_comm_vector[PROJ]), aes(x=nbsp, y=FDis, col=treatment)) +
+    geom_point() +
+    ggtitle(site_proj_comm_vector[PROJ]) +
+    theme_bw()
+  ggsave(filename=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\figures\\FDis\\",
+                         site_proj_comm_vector[PROJ], "FDis.jpg"))
+}
+
+ggplot(FD_df_master, aes(x=nbsp, y=FDis, col=site_proj_comm)) +
+#  geom_point() +
+  geom_smooth(method="lm", se=T) +
+  theme_bw() +
+  theme(legend.position = "none")
 
 ### Trouble getting species by species distance matrix in Euclidean form... here's the error message:
 # Error in dbFD(x = pplots_traits, a = pplots_relcov) : 
