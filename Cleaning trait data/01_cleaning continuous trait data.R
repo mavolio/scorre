@@ -18,7 +18,7 @@ library(tidyverse)
 
 ### Read in trait data -- for now I'm just cleaning the traits identified above
 traits_cont_raw <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\Continuous_Traits\\Backtrans_GapFilled_sCorre.csv") %>%
-  dplyr::select(X:family, LDMC, SLA, plant_height_vegetative, seed_dry_mass, seed_number, rooting_depth, SRL) %>%
+  dplyr::select(X:family, LDMC, SLA, plant_height_vegetative, seed_dry_mass, seed_number, rooting_depth) %>% # NEED TO REMOVE SRL
   mutate(across(everything(), ~replace(., .<0, NA)))
 
 
@@ -43,16 +43,16 @@ traits_cont_clean <- traits_cont_raw %>%
          plant_height_vegetative = replace(plant_height_vegetative, plant_height_vegetative > 5, NA),
          seed_dry_mass = replace(seed_dry_mass, seed_dry_mass > 100, NA),
          seed_number = replace(seed_number, seed_number > 1e5, NA),
-         rooting_depth = replace(rooting_depth, rooting_depth > 4.5, NA),
-         SRL = replace(SRL, SRL > 60000, NA)) %>%
+         rooting_depth = replace(rooting_depth, rooting_depth > 4.5, NA)) %>%
   group_by(genus, family, species_matched) %>%
  # summarize(LDMC=mean(LDMC,na.rm=T)) %>%
-  summarize_at(vars(LDMC:SRL), list(mean=mean, sd=sd), na.rm=T) %>%
+  summarize_at(vars(LDMC:rooting_depth), list(mean=mean, sd=sd), na.rm=T) %>%
   ungroup() %>%
   left_join(moss_key, by="species_matched") %>%
+  mutate(moss=ifelse(moss=="moss","moss","non-moss")) %>%
   filter(moss!="moss") %>%
   dplyr::select(-moss)
-  
+
 
 # hist(traits_cont_clean$LDMC_mean)
 # hist(traits_cont_clean$SLA_mean)
