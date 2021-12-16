@@ -79,7 +79,8 @@ rDiv <- community_structure(relCover, time.var="treatment_year", abundance.var="
 allDiv <- pDiv%>%
   full_join(fDiv)%>%
   full_join(rDiv)%>%
-  filter(site_code!='DCGS')
+  filter(site_code!='DCGS')%>%
+  filter(treatment_year>0)
 
 # control <- pDiv%>%
 #   filter(trt_type=='control')%>%
@@ -115,7 +116,9 @@ trt_analysis<-trt%>%
 
 #pick treatments here.
 allDivTrt <- allDiv%>%
-  right_join(trt_analysis)
+  right_join(trt_analysis)%>%
+  mutate(trt_binary=ifelse(plot_mani>0, 1, 0))%>%
+  select(-FDiv)
 
 # write.csv(allDivTrt, 'CoRRE_allDiversityMetrics_phyFunAnalysis.csv', row.names=F)
 
@@ -164,41 +167,41 @@ allDivPlotMeans <- allDivTrt %>%
   ungroup()
 
 
-#MPD vs trait functional diversity
-for(PROJ in 1:length(site_proj_comm_vector)){
-  ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
-         aes(x=mpd.ses_mean, y=FDis_mean, col=treatment)) +
-    geom_point() +
-    geom_smooth(method='lm', se=F) +
-    ggtitle(site_proj_comm_vector[PROJ]) +
-    theme_bw()
-  ggsave(filename=paste0("C:\\Users\\lapie\\Desktop\\pd figs\\",
-                         site_proj_comm_vector[PROJ], "_mpd_Fdis.png"))
-}
-
-#MNTD vs trait functional diversity
-for(PROJ in 1:length(site_proj_comm_vector)){
-  ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
-         aes(x=mntd.ses_mean, y=FDis_mean, col=treatment)) +
-    geom_point() +
-    geom_smooth(method='lm', se=F) +
-    ggtitle(site_proj_comm_vector[PROJ]) +
-    theme_bw()
-  ggsave(filename=paste0("C:\\Users\\lapie\\Desktop\\pd figs\\",
-                         site_proj_comm_vector[PROJ], "_mntd_Fdis.png"))
-}
-
-#richness vs trait functional diversity
-for(PROJ in 1:length(site_proj_comm_vector)){
-  ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
-         aes(x=richness_mean, y=FDis_mean, col=treatment)) +
-    geom_point() +
-    geom_smooth(method='lm', se=F) +
-    ggtitle(site_proj_comm_vector[PROJ]) +
-    theme_bw()
-  ggsave(filename=paste0("C:\\Users\\lapie\\Desktop\\pd figs\\",
-                         site_proj_comm_vector[PROJ], "_richness_Fdis.png"))
-}
+# #MPD vs trait functional diversity
+# for(PROJ in 1:length(site_proj_comm_vector)){
+#   ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
+#          aes(x=mpd.ses_mean, y=FDis_mean, col=treatment)) +
+#     geom_point() +
+#     geom_smooth(method='lm', se=F) +
+#     ggtitle(site_proj_comm_vector[PROJ]) +
+#     theme_bw()
+#   ggsave(filename=paste0("C:\\Users\\lapie\\Desktop\\pd figs\\",
+#                          site_proj_comm_vector[PROJ], "_mpd_Fdis.png"))
+# }
+# 
+# #MNTD vs trait functional diversity
+# for(PROJ in 1:length(site_proj_comm_vector)){
+#   ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
+#          aes(x=mntd.ses_mean, y=FDis_mean, col=treatment)) +
+#     geom_point() +
+#     geom_smooth(method='lm', se=F) +
+#     ggtitle(site_proj_comm_vector[PROJ]) +
+#     theme_bw()
+#   ggsave(filename=paste0("C:\\Users\\lapie\\Desktop\\pd figs\\",
+#                          site_proj_comm_vector[PROJ], "_mntd_Fdis.png"))
+# }
+# 
+# #richness vs trait functional diversity
+# for(PROJ in 1:length(site_proj_comm_vector)){
+#   ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
+#          aes(x=richness_mean, y=FDis_mean, col=treatment)) +
+#     geom_point() +
+#     geom_smooth(method='lm', se=F) +
+#     ggtitle(site_proj_comm_vector[PROJ]) +
+#     theme_bw()
+#   ggsave(filename=paste0("C:\\Users\\lapie\\Desktop\\pd figs\\",
+#                          site_proj_comm_vector[PROJ], "_richness_Fdis.png"))
+# }
 
 
 ##### global trends - comparing diversity metrics #####
@@ -207,20 +210,20 @@ allDivGlobal <- allDivPlotMeans %>%
   summarize_at(vars(mpd.ses_mean, mntd.ses_mean, FDis_mean, richness_mean), list(mean=mean, se=se), na.rm=T)%>%
   ungroup()
 
-ggplot(data=allDivGlobal, aes(x=mpd.ses_mean_mean, y=FDis_mean_mean)) +
-  geom_point() +
-  geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
-  facet_wrap(~trt_type2)
-
-ggplot(data=allDivGlobal, aes(x=mntd.ses_mean_mean, y=FDis_mean_mean)) +
-  geom_point() +
-  geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
-  facet_wrap(~trt_type2)
-
-ggplot(data=allDivGlobal, aes(x=richness_mean_mean, y=FDis_mean_mean)) +
-  geom_point() +
-  geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
-  facet_wrap(~trt_type2)
+# ggplot(data=allDivGlobal, aes(x=mpd.ses_mean_mean, y=FDis_mean_mean)) +
+#   geom_point() +
+#   geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
+#   facet_wrap(~trt_type2)
+# 
+# ggplot(data=allDivGlobal, aes(x=mntd.ses_mean_mean, y=FDis_mean_mean)) +
+#   geom_point() +
+#   geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
+#   facet_wrap(~trt_type2)
+# 
+# ggplot(data=allDivGlobal, aes(x=richness_mean_mean, y=FDis_mean_mean)) +
+#   geom_point() +
+#   geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
+#   facet_wrap(~trt_type2)
 
 
 ### TO CONSIDER: should we look at each treatment within project and see if the slopes differ from 1 (more or less Fdiv per change in phy div), and does that differ by which treatment it is?
@@ -262,11 +265,47 @@ plot(fixedEffects)
 # etable(pDivCausalModel,
 #        cluster="site_year")
 
-##### figures #####
-ggplot(data=pDivAvgTrtFixed, aes(x=trt_type2, y=mpd_diff_avg)) +
-  geom_boxplot() +
-  geom_hline(yintercept=0)
+##### exploratory figures #####
+control <- allDivTrt%>%
+  filter(trt_type=='control')%>%
+  rename(mpd.ses_ctl=mpd.ses, mntd.ses_ctl=mntd.ses, FDis_ctl=FDis, richness_ctl=richness)%>%
+  group_by(site_code, project_name, community_type, treatment_year)%>%
+  summarize_at(vars(mpd.ses_ctl, mntd.ses_ctl, FDis_ctl, richness_ctl), list(mean=mean), na.rm=T)%>%
+  ungroup()
 
-ggplot(data=subset(pDivAvgTrtFixed, n<150), aes(x=n, y=mpd_diff_avg, color=rrich)) +
+allDivRR <- allDivTrt%>%
+  filter(trt_type!='control')%>%
+  left_join(control)%>%
+  mutate(mpd_diff=(mpd.ses-mpd.ses_ctl_mean), mntd_diff=(mntd.ses-mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean))%>%
+  gather(key=env_variable, value=env_value, c("MAP", "MAT", "rrich", "anpp"))%>%
+  group_by(site_code, project_name, community_type, treatment, trt_type2, env_variable)%>%
+  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR, env_value), list(mean=mean), na.rm=T)%>%
+  ungroup%>%
+  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))%>%
+  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
+  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))
+
+ggplot(data=allDivRR, aes(x=env_value_mean, y=FDis_RR_mean)) +
   geom_point() +
-  geom_hline(yintercept=0)
+  geom_smooth(method='lm', se=F) +
+  geom_hline(yintercept=0) +
+  facet_grid(trt_type2~env_variable, scales='free')
+  
+  
+test <- subset(allDivRR, project_name=='pplots'&treatment_year==10&treatment=='N2P3')
+
+
+##### repeated measures model #####
+library(nlme)
+library(emmeans)
+library(performance)
+
+options(contrasts=c('contr.sum','contr.poly')) 
+
+summary(FDisModel <- lme(FDis_RR_mean ~ as.factor(trt_type2),
+                         data=na.omit(allDivRR),
+                         random=~1|site_proj_comm))
+anova.lme(FDisModel, type='sequential')
+emmeans(FDisModel, pairwise~as.factor(trt_type2), adjust="tukey")
+
+summary(glm(FDis ~ trt_binary*trt_type2*treatment_year, data=allDivTrt))
