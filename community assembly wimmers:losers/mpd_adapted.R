@@ -6,7 +6,7 @@ mpd_focal <- function (samp, dis, focal, abundance.weighted = FALSE)
   for (i in 1:N) {
     sppInSample <- names(samp[i, samp[i, ] > 0])
     if (length(sppInSample) > 1) {
-      sample.dis <- dis[sppInSample, sppInSample]
+      sample.dis <- dis[focal, sppInSample]
       if (abundance.weighted) {
         sample.weights <- t(as.matrix(samp[i, sppInSample, 
                                            drop = FALSE])) %*% as.matrix(samp[i, sppInSample, 
