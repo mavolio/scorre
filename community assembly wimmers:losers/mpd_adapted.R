@@ -1,5 +1,5 @@
 
-mpd_focal <- function (samp, dis, abundance.weighted = FALSE) 
+mpd_focal <- function (samp, dis, focal, abundance.weighted = FALSE) 
 {
   N <- dim(samp)[1]
   mpd <- numeric(N)
