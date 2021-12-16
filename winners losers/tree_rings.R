@@ -20,7 +20,7 @@ library(scico)
 
 #for V.PhyloMaker
 library(devtools)
-#devtools::install_github("jinyizju/V.PhyloMaker")
+devtools::install_github("jinyizju/V.PhyloMaker")
 library(V.PhyloMaker)
 
 #set directory:
@@ -37,28 +37,29 @@ spp<-as.data.frame(unique(species.data$species_matched))
 names(spp)[1]<-paste("species")
 spp$genus<-word(spp$species, 1)
 
-non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       "Aulacomnium turgidum",       
-                   "Barbilophozia hatcheri",      "Barbilophozia kunzeana" ,     "Blepharostoma trichophyllum",
-                   "Brachythecium albicans",      "Bryum arcticum"   ,           "Bryum pseudotriquetrum",     
-                   "Campylium stellatum",         "Cyrtomnium hymenophyllum" ,   "Dicranoweisia crispula",     
-                   "Dicranum brevifolium",        "Dicranum elongatum"  ,        "Dicranum fuscescens",        
-                   "Dicranum groenlandicum",      "Dicranum scoparium" ,         "Distichium capillaceum",     
-                   "Ditrichum flexicaule",        "Gymnomitrion concinnatum" ,   "Hamatocaulis vernicosus",    
-                   "Homalothecium pinnatifidum",  "Hylocomium splendens",        "Hypnum cupressiforme",       
-                   "Hypnum hamulosum",            "Isopterygiopsis pulchella",   "Kiaeria starkei",            
-                   "Leiocolea heterocolpos",      "Marchantia polymorpha",       "Marsupella brevissima",      
-                   "Meesia uliginosa",            "Myurella tenerrima",          "Oncophorus virens",         
-                   "Oncophorus wahlenbergii",     "Pleurozium schreberi",        "Pogonatum urnigerum" ,       
-                   "Pohlia cruda" ,               "Pohlia nutans",               "Polytrichastrum alpinum",    
-                   "Polytrichum juniperinum",     "Polytrichum piliferum",       "Polytrichum strictum",       
-                   "Preissia quadrata",           "Ptilidium ciliare",           "Racomitrium lanuginosum",    
-                   "Rhytidium rugosum",           "Saelania glaucescens",        "Sanionia uncinata",          
-                   "Schistidium apocarpum",       "Syntrichia ruralis",          "Tomentypnum nitens",         
-                   "Tortella tortuosa",           "Tritomaria quinquedentata",   "Nephroma arcticum" , "Unknown NA",
-                   "Campylopus flexuosus",        "Hypnum jutlandicum",          "Plagiothecium undulatum",    
-                   "Polytrichum commune",         "Pseudoscleropodium purum",    "Rhytidiadelphus loreus",
-                   "Rhytidiadelphus triquetrus",  "Thuidium tamariscinum")
-spp <- spp[!spp$species %in% non.vascular, ] #remove
+##this is not longer necessary becuase I remove these species in the previous code step.
+# non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       "Aulacomnium turgidum",       
+#                    "Barbilophozia hatcheri",      "Barbilophozia kunzeana" ,     "Blepharostoma trichophyllum",
+#                    "Brachythecium albicans",      "Bryum arcticum"   ,           "Bryum pseudotriquetrum",     
+#                    "Campylium stellatum",         "Cyrtomnium hymenophyllum" ,   "Dicranoweisia crispula",     
+#                    "Dicranum brevifolium",        "Dicranum elongatum"  ,        "Dicranum fuscescens",        
+#                    "Dicranum groenlandicum",      "Dicranum scoparium" ,         "Distichium capillaceum",     
+#                    "Ditrichum flexicaule",        "Gymnomitrion concinnatum" ,   "Hamatocaulis vernicosus",    
+#                    "Homalothecium pinnatifidum",  "Hylocomium splendens",        "Hypnum cupressiforme",       
+#                    "Hypnum hamulosum",            "Isopterygiopsis pulchella",   "Kiaeria starkei",            
+#                    "Leiocolea heterocolpos",      "Marchantia polymorpha",       "Marsupella brevissima",      
+#                    "Meesia uliginosa",            "Myurella tenerrima",          "Oncophorus virens",         
+#                    "Oncophorus wahlenbergii",     "Pleurozium schreberi",        "Pogonatum urnigerum" ,       
+#                    "Pohlia cruda" ,               "Pohlia nutans",               "Polytrichastrum alpinum",    
+#                    "Polytrichum juniperinum",     "Polytrichum piliferum",       "Polytrichum strictum",       
+#                    "Preissia quadrata",           "Ptilidium ciliare",           "Racomitrium lanuginosum",    
+#                    "Rhytidium rugosum",           "Saelania glaucescens",        "Sanionia uncinata",          
+#                    "Schistidium apocarpum",       "Syntrichia ruralis",          "Tomentypnum nitens",         
+#                    "Tortella tortuosa",           "Tritomaria quinquedentata",   "Nephroma arcticum" , "Unknown NA",
+#                    "Campylopus flexuosus",        "Hypnum jutlandicum",          "Plagiothecium undulatum",    
+#                    "Polytrichum commune",         "Pseudoscleropodium purum",    "Rhytidiadelphus loreus",
+#                    "Rhytidiadelphus triquetrus",  "Thuidium tamariscinum")
+# spp <- spp[!spp$species %in% non.vascular, ] #remove
 
 #load families for species and rearrange to create necessary fields for the phylogenies:
 fam<-read.table(paste(my.wd, "species_families_trees_2021.csv",sep=""), header=T, sep=",", fill = TRUE)
@@ -81,14 +82,17 @@ spp$family[spp$genus=="Thelypteris"]<-"Thelypteridaceae"
 #get phylogenetic tree:
 scorre.tree <- phylo.maker(sp.list = spp, tree = GBOTB.extended, nodes = nodes.info.1, scenarios="S3")
 
-#remove from the original table non-vascular plants that couldn't be added to the tree:
-species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
-in.data.not.tree <- setdiff(unique(species.data$species_matched), scorre.tree$scenario.3$tip.label)
-species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),] #only works if some species from the data are not in the tree
+##also not necessary becuase I am removing non-vascular plant earlier.
+# #remove from the original table non-vascular plants that couldn't be added to the tree:
+# species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
+# in.data.not.tree <- setdiff(unique(species.data$species_matched), scorre.tree$scenario.3$tip.label)
+# species.data <- species.data[-which(species.data$species_matched %in% in.data.not.tree),] #only works if some species from the data are not in the tree
 
 #save tree and subset table:
 write.tree(scorre.tree$scenario.3, paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep=""))
-write.table(species.data, paste(my.wd, "Species_DCiDiff_filtered_Dec2021.csv", sep=""))
+
+#don't need to do this because species are not filtered.
+#write.table(species.data, paste(my.wd, "Species_DCiDiff_filtered_Dec2021.csv", sep=""))
 
 
 
