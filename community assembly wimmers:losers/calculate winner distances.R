@@ -6,9 +6,11 @@ library(gawdis)
 my.wd <- "~/Dropbox/sCoRRE/sDiv_sCoRRE_shared"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #Padu's wd
 
+###
+# Get functional tree (functional dissimilarities)
+###
 
-#load data:
-corre<-read.table(paste(my.wd, "CoRRE_RelativeCover_Dec2021.csv", sep=""), header=T, sep=",", fill = TRUE)
+#load trait data:
 trait<-read.table(paste(my.wd, "Backtrans_GapFilled_sCorre.csv", sep=""), header=T, sep=",", fill = TRUE)
 
 #get mean trait values:
@@ -31,6 +33,34 @@ ftree<-as.phylo(hclust(trait.dis, method="average"))
 #save output:
 write.tree(ftree, paste(my.wd, "ftree.scorre.gowdis.log.upgma.tre", sep=""))
 
+
+
+
+
+
+#get dissimilarity matrix between species:
+trait.dis.matrix<-as.matrix(trait.dis)
+diag(trait.dis.matrix) <- NA
+
+#load data:
+corre<-read.table(paste(my.wd, "CoRRE_RelativeCover_Dec2021.csv", sep=""), header=T, sep=",", fill = TRUE)
+corre<-subset(corre, site_code=="CDR" & project_name=="e001" & community_type%in%c("C") & treatment%in%c("1", "8"))
+
+#load species to use:
+spp<-read.table(paste(my.wd, "FullList_Nov2021.csv", sep=""), header=T, sep=",", fill = TRUE)[,c(2,5)]
+corre<-merge(corre, spp, by="genus_species", all.x=T)
+
+
+
+
+#subset from the species distance matrix:
+plots<-unique(corre$plot_id)
+years<-unique(corre$calendar_year)
+
+corre.filtered<-subset(corre, plot_id==plots[1] & calendar_year==years[1])
+
+species.names<-unique(corre.filtered$species_matched)
+trait.dis.sub<-trait.dis.matrix[(rownames(trait.dis.matrix) %in% species.names), (colnames(trait.dis.matrix) %in% species.names)]
 
 
 
