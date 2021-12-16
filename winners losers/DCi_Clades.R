@@ -21,21 +21,22 @@ my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\d
 ###
 
 #load species data (filtered after removing mosses and species missing from the phylogeny):
-species.data<-read.table(paste(my.wd,"Species_DCiDiff_filtered_Dec2021.csv",sep=""), header=T, sep=" ")
+species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021.csv",sep=""))
+species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 
 #load phylogenetic tree:
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep=""))
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.Dec2021", sep=""))
 
 
 ###
 # Filter by treatment == all mult
 ###
 
-dat<-subset(species.data, trt_type2=="all mult")[,c(1,4)] #select "all mult" treatment from original data
-dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
-dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
-rownames(dat)<-dat$Group.1 #set species names as rownames
-dat$Group.1<-NULL #and delete column with species names
+dat<-subset(species.data, trt_type2=="all mult")[,c(1,2)] #select "all mult" treatment from original data
+#dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
+dat<-dat[dat$species_matched %in% tree$tip.label, ] #make sure all species in the data are on the tree
+rownames(dat)<-dat$species_matched #set species names as rownames
+dat$species_matched<-NULL #and delete column with species names
 
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
@@ -196,7 +197,7 @@ dev.off()
 # Filter by treatment = N
 ###
 
-dat<-subset(species.data, trt_type2=="n")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="n")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -354,7 +355,7 @@ dev.off()
 # Filter by treatment = N +OTHER
 ###
 
-dat<-subset(species.data, trt_type2=="n_other")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="n_other")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames

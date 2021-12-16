@@ -10,7 +10,7 @@ rm(list=ls())
 #my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
-my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
+#my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 
 #Load library()
 library(geiger)
@@ -27,7 +27,8 @@ library(dplyr)
 
 #Load data
 tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep="")) #load tree
-dd<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_filtered_Dec2021.csv",sep=""), header=T)
+dd<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021.csv",sep=""), header=T)
+dd$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 str(dd)
 str(tree)
 
@@ -44,7 +45,7 @@ names(final.dd)[1]<-paste("species_matched")
 
 for (i in 1:length(trt))
 {
-  sub.dd<-subset(dd, trt_type2==trt[i])[,c(1,4)]
+  sub.dd<-subset(dd, trt_type2==trt[i])[,c(1,2)]
   final.dd<-merge(final.dd, sub.dd, by="species_matched", all.x=T)
   colnames(final.dd)[i+1]<-trt[i]
 }
@@ -74,7 +75,7 @@ for (i in 1:length(trt))
   output[i,5]<-blomb$P
 }
 
-write.table(output, paste(my.wd,"phylo_signal.csv",sep=""))
+write.csv(output, paste(my.wd,"phylo_signal.csv",sep=""), row.names = F)
 
 
 
