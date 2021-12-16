@@ -8,6 +8,7 @@ library(beepr)
 # install.packages("mFD")
 # library("mFD")
 # rm(list=ls())
+
 ## testing github
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
 setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
