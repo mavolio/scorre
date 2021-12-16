@@ -1,37 +1,13 @@
-
-mpd_focal <- function (samp, dis, focal, abundance.weighted = FALSE) 
-{
-  
-  
-  for (i in 1:N) {
-    sppInSample <- names(samp[i, samp[i, ] > 0])
-    if (length(sppInSample) > 1) {
-      sample.dis <- dis[focal, sppInSample]
-      if (abundance.weighted) {
-        sample.weights <- t(as.matrix(samp[i, sppInSample, 
-                                           drop = FALSE])) %*% as.matrix(samp[i, sppInSample, 
-                                                                              drop = FALSE])
-        #mpd[i] <- weighted.mean(sample.dis, sample.weights)
-        mpd[i] <- weighted.mean(sample.dis, sample.weights[focal,])
-      }
-      else {
-        mpd[i] <- mean(sample.dis[lower.tri(sample.dis)])
-      }
-    }
-    else {
-      mpd[i] <- NA
-    }
-  }
-  mpd
-}
-
-###### Adam function
-mpd_focal = function (samp, focal, dis, abundance.weighted = FALSE)
+mpd_focal = function (samp, focal, dis, abundance.weighted = FALSE, remove_focal_from_distance = TRUE)
 {
   N <- dim(samp)[1]
   mpd <- numeric(N)
   for (i in 1:N) {
-    sppInSample <- names(samp[i, samp[i, ] > 0])
+    if(remove_focal_from_distance) {
+      sppInSample <- names(samp[,-focal][i, samp[,-focal][i, ] > 0])
+    } else {
+      sppInSample <- names(samp[i, samp[i, ] > 0])
+    }
     if (length(sppInSample) > 1) {
       sample.dis <- dis[focal, sppInSample]
       if (abundance.weighted) {
