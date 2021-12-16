@@ -13,37 +13,24 @@ my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
 library(geiger)
 library(phangorn)
 library(ape)
-
-#Load data
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep="")) #load tree
-dd<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_Jul2021.csv",sep=""), header=T, sep=",")
-str(dd)
-str(tree)
-
-#####
-# Create Phylo-ring to show patterns on tips
-#####
-
-#load packages:
-
 library(phytools)
 library(ggplot2)
 library(stringr)
 library(plyr)
 library(ape)
-library(scico)
 
-#remove from the original table non-vascular plants that couldn't be added to the tree:
-dd$species_matched<-gsub(" ", "_", dd$species_matched) #unify nomenclature
-in.data.not.tree <- setdiff(unique(dd$species_matched), tree$tip.label)
-dd <- dd[-which(dd$species_matched %in% in.data.not.tree),]
+#Load data
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep="")) #load tree
+dd<-read.table(paste(my.wd,"Species_DCiDiff_newtrts_filtered_Dec2021.csv",sep=""), header=T)
+str(dd)
+str(tree)
 
 #get levels of treatments:
-trt<-levels(dd$trt_type2)
+trt<-levels(as.factor(dd$trt_type2))
 
-#[1] "all mult"       "co2"            "co2_other"      "dist_other"     "disturbance"    "drought"       
-#[7] "drt_other"      "herb_rem_other" "herb_removal"   "irg_other"      "irrigation"     "nutrients"     
-#[13] "nuts_other"     "temp"           "temp_other" 
+#[1] "all mult"       "co2"            "co2_other"      "dist_other"     "disturbance"    "drought"        "drt_other"     
+#[8] "herb_rem_other" "herb_removal"   "irg_other"      "irrigation"     "n"              "n_other"        "p"             
+#[15] "p_other"        "temp"           "temp_other"
 
 #re-arrange table:
 final.dd<-as.data.frame(unique(dd$species_matched))
@@ -82,7 +69,8 @@ for (i in 1:length(trt))
   output[i,5]<-blomb$P
 }
 
-write.table(output, "phylo_signal.csv")
+getwd()
+write.table(output, paste(my.wd,"phylo_signal.csv",sep=""))
 
 #clean-up:
 rm(list = ls())
