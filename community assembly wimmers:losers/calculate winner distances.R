@@ -55,15 +55,39 @@ corre<-merge(corre, spp, by="genus_species", all.x=T)
 
 #subset from the species distance matrix:
 plots<-unique(corre$plot_id)
+treat<-unique(corre[,c(7,9)])$treatment
 years<-unique(corre$calendar_year)
+win_los<-c("Elymus repens")
+  
+out2<-NULL
+for(i in 1:length(plots)){
+  print(i)
+  corre.filt<-subset(corre, plot_id==plots[1])
 
-corre.filtered<-subset(corre, plot_id==plots[1] & calendar_year==years[1])
-
-species.names<-unique(corre.filtered$species_matched)
-trait.dis.sub<-trait.dis.matrix[(rownames(trait.dis.matrix) %in% species.names), (colnames(trait.dis.matrix) %in% species.names)]
-
-
-
+  out<-NULL
+  for(j in 1:length(years)){
+    print(j)
+    corre.filtered<-subset(corre.filt, calendar_year==years[j])
+    species.names<-unique(corre.filtered$species_matched)
+    species.names<-unique(c(species.names, win_los))
+    
+    if (length(species.names)>1) {
+      trait.dis.sub<-trait.dis.matrix[(rownames(trait.dis.matrix) %in% species.names), (colnames(trait.dis.matrix) %in% species.names)]
+      
+      a<-as.data.frame(rowMeans(trait.dis.sub, na.rm=T))
+      a$species_matched<-rownames(a)
+      names(a)[1]<-"mpd"
+      a$year<-years[j]
+      
+      out<-rbind(out, a)
+    }
+  }
+  out$plot_id<-plots[i]
+  out$treatment<-treat[i]
+  out2<-rbind(out2, out)
+}
+rownames(out2)<-NULL
+write.table(out2, paste(my.wd, "mpd_win_los.csv", sep=""))
 
 # only experimennts that are at least 5 years
 
