@@ -126,7 +126,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
 }
 
 #save output:
-write.table(pd.all, paste(my.wd, "CoRRE_pd_metrics_non_weighted.csv", sep=""))
+write.table(pd.all, paste(my.wd, "CoRRE_pd_metrics_non_weighted.csv", sep=","))
 
 
 
