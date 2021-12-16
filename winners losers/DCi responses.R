@@ -96,7 +96,7 @@ relave<-datfilled%>%
   summarize(mean=mean(relcov))
 
 #subset out control plots, plot_mani==0
-Crelave<-alldat%>%
+Crelave<-relave%>%
   filter(plot_mani==0)%>%
   ungroup()%>%
   select(-treatment, -plot_mani)
@@ -116,7 +116,7 @@ controlplots<-alldat%>%
   group_by(site_code, project_name, community_type)%>%
   summarize(ncplots=length(plot_id))
 
-#to get relative frequency, determine number of control plots a species is found in, merge in total number of plots and calculate relative frequency  
+#to get relative frequency, determine number of control plots a species is found in, merge in total number of plots and calculate relative frequency. By taking this from all dat there are no options for zero and thus all using n to calcualte length will work.
 control_freq<-alldat%>%
   filter(plot_mani==0)%>%
   ungroup() %>% 
@@ -154,230 +154,365 @@ treat_freq<-alldat%>%
   left_join(treatplots)%>%
   mutate(freq=nplots/ntplots)
 
-treat_dom<-treat_freq%>%
-  left_join(Trelave)%>%
+treat_dom<-Trelave%>%
+  left_join(treat_freq)%>%
+  mutate(freq=replace_na(freq, 0)) %>% 
   mutate(treatDCi=(mean+freq)/2)%>%
   select(site_code, project_name, community_type, treatment, species_matched, mean, freq, treatDCi)
 
 
-# Calculating changes in DCi for each species comparing control to treatments.
-CT<-treat_dom%>%
-  full_join(control_dom)#this introduces NA into the treatment column when it is present in the controls but not the treated plots.
-
-#this is to replace the NAs with 0
-CT$DCi[is.na(CT$DCi)] <- 0
-CT$treatDCi[is.na(CT$treatDCi)] <- 0
-
-#add treatments to plots were was only in control
-CT_diff_control<-CT%>%
-  mutate(diff=treatDCi-DCi)%>%
-  filter(is.na(treatment))%>%#dropping control only plots
-  ungroup()%>%
-  select(-treatment)%>%
-  left_join(trt_analysis)%>%
-  filter(!is.na(treatment))
-
-CT_diff<-CT%>%
+# Calculating changes in DCi for each species comparing control to treatments. Dropping extra treatments in CDR, and pulse experiments, and dropping species that are not found in either control or treatments.
+CT_diff<-treat_dom%>%
+  full_join(control_dom)%>%
   mutate(diff=treatDCi-DCi)%>%
   filter(!is.na(treatment))%>%
-  right_join(trt_analysis)%>%
-  filter(!is.na(diff))%>%# somthing about adding controls adds NA for treatemtns were there were control plots kept. investigate this. 3 datasets are missing, GVN_Face, KNZ_GFP, RIO_interaction and SCL_Lucero
-  bind_rows(CT_diff_control)%>%
-  mutate(drop=ifelse(site_code=="Sil"&resource_mani==0, 1, ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1, ifelse(pulse==1, 1, 0))))%>%
+  right_join(trt_analysis) %>% 
+  mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1, ifelse(pulse==1, 1, ifelse(treatDCi==0&DCi==0, 1, 0))))%>%
   filter(drop==0)
+  
 
-#dataset of treatment responses, ave, se, min, max, and how often species is found for phylogenetic analyses.
+#dataset of treatment responses, ave, se, and how often species is found for phylogenetic analyses. and calculating number of sites and experiments at treatment is at.
 
-##
-CT_Sp_herb<-CT_diff%>%
+##Herbivory
+herb_sites<-CT_diff%>%
+  filter(herb_removal==1)%>%
+  select(site_code)%>%
+  unique()
+
+herb_experimenets<-CT_diff%>%
+  filter(herb_removal==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+  
+herb_mean<-CT_diff%>%
   filter(herb_removal==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff)) %>% 
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="herb_removal")
+  mutate(trt_type2="herb_removal")%>%
+  select(-sd)
+##Herbivory + other
+herb_other_sites<-CT_diff%>%
+  filter(herb_removal_other==1)%>%
+  select(site_code)%>%
+  unique()
 
-CT_Sp_herb_other<-CT_diff%>%
+herb_other_exmt<-CT_diff%>%
+  filter(herb_removal_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+herb_other_mean<-CT_diff%>%
   filter(herb_removal_other==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="herb_rem_other")
+  mutate(trt_type2="herb_rem_other")%>%
+  select(-sd)
 
-CT_Sp_temp<-CT_diff%>%
+##Temperature
+temp_sites<-CT_diff%>%
+  filter(temp==1)%>%
+  select(site_code)%>%
+  unique()
+
+temp_experimenets<-CT_diff%>%
+  filter(temp==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+temp_mean<-CT_diff%>%
   filter(temp==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff)) %>% 
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="temp")
+  mutate(trt_type2="temp")%>%
+  select(-sd)
 
-CT_Sp_temp_other<-CT_diff%>%
+##Temp + other
+temp_other_sites<-CT_diff%>%
+  filter(temp_other==1)%>%
+  select(site_code)%>%
+  unique()
+
+temp_other_exmt<-CT_diff%>%
+  filter(temp_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+temp_other_mean<-CT_diff%>%
   filter(temp_other==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="temp_other")
+  mutate(trt_type2="temp_other")%>%
+  select(-sd)
 
-CT_Sp_co2<-CT_diff%>%
+##CO2
+co2_sites<-CT_diff%>%
+  filter(CO2==1)%>%
+  select(site_code)%>%
+  unique()
+
+co2_experimenets<-CT_diff%>%
+  filter(CO2==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+co2_mean<-CT_diff%>%
   filter(CO2==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff)) %>% 
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="co2")
- 
+  mutate(trt_type2="CO2")%>%
+  select(-sd)
 
-CT_Sp_co2_other<-CT_diff%>%
+##CO2 + other
+co2_other_sites<-CT_diff%>%
+  filter(CO2_other==1)%>%
+  select(site_code)%>%
+  unique()
+
+co2_other_exmt<-CT_diff%>%
+  filter(CO2_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+co2_other_mean<-CT_diff%>%
   filter(CO2_other==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="co2_other")
+  mutate(trt_type2="co2_other")%>%
+  select(-sd)
 
-CT_Sp_dist<-CT_diff%>%
+##disturbance
+dist_sites<-CT_diff%>%
+  filter(dist==1)%>%
+  select(site_code)%>%
+  unique()
+
+dist_experimenets<-CT_diff%>%
+  filter(dist==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+dist_mean<-CT_diff%>%
   filter(dist==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff)) %>% 
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="disturbance")
+  mutate(trt_type2="dist")%>%
+  select(-sd)
 
-CT_Sp_dist_other<-CT_diff%>%
+##dist + other
+dist_other_sites<-CT_diff%>%
+  filter(dist_other==1)%>%
+  select(site_code)%>%
+  unique()
+
+dist_other_exmt<-CT_diff%>%
+  filter(dist_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+dist_other_mean<-CT_diff%>%
   filter(dist_other==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="dist_other")
+  mutate(trt_type2="dist_other")%>%
+  select(-sd)
 
-CT_Sp_irg<-CT_diff%>%
+##Irrigation
+irg_sites<-CT_diff%>%
+  filter(irg==1)%>%
+  select(site_code)%>%
+  unique()
+
+irg_experimenets<-CT_diff%>%
+  filter(irg==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+irg_mean<-CT_diff%>%
   filter(irg==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff)) %>% 
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="irrigation")
+  mutate(trt_type2="irg")%>%
+  select(-sd)
 
-CT_Sp_irg_other<-CT_diff%>%
+##Irg + other
+irg_other_sites<-CT_diff%>%
+  filter(irg_other==1)%>%
+  select(site_code)%>%
+  unique()
+
+irg_other_exmt<-CT_diff%>%
+  filter(irg_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+irg_other_mean<-CT_diff%>%
   filter(irg_other==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="irg_other")
+  mutate(trt_type2="irg_other")%>%
+  select(-sd)
 
-CT_Sp_drt<-CT_diff%>%
+##Drought
+drt_sites<-CT_diff%>%
+  filter(drought==1)%>%
+  select(site_code)%>%
+  unique()
+
+drt_experimenets<-CT_diff%>%
+  filter(drought==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+drt_mean<-CT_diff%>%
   filter(drought==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff)) %>% 
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="drought")
+  mutate(trt_type2="drt")%>%
+  select(-sd)
 
-CT_Sp_drt_other<-CT_diff%>%
+##drought + other
+drt_other_sites<-CT_diff%>%
+  filter(drought_other==1)%>%
+  select(site_code)%>%
+  unique()
+
+drt_other_exmt<-CT_diff%>%
+  filter(drought_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+drt_other_mean<-CT_diff%>%
   filter(drought_other==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="drt_other")
+  mutate(trt_type2="drt_other")%>%
+  select(-sd)
 
-CT_Sp_N<-CT_diff%>%
+##N
+n_sites<-CT_diff%>%
+  filter(n==1)%>%
+  select(site_code)%>%
+  unique()
+
+n_experimenets<-CT_diff%>%
+  filter(n==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+n_mean<-CT_diff%>%
   filter(n==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff)) %>% 
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="n")
+  mutate(trt_type2="n")%>%
+  select(-sd)
 
-CT_Sp_P<-CT_diff%>%
-  filter(p==1)%>%
-  group_by(species_matched)%>%
-  summarize(ave_diff=mean(diff),
-            nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
-  mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="p")
+##n + other
+n_other_sites<-CT_diff%>%
+  filter(n_other==1)%>%
+  select(site_code)%>%
+  unique()
 
-CT_Sp_P_other<-CT_diff%>%
-  filter(p_other==1)%>%
-  group_by(species_matched)%>%
-  summarize(ave_diff=mean(diff),
-            nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
-  mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="p_other")
+n_other_exmt<-CT_diff%>%
+  filter(n_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
 
-# CT_Sp_nuts_other<-CT_diff%>%
-#   filter(nuts_other==1)%>%
-#   group_by(species_matched)%>%
-#   summarize(ave_diff=mean(diff),
-#             nobs=length(diff),
-#             sd=sd(diff),
-#             min=min(diff),
-#             max=max(diff))%>%
-#   mutate(se=sd/sqrt(nobs))%>%
-#   mutate(trt_type2="nuts_other")
-
-CT_Sp_n_other<-CT_diff%>%
+n_other_mean<-CT_diff%>%
   filter(n_other==1)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="n_other")
+  mutate(trt_type2="n_other")%>%
+  select(-sd)
 
-allmul_subset<-CT_diff%>%
+##P
+p_sites<-CT_diff%>%
+  filter(p==1)%>%
+  select(site_code)%>%
+  unique()
+
+p_experimenets<-CT_diff%>%
+  filter(p==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+p_mean<-CT_diff%>%
+  filter(p==1)%>%
+  group_by(species_matched)%>%
+  summarize(ave_diff=mean(diff),
+            nobs=length(diff),
+            sd=sd(diff)) %>% 
+  mutate(se=sd/sqrt(nobs))%>%
+  mutate(trt_type2="p")%>%
+  select(-sd)
+
+##p + other
+p_other_sites<-CT_diff%>%
+  filter(p_other==1)%>%
+  select(site_code)%>%
+  unique()
+
+p_other_exmt<-CT_diff%>%
+  filter(p_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+p_other_mean<-CT_diff%>%
+  filter(p_other==1)%>%
+  group_by(species_matched)%>%
+  summarize(ave_diff=mean(diff),
+            nobs=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(nobs))%>%
+  mutate(trt_type2="p_other")%>%
+  select(-sd)
+
+
+
+##multiple treatments only use species that are found in 3 or more experiments
+
+allmult_subset<-CT_diff%>%
   filter(multtrts==1)%>%
   ungroup()%>%
   select(species_matched, trt_type)%>%
@@ -387,22 +522,38 @@ allmul_subset<-CT_diff%>%
   filter(n>2)%>%
   select(-n)
 
-CT_Sp_allint<-CT_diff%>%
+allmult_sites<-CT_diff%>%
   filter(multtrts==1)%>%
-  right_join(allmul_subset)%>%
+  right_join(allmult_subset)%>%
+  select(site_code)%>%
+  unique()
+
+allmult_exmt<-CT_diff%>%
+  filter(multtrts==1)%>%
+  right_join(allmult_subset)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()%>%
+  mutate(presmult=1)
+
+
+allmult_mean<-CT_diff%>%
+  filter(multtrts==1)%>%
+  right_join(allmult_subset)%>%
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
-            sd=sd(diff),
-            min=min(diff),
-            max=max(diff))%>%
+            sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="all mult")
+  mutate(trt_type2="all mult")%>%
+  select(-sd)
 
+###how simialr are n+other with mult_trts - not that similar of 1/4 of all comparisions involve N. 
+compare_n_mult<-n_other_exmt%>%
+  mutate(npresent=1)%>%
+  full_join(allmult_exmt) 
 
-Fulldataset<-CT_Sp_allint%>%
-  bind_rows(CT_Sp_co2, CT_Sp_co2_other, CT_Sp_dist, CT_Sp_dist_other, CT_Sp_drt,CT_Sp_drt_other,  CT_Sp_herb, CT_Sp_herb_other, CT_Sp_irg, CT_Sp_irg_other, CT_Sp_N, CT_Sp_n_other, CT_Sp_P, CT_Sp_P_other, CT_Sp_temp, CT_Sp_temp_other)%>%
-  select(species_matched, trt_type2, nobs, ave_diff, min, max, se)
+Fulldataset<-allmult_mean%>%
+  bind_rows(co2_mean, co2_other_mean, dist_mean, dist_other_mean, drt_mean, drt_other_mean,  herb_mean, herb_other_mean, irg_mean, irg_other_mean, n_mean, n_other_mean, p_mean, p_other_mean, temp_mean, temp_other_mean)
 
 write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Dec2021.csv", sep=""), row.names=F)
 
