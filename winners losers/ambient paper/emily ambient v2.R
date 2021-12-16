@@ -165,18 +165,40 @@ DCi_dropped=DCi_0.1 %>%
   left_join(DCi.through.time) %>% 
   right_join(long_enough_studies)
 
-filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi through time dropping rare species and short studies.csv", sep=""))
-write.csv(DCi.averaged, filename, row.names=F)
+filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi through time dropping rare species and short studies.csv", sep="")); write.csv(DCi_dropped, filename, row.names=F)
 
 #plotting species trends through time
-spc.dropped=unique(DCi_dropped$site_project_comm)
-for (i in 1:length(spc.dropped)) {
-  qplot(treatment_year, DCi, data=DCi_dropped[DCi_dropped$site_project_comm==as.character(spc.dropped[i]),], color=treatment, main=spc.dropped[i]) + geom_smooth(method="lm", se=F, aes(group=treatment)) + facet_wrap(~species_matched)
-  filename=paste(my.wd, "/WinnersLosers paper/DCi/species trends through time, dropping rare and short studies/", as.character(spc.dropped[i]), ".pdf", sep="")
-  ggsave(filename, width=10, height=10)
+
+#spc.dropped=unique(DCi_dropped$site_project_comm)
+#for (i in 1:length(spc.dropped)) {
+#  qplot(treatment_year, DCi, data=DCi_dropped[DCi_dropped$site_project_comm==as.character(spc.dropped[i]),], color=treatment, main=spc.dropped[i]) + geom_smooth(method="lm", se=F, aes(group=treatment)) + facet_wrap(~species_matched)
+#  filename=paste(my.wd, "/WinnersLosers paper/DCi/species trends through time, dropping rare and short studies/", as.character(spc.dropped[i]), ".pdf", sep="")
+#  ggsave(filename, width=10, height=10)
+#}
+
+#running regressions for each species, each treatment and extracting slopes
+
+DCi_dropped$site_project_comm_trt_sp=as.factor(paste(DCi_dropped$site_project_comm, DCi_dropped$treatment, DCi_dropped$species_matched, sep="::"))
+
+spcts=unique(DCi_dropped$site_project_comm_trt_sp)
+spcts_regressions=NULL
+
+for (h in 1:length(spcts)) {
+  mod=lm(DCi~treatment_year, data=DCi_dropped[DCi_dropped$site_project_comm_trt_sp==as.character(spcts[h]),])
+  mod2=lm(mean.relabund~treatment_year, data=DCi_dropped[DCi_dropped$site_project_comm_trt_sp==as.character(spcts[h]),])
+  keep=cbind(as.character(spcts[h]), mod$coefficients[[2]], anova(mod)$Pr[1], mod2$coefficients[[2]], anova(mod2)$Pr[1])
+  spcts_regressions=rbind(spcts_regressions, keep)
 }
 
+spcts_regressions=data.frame(spcts_regressions)
+names(spcts_regressions)=c("site_project_comm_trt_sp", "DCi.slope", "DCi.p", "relabund.slope", "relabund.p")
 
+DCi_regressions=DCi_dropped %>% 
+  select(site_code, project_name, community_type, site_project_comm, species_matched, treatment, trt_type, site_project_comm_trt_sp, study_length, number_years) %>% 
+  unique() %>% 
+  left_join(spcts_regressions)
+  
+filename=(paste(my.wd, "/WinnersLosers paper/DCi/ regression results.csv", sep="")); write.csv(DCi_regressions, filename, row.names=F)
 
 
 
