@@ -3,6 +3,8 @@ library(plyr)
 library(hypervolume)
 library(BAT)
 library(reshape2)
+library(lmerTest)
+library(ggpubr)
 
 
 
@@ -118,10 +120,10 @@ test <- crest %>%
   subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
             trt_type == "drought")%>%
   subset(rep_num >= 5)%>%
-  subset(#site_code == "KNZ" | 
+  subset(site_code == "KNZ" | 
     #site_code == "NWT" | 
-      #site_code == "SEV" |
-        project_name == "EDGE"
+      site_code == "SEV" #|
+      #  project_name == "EDGE"
     )##THIS IS ONLY TO GET THE CODE TO RUN FASTER WHILE MAKING THE WORKFLOW
 
 test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "genus_species", "relcov", "trt_type")]%>%
@@ -137,14 +139,14 @@ df <- merge(test, traits, by.x = "genus_species", by.y = "species_matched", all.
 df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "::")
 
 df$ok <- complete.cases(df[,c("seed_dry_mass", 
-                              "LDMC",
+                              #"LDMC",
                               "plant_height_vegetative",
                               "rooting_depth"
                               )])
 df <- subset(df, ok == TRUE)
 
 hv_split <- base::split(df[,c("seed_dry_mass", 
-                              "LDMC",
+                              #"LDMC",
                               "plant_height_vegetative",
                               "rooting_depth",
                               "relcov",
@@ -156,7 +158,7 @@ hv_split <- subset(hv_split, lapply(hv_split, nrow) >1)
 
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, 
+  hypervolume_gaussian(data = x[1:3], name = unique(x$rep), weight = x$relcov, 
                        verbose = FALSE) 
   }
 
@@ -230,20 +232,27 @@ distance.measures <- kernel.similarity(hvs_joined) #this takes a long time, but 
 #distance.centroids <- distance$Distance_centroids
 
 
-distance.centroids.dat <- melt(as.matrix(distance.measures$Distance_centroids), varnames = c("rep1", "rep2"))
+distance.centroids.dat <- data.frame(as.table(as.matrix(distance.measures$Distance_centroids)))[lower.tri(as.matrix(distance.measures$Distance_centroids), diag = FALSE), ]
+  
+distance.centroids.dat$rep1 <- distance.centroids.dat$Var1
+distance.centroids.dat$rep2 <- distance.centroids.dat$Var2
+distance.centroids.dat$value <- distance.centroids.dat$Freq
+#  as.matrix(distance.measures$Distance_centroids)%>%
+#  reshape2::melt( varnames = c("rep1", "rep2"))%>%
+#    unique()
 
 
 scooby <- distance.centroids.dat%>%
           merge(plot.treatment, by.x = "rep1", by.y = "rep")
 
 dooby <- scooby[c("rep1", "rep2", "value", "trt_type", "site_code", "project_name", "community_type")]%>%
-        unite( expgroup1, c("site_code", "project_name", "community_type"))
+        unite( expgroup1, c("site_code", "project_name", "community_type"), sep = "::")
 
 dooby$trt_rep1 <- dooby$trt_type
 
 doo <- dooby%>%
       merge( plot.treatment, by.x = "rep2", by.y = "rep")%>%
-      unite( expgroup2, c("site_code", "project_name", "community_type"))
+      unite( expgroup2, c("site_code", "project_name", "community_type"), sep = "::")
 
 doo$trt_rep2 <- doo$trt_type.y
 
@@ -254,22 +263,31 @@ last <- doo%>%
           unite( trt_comp, c("trt_rep1", "trt_rep2"), sep = ".", remove = FALSE)%>%
           subset( value != 0)%>%
           subset( trt_comp == "control.control" | trt_comp == "drought.drought" | trt_comp == "N.N" | trt_comp == "P.P" | trt_comp == "irr.irr" )%>%
-          mutate( match = ifelse("expgroup1"=="expgroup2", TRUE, FALSE))
+          mutate( match = ifelse(expgroup1 == expgroup2 , TRUE, FALSE))
 
-ggplot(last, aes(trt_comp, value))+
+withinsite <- subset(last, match == TRUE)
+
+ggplot(withinsite, aes(trt_comp, value))+
   facet_wrap(~expgroup1)+
   geom_boxplot()+
+  ylab("Distance between centroids")+
+  stat_compare_means(method = "t.test")+
   theme_bw()
 
 
 
 
 
+##Figure out how to do inter-site comparisons. All the distances are already calculated. Have to use site pairs as a random effect?
 
 
+last    <- last%>%
+        unite(exppair, c("expgroup1", "expgroup2" ), remove = FALSE, sep = "||")
 
 
+mod <- lmer(value~trt_comp + (1|exppair), data = last)
+summary(mod)
 
-
-
+library(visreg)
+visreg(mod, ylab = "Distance between centroids")
 
