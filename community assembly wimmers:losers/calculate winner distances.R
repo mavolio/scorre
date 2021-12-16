@@ -22,7 +22,8 @@ trait$species_matched<-NULL
 #calculate functional dissimilarities between species using GAWDIS:
 #I haven't log-transformed traits. Pending!!
 #trait.dis<-gawdis(trait, w.type="optimized") #This took forever and I had to stop it. Can remove "w.type="optiimized" but a warning pops up)
-trait.dis<-cluster::daisy(trait, metric="gower") #can take a while
+#trait.dis<-gawdis(trait) #with "analytical" method
+trait.dis<-cluster::daisy(trait, metric="gower") #or with gower distance
 
 #convert distance object into phylotree using the Ward's algorithm (https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/hclust):
 ftree<-as.phylo(hclust(trait.dis, method="average"))
