@@ -13,7 +13,8 @@ my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 #read in the data
 
 #raw abundance data
-dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep=""))
+dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
+  filter(treatment_year!=0)
 
 sp <-read.csv(paste(my.wd,"CoRRE data/CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
   select(genus_species, species_matched)%>%
