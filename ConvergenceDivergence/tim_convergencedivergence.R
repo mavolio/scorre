@@ -120,10 +120,10 @@ test <- crest %>%
   subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
             trt_type == "drought")%>%
   subset(rep_num >= 5)%>%
-  subset(site_code == "KNZ" | 
+  subset(site_code == "KNZ" & project_name == "change" 
     #site_code == "NWT" | 
-      site_code == "SEV" #|
-      #  project_name == "EDGE"
+      #site_code == "SEV" &  project_name == "EDGE" & community_type == "blue_gramma"
+    #site_code == "KBS" & project_name == "T7" & community_type == "0"
     )##THIS IS ONLY TO GET THE CODE TO RUN FASTER WHILE MAKING THE WORKFLOW
 
 test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "genus_species", "relcov", "trt_type")]%>%
@@ -291,3 +291,29 @@ summary(mod)
 library(visreg)
 visreg(mod, ylab = "Distance between centroids")
 
+
+
+
+
+
+
+##############################
+####
+library(vegan)
+
+
+
+#'test' dataframe has all the cover data but only with focal sites and treatments and such
+
+#For each treatment at each site, pull the treatment and control data, spread, calculate distance matrix, then betadisper 
+
+
+wide <- test%>%
+    pivot_wider(names_from = genus_species, values_from = relcov, values_fill = 0)
+
+distances <- dist(wide[7:ncol(wide)])
+mod <- betadisper(distances, group = wide$trt_type, type = "centroid")
+permutest(mod, permutations = 99)
+anova(mod)
+#plot(mod)
+boxplot(mod)
