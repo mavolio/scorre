@@ -1,5 +1,36 @@
 
+#load packages
+library(gawdis)
+
+#set directory
 my.wd <- "~/Dropbox/sCoRRE/sDiv_sCoRRE_shared"
+my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #Padu's wd
+
+
+#load data:
+corre<-read.table(paste(my.wd, "CoRRE_RelativeCover_Dec2021.csv", sep=""), header=T, sep=",", fill = TRUE)
+trait<-read.table(paste(my.wd, "Backtrans_GapFilled_sCorre.csv", sep=""), header=T, sep=",", fill = TRUE)
+
+#get mean trait values:
+trait <- trait %>%  group_by(species_matched) %>% summarise_at(vars("seed_dry_mass","stem_spec_density", "leaf_N",                 
+                                                                  "leaf_P", "LDMC", "leaf_C","leaf_dry_mass",          
+                                                                   "plant_height_vegetative", "leaf_C.N", "SLA","water_content",          
+                                                                   "rooting_depth", "SRL"), median, na.rm=T) %>% as.data.frame() 
+rownames(trait)<-trait$species_matched
+trait$species_matched<-NULL
+
+#calculate functional dissimilarities between species using GAWDIS:
+#I haven't log-transformed traits. Pending!!
+#trait.dis<-gawdis(trait, w.type="optimized") #This took forever and I had to stop it. Can remove "w.type="optiimized" but a warning pops up)
+trait.dis<-cluster::daisy(trait, metric="gower") #can take a while
+
+#convert distance object into phylotree using the Ward's algorithm (https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/hclust):
+ftree<-as.phylo(hclust(trait.dis, method="average"))
+
+#save output:
+write.tree(ftree, paste(my.wd, "ftree.scorre.gowdis.log.upgma.tre", sep=""))
+
+
 
 
 
