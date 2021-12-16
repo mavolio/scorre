@@ -93,17 +93,6 @@ write.csv(DCi.through.time, filename, row.names=F)
 #add handy labels
 DCi.through.time$site_project_comm=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, sep="_")); spc=unique(DCi.through.time$site_project_comm); length(spc)
 
-DCi.through.time$site_project_comm_trt=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$treatment, sep="::")); spct=unique(DCi.through.time$site_project_comm_trt); length(spct)
-
-DCi.through.time$site_project_comm_sp=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, sep="::")); spcs=unique(DCi.through.time$site_project_comm_sp); length(spcs)
-
-DCi.through.time$site_project_comm_sp_yr=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$calendar_year, sep="::")); spcsy=unique(DCi.through.time$site_project_comm_sp_yr); length(spcsy)
-
-DCi.through.time$site_project_comm_sp_trt_yr=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$treatment, DCi.through.time$calendar_year, sep="::")); spcsty=unique(DCi.through.time$site_project_comm_sp_trt_yr); length(spcsty)
-
-DCi.through.time$site_project_comm_sp_trt=as.factor(paste(DCi.through.time$site_project_comm, DCi.through.time$species_matched, DCi.through.time$treatment, sep="::")); spcst=unique(DCi.through.time$site_project_comm_sp_trt); length(spcst)
-
-
 #plot species trends through time
 
 #for (i in 1:length(spc)) {
@@ -113,21 +102,29 @@ DCi.through.time$site_project_comm_sp_trt=as.factor(paste(DCi.through.time$site_
 #}
 
 
-#averaging over time:
-
-DCi.averaged=DCi.through.time %>% 
-  group_by(site_code, project_name, community_type, site_project_comm, site_project_comm_trt, site_project_comm_sp, site_project_comm_sp_trt, treatment, trt_type, species_matched) %>% 
-  summarize(across(c(DCi, freq, mean.relabund, nplots), mean)) %>% 
-  ungroup() 
+#averaging over time and adding column for length of study:
 
 study.length=DCi.through.time %>% 
-  select(site_code, project_name, community_type, site_project_comm, site_project_comm_trt, site_project_comm_sp, site_project_comm_sp_trt, treatment, trt_type, species_matched, treatment_year, DCi, freq, mean.relabund, nplots) %>% 
-  mutate(study_length=max(treatment_year))
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, treatment_year) %>% 
+  unique %>% 
+  group_by(site_code, project_name, community_type, treatment, trt_type) %>% 
+  summarize(study_length=max(treatment_year), number_years=length(treatment_year)) %>% 
+  ungroup()
 
-
+DCi.averaged=DCi.through.time %>% 
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched) %>% 
+  summarize(across(c(DCi, freq, mean.relabund, nplots), mean)) %>% 
+  ungroup() %>% 
+  right_join(study.length)
 
 filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi averaged through time.csv", sep=""))
 write.csv(DCi.averaged, filename, row.names=F)
+
+#making list of studies that have at least 5 years of data (and should be kept in future analysis):
+long_enough_studies=DCi.averaged %>% 
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, study_length, number_years) %>% 
+  unique() %>% 
+  filter(!number_years<5) 
 
 # how do we decide which species are rare enough to drop? 
 
@@ -140,7 +137,7 @@ for (i in 1:length(spc)) {
 #exploring DCi cutoffs: keep DCi>0.1
 
 DCi_0.1=DCi.averaged %>% 
-  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, site_project_comm_trt, species_matched, site_project_comm_sp, site_project_comm_sp_trt, DCi, freq, mean.relabund, nplots) %>% 
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, DCi, freq, mean.relabund, nplots) %>% 
   filter(DCi<0.1)
 
 ggplot(DCi_0.1, aes(freq)) + geom_histogram()
@@ -150,7 +147,7 @@ ggplot(DCi_0.1, aes(mean.relabund)) + geom_histogram()
 filename=paste(my.wd, "/WinnersLosers paper/DCi/relabund histogram with DCi less than 0.1", ".pdf", sep=""); ggsave(filename, width=6, height=6)
 
 DCi_0.1=DCi.averaged %>% 
-  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, site_project_comm_trt, species_matched, site_project_comm_sp, site_project_comm_sp_trt, DCi, freq, mean.relabund, nplots) %>% 
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, DCi, freq, mean.relabund, nplots) %>% 
   filter(!DCi<0.1)
 
 ggplot(DCi_0.1, aes(freq)) + geom_histogram()
@@ -159,24 +156,32 @@ filename=paste(my.wd, "/WinnersLosers paper/DCi/freq histogram with DCi greater 
 ggplot(DCi_0.1, aes(mean.relabund)) + geom_histogram() 
 filename=paste(my.wd, "/WinnersLosers paper/DCi/relabund histogram with DCi greater than 0.1", ".pdf", sep=""); ggsave(filename, width=6, height=6)
 
+
+#cutting dataset to only species with average (across all plots all years) DCi >=0.1 and to studies with 5 or more years of data
+
 DCi_dropped=DCi_0.1 %>% 
-  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched) %>% 
-  left_join(DCi.through.time)
+  select(site_code, project_name, community_type, site_project_comm, species_matched) %>% 
+  unique %>% 
+  left_join(DCi.through.time) %>% 
+  right_join(long_enough_studies)
 
-#exploring DCi cutoffs: keep only studies with 5 or more years of data
+filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi through time dropping rare species and short studies.csv", sep=""))
+write.csv(DCi.averaged, filename, row.names=F)
 
-
-
-
-
-
+#plotting species trends through time
 spc.dropped=unique(DCi_dropped$site_project_comm)
 for (i in 1:length(spc.dropped)) {
   qplot(treatment_year, DCi, data=DCi_dropped[DCi_dropped$site_project_comm==as.character(spc.dropped[i]),], color=treatment, main=spc.dropped[i]) + geom_smooth(method="lm", se=F, aes(group=treatment)) + facet_wrap(~species_matched)
-  filename=paste(my.wd, "/WinnersLosers paper/DCi/species trends through time/", as.character(spc.dropped[i]), ".pdf", sep="")
+  filename=paste(my.wd, "/WinnersLosers paper/DCi/species trends through time, dropping rare and short studies/", as.character(spc.dropped[i]), ".pdf", sep="")
   ggsave(filename, width=10, height=10)
 }
 
+
+
+
+
+
+#making some more figures to check out our DCi cutoff (to compare with figures Meghan had previously made)
 
 #averaging again across treatments, leaving control plots out:
 
