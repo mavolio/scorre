@@ -185,7 +185,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_all_mult.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -346,7 +346,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_n.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_n.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -516,7 +516,7 @@ dev.off()
 # Filter by treatment = P
 ###
 
-dat<-subset(species.data, trt_type2=="p")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="p")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -666,7 +666,7 @@ p <-
         legend.key.size = unit(1, "cm"),
         legend.position="bottom")
 #save output:
-png("phylo_ring_p.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_p.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -675,7 +675,7 @@ dev.off()
 # Filter by treatment == Co2
 ###
 
-dat<-subset(species.data, trt_type2=="co2")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="CO2")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -829,7 +829,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_co2.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_co2.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -839,7 +839,7 @@ dev.off()
 # Filter by treatment == drought
 ###
 
-dat<-subset(species.data, trt_type2=="drought")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="drt")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -993,7 +993,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_drought.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_drought.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1002,7 +1002,7 @@ dev.off()
 # Filter by treatment == irrigation
 ###
 
-dat<-subset(species.data, trt_type2=="irrigation")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="irg")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1156,7 +1156,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_irrigation.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_irrigation.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1165,7 +1165,7 @@ dev.off()
 # Filter by treatment == temp
 ###
 
-dat<-subset(species.data, trt_type2=="temp")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="temp")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1319,7 +1319,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_temp.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_temp.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1328,7 +1328,7 @@ dev.off()
 # Filter by treatment == herbivore removal
 ###
 
-dat<-subset(species.data, trt_type2=="herb_removal")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="herb_removal")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1482,7 +1482,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_herb_removal.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_herb_removal.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1492,7 +1492,7 @@ dev.off()
 # Filter by treatment == disturbance
 ###
 
-dat<-subset(species.data, trt_type2=="disturbance")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="dist")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1646,7 +1646,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_disturbance.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_disturbance.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
