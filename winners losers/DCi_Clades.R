@@ -22,7 +22,7 @@ my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\d
 ###
 
 #load species data (filtered after removing mosses and species missing from the phylogeny):
-species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021.csv",sep=""))
+species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021_newother.csv",sep=""))
 species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 
 #load phylogenetic tree:
@@ -378,7 +378,7 @@ tree2<-keep.tip(tree, rownames(dat))
 ###
 
 res<-node.mean(tree2, dat, 999)
-write.table(res, paste(my.wd, "res_phylo_n_other.csv", sep="")) #save the result
+#write.table(res, paste(my.wd, "res_phylo_n_other.csv", sep="")) #save the result
 #res<-read.table(paste(my.wd, "res_phylo_n_other (3).csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
@@ -446,7 +446,7 @@ toplot<-as.character(head(famf$Var1, n=27)) #select the top 27 families with 5 o
 p <- 
   ggtree(tree2, layout="circular", size=0.5)+ # build circular tree
   geom_point(aes(colour=as.factor(significant)), size=2, alpha=1, show.legend = TRUE) + # highlight nodes
-  scale_colour_manual(values=c("red", "deepskyblue"), labels=c("Lower DCi", "Higher DCi"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
+  scale_colour_manual(values=c("orange", "purple"), labels=c("Worse with N + Other", "Better with N + Other"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
   geom_cladelabel(node=subset(famf, Var1=="Poaceae")$num, label="Poaceae",  fontsize=2.5, barsize = 0.1, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1=="Asteraceae")$num, label="Asteraceae", fontsize=2.5, barsize = 0.1, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1=="Fabaceae")$num, label="Fabaceae", fontsize=2.5, barsize=0.5, hjust= 1, angle = 5) +
@@ -511,7 +511,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_n_other.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_n_other.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1659,10 +1659,10 @@ p
 dev.off()
 
 ###
-# Filter by treatment = N_other
+# Filter by treatment = Dist_other
 ###
 
-dat<-subset(species.data, trt_type2=="n_other")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="dist_other")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1678,8 +1678,8 @@ tree2<-keep.tip(tree, rownames(dat))
 ###
 
 res<-node.mean(tree2, dat, 999)
-write.table(res, paste(my.wd, "res_phylo_n_other.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_n_other.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_p_other.csv", sep="")) #save the result
+#res<-read.table(paste(my.wd, "res_phylo_p_other.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -1811,7 +1811,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_n_other.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_dist_other.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
