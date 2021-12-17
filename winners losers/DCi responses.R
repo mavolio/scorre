@@ -12,7 +12,7 @@ my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 
 #read in the data
 
-#raw abundance data
+#raw abundance data and drop pretreatment years
 dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
   filter(treatment_year!=0)
 
@@ -194,19 +194,33 @@ herb_mean<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="herb_removal")%>%
   select(-sd)
-##Herbivory + other
-herb_other_sites<-CT_diff%>%
-  filter(herb_removal_other==1)%>%
-  select(site_code)%>%
-  unique()
 
+
+##Herbivory + other - need to filter out same experiments that have herbivory alone and herbivory + other
+
+#first get list of experiments that have herb + other
 herb_other_exmt<-CT_diff%>%
   filter(herb_removal_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-herb_other_mean<-CT_diff%>%
+##get list of experiments with herb and trim this to match herb + other
+herb_exmt_withother<-CT_diff%>%
+  filter(herb_removal==1)%>%
+  right_join(herb_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+herb_other_combine<-CT_diff%>%
   filter(herb_removal_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(herb_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+herb_other_mean<-herb_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -214,6 +228,16 @@ herb_other_mean<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="herb_rem_other")%>%
   select(-sd)
+
+##get the number of site
+herb_other_sites<-herb_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+herb_other_exmt<-herb_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
 
 ##Temperature
 temp_sites<-CT_diff%>%
@@ -236,19 +260,31 @@ temp_mean<-CT_diff%>%
   mutate(trt_type2="temp")%>%
   select(-sd)
 
-##Temp + other
-temp_other_sites<-CT_diff%>%
-  filter(temp_other==1)%>%
-  select(site_code)%>%
-  unique()
+##Temp + other - 
 
+#first get list of experiments that have driver + other
 temp_other_exmt<-CT_diff%>%
   filter(temp_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-temp_other_mean<-CT_diff%>%
+##get list of experiments with driver alone and trim this to match driver + other
+temp_exmt_withother<-CT_diff%>%
+  filter(temp==1)%>%
+  right_join(temp_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+temp_other_combine<-CT_diff%>%
   filter(temp_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(temp_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+temp_other_mean<-temp_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -256,6 +292,16 @@ temp_other_mean<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="temp_other")%>%
   select(-sd)
+
+##get the number of site
+temp_other_sites<-temp_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+temp_other_exmt<-temp_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
 
 ##CO2
 co2_sites<-CT_diff%>%
@@ -278,28 +324,51 @@ co2_mean<-CT_diff%>%
   mutate(trt_type2="CO2")%>%
   select(-sd)
 
-##CO2 + other
-co2_other_sites<-CT_diff%>%
-  filter(CO2_other==1)%>%
-  select(site_code)%>%
-  unique()
+##CO2 + other - 
 
+#first get list of experiments that have driver + other
 co2_other_exmt<-CT_diff%>%
   filter(CO2_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-co2_other_mean<-CT_diff%>%
+##get list of experiments with driver alone and trim this to match driver + other
+co2_exmt_withother<-CT_diff%>%
+  filter(CO2==1)%>%
+  right_join(co2_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+co2_other_combine<-CT_diff%>%
   filter(CO2_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(co2_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+co2_other_mean<-co2_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
             sd=sd(diff))%>%
   mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="co2_other")%>%
+  mutate(trt_type2="CO2_other")%>%
   select(-sd)
 
-##disturbance
+##get the number of site
+co2_other_sites<-co2_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+co2_other_exmt<-co2_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+
+#disturbance
 dist_sites<-CT_diff%>%
   filter(dist==1)%>%
   select(site_code)%>%
@@ -320,19 +389,31 @@ dist_mean<-CT_diff%>%
   mutate(trt_type2="dist")%>%
   select(-sd)
 
-##dist + other
-dist_other_sites<-CT_diff%>%
-  filter(dist_other==1)%>%
-  select(site_code)%>%
-  unique()
+##dist + other - 
 
+#first get list of experiments that have driver + other
 dist_other_exmt<-CT_diff%>%
   filter(dist_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-dist_other_mean<-CT_diff%>%
+##get list of experiments with driver alone and trim this to match driver + other
+dist_exmt_withother<-CT_diff%>%
+  filter(dist==1)%>%
+  right_join(dist_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+dist_other_combine<-CT_diff%>%
   filter(dist_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(dist_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+dist_other_mean<-dist_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -340,6 +421,16 @@ dist_other_mean<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="dist_other")%>%
   select(-sd)
+
+##get the number of site
+dist_other_sites<-dist_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+dist_other_exmt<-dist_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
 
 ##Irrigation
 irg_sites<-CT_diff%>%
@@ -362,19 +453,31 @@ irg_mean<-CT_diff%>%
   mutate(trt_type2="irg")%>%
   select(-sd)
 
-##Irg + other
-irg_other_sites<-CT_diff%>%
-  filter(irg_other==1)%>%
-  select(site_code)%>%
-  unique()
+##Irrigation + other - 
 
+#first get list of experiments that have driver + other
 irg_other_exmt<-CT_diff%>%
   filter(irg_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-irg_other_mean<-CT_diff%>%
+##get list of experiments with driver alone and trim this to match driver + other
+irg_exmt_withother<-CT_diff%>%
+  filter(irg==1)%>%
+  right_join(irg_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+irg_other_combine<-CT_diff%>%
   filter(irg_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(irg_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+irg_other_mean<-irg_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -382,6 +485,17 @@ irg_other_mean<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="irg_other")%>%
   select(-sd)
+
+
+##get the number of site
+irg_other_sites<-irg_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+irg_other_exmt<-irg_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
 
 ##Drought
 drt_sites<-CT_diff%>%
@@ -404,19 +518,31 @@ drt_mean<-CT_diff%>%
   mutate(trt_type2="drt")%>%
   select(-sd)
 
-##drought + other
-drt_other_sites<-CT_diff%>%
-  filter(drought_other==1)%>%
-  select(site_code)%>%
-  unique()
+##drought + other - 
 
+#first get list of experiments that have driver + other
 drt_other_exmt<-CT_diff%>%
   filter(drought_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-drt_other_mean<-CT_diff%>%
+##get list of experiments with driver alone and trim this to match driver + other
+drt_exmt_withother<-CT_diff%>%
+  filter(drought==1)%>%
+  right_join(drt_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+drt_other_combine<-CT_diff%>%
   filter(drought_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(drt_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+drt_other_mean<-drt_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -424,6 +550,18 @@ drt_other_mean<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="drt_other")%>%
   select(-sd)
+
+
+##get the number of site
+drt_other_sites<-drt_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+drt_other_exmt<-drt_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
 
 ##N
 n_sites<-CT_diff%>%
@@ -446,19 +584,31 @@ n_mean<-CT_diff%>%
   mutate(trt_type2="n")%>%
   select(-sd)
 
-##n + other
-n_other_sites<-CT_diff%>%
-  filter(n_other==1)%>%
-  select(site_code)%>%
-  unique()
+##N + other - ###way to compare response to N alone versus N with toher
 
+#first get list of experiments that have driver + other
 n_other_exmt<-CT_diff%>%
   filter(n_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-n_other_mean<-CT_diff%>%
+##get list of experiments with driver alone and trim this to match driver + other
+n_exmt_withother<-CT_diff%>%
+  filter(n==1)%>%
+  right_join(n_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+n_other_combine<-CT_diff%>%
   filter(n_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(n_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+n_other_mean<-n_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -466,6 +616,60 @@ n_other_mean<-CT_diff%>%
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="n_other")%>%
   select(-sd)
+
+
+##get the number of site
+n_other_sites<-n_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+n_other_exmt<-n_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+
+##N + other - ###now doing N_other alone and subset of all N data to match N_other
+#first get list of experiments that have driver + other
+n_other_exmt<-CT_diff%>%
+  filter(n_other==1)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+##get list of experiments with driver alone and trim this to match driver + other
+n_exmt_withother_mean<-CT_diff%>%
+  filter(n==1)%>%
+  right_join(n_other_exmt)%>%
+  group_by(species_matched)%>%
+  summarize(ave_diff=mean(diff),
+            nobs=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(nobs))%>%
+  mutate(trt_type2="n_alone_otherexmpt")%>%
+  select(-sd)
+
+#just get N_other
+
+n_other_mean_way2<-CT_diff%>%
+  filter(n_other==1)%>%
+  group_by(species_matched)%>%
+  summarize(ave_diff=mean(diff),
+            nobs=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(nobs))%>%
+  mutate(trt_type2="n_other_two")%>%
+  select(-sd)
+
+
+##get the number of site
+n_other_sites<-n_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+n_other_exmt<-n_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
 
 ##P
 p_sites<-CT_diff%>%
@@ -488,19 +692,31 @@ p_mean<-CT_diff%>%
   mutate(trt_type2="p")%>%
   select(-sd)
 
-##p + other
-p_other_sites<-CT_diff%>%
-  filter(p_other==1)%>%
-  select(site_code)%>%
-  unique()
+##P + other - 
 
+#first get list of experiments that have driver + other
 p_other_exmt<-CT_diff%>%
   filter(p_other==1)%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-p_other_mean<-CT_diff%>%
+##get list of experiments with driver alone and trim this to match driver + other
+p_exmt_withother<-CT_diff%>%
+  filter(p==1)%>%
+  right_join(p_other_exmt)%>%
+  select(site_code, project_name, community_type, diff, species_matched)%>%
+  rename(diff_alone=diff)
+
+#merge both datasets together 
+p_other_combine<-CT_diff%>%
   filter(p_other==1)%>%
+  rename(diff_withOther=diff)%>%
+  left_join(p_exmt_withother)%>%
+  select(site_code, project_name, community_type, treatment, species_matched, diff_withOther, diff_alone)
+
+p_other_mean<-p_other_combine %>% 
+  mutate(diff_alone=replace_na(diff_alone, 0),
+         diff=diff_withOther-diff_alone) %>% 
   group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
@@ -509,6 +725,16 @@ p_other_mean<-CT_diff%>%
   mutate(trt_type2="p_other")%>%
   select(-sd)
 
+
+##get the number of site
+p_other_sites<-p_other_combine%>%
+  select(site_code)%>%
+  unique()
+
+##get the number of experiments
+p_other_exmt<-p_other_combine%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
 
 
 ##multiple treatments only use species that are found in 3 or more experiments
@@ -554,9 +780,9 @@ compare_n_mult<-n_other_exmt%>%
   full_join(allmult_exmt) 
 
 Fulldataset<-allmult_mean%>%
-  bind_rows(co2_mean, co2_other_mean, dist_mean, dist_other_mean, drt_mean, drt_other_mean,  herb_mean, herb_other_mean, irg_mean, irg_other_mean, n_mean, n_other_mean, p_mean, p_other_mean, temp_mean, temp_other_mean)
+  bind_rows(co2_mean, co2_other_mean, dist_mean, dist_other_mean, drt_mean, drt_other_mean,  herb_mean, herb_other_mean, irg_mean, irg_other_mean, n_mean, n_other_mean_way2, n_exmt_withother_mean, n_other_mean, p_mean, p_other_mean, temp_mean, temp_other_mean)
 
-write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Dec2021.csv", sep=""), row.names=F)
+write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Dec2021_newother.csv", sep=""), row.names=F)
 
 #figure
 aves<-Fulldataset%>%
