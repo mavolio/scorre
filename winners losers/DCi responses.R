@@ -774,13 +774,39 @@ allmult_mean<-CT_diff%>%
   mutate(trt_type2="all mult")%>%
   select(-sd)
 
+###all three or more treatmetns
+allmult_sites_3<-CT_diff%>%
+  filter(multtrts==1&plot_mani>2)%>%
+  right_join(allmult_subset)%>%
+  select(site_code)%>%
+  unique()
+
+allmult_exmt_3<-CT_diff%>%
+  filter(multtrts==1&plot_mani>2)%>%
+  right_join(allmult_subset)%>%
+  select(site_code, project_name, community_type)%>%
+  unique()%>%
+  mutate(presmult=1)
+
+allmult_mean_3<-CT_diff%>%
+  filter(multtrts==1&plot_mani>2)%>%
+  right_join(allmult_subset)%>%
+  group_by(species_matched)%>%
+  summarize(ave_diff=mean(diff),
+            nobs=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(nobs))%>%
+  mutate(trt_type2="all mult")%>%
+  select(-sd)
+
+
 ###how simialr are n+other with mult_trts - not that similar of 1/4 of all comparisions involve N. 
 compare_n_mult<-n_other_exmt%>%
   mutate(npresent=1)%>%
   full_join(allmult_exmt) 
 
 Fulldataset<-allmult_mean%>%
-  bind_rows(co2_mean, co2_other_mean, dist_mean, dist_other_mean, drt_mean, drt_other_mean,  herb_mean, herb_other_mean, irg_mean, irg_other_mean, n_mean, n_other_mean_way2, n_exmt_withother_mean, n_other_mean, p_mean, p_other_mean, temp_mean, temp_other_mean)
+  bind_rows(allmult_mean_3, co2_mean, co2_other_mean, dist_mean, dist_other_mean, drt_mean, drt_other_mean,  herb_mean, herb_other_mean, irg_mean, irg_other_mean, n_mean, n_other_mean, p_mean, p_other_mean, temp_mean, temp_other_mean)
 
 write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Dec2021_newother.csv", sep=""), row.names=F)
 
