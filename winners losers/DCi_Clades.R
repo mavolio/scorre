@@ -32,7 +32,7 @@ tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.Dec2021", sep=""))
 # Filter by treatment == all mult
 ###
 
-dat<-subset(species.data, trt_type2=="all mult")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="all mult")[,c(1,2)] #select "all mult" treatment from original data
 #dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$species_matched %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$species_matched #set species names as rownames
@@ -202,7 +202,7 @@ dev.off()
 # Filter by treatment = N
 ###
 
-dat<-subset(species.data, trt_type2=="n")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="n")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
