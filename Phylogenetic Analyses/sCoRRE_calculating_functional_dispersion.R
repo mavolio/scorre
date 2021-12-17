@@ -25,30 +25,8 @@ se <- function(x, na.rm=na.rm){
 ###
 
 ### Read in a clean continuous trait data
-source("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Git projects\\scorre\\Cleaning trait data\\01_cleaning continuous trait data.R")
+source("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Git projects\\scorre\\Cleaning trait data\\01_cleaning continuous and catagorical trait data.R")
 
-### Categorical trait data 
-#### NOTES:
-###
-### Categorical traits to include: growth_form, life_span, mycorrhizal_type, n_fixation, clonal, photosynthetic_pathway 
-###
-#########
-
-
-#all_traits_raw <- openxlsx::read.xlsx("sCoRRE categorical trait data_final_20211209.xlsx", sheet=1) %>%
-traits_catag_clean <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sCoRRE categorical trait data_final_20211209.csv") %>%
-  dplyr::select(species_matched, growth_form, photosynthetic_pathway, lifespan,  clonal, mycorrhizal_type, n_fixation) %>%
-  mutate(photosynthetic_pathway = replace(photosynthetic_pathway, grep("possible", photosynthetic_pathway), NA)) %>%
-  mutate(clonal = replace(clonal, clonal=="uncertain", NA)) %>%
-  mutate(mycorrhizal_type = replace(mycorrhizal_type, mycorrhizal_type=="uncertain", NA)) %>%
-  mutate(lifespan = replace(lifespan, lifespan=="uncertain", NA)) %>%
-  filter(lifespan != "moss")
-
-traits_all <- dplyr::select(traits_cont_clean, -LDMC_sd:-rooting_depth_sd) %>%
-  full_join(traits_catag_clean, by="species_matched")
-
-# Find species that have continuous data but no categorical data -- 3 of these are mosses, so I will remove them from continuous data in that cleaning script
-# TO DO: We will want to populate categorical data for three species: "Galium mollugo" "Heracleum sphondylium" "Trachypogon spicatus"
 
 sp_without_catag_data <- filter(traits_all, is.na(n_fixation))
 
@@ -62,7 +40,7 @@ corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
   dplyr::select(genus_species, species_matched) %>%
   unique(.)
 
-### merge species names and remove all mosses
+### merge species names and remove all mosses (dang mosses!)
 
 # moss key to remove mosses from species comp data
 moss_sp_vec <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sCoRRE categorical trait data_final_20211209.csv") %>%
@@ -71,21 +49,11 @@ moss_sp_vec <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sCoRRE ca
   filter(moss=="moss") %>%
   pull(species_matched)
 
-#Heracleum sphondylium
-
 relcov_full_clean <- relcov_full_raw %>%
   dplyr::left_join(corre_to_try, by="genus_species") %>%
   filter(!species_matched  %in% moss_sp_vec) %>%
   filter(!(site_code == "EGN" & project_name == "Nmow" & community_type == "0" & 
              plot_id == "19" & calendar_year==2015 & treatment=="Control")) ## Stipa species just has an incorrect treatment I think, needs to be fixed in absolute abundance data frame but I'm just removing it for now
-#  filter(relcov_full_clean, species_matched=="Homalothecium pinnatifidum")
-
-# 
-# test5 <- relcov_full_raw %>%
-#   dplyr::left_join(corre_to_try, by="genus_species") %>%
-#   filter(!species_matched  %in% moss_sp_vec) %>%
-#   filter(site_code == "EGN" & project_name == "Nmow" & community_type == "0" & 
-#              plot_id == "19" & calendar_year==2015 )
 
 rm(moss_key, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
 
@@ -96,7 +64,8 @@ rm(moss_key, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
 FD_df_master <- {}
 site_proj_comm_vector <- unique(relcov_full_raw$site_proj_comm)
 
-for(PROJ in 1:length(site_proj_comm_vector)){
+for(PROJ in 1:4){
+#for(PROJ in 1:length(site_proj_comm_vector)){
   relcov_df_temp <-relcov_full_clean %>%
     filter(site_proj_comm==site_proj_comm_vector[PROJ])
   
@@ -184,10 +153,11 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   #beep(sound = 2, expr = NULL)
 }
 
-beep(sound=4)
+beep(sound=3)
+
 write.csv(FD_df_master, file=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\Functional diversity metrics_", Sys.Date(),".csv"),
                                     row.names=F)
-  xz
+
 ggplot(filter(FD_df_master, site_proj_comm == site_proj_comm_vector[3]), aes(x=treatment_year, y=FDis, col=treatment)) +
   geom_point()
   
@@ -195,7 +165,10 @@ FD_df_means <- FD_df_master %>%
   group_by(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment) %>%
   summarize_at(vars(FEve, FDis, RaoQ), list(mean=mean, se=se), na.rm=T)
 
-### fun plotting
+#################################################
+### plotting site level patterns of FD and FEve
+#################################################
+
 # F div
 for(PROJ in 1:length(site_proj_comm_vector)){
   ggplot(filter(FD_df_means, site_proj_comm == site_proj_comm_vector[PROJ]), aes(x=treatment_year, y=FDis_mean, col=treatment,
@@ -239,7 +212,6 @@ ggplot(FD_df_master, aes(x=nbsp, y=FDis, col=site_proj_comm)) +
   theme(legend.position = "none")
 
 ################## End of current script ##########################
-
 
 
 
