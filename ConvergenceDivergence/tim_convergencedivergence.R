@@ -117,26 +117,33 @@ test <- crest %>%
   subset(treats_wanted != "NA")%>%
         subset( n.trt.yrs >=5)%>%
         subset(last_trt_yr == calendar_year)%>%
-  subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
-            trt_type == "drought")%>%
-  subset(rep_num >= 5)%>%
-  subset(site_code == "KNZ" & project_name == "change" 
-    #site_code == "NWT" | 
-      #site_code == "SEV" &  project_name == "EDGE" & community_type == "blue_gramma"
-    #site_code == "KBS" & project_name == "T7" & community_type == "0"
-    )##THIS IS ONLY TO GET THE CODE TO RUN FASTER WHILE MAKING THE WORKFLOW
+  subset( trt_type == "control" | #trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
+            trt_type == "drought" #| trt_type == "N*P" | trt_type == "mult_nutrient"
+          )%>%
 
-test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "genus_species", "relcov", "trt_type")]%>%
+  subset(rep_num >= 5)#%>%
+#  subset(#site_code == "KNZ" |# & project_name == "change" 
+    #site_code == "NWT" | 
+#      site_code == "SEV" #|#&  project_name == "EDGE" & community_type == "blue_gramma"
+    #site_code == "KBS" #& project_name == "T7" & community_type == "0"
+    #site_code == "SEV" &  project_name == "WENNDEx"
+#    )##THIS IS ONLY TO GET THE CODE TO RUN FASTER WHILE MAKING THE WORKFLOW
+
+test$trt_type <- revalue(test$trt_type, c("N*P" = "mult_nutrient"))
+
+test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "genus_species", "relcov", "trt_type", "plot_mani", "treatment.x")]%>%
         unique()
 
 
-plot.treatment <- test[c("site_code", "project_name", "community_type", "plot_id", "trt_type")]%>%
+plot.treatment <- test[c("site_code", "project_name", "community_type", "plot_id", "trt_type", "treatment.x")]%>%
                   unique()
 plot.treatment <- tidyr::unite(plot.treatment, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
 
 df <- merge(test, traits, by.x = "genus_species", by.y = "species_matched", all.x = TRUE)
 
-df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "::")
+df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
+
+df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 df$ok <- complete.cases(df[,c("seed_dry_mass", 
                               #"LDMC",
@@ -157,40 +164,40 @@ hv_split <- subset(hv_split, lapply(hv_split, nrow) >1)
 
 
 
-hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:3], name = unique(x$rep), weight = x$relcov, 
-                       verbose = FALSE) 
-  }
+#hv_func <- function(x) {
+#  hypervolume_gaussian(data = x[1:3], name = unique(x$rep), weight = x$relcov, 
+#                       verbose = FALSE) 
+#  }
 
 #hv_volumes <- lapply(hv_split,  hv_func)
 
 
 
 #same thing but in parallel
-library(parallel)
-numCores <- detectCores()
-cl <- makeCluster(numCores)
+#library(parallel)
+#numCores <- detectCores()
+#cl <- makeCluster(numCores)
 
 
-clusterEvalQ(cl, {library(plyr)
-  library(hypervolume)
-  library(lmerTest)
-  library(visreg)
-  library(emmeans)
-  library(tidyverse)
-  library(ggthemes)
-  library(MuMIn)
-  library(dplyr)
-  library(BAT)
-})
+#clusterEvalQ(cl, {library(plyr)
+#  library(hypervolume)
+#  library(lmerTest)
+#  library(visreg)
+#  library(emmeans)
+#  library(tidyverse)
+#  library(ggthemes)
+#  library(MuMIn)
+#  library(dplyr)
+#  library(BAT)
+#})
 
-hv_volumes <- parLapply(cl,  hv_split, hv_func)
+#hv_volumes <- parLapply(cl,  hv_split, hv_func)
 
 
 #names(hv_volumes) <- names(hv_split)                        
 
 
-hvs_joined = hypervolume_join(hv_volumes)
+#hvs_joined = hypervolume_join(hv_volumes)
 
 
 #make metrics?
@@ -227,52 +234,52 @@ hvs_joined = hypervolume_join(hv_volumes)
 #lapply(hv_volumes, dist_func)
 
 
-distance.measures <- kernel.similarity(hvs_joined) #this takes a long time, but once it's done I hope to be able to subset dataframe by sites and treatments which is the last step for comparison
+#distance.measures <- kernel.similarity(hvs_joined) #this takes a long time, but once it's done I hope to be able to subset dataframe by sites and treatments which is the last step for comparison
 
 #distance.centroids <- distance$Distance_centroids
 
 
-distance.centroids.dat <- data.frame(as.table(as.matrix(distance.measures$Distance_centroids)))[lower.tri(as.matrix(distance.measures$Distance_centroids), diag = FALSE), ]
-  
-distance.centroids.dat$rep1 <- distance.centroids.dat$Var1
-distance.centroids.dat$rep2 <- distance.centroids.dat$Var2
-distance.centroids.dat$value <- distance.centroids.dat$Freq
+#distance.centroids.dat <- data.frame(as.table(as.matrix(distance.measures$Distance_centroids)))[lower.tri(as.matrix(distance.measures$Distance_centroids), diag = FALSE), ]
+  #
+#distance.centroids.dat$rep1 <- distance.centroids.dat$Var1
+#distance.centroids.dat$rep2 <- distance.centroids.dat$Var2
+#distance.centroids.dat$value <- distance.centroids.dat$Freq
 #  as.matrix(distance.measures$Distance_centroids)%>%
 #  reshape2::melt( varnames = c("rep1", "rep2"))%>%
 #    unique()
 
 
-scooby <- distance.centroids.dat%>%
-          merge(plot.treatment, by.x = "rep1", by.y = "rep")
+#scooby <- distance.centroids.dat%>%
+#          merge(plot.treatment, by.x = "rep1", by.y = "rep")
 
-dooby <- scooby[c("rep1", "rep2", "value", "trt_type", "site_code", "project_name", "community_type")]%>%
-        unite( expgroup1, c("site_code", "project_name", "community_type"), sep = "::")
+#dooby <- scooby[c("rep1", "rep2", "value", "trt_type", "site_code", "project_name", "community_type")]%>%
+#        unite( expgroup1, c("site_code", "project_name", "community_type"), sep = "::")
 
-dooby$trt_rep1 <- dooby$trt_type
+#dooby$trt_rep1 <- dooby$trt_type
 
-doo <- dooby%>%
-      merge( plot.treatment, by.x = "rep2", by.y = "rep")%>%
-      unite( expgroup2, c("site_code", "project_name", "community_type"), sep = "::")
+#doo <- dooby%>%
+#      merge( plot.treatment, by.x = "rep2", by.y = "rep")%>%
+#      unite( expgroup2, c("site_code", "project_name", "community_type"), sep = "::")
 
-doo$trt_rep2 <- doo$trt_type.y
+#doo$trt_rep2 <- doo$trt_type.y
 
-doo <- doo[c("rep1", "rep2", "value", "trt_rep1", "trt_rep2", "expgroup1", "expgroup2")]
+#doo <- doo[c("rep1", "rep2", "value", "trt_rep1", "trt_rep2", "expgroup1", "expgroup2")]
 
 
-last <- doo%>%
-          unite( trt_comp, c("trt_rep1", "trt_rep2"), sep = ".", remove = FALSE)%>%
-          subset( value != 0)%>%
-          subset( trt_comp == "control.control" | trt_comp == "drought.drought" | trt_comp == "N.N" | trt_comp == "P.P" | trt_comp == "irr.irr" )%>%
-          mutate( match = ifelse(expgroup1 == expgroup2 , TRUE, FALSE))
+#last <- doo%>%
+#          unite( trt_comp, c("trt_rep1", "trt_rep2"), sep = ".", remove = FALSE)%>%
+#          subset( value != 0)%>%
+#          subset( trt_comp == "control.control" | trt_comp == "drought.drought" | trt_comp == "N.N" | trt_comp == "P.P" | trt_comp == "irr.irr" )%>%
+#          mutate( match = ifelse(expgroup1 == expgroup2 , TRUE, FALSE))
 
-withinsite <- subset(last, match == TRUE)
+#withinsite <- subset(last, match == TRUE)
 
-ggplot(withinsite, aes(trt_comp, value))+
-  facet_wrap(~expgroup1)+
-  geom_boxplot()+
-  ylab("Distance between centroids")+
-  stat_compare_means(method = "t.test")+
-  theme_bw()
+#ggplot(withinsite, aes(trt_comp, value))+
+#  facet_wrap(~expgroup1)+
+#  geom_boxplot()+
+#  ylab("Distance between centroids")+
+#  stat_compare_means(method = "t.test")+
+#  theme_bw()
 
 
 
@@ -281,15 +288,15 @@ ggplot(withinsite, aes(trt_comp, value))+
 ##Figure out how to do inter-site comparisons. All the distances are already calculated. Have to use site pairs as a random effect?
 
 
-last    <- last%>%
-        unite(exppair, c("expgroup1", "expgroup2" ), remove = FALSE, sep = "||")
+#last    <- last%>%
+#        unite(exppair, c("expgroup1", "expgroup2" ), remove = FALSE, sep = "||")
 
 
-mod <- lmer(value~trt_comp + (1|exppair), data = last)
-summary(mod)
+#mod <- lmer(value~trt_comp + (1|exppair), data = last)
+#summary(mod)
 
-library(visreg)
-visreg(mod, ylab = "Distance between centroids")
+#library(visreg)
+#visreg(mod, ylab = "Distance between centroids")
 
 
 
@@ -307,13 +314,126 @@ library(vegan)
 
 #For each treatment at each site, pull the treatment and control data, spread, calculate distance matrix, then betadisper 
 
+kevin <- unite(test, expgroup, c("site_code", "project_name", "community_type"), remove = FALSE, sep = "::" )
 
-wide <- test%>%
-    pivot_wider(names_from = genus_species, values_from = relcov, values_fill = 0)
+expgroup_vector <- unique(kevin$expgroup)
 
-distances <- dist(wide[7:ncol(wide)])
-mod <- betadisper(distances, group = wide$trt_type, type = "centroid")
-permutest(mod, permutations = 99)
-anova(mod)
-#plot(mod)
-boxplot(mod)
+distances_master <- {}
+
+for(i in 1:length(expgroup_vector)) {
+  temp.df <- subset(kevin, expgroup == expgroup_vector[i])
+
+  temp.wide <- temp.df%>%
+                  pivot_wider(names_from = genus_species, values_from = relcov, values_fill = 0)
+  temp.distances <- vegdist(temp.wide[10:ncol(temp.wide)], method = "bray")
+  temp.mod <- betadisper(temp.distances, group = temp.wide$trt_type, type = "centroid")
+  distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment.x, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist)
+  distances_master <- rbind(distances_master, distances_temp )
+  rm(temp.df, temp.wide, temp.distances, temp.mod, distances_temp)
+}
+
+
+mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani), function(x)data.frame( mean_dist = mean(x$dist)))
+
+trt.df <- subset(mean.dist.df, plot_mani >= 1)%>%
+            dplyr::rename(dist.trt = mean_dist)
+con.df <- subset(mean.dist.df, plot_mani == 0)%>%
+            dplyr::rename(dist.con = mean_dist)%>%
+            dplyr::select(expgroup, dist.con)
+
+lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
+    mutate(lrr = log(dist.trt/dist.con))%>%
+    mutate(con_minus_trt = dist.trt/dist.con)
+
+ggplot(lrr.df, aes(trt_type, lrr))+
+  geom_boxplot()+
+  geom_hline(yintercept = 0)+
+  theme_bw()
+
+################################################
+##########################
+#########Trying that trait stuff again but with loops
+
+
+expgroup_vector <- unique(df$expgroup)
+
+tdistances_master <- {}
+
+hv_func <- function(x) {
+  hypervolume_gaussian(data = x[1:3], name = unique(x$rep), weight = x$relcov, 
+                       verbose = FALSE) 
+}
+
+
+for(i in 1:length(expgroup_vector)) {
+  temp.df <- subset(df, expgroup == expgroup_vector[i])
+  temp.hv_split <- base::split(temp.df[,c("seed_dry_mass", 
+                                #"LDMC",
+                                "plant_height_vegetative",
+                                "rooting_depth",
+                                "relcov",
+                                "rep")], temp.df$rep)
+  temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
+  
+  temp.hv_volumes <- lapply(temp.hv_split,  hv_func)
+  
+  temp.hvs_joined = hypervolume_join(temp.hv_volumes)
+  
+  temp.distance.measures <- kernel.similarity(temp.hvs_joined) #this takes a long time, but once it's done I hope to be able to subset dataframe by sites and treatments which is the last step for comparison
+  
+  #distance.centroids <- distance$Distance_centroids
+  
+  
+  temp.distance.centroids.dat <- data.frame(as.table(as.matrix(temp.distance.measures$Distance_centroids)))[lower.tri(as.matrix(temp.distance.measures$Distance_centroids), diag = FALSE), ]
+  
+  tdistances_master <- rbind(tdistances_master, temp.distance.centroids.dat )
+  #distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist)
+  #distances_master <- rbind(distances_master, distances_temp )
+  rm(temp.df, temp.hv_split, temp.hv_volumes)
+}
+
+
+tdistances_full        <-   tdistances_master%>%
+              #separate(Var1, c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)%>%
+              #unite( expgroup1, c("site_code", "project_name", "community_type"), sep = "::", remove = FALSE)%>%
+  #separate(Var2, c("site_code", "project_name", "community_type", "plot_id"), sep = "::")%>%
+  #unite( expgroup2, c("site_code", "project_name", "community_type"), sep = "::", remove = FALSE)%>%
+  merge(plot.treatment, by.x = c("Var1"), by.y = c("rep"))%>%
+  dplyr::select(Var1, Var2, Freq, trt_type, treatment.x)%>%
+  dplyr::rename(c(trt_type.1 = trt_type, treatment.1 = treatment.x))%>%
+  merge(plot.treatment, by.x = "Var2", by.y = "rep")%>%
+    dplyr::select(Var2, Var2, Freq, trt_type.1, treatment.1, trt_type, treatment.x, site_code, project_name, community_type )%>%
+  dplyr::rename(c(trt_type.2 = trt_type, treatment.2 = treatment.x))%>%
+  unite( expgroup, c("site_code", "project_name", "community_type"), sep = "::", remove = TRUE)%>%
+  dplyr::filter(trt_type.1 == trt_type.2)
+
+  
+
+
+tmean.dist.df <- ddply(tdistances_full,.(expgroup, trt_type.1, treatment.1), function(x)data.frame( mean_dist = mean(x$Freq)))
+
+trt.df <- subset(tmean.dist.df, trt_type.1 != "control")%>%
+  dplyr::rename(dist.trt = mean_dist)
+con.df <- subset(tmean.dist.df, trt_type.1 == "control")%>%
+  dplyr::rename(dist.con = mean_dist)%>%
+  dplyr::select(expgroup, dist.con)
+
+lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
+  mutate(lrr = log(dist.trt/dist.con))%>%
+  mutate(con_minus_trt = dist.trt/dist.con)
+
+
+ggplot(lrr.df, aes(trt_type.1, lrr))+
+  geom_boxplot()+
+  geom_hline(yintercept = 0)+
+  theme_bw()
+
+
+
+
+#hv_func <- function(x) {
+#  hypervolume_gaussian(data = x[1:3], name = unique(x$rep), weight = x$relcov, 
+#                       verbose = FALSE) 
+#}
+
+#hv_volumes <- lapply(hv_split,  hv_func)
