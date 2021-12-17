@@ -1659,10 +1659,10 @@ p
 dev.off()
 
 ###
-# Filter by treatment = Dist_other
+# Filter by treatment = temp_other
 ###
 
-dat<-subset(species.data, trt_type2=="dist_other")[,c(1,2)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="temp_other")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1811,7 +1811,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_dist_other.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_temp_other.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
