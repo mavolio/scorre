@@ -16,6 +16,7 @@ library(phytools)
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+
 ###
 # Load data
 ###
@@ -27,12 +28,11 @@ species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unif
 #load phylogenetic tree:
 tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.Dec2021", sep=""))
 
-
 ###
 # Filter by treatment == all mult
 ###
 
-dat<-subset(species.data, trt_type2=="all mult")[,c(1,2)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="all mult")[,c(1,4)] #select "all mult" treatment from original data
 #dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$species_matched %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$species_matched #set species names as rownames
@@ -75,10 +75,11 @@ significant<-factor(significant, levels = c("neg.05", "pos.05" )) #change order 
 ###
 
 #load family data and clean-up:
-fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE) #load data
+fam<-read.table(paste(my.wd, "species_families_trees_2021.csv",sep=""), header=T, sep=",", fill = TRUE)[,-c(3)] #load data
 fam$species_matched<-gsub(" ", "_", fam$species_matched) #adapt species nomenclature
 fam$family[fam$family=="Compositae"]<-"Asteraceae" #replace family name
 fam$family[fam$family=="Leguminosae"]<-"Fabaceae" #replace family name
+fam$family[fam$family=="Viburnaceae"]<-"Adoxaceae" #replace family name
 fam<-fam[which(fam$species_matched %in% rownames(dat)),] #subset only species included in our treatment
 
 #get table with ranked families based on their number of species:
@@ -187,17 +188,21 @@ p <-
 #save output:
 png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult.png",
     res=300,height=8,width=8,units="in"); 
+#png("phylo_ring_all_mult2.png", res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
 #clean-up:
 #rm(list = ls())
 
+
+
+
 ###
 # Filter by treatment = N
 ###
 
-dat<-subset(species.data, trt_type2=="n")[,c(1,2)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="n")[,c(1,4)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -238,10 +243,11 @@ significant<-factor(significant, levels = c("neg.05", "pos.05" )) #change order 
 ###
 
 #load family data and clean-up:
-fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE) #load data
+fam<-read.table(paste(my.wd, "species_families_trees_2021.csv",sep=""), header=T, sep=",", fill = TRUE) #load data
 fam$species_matched<-gsub(" ", "_", fam$species_matched) #adapt species nomenclature
 fam$family[fam$family=="Compositae"]<-"Asteraceae" #replace family name
 fam$family[fam$family=="Leguminosae"]<-"Fabaceae" #replace family name
+fam$family[fam$family=="Viburnaceae"]<-"Adoxaceae" #replace family name
 fam<-fam[which(fam$species_matched %in% rownames(dat)),] #subset only species included in our treatment
 
 #get table with ranked families based on their number of species:
@@ -348,6 +354,7 @@ p <-
 #save output:
 png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_n.png",
     res=300,height=8,width=8,units="in"); 
+#png("phylo_ring_n.png", res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
