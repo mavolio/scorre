@@ -65,7 +65,7 @@ traits$species_matched <- tolower(traits$species_matched)
 #Reduce cover data to focal data using a series of merges
 
 
-    #minimum number of replicates (I guess I still haven't figured this part out yet)
+    #minimum number of replicates
 repnum <- cover%>%
   dplyr::select(site_code, project_name, community_type, treatment, plot_id)%>%
   unique()%>%
@@ -78,7 +78,7 @@ repnum <- cover%>%
   #only certain manipulations
 foctrt <- experimentinfo[c("site_code", "project_name", "community_type", "trt_type")]%>%
           unique()%>%
-          subset( trt_type == "N" | trt_type == "P" | trt_type == "irr" | trt_type == "drought")
+          subset( trt_type == "N" | trt_type == "P" | trt_type == "irr" | trt_type == "drought"| trt_type == "N*P" | trt_type == "mult_nutrient")
 
 foctrt$treats_wanted <- foctrt$trt_type
 foctrt <- foctrt[c("site_code", "project_name", "community_type", "treats_wanted")]
@@ -117,8 +117,8 @@ test <- crest %>%
   subset(treats_wanted != "NA")%>%
         subset( n.trt.yrs >=5)%>%
         subset(last_trt_yr == calendar_year)%>%
-  subset( trt_type == "control" | #trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
-            trt_type == "drought" #| trt_type == "N*P" | trt_type == "mult_nutrient"
+  subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
+            trt_type == "drought" | trt_type == "N*P" | trt_type == "mult_nutrient"
           )%>%
 
   subset(rep_num >= 5)#%>%
@@ -146,14 +146,14 @@ df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id")
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 df$ok <- complete.cases(df[,c("seed_dry_mass", 
-                              #"LDMC",
+                              "LDMC",
                               "plant_height_vegetative",
                               "rooting_depth"
                               )])
 df <- subset(df, ok == TRUE)
 
 hv_split <- base::split(df[,c("seed_dry_mass", 
-                              #"LDMC",
+                              "LDMC",
                               "plant_height_vegetative",
                               "rooting_depth",
                               "relcov",
@@ -360,7 +360,7 @@ expgroup_vector <- unique(df$expgroup)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:3], name = unique(x$rep), weight = x$relcov, 
+  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
                        verbose = FALSE) 
 }
 
