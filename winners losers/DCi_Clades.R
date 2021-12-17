@@ -16,17 +16,17 @@ library(phytools)
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+
 ###
 # Load data
 ###
 
 #load species data (filtered after removing mosses and species missing from the phylogeny):
-species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021.csv",sep=""))
+species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021_newother.csv",sep=""))
 species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 
 #load phylogenetic tree:
 tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.Dec2021", sep=""))
-
 
 ###
 # Filter by treatment == all mult
@@ -75,10 +75,11 @@ significant<-factor(significant, levels = c("neg.05", "pos.05" )) #change order 
 ###
 
 #load family data and clean-up:
-fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE) #load data
+fam<-read.table(paste(my.wd, "species_families_trees_2021.csv",sep=""), header=T, sep=",", fill = TRUE)[,-c(3)] #load data
 fam$species_matched<-gsub(" ", "_", fam$species_matched) #adapt species nomenclature
 fam$family[fam$family=="Compositae"]<-"Asteraceae" #replace family name
 fam$family[fam$family=="Leguminosae"]<-"Fabaceae" #replace family name
+fam$family[fam$family=="Viburnaceae"]<-"Adoxaceae" #replace family name
 fam<-fam[which(fam$species_matched %in% rownames(dat)),] #subset only species included in our treatment
 
 #get table with ranked families based on their number of species:
@@ -185,13 +186,17 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_all_mult.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult.png",
     res=300,height=8,width=8,units="in"); 
+#png("phylo_ring_all_mult2.png", res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
 #clean-up:
 #rm(list = ls())
+
+
+
 
 ###
 # Filter by treatment = N
@@ -238,10 +243,11 @@ significant<-factor(significant, levels = c("neg.05", "pos.05" )) #change order 
 ###
 
 #load family data and clean-up:
-fam<-read.table(paste(my.wd, "species_families_2021.csv",sep=""), header=T, sep=",", fill = TRUE) #load data
+fam<-read.table(paste(my.wd, "species_families_trees_2021.csv",sep=""), header=T, sep=",", fill = TRUE) #load data
 fam$species_matched<-gsub(" ", "_", fam$species_matched) #adapt species nomenclature
 fam$family[fam$family=="Compositae"]<-"Asteraceae" #replace family name
 fam$family[fam$family=="Leguminosae"]<-"Fabaceae" #replace family name
+fam$family[fam$family=="Viburnaceae"]<-"Adoxaceae" #replace family name
 fam<-fam[which(fam$species_matched %in% rownames(dat)),] #subset only species included in our treatment
 
 #get table with ranked families based on their number of species:
@@ -346,8 +352,9 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_n.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_n.png",
     res=300,height=8,width=8,units="in"); 
+#png("phylo_ring_n.png", res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
@@ -371,7 +378,7 @@ tree2<-keep.tip(tree, rownames(dat))
 ###
 
 res<-node.mean(tree2, dat, 999)
-write.table(res, paste(my.wd, "res_phylo_n_other.csv", sep="")) #save the result
+#write.table(res, paste(my.wd, "res_phylo_n_other.csv", sep="")) #save the result
 #res<-read.table(paste(my.wd, "res_phylo_n_other (3).csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
@@ -439,7 +446,7 @@ toplot<-as.character(head(famf$Var1, n=27)) #select the top 27 families with 5 o
 p <- 
   ggtree(tree2, layout="circular", size=0.5)+ # build circular tree
   geom_point(aes(colour=as.factor(significant)), size=2, alpha=1, show.legend = TRUE) + # highlight nodes
-  scale_colour_manual(values=c("red", "deepskyblue"), labels=c("Lower DCi", "Higher DCi"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
+  scale_colour_manual(values=c("orange", "purple"), labels=c("Worse with N + Other", "Better with N + Other"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
   geom_cladelabel(node=subset(famf, Var1=="Poaceae")$num, label="Poaceae",  fontsize=2.5, barsize = 0.1, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1=="Asteraceae")$num, label="Asteraceae", fontsize=2.5, barsize = 0.1, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1=="Fabaceae")$num, label="Fabaceae", fontsize=2.5, barsize=0.5, hjust= 1, angle = 5) +
@@ -504,7 +511,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figures Dec 2021\\phylo_ring_n_other.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_n_other.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -516,7 +523,7 @@ dev.off()
 # Filter by treatment = P
 ###
 
-dat<-subset(species.data, trt_type2=="p")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="p")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -666,7 +673,7 @@ p <-
         legend.key.size = unit(1, "cm"),
         legend.position="bottom")
 #save output:
-png("phylo_ring_p.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_p.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -675,7 +682,7 @@ dev.off()
 # Filter by treatment == Co2
 ###
 
-dat<-subset(species.data, trt_type2=="co2")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="CO2")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -829,7 +836,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_co2.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_co2.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -839,7 +846,7 @@ dev.off()
 # Filter by treatment == drought
 ###
 
-dat<-subset(species.data, trt_type2=="drought")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="drt")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -993,7 +1000,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_drought.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_drought.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1002,7 +1009,7 @@ dev.off()
 # Filter by treatment == irrigation
 ###
 
-dat<-subset(species.data, trt_type2=="irrigation")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="irg")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1156,7 +1163,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_irrigation.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_irrigation.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1165,7 +1172,7 @@ dev.off()
 # Filter by treatment == temp
 ###
 
-dat<-subset(species.data, trt_type2=="temp")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="temp")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1319,7 +1326,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_temp.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_temp.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1328,7 +1335,7 @@ dev.off()
 # Filter by treatment == herbivore removal
 ###
 
-dat<-subset(species.data, trt_type2=="herb_removal")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="herb_removal")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1482,7 +1489,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_herb_removal.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_herb_removal.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
@@ -1492,7 +1499,7 @@ dev.off()
 # Filter by treatment == disturbance
 ###
 
-dat<-subset(species.data, trt_type2=="disturbance")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="dist")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species - this is not necessary - is already the average.
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1646,16 +1653,16 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_disturbance.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_disturbance.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
 ###
-# Filter by treatment = N_other
+# Filter by treatment = temp_other
 ###
 
-dat<-subset(species.data, trt_type2=="n_other")[,c(1,4)] #select "all mult" treatment from original data
+dat<-subset(species.data, trt_type2=="temp_other")[,c(1,2)] #select "all mult" treatment from original data
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -1671,8 +1678,8 @@ tree2<-keep.tip(tree, rownames(dat))
 ###
 
 res<-node.mean(tree2, dat, 999)
-write.table(res, paste(my.wd, "res_phylo_n_other.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_n_other.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_p_other.csv", sep="")) #save the result
+#res<-read.table(paste(my.wd, "res_phylo_p_other.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -1804,7 +1811,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("phylo_ring_n_other.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_temp_other.png",
     res=300,height=8,width=8,units="in"); 
 p
 dev.off()

@@ -6,7 +6,7 @@
 
 #load packages:
 #for ggtree if you have r version 4 or above
-if (!requireNamespace("BiocManager", quietly = TRUE))
+#if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
 #BiocManager::install("ggtree")
@@ -19,8 +19,8 @@ library(ape)
 library(scico)
 
 #for V.PhyloMaker
-library(devtools)
-devtools::install_github("jinyizju/V.PhyloMaker")
+#library(devtools)
+#devtools::install_github("jinyizju/V.PhyloMaker")
 library(V.PhyloMaker)
 
 #set directory:

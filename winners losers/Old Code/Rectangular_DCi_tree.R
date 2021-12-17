@@ -35,7 +35,7 @@ names(result)[1]<-paste("species") #change name of first column
 ####
 
 trt<-levels(species.data$trt_type2) #get list of treatments
-k<-3
+
 for(k in 1:length(trt)){
   print(k/length(trt)) #keep track of the process
   
