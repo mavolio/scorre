@@ -3,6 +3,9 @@
 library(gawdis)
 library(ape)
 library(dplyr) 
+library(ggplot2)
+library(reshape2)
+
 
 #set directory
 my.wd <- "~/Dropbox/sCoRRE/sDiv_sCoRRE_shared"
@@ -74,22 +77,22 @@ spp<-read.table(paste(my.wd, "/CoRRE data/CoRRE data/trait data/FullList_Nov2021
 
 CDR<-merge(CDR_tmp, spp, by="genus_species", all.x=T)
 
-dim(CDR)
 
 
 # here we go with a visual selection with help from Adam for a focal experiment
 win_los<-c("Elymus repens", "Schizachyrium scoparium")
-# for each
-CDR<-unique(CDR$plot_id)
-treat<-unique(CDR[,c(7,9)])$treatment
-
+#subset from the species distance matrix:
 species<- unique(CDR$species_matched)
 
-# calculate for all species distance to the rest of the community 
+# calculate for all species distance to the rest of the community/plot - independently for each plot and year 
+# keep plt-treatment information
+plot_treat<-unique(CDR[,c(7,9)])
+
+#loop over plots and years
 out2<-NULL
-for(i in 1:length(plots)){
-  print(plots[i])
-  corre.filt<-subset(CDR, plot_id==plots[i])
+for(i in 1:length(plot_treat[,2])){
+  print(plot_treat[i,])
+  corre.filt<-subset(CDR, plot_id==plot_treat[i,2])
   years<-unique(corre.filt$calendar_year)
   out<-NULL
   for(j in 1:length(years)){
@@ -104,26 +107,63 @@ for(i in 1:length(plots)){
       
       a<-as.data.frame(rowMeans(trait.dis.sub, na.rm=T))
       a$species_matched<-rownames(a)
-      names(a)[1]<-"mpd"
+      names(a)[1]<-"focal_mpd"
       a$year<-years[j]
       
       out<-rbind(out, a)
     }
   }
-  out$plot_id<-plots[i]
-  out$treatment<-treat[i]
+  out$plot_id<-plot_treat[i,2]
+  out$treatment<-plot_treat[i,1]
   out2<-rbind(out2, out)
 }
 rownames(out2)<-NULL
-
-
-
-
+out2$success <- ifelse(out2$species_matched == "Elymus repens", "winner",ifelse(out2$species_matched == "Schizachyrium scoparium", "loser", "normalo"))
 
 write.table(out2, paste(my.wd, "mpd_win_los.csv", sep=""))
 
 
+# now we can either do a regression but that would be too much storage for all dataset together
+# not tried here as we only identified one winner and one loser
 
+
+
+# or we calculate something siilar to SES
+#loop over plots and years
+out3<-as.data.frame(matrix(NA, 1,7))
+colnames(out3) <- c(colnames(out2), "SES")
+for(i in 1:length(plot_treat[,2])){
+  corre.filt<-subset(out2, plot_id==plot_treat[i,2])
+  years<-unique(corre.filt$year)
+  print(plot_treat[i,])
+  for(j in 1:length(years)){
+    print(years[j])
+    filtered <- subset(corre.filt, year==years[j])
+    w_l <- subset(filtered, success=="winner" | success == "loser")
+    normalo_mpd <- filtered[filtered$success=="normalo","focal_mpd" ]
+    w_l$SES <- sapply(w_l$focal_mpd, function(x) (x-mean(normalo_mpd))/sd(normalo_mpd))
+    out3 <- rbind(out3, w_l)  
+  }
+}
+out3 <- out3[-1,]
+
+
+write.table(out3, paste(my.wd, "SES_win_los.csv", sep=""))
+
+
+#plotting results
+out3$treatment <- ifelse(out3$treatment == 1, "control", "N")
+d <- ggplot(out3, aes(x=success, y=SES, color=factor(success))  ) +
+  geom_boxplot(outlier.shape = NA)+
+  facet_wrap(~treatment)+
+  coord_cartesian(ylim = quantile(out3$SES, c(0.1, 0.9), na.rm=T))
+d #plot
+
+d <- ggplot(out3, aes(x=success, y=SES, color=factor(success))  ) +
+  geom_boxplot(outlier.shape = NA)+
+  facet_grid(treatment ~ year) +
+  coord_cartesian(ylim = quantile(out3$SES, c(0.1, 0.9), na.rm=T))
+d #plot
 
 
 
