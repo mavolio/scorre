@@ -155,7 +155,7 @@ write.table(out3, paste(my.wd, "SES_win_los.csv", sep=""))
 out3$treatment <- ifelse(out3$treatment == 1, "control", "N")
 d <- ggplot(out3, aes(x=success, y=SES, color=factor(success))  ) +
   geom_boxplot(outlier.shape = NA)+
-  facet_wrap(~treatment)+
+  facet_wrap(~ treatment)+
   coord_cartesian(ylim = quantile(out3$SES, c(0.1, 0.9), na.rm=T))
 d #plot
 
