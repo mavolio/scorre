@@ -188,7 +188,7 @@ p <-
 #save output:
 png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult.png",
     res=300,height=8,width=8,units="in"); 
-png("phylo_ring_all_mult_dec.png", res=300,height=8,width=8,units="in"); 
+#png("phylo_ring_all_mult_dec.png", res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
