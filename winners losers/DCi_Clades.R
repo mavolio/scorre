@@ -27,6 +27,7 @@ species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unif
 
 #load phylogenetic tree:
 tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.Dec2021", sep=""))
+tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep="")) #why not using the original tree? I detected that some species are missing from the other.
 
 ###
 # Filter by treatment == all mult
@@ -40,7 +41,6 @@ dat$species_matched<-NULL #and delete column with species names
 
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
-
 
 ###
 # Run function to calculate if each node has significantly higher or lower mean DCi than
@@ -188,7 +188,7 @@ p <-
 #save output:
 png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult.png",
     res=300,height=8,width=8,units="in"); 
-#png("phylo_ring_all_mult2.png", res=300,height=8,width=8,units="in"); 
+png("phylo_ring_all_mult_dec.png", res=300,height=8,width=8,units="in"); 
 p
 dev.off()
 
