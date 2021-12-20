@@ -62,6 +62,15 @@ diag(trait.dis.matrix) <- NA
 ##############################################
 # only experimennts that are at least 5 years
 
+# experiments from Kim to start with, corre$site_code and corre$project_name:
+# KNZ pplots
+# KNZ irg
+# KBS T7
+# CDR e001
+# ANG watering
+# SERC TMECE
+# SERC CXN
+
 # first step in one experiment
 #ftree<-read.tree(paste(my.wd, "/CoRRE data/CoRRE data/trait data/ftree.scorre.gowdis.log.upgma.tre", sep=""))
 dis<-trait.dis.matrix

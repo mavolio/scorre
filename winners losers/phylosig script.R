@@ -27,8 +27,11 @@ library(dplyr)
 
 #Load data
 tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep="")) #load tree
-dd<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021.csv",sep=""), header=T)
-dd$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
+dd<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021_newother.csv",sep=""), header=T)
+dd<-dd%>%
+  filter(trt_type2!="n_other_two"&trt_type2!="n_alone_otherexmpt")
+
+dd$species_matched<-gsub(" ", "_", dd$species_matched) #unify nomenclature
 str(dd)
 str(tree)
 
@@ -49,6 +52,8 @@ for (i in 1:length(trt))
   final.dd<-merge(final.dd, sub.dd, by="species_matched", all.x=T)
   colnames(final.dd)[i+1]<-trt[i]
 }
+
+
 rownames(final.dd)<-final.dd$species_matched
 final.dd$species_matched<-NULL
 
@@ -75,7 +80,7 @@ for (i in 1:length(trt))
   output[i,5]<-blomb$P
 }
 
-write.csv(output, paste(my.wd,"phylo_signal.csv",sep=""), row.names = F)
+#write.csv(output, paste(my.wd,"phylo_signal.csv",sep=""), row.names = F)
 
 
 

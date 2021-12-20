@@ -57,20 +57,17 @@ select(site_code, project_name, community_type, treatment_year, calendar_year, t
   left_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\ExperimentInfo.csv'))%>%
   group_by(site_code, project_name, community_type)%>%
   mutate(experiment_length=max(treatment_year))%>%
-  ungroup()
+  ungroup()%>%
+  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp)
 
 
 pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv')%>%
   separate(identifier, into=c("site_code", "project_name", "community_type", "treatment_year", "plot_id"), sep="::")%>%
-  mutate(treatment_year=as.integer(treatment_year))%>%
-  left_join(trt)%>%
-  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
-  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>%
-  mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='_'))
+  mutate(treatment_year=as.integer(treatment_year))
 
 fDiv <- read.csv('CoRRE_functionalDiversity_20211215.csv')
 
-relCover <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RelativeCover.csv')%>%
+relCover <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv')%>%
   mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::'))
 
 rDiv <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate")%>%
@@ -80,7 +77,21 @@ allDiv <- pDiv%>%
   full_join(fDiv)%>%
   full_join(rDiv)%>%
   filter(site_code!='DCGS')%>%
-  filter(treatment_year>0)
+  filter(treatment_year>0)%>%
+  mutate(pd.raw=ifelse(richness==1, 0, pd.raw),
+         pd.ses=ifelse(richness==1, 0, pd.ses),
+         mpd.raw=ifelse(richness==1, 0, mpd.raw),
+         mpd.ses=ifelse(richness==1, 0, mpd.ses),
+         mntd.raw=ifelse(richness==1, 0, mntd.raw),
+         mntd.ses=ifelse(richness==1, 0, pd.raw),
+         FDis=ifelse(richness==1, 0, FDis),
+         RaoQ=ifelse(richness==1, 0, RaoQ))%>%
+  left_join(trt)%>%
+  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
+  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>%
+  mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='_'))%>%
+  select(site_code, project_name, community_type, site_proj_comm, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp)%>%
+  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) #remove problem expts until they are fixed
 
 # control <- pDiv%>%
 #   filter(trt_type=='control')%>%
@@ -101,16 +112,16 @@ trt_analysis<-trt%>%
   mutate(alltrts=ifelse(trt_type %in% c("control", "CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0))%>%
   filter(alltrts==1)%>%
   mutate(dist=ifelse(trt_type %in% c("mow_clip","burn","burn*graze","disturbance","burn*mow_clip"), 1, 0),
-         tCO2=ifelse(trt_type %in% c("CO2"), 1, 0),
+         # tCO2=ifelse(trt_type %in% c("CO2"), 1, 0),
          drought=ifelse(trt_type %in% c("drought"), 1, 0),
-         therb_removal=ifelse(trt_type %in% c("herb_removal"), 1, 0),
+         # therb_removal=ifelse(trt_type %in% c("herb_removal"), 1, 0),
          irg=ifelse(trt_type %in% c("irr"), 1, 0),
-         ttemp=ifelse(trt_type %in% c("temp"), 1, 0),
-         tn=ifelse(trt_type %in% c("N"), 1, 0),
-         tp=ifelse(trt_type %in% c("P"), 1, 0),
+         # ttemp=ifelse(trt_type %in% c("temp"), 1, 0),
+         # tn=ifelse(trt_type %in% c("N"), 1, 0),
+         # tp=ifelse(trt_type %in% c("P"), 1, 0),
          multtrts=ifelse(trt_type %in% c("CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp","mult_nutrient","N*P"),1,0))%>%
   mutate(trt_type2=ifelse(dist==1, 'disturbance', ifelse(multtrts==1, 'multiple trts', trt_type)))%>%
-  select(site_code, project_name, community_type, treatment, alltrts, dist, tCO2, drought, therb_removal, irg, ttemp, tn, tp, multtrts, trt_type2)%>%
+  select(site_code, project_name, community_type, treatment, alltrts, dist, drought, irg, multtrts, trt_type2)%>%
   unique()
 
 
@@ -118,7 +129,8 @@ trt_analysis<-trt%>%
 allDivTrt <- allDiv%>%
   right_join(trt_analysis)%>%
   mutate(trt_binary=ifelse(plot_mani>0, 1, 0))%>%
-  select(-FDiv)
+  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) #remove problem expts until they are fixed
+
 
 # write.csv(allDivTrt, 'CoRRE_allDiversityMetrics_phyFunAnalysis.csv', row.names=F)
 
@@ -226,14 +238,14 @@ allDivGlobal <- allDivPlotMeans %>%
 #   facet_wrap(~trt_type2)
 
 
-### TO CONSIDER: should we look at each treatment within project and see if the slopes differ from 1 (more or less Fdiv per change in phy div), and does that differ by which treatment it is?
-#can we identify trajectories through time for each plot?
-
-#plot trajectories through time, this is not very straight forward
-ggplot(data=subset(allDivTrt, project_name=='Fert1'&treatment %in% c('full_nut', 'control')), aes(x=mntd.ses, y=FDis, color=treatment, label=as.numeric(treatment_year))) +
-  geom_text() +
-  geom_path() +
-  facet_wrap(~plot_id)
+# ### TO CONSIDER: should we look at each treatment within project and see if the slopes differ from 1 (more or less Fdiv per change in phy div), and does that differ by which treatment it is?
+# #can we identify trajectories through time for each plot?
+# 
+# #plot trajectories through time, this is not very straight forward
+# ggplot(data=subset(allDivTrt, project_name=='Fert1'&treatment %in% c('full_nut', 'control')), aes(x=mntd.ses, y=FDis, color=treatment, label=as.numeric(treatment_year))) +
+#   geom_text() +
+#   geom_path() +
+#   facet_wrap(~plot_id)
 
 
 
@@ -245,20 +257,23 @@ allDivTrtFixed <- allDivTrt%>%
   mutate(site_project_comm=paste(site_code, project_name, community_type, sep='::')) #creates dummy site-experiment variable
 
 #individual treatments
-mpdDivCausalModel <- feols(mpd.ses ~ n + p + CO2 + drought + irg + temp + dist | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
-etable(mpdDivCausalModel, cluster="site_year") #trt effects
+#NOTE: these do account for env variables and trt magnitude
+mpdDivCausalModel <- feols(mpd.ses ~ n + p + CO2 + drought + irg + temp + dist + multtrts | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
+summary(mpdDivCausalModel, cluster="site_year") #trt effects
 fixedEffects = fixef(mpdDivCausalModel) #env effects
 plot(fixedEffects)
 
-mntdDivCausalModel <- feols(mntd.ses ~ n + p + CO2 + drought + irg + temp + dist | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
-etable(mntdDivCausalModel, cluster="site_year") #trt effects
+mntdDivCausalModel <- feols(mntd.ses ~ n + p + CO2 + drought + irg + temp + dist + multtrts | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
+summary(mntdDivCausalModel, cluster="site_year") #trt effects
 fixedEffects = fixef(mntdDivCausalModel) #env effects
 plot(fixedEffects)
 
-fdisDivCausalModel <- feols(FDis ~ n + p + CO2 + drought + irg + temp + dist | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
-etable(fdisDivCausalModel, cluster="site_year") #trt effects
+fdisDivCausalModel <- feols(FDis ~ n + p + CO2 + drought + irg + temp + dist + multtrts | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
+summary(fdisDivCausalModel, cluster="site_year") #trt effects
 fixedEffects = fixef(fdisDivCausalModel) #env effects
 plot(fixedEffects)
+
+etable(mpdDivCausalModel, mntdDivCausalModel, fdisDivCausalModel, cluster='site_year')
 
 # #all together
 # pDivCausalModel <- feols(mpd_diff_avg ~ trt_type2 | site_year, data=pDivAvgTrtFixed)
@@ -282,23 +297,23 @@ allDivRR <- allDivTrt%>%
   summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR, env_value), list(mean=mean), na.rm=T)%>%
   ungroup%>%
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))%>%
-  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
-  full_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))
+  left_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
+  left_join(read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))
+
 
 ggplot(data=allDivRR, aes(x=env_value_mean, y=FDis_RR_mean)) +
   geom_point() +
   geom_smooth(method='lm', se=F) +
   geom_hline(yintercept=0) +
   facet_grid(trt_type2~env_variable, scales='free')
-  
-  
-test <- subset(allDivRR, project_name=='pplots'&treatment_year==10&treatment=='N2P3')
 
 
-##### repeated measures model #####
+##### mixed effects model #####
+#NOTE: these models do not account for biotic or abiotic env drivers at a site or for trt magnitude
 library(nlme)
 library(emmeans)
 library(performance)
+library(grid)
 
 options(contrasts=c('contr.sum','contr.poly')) 
 
@@ -306,6 +321,100 @@ summary(FDisModel <- lme(FDis_RR_mean ~ as.factor(trt_type2),
                          data=na.omit(allDivRR),
                          random=~1|site_proj_comm))
 anova.lme(FDisModel, type='sequential')
-emmeans(FDisModel, pairwise~as.factor(trt_type2), adjust="tukey")
+meansFDisModel <- emmeans(FDisModel, pairwise~as.factor(trt_type2), adjust="tukey")
+meansFDisModelOutput <- as.data.frame(meansFDisModel$emmeans)
 
-summary(glm(FDis ~ trt_binary*trt_type2*treatment_year, data=allDivTrt))
+FDisFig <- ggplot(data=meansFDisModelOutput, aes(x=trt_type2, y=emmean)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.2) +
+  geom_hline(yintercept=0) +
+  coord_flip() +
+  ylab('FDis Effect Size') + xlab('') +
+  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'irr', 'drought', 'CO2', 'P', 'N'), breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'irr', 'drought', 'CO2', 'P', 'N'), labels=c('Multiple Trts', 'Herbivore Removal', 'Disturbance', 'Temperature', 'Irrigation', 'Drought', 'CO2', 'P', 'N'))
+
+
+summary(MNTDModel <- lme(mntd_diff_mean ~ as.factor(trt_type2),
+                         data=na.omit(allDivRR),
+                         random=~1|site_proj_comm))
+anova.lme(MNTDModel, type='sequential')
+meansMNTDModel <- emmeans(MNTDModel, pairwise~as.factor(trt_type2), adjust="tukey")
+meansMNTDModelOutput <- as.data.frame(meansMNTDModel$emmeans)
+
+MNTDFig <- ggplot(data=meansMNTDModelOutput, aes(x=trt_type2, y=emmean)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.2) +
+  geom_hline(yintercept=0) +
+  coord_flip() +
+  ylab('MNTD Effect Size') + xlab('') +
+  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'irr', 'drought', 'CO2', 'P', 'N'), breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'irr', 'drought', 'CO2', 'P', 'N'), labels=c('Multiple Trts', 'Herbivore Removal', 'Disturbance', 'Temperature', 'Irrigation', 'Drought', 'CO2', 'P', 'N'))
+
+
+pushViewport(viewport(layout=grid.layout(1,2)))
+print(FDisFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+
+
+
+
+
+##### another way to make a causal model #####
+
+testImplications <- function( covariance.matrix, sample.size ){
+  library(ggm)
+  tst <- function(i){ pcor.test( pcor(i,covariance.matrix), length(i)-2, sample.size )$pvalue }
+  tos <- function(i){ paste(i,collapse=" ") }
+  implications <- list(c("n","p"),
+                       c("n","drought"),
+                       c("n","CO2"),
+                       c("n","temp"),
+                       c("n","irg"),
+                       c("n","dist"),
+                       c("n","MAP"),
+                       c("n","MAT"),
+                       c("n","rrich"),
+                       c("n","anpp"),
+                       c("p","drought"),
+                       c("p","CO2"),
+                       c("p","temp"),
+                       c("p","irg"),
+                       c("p","dist"),
+                       c("p","MAP"),
+                       c("p","MAT"),
+                       c("p","rrich"),
+                       c("p","anpp"),
+                       c("drought","CO2"),
+                       c("drought","temp"),
+                       c("drought","irg"),
+                       c("drought","dist"),
+                       c("drought","MAP"),
+                       c("drought","MAT"),
+                       c("drought","rrich"),
+                       c("drought","anpp"),
+                       c("CO2","temp"),
+                       c("CO2","irg"),
+                       c("CO2","dist"),
+                       c("CO2","MAP"),
+                       c("CO2","MAT"),
+                       c("CO2","rrich"),
+                       c("CO2","anpp"),
+                       c("temp","irg"),
+                       c("temp","dist"),
+                       c("temp","MAP"),
+                       c("temp","MAT"),
+                       c("temp","rrich"),
+                       c("temp","anpp"),
+                       c("irg","dist"),
+                       c("irg","MAP"),
+                       c("irg","MAT"),
+                       c("irg","rrich"),
+                       c("irg","anpp"),
+                       c("dist","MAP"),
+                       c("dist","MAT"),
+                       c("dist","rrich"),
+                       c("dist","anpp"),
+                       c("MAP","MAT"),
+                       c("rrich","anpp","MAP","MAT"))
+  data.frame( implication=unlist(lapply(implications,tos)),
+              pvalue=unlist( lapply( implications, tst ) ) )
+  
+}
