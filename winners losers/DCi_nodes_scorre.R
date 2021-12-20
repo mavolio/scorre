@@ -38,13 +38,13 @@ node.mean <- function(tree, samp, N) {
   
   ## calculating mean expected values for each node:
   for(j in 1:N){
-    tree2<-tree #create copy of the tree
+    tree.sel<-tree #create copy of the tree
     set.seed(123+j) #for reproducibility
-    tree2$tip.label<-sample(tree2$tip.label) #shuffle tips in the phylogeny
+    tree.sel$tip.label<-sample(tree.sel$tip.label) #shuffle tips in the phylogeny
     
     for(i in (n.tips+1):(n.tips+n.internal.nodes)){
       node <- i
-      spp.node <- tips(tree2, node) # get taxa in node
+      spp.node <- tips(tree.sel, node) # get taxa in node
       out[i-n.tips, j+1] <- mean(samp[rownames(samp) %in% spp.node, ], na.rm = T) # subset taxa and get the mean
     }
   }
