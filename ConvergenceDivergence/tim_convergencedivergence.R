@@ -150,13 +150,13 @@ df$ok <- complete.cases(df[,c("seed_dry_mass",
                               )])
 df <- subset(df, ok == TRUE)
 
-hv_split <- base::split(df[,c("seed_dry_mass", 
-                              "LDMC",
-                              "plant_height_vegetative",
-                              "rooting_depth",
-                              "relcov",
-                              "rep")], df$rep)
-hv_split <- subset(hv_split, lapply(hv_split, nrow) >1)
+#hv_split <- base::split(df[,c("seed_dry_mass", 
+#                              "LDMC",
+#                              "plant_height_vegetative",
+#                              "rooting_depth",
+#                              "relcov",
+#                              "rep")], df$rep)
+#hv_split <- subset(hv_split, lapply(hv_split, nrow) >1)
 
 
 
@@ -337,4 +337,164 @@ ggplot(lrr.df, aes(trt_type.1, lrr))+
 lrr.df_traits <- lrr.df
 
 write.csv(lrr.df_traits, "lrr.df_traits.csv")
+
+#################################################################################
+#################################################################################
+##Cross site comparison
+
+##Need some some sort of site df with cover values averaged across all the replicates
+
+test <- unite(test, expgroup, c("site_code", "project_name", "community_type"), remove = FALSE, sep = "::" )
+
+expgroup_vector <- unique(test$expgroup)
+
+test_w0_master <- {}
+
+
+for(i in 1:length(expgroup_vector)) {
+  temp.df <- subset(test, expgroup == expgroup_vector[i])
+  temp.wide <- pivot_wider(temp.df, names_from = genus_species, values_from = relcov, values_fill = 0)
+  temp.test_w0 <- pivot_longer(temp.wide, cols = 10:ncol(temp.wide), names_to = "genus_species", values_to = "cover")
+  
+  
+  test_w0_master <- rbind(test_w0_master, temp.test_w0 )
+  
+  rm(temp.df, temp.wide,temp.test_w0)
+
+  
+}
+
+site.df <- test_w0_master%>%
+            ddply(.(expgroup, site_code, project_name, community_type, treatment_year, trt_type, plot_mani, treatment.x, genus_species), function(x)data.frame( cover = mean(x$cover)))
+
+#start editing here
+site.traits <- merge(site.df, traits, by.x = "genus_species", by.y = "species_matched", all.x = TRUE)
+
+site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community_type", "trt_type", "treatment.x"), sep = "::", remove = FALSE)
+
+#df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
+
+site.traits$ok <- stats::complete.cases(site.traits[,c("seed_dry_mass", 
+                              "LDMC",
+                              "plant_height_vegetative",
+                              "rooting_depth"
+                                  )])
+
+site.traits <- subset(site.traits, ok == TRUE)
+
+
+
+##loop to get distances
+
+trt_type_vector <- unique(site.traits$trt_type)
+
+
+tdistances_master <- {}
+
+hv_func <- function(x) {
+  hypervolume_gaussian(data = x[1:4], name = unique(x$expgroup), weight = x$cover, #changing number of traits included scales time exponentially
+                       verbose = FALSE) 
+}
+
+
+for(i in 1:length(trt_type_vector)) {
+  temp.df <- subset(site.traits, trt_type == trt_type_vector[i])
+  temp.hv_split <- base::split(temp.df[,c("seed_dry_mass", 
+                                          "LDMC",
+                                          "plant_height_vegetative",
+                                          "rooting_depth",
+                                          "cover",
+                                          "rep")], temp.df$rep)
+  temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
+  
+  temp.hv_volumes <- lapply(temp.hv_split,  hv_func)
+  
+  temp.hvs_joined = hypervolume_join(temp.hv_volumes)
+  
+  temp.distance.measures <- kernel.similarity(temp.hvs_joined) #this takes a long time,
+  
+  
+  temp.distance.centroids.dat <- data.frame(as.table(as.matrix(temp.distance.measures$Distance_centroids)))[lower.tri(as.matrix(temp.distance.measures$Distance_centroids), diag = FALSE), ]
+  
+  temp.distance.centroids.dat$trt_type <- trt_type_vector[i]
+  
+  tdistances_master <- rbind(tdistances_master, temp.distance.centroids.dat )
+  
+  rm(temp.df, temp.hv_split, temp.hv_volumes)
+}
+
+
+tdistances_full        <-   tdistances_master%>%
+  merge(plot.treatment, by.x = c("Var1"), by.y = c("rep"))%>%
+  dplyr::select(Var1, Var2, Freq, trt_type, treatment.x)%>%
+  dplyr::rename(c(trt_type.1 = trt_type, treatment.1 = treatment.x))%>%
+  merge(plot.treatment, by.x = "Var2", by.y = "rep")%>%
+  dplyr::select(Var2, Var2, Freq, trt_type.1, treatment.1, trt_type, treatment.x, site_code, project_name, community_type )%>%
+  dplyr::rename(c(trt_type.2 = trt_type, treatment.2 = treatment.x))%>%
+  unite( expgroup, c("site_code", "project_name", "community_type"), sep = "::", remove = TRUE)%>%
+  dplyr::filter(trt_type.1 == trt_type.2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#hv_split <- base::split(site.traits[,c("seed_dry_mass", 
+#                              "LDMC",
+#                              "plant_height_vegetative",
+#                              "rooting_depth",
+#                              "cover",
+#                              "rep")], site.traits$rep)
+#hv_split <- subset(hv_split, lapply(hv_split, nrow) >1)
+
+
+
+
+
+#hv_func <- function(x) {
+#  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, 
+#                       verbose = FALSE) 
+#  }
+
+#hv_volumes <- lapply(hv_split,  hv_func)
+
+
+
+#same thing but in parallel
+#library(parallel)
+#numCores <- detectCores()
+#cl <- makeCluster(numCores)
+
+
+#clusterEvalQ(cl, {library(plyr)
+#  library(hypervolume)
+#  library(lmerTest)
+#  library(visreg)
+#  library(emmeans)
+#  library(tidyverse)
+#  library(ggthemes)
+#  library(MuMIn)
+#  library(dplyr)
+#  library(BAT)
+#})
+
+#hv_volumes <- parLapply(cl,  hv_split, hv_func)
+
+
+ #names(hv_volumes) <- names(hv_split)                        
+
+
+#hvs_joined = hypervolume_join(hv_volumes)
 
