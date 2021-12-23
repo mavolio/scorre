@@ -392,7 +392,7 @@ trt_type_vector <- unique(site.traits$trt_type)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:4], name = unique(x$expgroup), weight = x$cover, #changing number of traits included scales time exponentially
+  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$cover, #changing number of traits included scales time exponentially
                        verbose = FALSE) 
 }
 
@@ -425,76 +425,80 @@ for(i in 1:length(trt_type_vector)) {
 
 
 tdistances_full        <-   tdistances_master%>%
-  merge(plot.treatment, by.x = c("Var1"), by.y = c("rep"))%>%
-  dplyr::select(Var1, Var2, Freq, trt_type, treatment.x)%>%
-  dplyr::rename(c(trt_type.1 = trt_type, treatment.1 = treatment.x))%>%
-  merge(plot.treatment, by.x = "Var2", by.y = "rep")%>%
-  dplyr::select(Var2, Var2, Freq, trt_type.1, treatment.1, trt_type, treatment.x, site_code, project_name, community_type )%>%
-  dplyr::rename(c(trt_type.2 = trt_type, treatment.2 = treatment.x))%>%
-  unite( expgroup, c("site_code", "project_name", "community_type"), sep = "::", remove = TRUE)%>%
-  dplyr::filter(trt_type.1 == trt_type.2)
+  separate(Var1, c("site_code", "project_name", "community_type", "trt_type", "treatment"), sep = "::", remove = FALSE)%>%
+  unite(expgroup.1, c("site_code", "project_name", "community_type"), remove = TRUE, sep = "::" )%>%
+  separate(Var2,c("site_code", "project_name", "community_type", "trt_type", "treatment"), sep = "::", remove = FALSE)%>%
+  unite(expgroup.2, c("site_code", "project_name", "community_type"), remove = TRUE, sep = "::" )%>%
+  unite(exp_pair, c("expgroup.1", "expgroup.2"))%>%
+  dplyr::select(exp_pair, Freq, trt_type)
+
+
+
+explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
+
+explist.drought <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "drought"]))
+
+explist.P <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "P"]))
+
+explist.N <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "N"]))
+
+explist.irr <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "irr"]))
+
+  
+finalframe.mult_nutrient <- explist.mult_nutrient%>%
+                merge(tdistances_full, by = "exp_pair", all.x = TRUE )%>%
+                subset(trt_type == "mult_nutrient" | trt_type == "control")
+
+finalframe.drought <- explist.drought%>%
+  merge(tdistances_full, by = "exp_pair", all.x = TRUE )%>%
+  subset(trt_type == "drought" | trt_type == "control")
+
+finalframe.P <- explist.P%>%
+  merge(tdistances_full, by = "exp_pair", all.x = TRUE )%>%
+  subset(trt_type == "P" | trt_type == "control")
+
+finalframe.N <- explist.N%>%
+  merge(tdistances_full, by = "exp_pair", all.x = TRUE )%>%
+  subset(trt_type == "N" | trt_type == "control")
+
+finalframe.irr <- explist.irr%>%
+  merge(tdistances_full, by = "exp_pair", all.x = TRUE )%>%
+  subset(trt_type == "irr" | trt_type == "control")
 
 
 
 
+  
+ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
+  geom_boxplot()+
+  stat_compare_means(method = "t.test")+
+  ylab("")+
+  theme_bw()
+  
+  
+ggplot(finalframe.drought, aes(trt_type, Freq))+
+  geom_boxplot()+
+  stat_compare_means(method = "t.test")+
+  theme_bw()
+
+ggplot(finalframe.P, aes(trt_type, Freq))+
+  geom_boxplot()+
+  stat_compare_means(method = "t.test")+
+  theme_bw()
+
+ggplot(finalframe.N, aes(trt_type, Freq))+
+  geom_boxplot()+
+  stat_compare_means(method = "t.test")+
+  theme_bw()
+
+ggplot(finalframe.irr, aes(trt_type, Freq))+
+  geom_boxplot()+
+  stat_compare_means(method = "t.test")+
+  theme_bw()
 
 
 
 
+  
 
-
-
-
-
-
-
-
-
-
-#hv_split <- base::split(site.traits[,c("seed_dry_mass", 
-#                              "LDMC",
-#                              "plant_height_vegetative",
-#                              "rooting_depth",
-#                              "cover",
-#                              "rep")], site.traits$rep)
-#hv_split <- subset(hv_split, lapply(hv_split, nrow) >1)
-
-
-
-
-
-#hv_func <- function(x) {
-#  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, 
-#                       verbose = FALSE) 
-#  }
-
-#hv_volumes <- lapply(hv_split,  hv_func)
-
-
-
-#same thing but in parallel
-#library(parallel)
-#numCores <- detectCores()
-#cl <- makeCluster(numCores)
-
-
-#clusterEvalQ(cl, {library(plyr)
-#  library(hypervolume)
-#  library(lmerTest)
-#  library(visreg)
-#  library(emmeans)
-#  library(tidyverse)
-#  library(ggthemes)
-#  library(MuMIn)
-#  library(dplyr)
-#  library(BAT)
-#})
-
-#hv_volumes <- parLapply(cl,  hv_split, hv_func)
-
-
- #names(hv_volumes) <- names(hv_split)                        
-
-
-#hvs_joined = hypervolume_join(hv_volumes)
 
