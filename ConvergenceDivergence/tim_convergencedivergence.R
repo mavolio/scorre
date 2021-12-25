@@ -260,7 +260,13 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
 ggplot(lrr.df, aes(trt_type, lrr))+
   geom_boxplot()+
   geom_hline(yintercept = 0)+
+  xlab("")+
+  ylab("Bray-Curtis LRR Distance between plots within sites")+
   theme_bw()
+
+mod <-lm(lrr~trt_type, data = lrr.df)
+summary(mod)
+
 
 ################################################
 ##########################
@@ -327,6 +333,7 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.trt/dist.con)
 
+#lrr.df <- read.csv("~/lrr.df_traits.csv")
 
 ggplot(lrr.df, aes(trt_type.1, lrr))+
   geom_boxplot()+
@@ -336,7 +343,7 @@ ggplot(lrr.df, aes(trt_type.1, lrr))+
 
 lrr.df_traits <- lrr.df
 
-write.csv(lrr.df_traits, "lrr.df_traits.csv")
+write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
 
 #################################################################################
 #################################################################################
@@ -433,6 +440,7 @@ tdistances_full        <-   tdistances_master%>%
   dplyr::select(exp_pair, Freq, trt_type)
 
 
+#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
 
@@ -472,28 +480,42 @@ finalframe.irr <- explist.irr%>%
 ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
-  ylab("")+
-  theme_bw()
+  ylab("Trait distance between sites")+
+  ggtitle("Multiple nutrients ")+
+  xlab("")+
+    theme_bw()
   
   
 ggplot(finalframe.drought, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
-  theme_bw()
+  ylab("Trait distance between sites")+
+  ggtitle("Drought")+
+  xlab("")+
+    theme_bw()
 
 ggplot(finalframe.P, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
-  theme_bw()
+  ylab("Trait distance between sites")+
+  ggtitle("Phosphorous")+
+  xlab("")+
+    theme_bw()
 
 ggplot(finalframe.N, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
-  theme_bw()
+  ylab("Trait distance between sites")+
+  ggtitle("Nitrogen")+
+  xlab("")+
+    theme_bw()
 
 ggplot(finalframe.irr, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
+  ylab("Trait distance between sites")+
+  ggtitle("Irrigation")+
+  xlab("")+
   theme_bw()
 
 
