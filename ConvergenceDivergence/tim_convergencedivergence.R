@@ -338,6 +338,8 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
 ggplot(lrr.df, aes(trt_type.1, lrr))+
   geom_boxplot()+
   geom_hline(yintercept = 0)+
+  xlab("")+
+  ylab("Trait space LRR Distance between plots within sites")+
   theme_bw()
 
 
