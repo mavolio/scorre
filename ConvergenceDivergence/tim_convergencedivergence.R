@@ -6,6 +6,8 @@ library(reshape2)
 library(lmerTest)
 library(ggpubr)
 
+library(vegan)
+
 
 #Read in data
 traits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/trait data/Final Cleaned Traits/Continuous_Traits/Backtrans_GapFilled_sCorre.csv")
@@ -113,13 +115,21 @@ crest <- cover %>%
 #subset by criteria
 test <- crest %>%
   subset(treats_wanted != "NA")%>%
-        subset( n.trt.yrs >=5)%>%
+        subset( n.trt.yrs >=4)%>%
         subset(last_trt_yr == calendar_year)%>%
   subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
-            trt_type == "drought" | trt_type == "N*P" | trt_type == "mult_nutrient"
-          )%>%
+        trt_type == "drought" | trt_type == "N*P" | trt_type == "mult_nutrient"
+          )#%>%
 
-  subset(rep_num >= 5)#%>%
+N <-  subset(test[test$trt_type %in% "N",], rep_num >= 5)
+P <-  subset(test[test$trt_type %in% "P",], rep_num >= 5)
+irr <-  subset(test[test$trt_type %in% "irr",], rep_num >= 5)
+mult_nutrient <-  subset(test[test$trt_type %in% "mult_nutrient",], rep_num >= 5)
+drought <-  subset(test[test$trt_type %in% "drought",], rep_num >= 4)
+control <-  subset(test[test$trt_type %in% "control",], rep_num >= 4)
+
+test <- bind_rows(N, P, irr, mult_nutrient, drought, control)
+  #subset(rep_num >= 5)#%>%
 #  subset(#site_code == "KNZ" |# & project_name == "change" 
     #site_code == "NWT" | 
 #      site_code == "SEV" #|#&  project_name == "EDGE" & community_type == "blue_gramma"
@@ -143,10 +153,13 @@ df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id")
 
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
-df$ok <- complete.cases(df[,c("seed_dry_mass", 
-                              "LDMC",
-                              "plant_height_vegetative",
-                              "rooting_depth"
+df$ok <- complete.cases(df[,c(#"seed_dry_mass",
+  "stem_spec_density",
+  "leaf_N",
+  "leaf_P",
+  "LDMC",
+  "plant_height_vegetative",
+  "rooting_depth"
                               )])
 df <- subset(df, ok == TRUE)
 
@@ -218,7 +231,6 @@ df <- subset(df, ok == TRUE)
 
 ##############################
 ####
-library(vegan)
 
 
 
@@ -257,15 +269,21 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
     mutate(lrr = log(dist.trt/dist.con))%>%
     mutate(con_minus_trt = dist.trt/dist.con)
 
-ggplot(lrr.df, aes(trt_type, lrr))+
-  geom_boxplot()+
-  geom_hline(yintercept = 0)+
+lrr.df.conf <- lrr.df%>%
+                ddply(.(trt_type), function(x)data.frame(
+                  lrr.mean = mean(x$lrr),
+                  lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1)
+                ))
+
+ggplot(lrr.df.conf, aes(trt_type, lrr.mean))+
+  #geom_point()+
+  #geom_errorbar(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error))+
+  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
+  geom_hline(yintercept = 0, size = 1)+
   xlab("")+
   ylab("Bray-Curtis LRR Distance between plots within sites")+
   theme_bw()
 
-mod <-lm(lrr~trt_type, data = lrr.df)
-summary(mod)
 
 
 ################################################
@@ -278,17 +296,20 @@ expgroup_vector <- unique(df$expgroup)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
+  hypervolume_gaussian(data = x[1:6], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
                        verbose = FALSE) 
 }
 
 
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(df, expgroup == expgroup_vector[i])
-  temp.hv_split <- base::split(temp.df[,c("seed_dry_mass", 
-                                "LDMC",
-                                "plant_height_vegetative",
-                                "rooting_depth",
+  temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
+    "stem_spec_density",
+    "leaf_N",
+    "leaf_P",
+    "LDMC",
+    "plant_height_vegetative",
+    "rooting_depth",
                                 "relcov",
                                 "rep")], temp.df$rep)
   temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
@@ -335,9 +356,18 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
 
 #lrr.df <- read.csv("~/lrr.df_traits.csv")
 
-ggplot(lrr.df, aes(trt_type.1, lrr))+
-  geom_boxplot()+
-  geom_hline(yintercept = 0)+
+lrr.df.conf <- lrr.df%>%
+  ddply(.(trt_type.1), function(x)data.frame(
+    lrr.mean = mean(x$lrr),
+    lrr.error = qt(0.975, df=length(x$trt_type.1)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type.1)-1)
+  ))
+
+
+ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean))+
+  #geom_point()+
+  #geom_errorbar(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error))+
+  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
+  geom_hline(yintercept = 0, size = 1)+
   xlab("")+
   ylab("Trait space LRR Distance between plots within sites")+
   theme_bw()
@@ -345,7 +375,7 @@ ggplot(lrr.df, aes(trt_type.1, lrr))+
 
 lrr.df_traits <- lrr.df
 
-write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
+#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
 
 #################################################################################
 #################################################################################
@@ -383,10 +413,13 @@ site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community
 
 #df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
-site.traits$ok <- stats::complete.cases(site.traits[,c("seed_dry_mass", 
-                              "LDMC",
-                              "plant_height_vegetative",
-                              "rooting_depth"
+site.traits$ok <- stats::complete.cases(site.traits[,c(#"seed_dry_mass",
+  "stem_spec_density",
+  "leaf_N",
+  "leaf_P",
+  "LDMC",
+  "plant_height_vegetative",
+  "rooting_depth"
                                   )])
 
 site.traits <- subset(site.traits, ok == TRUE)
@@ -401,14 +434,17 @@ trt_type_vector <- unique(site.traits$trt_type)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$cover, #changing number of traits included scales time exponentially
+  hypervolume_gaussian(data = x[1:6], name = unique(x$rep), weight = x$cover, #changing number of traits included scales time exponentially
                        verbose = FALSE) 
 }
 
 
 for(i in 1:length(trt_type_vector)) {
   temp.df <- subset(site.traits, trt_type == trt_type_vector[i])
-  temp.hv_split <- base::split(temp.df[,c("seed_dry_mass", 
+  temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
+                                          "stem_spec_density",
+                                          "leaf_N",
+                                          "leaf_P",
                                           "LDMC",
                                           "plant_height_vegetative",
                                           "rooting_depth",
@@ -442,7 +478,8 @@ tdistances_full        <-   tdistances_master%>%
   dplyr::select(exp_pair, Freq, trt_type)
 
 
-#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full.csv")
+#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full2.csv")
+#tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full2.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
 
@@ -486,6 +523,8 @@ ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
   ggtitle("Multiple nutrients ")+
   xlab("")+
     theme_bw()
+
+hist(subset(finalframe.mult_nutrient, trt_type == "mult_nutrient")$Freq)
   
   
 ggplot(finalframe.drought, aes(trt_type, Freq))+
@@ -496,6 +535,9 @@ ggplot(finalframe.drought, aes(trt_type, Freq))+
   xlab("")+
     theme_bw()
 
+hist(subset(finalframe.drought, trt_type == "drought")$Freq)
+
+
 ggplot(finalframe.P, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
@@ -503,6 +545,10 @@ ggplot(finalframe.P, aes(trt_type, Freq))+
   ggtitle("Phosphorous")+
   xlab("")+
     theme_bw()
+
+hist(subset(finalframe.P, trt_type == "P")$Freq)
+
+
 
 ggplot(finalframe.N, aes(trt_type, Freq))+
   geom_boxplot()+
@@ -512,6 +558,11 @@ ggplot(finalframe.N, aes(trt_type, Freq))+
   xlab("")+
     theme_bw()
 
+hist(subset(finalframe.N, trt_type == "N")$Freq)
+
+
+
+
 ggplot(finalframe.irr, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
@@ -519,6 +570,10 @@ ggplot(finalframe.irr, aes(trt_type, Freq))+
   ggtitle("Irrigation")+
   xlab("")+
   theme_bw()
+
+hist(subset(finalframe.irr, trt_type == "irr")$Freq)
+
+
 
 
 
