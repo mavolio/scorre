@@ -121,6 +121,8 @@ test <- crest %>%
         trt_type == "drought" | trt_type == "N*P" | trt_type == "mult_nutrient"
           )#%>%
 
+test$trt_type <- revalue(test$trt_type, c("N*P" = "mult_nutrient"))
+
 N <-  subset(test[test$trt_type %in% "N",], rep_num >= 5)
 P <-  subset(test[test$trt_type %in% "P",], rep_num >= 5)
 irr <-  subset(test[test$trt_type %in% "irr",], rep_num >= 5)
@@ -137,7 +139,7 @@ test <- bind_rows(N, P, irr, mult_nutrient, drought, control)
     #site_code == "SEV" &  project_name == "WENNDEx"
 #    )##THIS IS ONLY TO GET THE CODE TO RUN FASTER WHILE MAKING THE WORKFLOW
 
-test$trt_type <- revalue(test$trt_type, c("N*P" = "mult_nutrient"))
+#test$trt_type <- revalue(test$trt_type, c("N*P" = "mult_nutrient"))
 
 test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "genus_species", "relcov", "trt_type", "plot_mani", "treatment.x")]%>%
         unique()
@@ -155,11 +157,12 @@ df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep 
 
 df$ok <- complete.cases(df[,c(#"seed_dry_mass",
   "stem_spec_density",
-  "leaf_N",
-  "leaf_P",
+  #"leaf_N",
+  #"leaf_P",
   "LDMC",
   "plant_height_vegetative",
-  "rooting_depth"
+  "SLA"
+  #"rooting_depth"
                               )])
 df <- subset(df, ok == TRUE)
 
@@ -296,7 +299,8 @@ expgroup_vector <- unique(df$expgroup)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:6], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
+  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
+                       chunk.size = 1000000,
                        verbose = FALSE) 
 }
 
@@ -305,11 +309,12 @@ for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(df, expgroup == expgroup_vector[i])
   temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
     "stem_spec_density",
-    "leaf_N",
-    "leaf_P",
+    #"leaf_N",
+    #"leaf_P",
     "LDMC",
     "plant_height_vegetative",
-    "rooting_depth",
+    "SLA",
+    #"rooting_depth",
                                 "relcov",
                                 "rep")], temp.df$rep)
   temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
@@ -375,7 +380,7 @@ ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean))+
 
 lrr.df_traits <- lrr.df
 
-#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
+write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
 
 #################################################################################
 #################################################################################
@@ -415,11 +420,12 @@ site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community
 
 site.traits$ok <- stats::complete.cases(site.traits[,c(#"seed_dry_mass",
   "stem_spec_density",
-  "leaf_N",
-  "leaf_P",
+  #"leaf_N",
+  #"leaf_P",
   "LDMC",
   "plant_height_vegetative",
-  "rooting_depth"
+  "SLA"
+  #"rooting_depth"
                                   )])
 
 site.traits <- subset(site.traits, ok == TRUE)
@@ -434,7 +440,8 @@ trt_type_vector <- unique(site.traits$trt_type)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:6], name = unique(x$rep), weight = x$cover, #changing number of traits included scales time exponentially
+  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$cover, #changing number of traits included scales time exponentially
+                       chunk.size = 2000,
                        verbose = FALSE) 
 }
 
@@ -443,11 +450,12 @@ for(i in 1:length(trt_type_vector)) {
   temp.df <- subset(site.traits, trt_type == trt_type_vector[i])
   temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
                                           "stem_spec_density",
-                                          "leaf_N",
-                                          "leaf_P",
+                                          #"leaf_N",
+                                          #"leaf_P",
                                           "LDMC",
-                                          "plant_height_vegetative",
-                                          "rooting_depth",
+                                    "plant_height_vegetative",
+                                          "SLA",
+                                          #"rooting_depth",
                                           "cover",
                                           "rep")], temp.df$rep)
   temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
@@ -456,7 +464,7 @@ for(i in 1:length(trt_type_vector)) {
   
   temp.hvs_joined = hypervolume_join(temp.hv_volumes)
   
-  temp.distance.measures <- kernel.similarity(temp.hvs_joined) #this takes a long time,
+  temp.distance.measures <- kernel.similarity(temp.hvs_joined, num.points.max =100) #this takes a long time,
   
   
   temp.distance.centroids.dat <- data.frame(as.table(as.matrix(temp.distance.measures$Distance_centroids)))[lower.tri(as.matrix(temp.distance.measures$Distance_centroids), diag = FALSE), ]
