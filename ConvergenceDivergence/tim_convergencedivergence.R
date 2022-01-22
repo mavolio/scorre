@@ -166,68 +166,16 @@ df$ok <- complete.cases(df[,c(#"seed_dry_mass",
                               )])
 df <- subset(df, ok == TRUE)
 
-#hv_split <- base::split(df[,c("seed_dry_mass", 
-#                              "LDMC",
-#                              "plant_height_vegetative",
-#                              "rooting_depth",
-#                              "relcov",
-#                              "rep")], df$rep)
-#hv_split <- subset(hv_split, lapply(hv_split, nrow) >1)
 
 
+########################
+##Summarize sites being used
 
-
-
-#hv_func <- function(x) {
-#  hypervolume_gaussian(data = x[1:3], name = unique(x$rep), weight = x$relcov, 
-#                       verbose = FALSE) 
-#  }
-
-#hv_volumes <- lapply(hv_split,  hv_func)
-
-
-
-#same thing but in parallel
-#library(parallel)
-#numCores <- detectCores()
-#cl <- makeCluster(numCores)
-
-
-#clusterEvalQ(cl, {library(plyr)
-#  library(hypervolume)
-#  library(lmerTest)
-#  library(visreg)
-#  library(emmeans)
-#  library(tidyverse)
-#  library(ggthemes)
-#  library(MuMIn)
-#  library(dplyr)
-#  library(BAT)
-#})
-
-#hv_volumes <- parLapply(cl,  hv_split, hv_func)
-
-
-#names(hv_volumes) <- names(hv_split)                        
-
-
-#hvs_joined = hypervolume_join(hv_volumes)
-
-
-#make metrics?
-#alpha <- sapply(hv_volumes, kernel.alpha)
-
-
-
-#alpha <- kernel.alpha(hvs_joined)
-#evenness <- kernel.evenness(hvs_joined)
-#dispersion <- kernel.dispersion(hvs_joined)
-
-
-#rep <- names(hv_volumes)
-#hv_div <- data.frame(rep, alpha, evenness, dispersion)
-
-
+sites <- test%>%
+  dplyr::select(site_code, project_name, community_type, treatment_year, trt_type, treatment.x)%>%
+          unique()%>%
+          subset(trt_type != "control")
+          
 
 
 
@@ -275,7 +223,8 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
 lrr.df.conf <- lrr.df%>%
                 ddply(.(trt_type), function(x)data.frame(
                   lrr.mean = mean(x$lrr),
-                  lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1)
+                  lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
+                  num_experiments = length(x$expgroup)
                 ))
 
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean))+
@@ -287,7 +236,7 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean))+
   ylab("Bray-Curtis LRR Distance between plots within sites")+
   theme_bw()
 
-
+lrr.df_species <- lrr.df
 
 ################################################
 ##########################
@@ -300,7 +249,7 @@ tdistances_master <- {}
 
 hv_func <- function(x) {
   hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
-                       chunk.size = 1000000,
+                       chunk.size = 10000,
                        verbose = FALSE) 
 }
 
@@ -361,7 +310,7 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
 
 #lrr.df <- read.csv("~/lrr.df_traits.csv")
 
-lrr.df.conf <- lrr.df%>%
+lrr.df.conf <- lrr.df_traits%>%
   ddply(.(trt_type.1), function(x)data.frame(
     lrr.mean = mean(x$lrr),
     lrr.error = qt(0.975, df=length(x$trt_type.1)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type.1)-1)
@@ -380,7 +329,58 @@ ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean))+
 
 lrr.df_traits <- lrr.df
 
-write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
+#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
+
+#############################################
+###########################################
+##Species-trait method comparison
+lrr.df_species$lrr.species <- lrr.df_species$lrr
+lrr.df_species <- lrr.df_species[, c("expgroup", "trt_type", "treatment", "lrr.species")]
+
+lrr.df_traits$lrr.traits <- lrr.df_traits$lrr
+lrr.df_traits$trt_type <- lrr.df_traits$trt_type.1
+lrr.df_traits$treatment <- lrr.df_traits$treatment.1
+lrr.df_traits <- lrr.df_traits[, c("expgroup", "trt_type", "treatment", "lrr.traits")]
+
+
+
+lrr_comparison <- merge(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type", "treatment"))
+
+ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
+  geom_point(aes(color = trt_type))+
+  geom_smooth(method = "lm", color = "black", size =2)+
+  geom_smooth(aes( color = trt_type), method = "lm")+
+  theme_bw()
+
+
+ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
+  facet_wrap(~trt_type)+
+  geom_point(aes(color = trt_type))+
+  geom_smooth(aes(color = trt_type),method = "lm", size =2, se = FALSE)+
+  theme_bw()
+
+
+drought <- subset(lrr_comparison, trt_type == "drought")
+irr <- subset(lrr_comparison, trt_type == "irr")
+mult_nutrient <- subset(lrr_comparison, trt_type == "mult_nutrient")
+N <- subset(lrr_comparison, trt_type == "N")
+P <- subset(lrr_comparison, trt_type == "P")
+
+
+mod <- lm(lrr.traits~lrr.species, data = drought)
+summary(mod)
+
+mod <- lm(lrr.traits~lrr.species, data = irr)
+summary(mod)
+
+mod <- lm(lrr.traits~lrr.species, data = mult_nutrient)
+summary(mod)
+
+mod <- lm(lrr.traits~lrr.species, data = N)
+summary(mod)
+
+mod <- lm(lrr.traits~lrr.species, data = P)
+summary(mod)
 
 #################################################################################
 #################################################################################
@@ -464,7 +464,7 @@ for(i in 1:length(trt_type_vector)) {
   
   temp.hvs_joined = hypervolume_join(temp.hv_volumes)
   
-  temp.distance.measures <- kernel.similarity(temp.hvs_joined, num.points.max =100) #this takes a long time,
+  temp.distance.measures <- kernel.similarity(temp.hvs_joined) #this takes a long time,
   
   
   temp.distance.centroids.dat <- data.frame(as.table(as.matrix(temp.distance.measures$Distance_centroids)))[lower.tri(as.matrix(temp.distance.measures$Distance_centroids), diag = FALSE), ]
@@ -486,7 +486,7 @@ tdistances_full        <-   tdistances_master%>%
   dplyr::select(exp_pair, Freq, trt_type)
 
 
-#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full2.csv")
+write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full3.csv")
 #tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full2.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
