@@ -308,7 +308,7 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.trt/dist.con)
 
-#lrr.df <- read.csv("~/lrr.df_traits.csv")
+#lrr.df_traits <- read.csv("~/lrr.df_traits.csv")
 
 lrr.df.conf <- lrr.df_traits%>%
   ddply(.(trt_type.1), function(x)data.frame(
@@ -357,7 +357,13 @@ ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
   geom_point(aes(color = trt_type))+
   geom_smooth(aes(color = trt_type),method = "lm", size =2, se = FALSE)+
-  theme_bw()
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 0)+
+  xlab("LRR species composition")+
+  ylab("LRR trait composition")+
+  theme_bw()+
+  theme(legend.position="none")
+
 
 
 drought <- subset(lrr_comparison, trt_type == "drought")
@@ -486,8 +492,8 @@ tdistances_full        <-   tdistances_master%>%
   dplyr::select(exp_pair, Freq, trt_type)
 
 
-write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full3.csv")
-#tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full2.csv")
+#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full3.csv")
+tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full3.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
 
@@ -532,9 +538,24 @@ ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
   xlab("")+
     theme_bw()
 
-hist(subset(finalframe.mult_nutrient, trt_type == "mult_nutrient")$Freq)
+ggplot(finalframe.mult_nutrient, aes(trt_type, Freq, color = trt_type))+
+  geom_point()+
+  geom_jitter(width = .2, height = 0)+
+  theme_bw()
+
+mu <- ddply(finalframe.mult_nutrient, "trt_type",function(x)data.frame( grp.mean=mean(x$Freq)))
+            
+ggplot(finalframe.mult_nutrient, aes(Freq, color = trt_type))+
+  geom_density(aes(fill = trt_type),alpha = .2)+
+  geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
+  theme_classic()
+
+#hist(subset(finalframe.mult_nutrient, trt_type == "mult_nutrient")$Freq)
   
-  
+
+mod <- lm(Freq~trt_type, data = finalframe.drought)
+summary(mod)  
+
 ggplot(finalframe.drought, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
@@ -543,7 +564,24 @@ ggplot(finalframe.drought, aes(trt_type, Freq))+
   xlab("")+
     theme_bw()
 
-hist(subset(finalframe.drought, trt_type == "drought")$Freq)
+ggplot(finalframe.drought, aes(trt_type, Freq))+
+  geom_violin(draw_quantiles = c(0.5))+
+  stat_compare_means(method = "t.test")+
+  ylab("Trait distance between sites")+
+  ggtitle("Drought")+
+  xlab("")+
+  theme_bw()
+
+mu <- ddply(finalframe.drought, "trt_type",function(x)data.frame( grp.mean=mean(x$Freq)))
+
+ggplot(finalframe.drought, aes(Freq, color = trt_type))+
+  geom_density(aes(fill = trt_type),alpha = .2)+
+  geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
+  theme_classic()
+
+
+
+
 
 
 ggplot(finalframe.P, aes(trt_type, Freq))+
@@ -568,7 +606,13 @@ ggplot(finalframe.N, aes(trt_type, Freq))+
 
 hist(subset(finalframe.N, trt_type == "N")$Freq)
 
+ggplot(finalframe.N, aes(Freq, color = trt_type))+
+  geom_histogram(aes(y=..density..),fill = "white")+
+  geom_density(aes(fill = trt_type),alpha = .2)+
+  theme_classic()
 
+mod <- lm(Freq~trt_type, data = finalframe.N)
+summary(mod)
 
 
 ggplot(finalframe.irr, aes(trt_type, Freq))+
