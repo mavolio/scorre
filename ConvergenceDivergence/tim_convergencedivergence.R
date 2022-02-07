@@ -156,13 +156,14 @@ df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id")
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 df$ok <- complete.cases(df[,c(#"seed_dry_mass",
-  "stem_spec_density",
+  #"stem_spec_density",
   #"leaf_N",
   #"leaf_P",
   "LDMC",
   "plant_height_vegetative",
-  "SLA"
-  #"rooting_depth"
+  #"SLA",
+  "rooting_depth",
+  "leaf_C.N"
                               )])
 df <- subset(df, ok == TRUE)
 
@@ -257,13 +258,14 @@ hv_func <- function(x) {
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(df, expgroup == expgroup_vector[i])
   temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
-    "stem_spec_density",
+    #"stem_spec_density",
     #"leaf_N",
     #"leaf_P",
     "LDMC",
     "plant_height_vegetative",
-    "SLA",
-    #"rooting_depth",
+    #"SLA",
+    "rooting_depth",
+    "leaf_C.N",
                                 "relcov",
                                 "rep")], temp.df$rep)
   temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
@@ -309,6 +311,7 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
   mutate(con_minus_trt = dist.trt/dist.con)
 
 #lrr.df_traits <- read.csv("~/lrr.df_traits.csv")
+lrr.df_traits <- lrr.df
 
 lrr.df.conf <- lrr.df_traits%>%
   ddply(.(trt_type.1), function(x)data.frame(
@@ -327,9 +330,9 @@ ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean))+
   theme_bw()
 
 
-lrr.df_traits <- lrr.df
 
-#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits.csv")
+
+write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits5.csv")
 
 #############################################
 ###########################################
@@ -425,13 +428,14 @@ site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community
 #df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 site.traits$ok <- stats::complete.cases(site.traits[,c(#"seed_dry_mass",
-  "stem_spec_density",
+  #"stem_spec_density",
   #"leaf_N",
   #"leaf_P",
   "LDMC",
   "plant_height_vegetative",
-  "SLA"
-  #"rooting_depth"
+  #"SLA",
+  "rooting_depth",
+  "leaf_C.N"
                                   )])
 
 site.traits <- subset(site.traits, ok == TRUE)
@@ -455,13 +459,14 @@ hv_func <- function(x) {
 for(i in 1:length(trt_type_vector)) {
   temp.df <- subset(site.traits, trt_type == trt_type_vector[i])
   temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
-                                          "stem_spec_density",
-                                          #"leaf_N",
-                                          #"leaf_P",
-                                          "LDMC",
-                                    "plant_height_vegetative",
-                                          "SLA",
-                                          #"rooting_depth",
+    #"stem_spec_density",
+    #"leaf_N",
+    #"leaf_P",
+    "LDMC",
+    "plant_height_vegetative",
+    #"SLA",
+    "rooting_depth",
+    "leaf_C.N",
                                           "cover",
                                           "rep")], temp.df$rep)
   temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
@@ -492,8 +497,8 @@ tdistances_full        <-   tdistances_master%>%
   dplyr::select(exp_pair, Freq, trt_type)
 
 
-#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full3.csv")
-tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full3.csv")
+write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full5.csv")
+#tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full5.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
 
@@ -529,7 +534,9 @@ finalframe.irr <- explist.irr%>%
 
 
 
-  
+mod <- lm(Freq~trt_type, data = finalframe.mult_nutrient)
+summary(mod)  
+
 ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
@@ -582,7 +589,8 @@ ggplot(finalframe.drought, aes(Freq, color = trt_type))+
 
 
 
-
+mod <- lm(Freq~trt_type, data = finalframe.P)
+summary(mod)  
 
 ggplot(finalframe.P, aes(trt_type, Freq))+
   geom_boxplot()+
@@ -596,6 +604,9 @@ hist(subset(finalframe.P, trt_type == "P")$Freq)
 
 
 
+mod <- lm(Freq~trt_type, data = finalframe.N)
+summary(mod)
+
 ggplot(finalframe.N, aes(trt_type, Freq))+
   geom_boxplot()+
   stat_compare_means(method = "t.test")+
@@ -606,14 +617,16 @@ ggplot(finalframe.N, aes(trt_type, Freq))+
 
 hist(subset(finalframe.N, trt_type == "N")$Freq)
 
+mu <- ddply(finalframe.N, "trt_type",function(x)data.frame( grp.mean=mean(x$Freq)))
+
 ggplot(finalframe.N, aes(Freq, color = trt_type))+
-  geom_histogram(aes(y=..density..),fill = "white")+
   geom_density(aes(fill = trt_type),alpha = .2)+
+  geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
   theme_classic()
 
-mod <- lm(Freq~trt_type, data = finalframe.N)
-summary(mod)
 
+mod <- lm(Freq~trt_type, data = finalframe.irr)
+summary(mod)
 
 ggplot(finalframe.irr, aes(trt_type, Freq))+
   geom_boxplot()+
@@ -628,7 +641,8 @@ hist(subset(finalframe.irr, trt_type == "irr")$Freq)
 
 
 
-
+##N regression
+ggplot(finalframe.N, aes())
 
   
 
