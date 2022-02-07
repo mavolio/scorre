@@ -156,14 +156,14 @@ df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id")
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 df$ok <- complete.cases(df[,c(#"seed_dry_mass",
-  #"stem_spec_density",
+  "stem_spec_density",
   #"leaf_N",
   #"leaf_P",
   "LDMC",
   "plant_height_vegetative",
-  #"SLA",
-  "rooting_depth",
-  "leaf_C.N"
+  "SLA",
+  "rooting_depth"
+  #"leaf_C.N"
                               )])
 df <- subset(df, ok == TRUE)
 
@@ -258,14 +258,14 @@ hv_func <- function(x) {
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(df, expgroup == expgroup_vector[i])
   temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
-    #"stem_spec_density",
+    "stem_spec_density",
     #"leaf_N",
     #"leaf_P",
     "LDMC",
     "plant_height_vegetative",
-    #"SLA",
+    "SLA",
     "rooting_depth",
-    "leaf_C.N",
+    #"leaf_C.N",
                                 "relcov",
                                 "rep")], temp.df$rep)
   temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
@@ -428,14 +428,14 @@ site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community
 #df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 site.traits$ok <- stats::complete.cases(site.traits[,c(#"seed_dry_mass",
-  #"stem_spec_density",
+  "stem_spec_density",
   #"leaf_N",
   #"leaf_P",
   "LDMC",
   "plant_height_vegetative",
-  #"SLA",
-  "rooting_depth",
-  "leaf_C.N"
+  "SLA",
+  "rooting_depth"
+  #"leaf_C.N"
                                   )])
 
 site.traits <- subset(site.traits, ok == TRUE)
@@ -459,14 +459,14 @@ hv_func <- function(x) {
 for(i in 1:length(trt_type_vector)) {
   temp.df <- subset(site.traits, trt_type == trt_type_vector[i])
   temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
-    #"stem_spec_density",
+    "stem_spec_density",
     #"leaf_N",
     #"leaf_P",
     "LDMC",
     "plant_height_vegetative",
-    #"SLA",
+    "SLA",
     "rooting_depth",
-    "leaf_C.N",
+    #"leaf_C.N",
                                           "cover",
                                           "rep")], temp.df$rep)
   temp.hv_split <- subset(temp.hv_split, lapply(temp.hv_split, nrow) >1)
