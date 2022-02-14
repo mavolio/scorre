@@ -177,7 +177,7 @@ sites <- test%>%
           unique()%>%
           subset(trt_type != "control")
           
-
+sites <- unite(sites, temp, c("project_name", "community_type"), sep = "::", remove = FALSE)
 
 
 
@@ -249,7 +249,7 @@ expgroup_vector <- unique(df$expgroup)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
+  hypervolume_gaussian(data = x[1:5], name = unique(x$rep), weight = x$relcov, #changing number of traits included scales time exponentially
                        chunk.size = 10000,
                        verbose = FALSE) 
 }
@@ -319,6 +319,8 @@ lrr.df.conf <- lrr.df_traits%>%
     lrr.error = qt(0.975, df=length(x$trt_type.1)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type.1)-1)
   ))
 
+lrr.df.conf$lrr.min <- lrr.df.conf$lrr.mean - lrr.df.conf$lrr.error
+lrr.df.conf$lrr.max <- lrr.df.conf$lrr.mean + lrr.df.conf$lrr.error
 
 ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean))+
   #geom_point()+
@@ -450,7 +452,7 @@ trt_type_vector <- unique(site.traits$trt_type)
 tdistances_master <- {}
 
 hv_func <- function(x) {
-  hypervolume_gaussian(data = x[1:4], name = unique(x$rep), weight = x$cover, #changing number of traits included scales time exponentially
+  hypervolume_gaussian(data = x[1:5], name = unique(x$rep), weight = x$cover, #changing number of traits included scales time exponentially
                        chunk.size = 2000,
                        verbose = FALSE) 
 }
@@ -497,7 +499,7 @@ tdistances_full        <-   tdistances_master%>%
   dplyr::select(exp_pair, Freq, trt_type)
 
 
-write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full5.csv")
+#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full5.csv")
 #tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full5.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
@@ -534,12 +536,16 @@ finalframe.irr <- explist.irr%>%
 
 
 
+####Stats and figures
+
+#multiple nutrient
+
 mod <- lm(Freq~trt_type, data = finalframe.mult_nutrient)
 summary(mod)  
 
 ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
   geom_boxplot()+
-  stat_compare_means(method = "t.test")+
+  #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Multiple nutrients ")+
   xlab("")+
@@ -555,17 +561,20 @@ mu <- ddply(finalframe.mult_nutrient, "trt_type",function(x)data.frame( grp.mean
 ggplot(finalframe.mult_nutrient, aes(Freq, color = trt_type))+
   geom_density(aes(fill = trt_type),alpha = .2)+
   geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
+  xlab("Distance between communities")+
+  ggtitle("Multiple nutrients ")+
   theme_classic()
 
-#hist(subset(finalframe.mult_nutrient, trt_type == "mult_nutrient")$Freq)
-  
+
+
+#Drought  
 
 mod <- lm(Freq~trt_type, data = finalframe.drought)
 summary(mod)  
 
 ggplot(finalframe.drought, aes(trt_type, Freq))+
   geom_boxplot()+
-  stat_compare_means(method = "t.test")+
+  #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Drought")+
   xlab("")+
@@ -573,7 +582,7 @@ ggplot(finalframe.drought, aes(trt_type, Freq))+
 
 ggplot(finalframe.drought, aes(trt_type, Freq))+
   geom_violin(draw_quantiles = c(0.5))+
-  stat_compare_means(method = "t.test")+
+  #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Drought")+
   xlab("")+
@@ -584,32 +593,45 @@ mu <- ddply(finalframe.drought, "trt_type",function(x)data.frame( grp.mean=mean(
 ggplot(finalframe.drought, aes(Freq, color = trt_type))+
   geom_density(aes(fill = trt_type),alpha = .2)+
   geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
+  xlab("Distance between communities")+
+  ggtitle("Drought")+
   theme_classic()
 
 
-
+#Phosphorus
 
 mod <- lm(Freq~trt_type, data = finalframe.P)
 summary(mod)  
 
 ggplot(finalframe.P, aes(trt_type, Freq))+
   geom_boxplot()+
-  stat_compare_means(method = "t.test")+
+  #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
-  ggtitle("Phosphorous")+
+  ggtitle("Phosphorus")+
   xlab("")+
     theme_bw()
 
 hist(subset(finalframe.P, trt_type == "P")$Freq)
 
+mu <- ddply(finalframe.P, "trt_type",function(x)data.frame( grp.mean=mean(x$Freq)))
 
+ggplot(finalframe.P, aes(Freq, color = trt_type))+
+  geom_density(aes(fill = trt_type),alpha = .2)+
+  geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
+  xlab("Distance between communities")+
+  ggtitle("Phosphorus")+
+  theme_classic()
+
+
+
+#Nitrogen
 
 mod <- lm(Freq~trt_type, data = finalframe.N)
 summary(mod)
 
 ggplot(finalframe.N, aes(trt_type, Freq))+
   geom_boxplot()+
-  stat_compare_means(method = "t.test")+
+  #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Nitrogen")+
   xlab("")+
@@ -622,15 +644,19 @@ mu <- ddply(finalframe.N, "trt_type",function(x)data.frame( grp.mean=mean(x$Freq
 ggplot(finalframe.N, aes(Freq, color = trt_type))+
   geom_density(aes(fill = trt_type),alpha = .2)+
   geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
+  xlab("Distance between communities")+
+  ggtitle("Nitrogen")+
   theme_classic()
 
+
+#Irrigation
 
 mod <- lm(Freq~trt_type, data = finalframe.irr)
 summary(mod)
 
 ggplot(finalframe.irr, aes(trt_type, Freq))+
   geom_boxplot()+
-  stat_compare_means(method = "t.test")+
+  #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Irrigation")+
   xlab("")+
@@ -638,7 +664,14 @@ ggplot(finalframe.irr, aes(trt_type, Freq))+
 
 hist(subset(finalframe.irr, trt_type == "irr")$Freq)
 
+mu <- ddply(finalframe.irr, "trt_type",function(x)data.frame( grp.mean=mean(x$Freq)))
 
+ggplot(finalframe.irr, aes(Freq, color = trt_type))+
+  geom_density(aes(fill = trt_type),alpha = .2)+
+  geom_vline(data = mu, aes(xintercept = grp.mean, color = trt_type), linetype = "dashed")+
+  xlab("Distance between communities")+
+  ggtitle("Irrigation")+
+  theme_classic()
 
 
 ##N regression
