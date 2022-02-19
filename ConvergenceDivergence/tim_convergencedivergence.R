@@ -167,7 +167,7 @@ df$ok <- complete.cases(df[,c(#"seed_dry_mass",
                               )])
 df <- subset(df, ok == TRUE)
 
-
+length(unique(df$genus_species))
 
 ########################
 ##Summarize sites being used
