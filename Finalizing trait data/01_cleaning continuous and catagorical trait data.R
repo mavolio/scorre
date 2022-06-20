@@ -1,7 +1,7 @@
 ### Cleaning continuous trait data
 ### 
 ### Authors: Kimberly Komatsu (komatsuk@si.edu), Meghan Avolio (meghan.avolio@jhu.edu), Kevin Wilcox (kevin.wilcox@uwyo.edu)
-### Created: December 14, 2021; last updated: May 20, 2022
+### Created: December 14, 2021; last updated: June 20, 2022
 ### Created with R version 4.1.1
 ###
 
@@ -16,6 +16,7 @@ library(tidyverse)
 
 # setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
 # setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\') #Kim's desktop
+# setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\') #Kim's laptop
 
 
 ############################
@@ -61,12 +62,19 @@ imputedSubset <- imputedRaw %>%
 #   filter(moss=='non-moss')
 
 
+write.csv(imputedSubset, 'C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')
+
 
 ##### outlier check #####
 hierarchy <- read.csv('Imputed Continuous_Traits\\hierarchy_info.txt')
 
-imputedMean <- read.delim('Imputed Continuous_Traits\\mean_gap_filled2.txt')
-imputedSD <- read.delim('Imputed Continuous_Traits\\std_gap_filled2.txt')
+imputedMean <- read.delim('Imputed Continuous_Traits\\mean_gap_filled2.txt', header=T)
+imputedSD <- read.delim('Imputed Continuous_Traits\\std_gap_filled2.txt', header=T)
+
+#trying to link files, but won't bind becasue of column mismatch, checking with Franzi
+# bhpmf_means <- imputedMean 
+# Final_Mean_Traits <- cbind(hierarchy,bhpmf_means)
+
 
 apply(imputedSD[], 2, quantile, probs=c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1))
 
