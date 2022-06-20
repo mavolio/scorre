@@ -13,6 +13,7 @@ library(beepr)
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
 setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
 setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
+setwd("C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\") # Kim's laptop
 
 # Standard Error Function:
 se <- function(x, na.rm=na.rm){
@@ -25,13 +26,27 @@ se <- function(x, na.rm=na.rm){
 ###
 
 ### Read in a clean continuous trait data
-source("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Git projects\\scorre\\Cleaning trait data\\01_cleaning continuous and catagorical trait data.R")
+contTraits <- read.csv('CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')%>%
+  select(-X.1, -X, -family, -genus, -observation)%>%
+  group_by(species_matched)%>%
+  summarise_all(funs(mean))%>%
+  ungroup()
 
+traits_all <- read.csv('CoRRE data\\trait data\\sCoRRE categorical trait data_11302021.csv')%>%
+  full_join(contTraits) %>%
+  drop_na()
 
-sp_without_catag_data <- filter(traits_all, is.na(n_fixation))
+traitsOutliersRemoved <- traits_all %>%
+  filter(!leaf_type %in% c("microphyll","frond")) %>%
+  filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
+
+traitsScaled <- traitsOutliersRemoved %>% ## only scales continuous traits
+  mutate_at(vars(seed_dry_mass:seed_number), scale)
+
+sp_without_catag_data <- filter(traits_all, is.na(n_fixation)) #none, we did a great job collecting categorical data!
 
 ### full species relative cover data
-relcov_full_raw <- read.csv("CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv") %>%
+relcov_full_raw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
   dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
 
@@ -43,7 +58,7 @@ corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
 ### merge species names and remove all mosses (dang mosses!)
 
 # moss key to remove mosses from species comp data
-moss_sp_vec <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sCoRRE categorical trait data_final_20211209.csv") %>%
+moss_sp_vec <- read.csv("CoRRE data\\trait data\\sCoRRE categorical trait data_11302021.csv") %>%
   dplyr::select(species_matched, leaf_type) %>%
   mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
   filter(moss=="moss") %>%
@@ -60,6 +75,8 @@ rm(moss_key, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
 ###
 ### looping through site_proj_comm and calculating FD for all
 ###
+
+#start here and figure out why only some traits are included and also why fdiv is NA for everything.
 
 FD_df_master <- {}
 site_proj_comm_vector <- unique(relcov_full_raw$site_proj_comm)
@@ -124,7 +141,7 @@ for(PROJ in 1:4){
   traits_df_temp <- traits_df_raw_temp %>%
     arrange(species_matched) %>%
     column_to_rownames("species_matched") %>%
-    dplyr::select(-genus, -family) %>%
+    dplyr::select(-family) %>%
     mutate_all(~ifelse(is.nan(.), NA, .))
 
    ### Changing all categorical traits to factors
