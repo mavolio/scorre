@@ -1,7 +1,7 @@
 ### Cleaning continuous trait data
 ### 
-### Authors: Kimberly Komatsu (komatsuk@si.edu), Meghan Avolio (meghan.avolio@jhu.edu), Kevin Wilcox (kevin.wilcox@uwyo.edu)
-### Created: December 14, 2021; last updated: May 20, 2022
+### Authors: Kevin Wilcox (kevin.wilcox@uwyo.edu)
+### Created: December 14, 2021; last updated: December 14, 2021
 ### Created with R version 4.1.1
 ###
 
@@ -11,126 +11,71 @@
 
 # rm(list=ls()) clean up workspace
 #library(FD)
-library(PerformanceAnalytics)
 library(tidyverse)
 
 # setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
-# setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\') #Kim's desktop
 
 
-############################
-##### Continous traits #####
-############################
+##################################
+### Continous traits
+##################################
 
+#### NOTES
+###
 ### Continuous traits to include: LDMC, SLA, Vegetative_height, seed dry mass, seed number, rooting density, rooting depth 
 
 
-##### Read in trait data #####
-imputedRaw <- read.csv("Imputed Continuous_Traits\\Backtrans_GapFilled_sCorre.csv") %>%
-  dplyr::select(-SRL) #need to remove SRL because input data was flawed
+### Read in trait data -- for now I'm just cleaning the traits identified above
+traits_cont_raw <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\Continuous_Traits\\Backtrans_GapFilled_sCorre.csv") %>%
+  dplyr::select(X:family, LDMC, SLA, plant_height_vegetative, seed_dry_mass, seed_number, rooting_depth) %>% # NEED TO REMOVE SRL
+  mutate(across(everything(), ~replace(., .<0, NA)))
 
 
-##### Look at histograms #####
-# hist(imputedRaw$LDMC)
-# hist(imputedRaw$SLA)
-# hist(imputedRaw$plant_height_vegetative)
-# hist(imputedRaw$seed_dry_mass)
-# hist(imputedRaw$seed_number)
-# hist(imputedRaw$rooting_depth)
-# filter(imputedRaw, SLA == max(SLA))
-# filter(imputedRaw, SLA > 200)
+### Look at histograms to determine cutoffs for outlier trait removal
 
+# hist(traits_cont_raw$LDMC)
+# hist(traits_cont_raw$SLA)
+# hist(traits_cont_raw$plant_height_vegetative)
+# hist(traits_cont_raw$seed_dry_mass)
+# hist(traits_cont_raw$seed_number)
+# hist(traits_cont_raw$rooting_depth)
+# filter(traits_cont_raw, SLA == max(SLA))
+# filter(traits_cont_raw, SLA > 200)
 
-##### Removing Mosses #####
-mossKey <- read.csv("sCoRRE categorical trait data_final_20211209.csv") %>%
+### Read in categorical data to get moss column
+moss_key <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sCoRRE categorical trait data_final_20211209.csv") %>%
   dplyr::select(species_matched, leaf_type) %>%
   mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
   dplyr::select(-leaf_type)
 
-imputedSubset <- imputedRaw %>%
-  left_join(mossKey, by="species_matched") %>%
+### Merge moss column into continuous trait data
+
+### Removing unrealistically high values for all traits -- based on trait histograms
+traits_cont_clean <- traits_cont_raw %>%
+  mutate(LDMC = replace(LDMC, LDMC > 0.8, NA), 
+         SLA = replace(SLA, SLA > 100, NA),
+         plant_height_vegetative = replace(plant_height_vegetative, plant_height_vegetative > 5, NA),
+         seed_dry_mass = replace(seed_dry_mass, seed_dry_mass > 100, NA),
+         seed_number = replace(seed_number, seed_number > 1e5, NA),
+         rooting_depth = replace(rooting_depth, rooting_depth > 4.5, NA)) %>%
+  group_by(genus, family, species_matched) %>%
+ # summarize(LDMC=mean(LDMC,na.rm=T)) %>%
+  summarize_at(vars(LDMC:rooting_depth), list(mean=mean, sd=sd), na.rm=T) %>%
+  ungroup() %>%
+  left_join(moss_key, by="species_matched") %>%
   mutate(moss=ifelse(moss=="moss","moss","non-moss")) %>%
   filter(moss!="moss") %>%
-  dplyr::select(-moss) #%>%
-  # group_by(genus, family, species_matched) %>%
-  # summarize_at(vars(seed_dry_mass:seed_number), list(mean=mean, sd=sd), na.rm=T) %>%
-  # ungroup() #total of 1786 species remain
-
-# #total species count = 2403 (so 617 species dropped [likely because they had zero trait data and therefore can't have any data imputed])
-# sppList <- mossKey %>%
-#   filter(moss=='non-moss')
+  dplyr::select(-moss)
 
 
+# hist(traits_cont_clean$LDMC_mean)
+# hist(traits_cont_clean$SLA_mean)
+# hist(traits_cont_clean$plant_height_vegetative_mean)
+# hist(traits_cont_clean$seed_dry_mass_mean)
+# hist(traits_cont_clean$seed_number_mean)
+# hist(traits_cont_clean$rooting_depth_mean)
 
-##### outlier check #####
-hierarchy <- read.csv('Imputed Continuous_Traits\\hierarchy_info.txt')
-
-imputedMean <- read.delim('Imputed Continuous_Traits\\mean_gap_filled2.txt')
-imputedSD <- read.delim('Imputed Continuous_Traits\\std_gap_filled2.txt')
-
-apply(imputedSD[], 2, quantile, probs=c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1))
-
-imputedSDLong <- imputedSD%>%
-  pivot_longer(names_to='trait', values_to='sd', seed_dry_mass:seed_number)
-
-
-ggplot(data=imputedSDLong, aes(x=trait, y=sd)) + geom_boxplot() + geom_point()
-
-
-##### TO DO #####
-# how were outliers removed before gap filling -- should maybe do it species by species, because there are some outliers for andro and achillea that might not be outliers in the entire dataset
-# figure out how to merge the sd with the imputed backtransformed data
-# determine how to do the sd cutoffs (we cannot just do quantiles because then the same amount of data is dropped from each trait, which is unfair to the good traits and generous to the bad traits)
-# drop the outliers based on sd cutoffs and the extreme values
-# correlations for each trait with imputed data (see code below)
-# look up some values for species that we know and make sure they are right
-
-
-
-
-
-
-
-
-
-
-
-##### Correlate imputed data with input data #####
-originalTRY <- read.csv('Imputed Continuous_Traits\\Final_Input_sCorr.csv')%>%
-  select(-X)%>%
-  pivot_longer(names_to='trait', values_to='TRY_value', seed_dry_mass:seed_number)%>%
-  na.omit()
-
-traitsContCheck <- imputedSubset%>%
-  select(-X)%>%
-  pivot_longer(names_to='trait', values_to='imputed_value', seed_dry_mass:seed_number)%>%
-  left_join(originalTRY)%>%
-  na.omit()
-
-ggplot(data=traitsContCheck, aes(x=TRY_value, y=imputed_value)) +
-  geom_point() +
-  geom_abline(slope=1) +
-  facet_wrap(~trait, scales='free')
-### traits that are very well correlated with input data
-#seed_number
-
-#getting figures for a few test species
-ggplot(data=subset(traitsContCheck, species_matched=='Achillea millefolium'), aes(x=TRY_value, y=imputed_value)) +
-  geom_point() +
-  geom_abline(slope=1) +
-  facet_wrap(~trait, scales='free')
-
-
-
-
-# hist(imputedSubset$LDMC_mean)
-# hist(imputedSubset$SLA_mean)
-# hist(imputedSubset$plant_height_vegetative_mean)
-# hist(imputedSubset$seed_dry_mass_mean)
-# hist(imputedSubset$seed_number_mean)
-# hist(imputedSubset$rooting_depth_mean)
-
-rm(imputedRaw)
+rm(traits_cont_raw)
 
 #########################################################################
 ### Categorical trait data 
@@ -157,7 +102,7 @@ traits_catag_clean <- read.csv("CoRRE data\\trait data\\Final Cleaned Traits\\sC
 ### Combine continuous and catagorical traits
 ###########################################################
 
-traits_all <- dplyr::select(imputedSubset, -LDMC_sd:-rooting_depth_sd) %>%
+traits_all <- dplyr::select(traits_cont_clean, -LDMC_sd:-rooting_depth_sd) %>%
   full_join(traits_catag_clean, by="species_matched")
 
 # Find species that have continuous data but no categorical data -- 3 of these are mosses, so I will remove them from continuous data in that cleaning script
