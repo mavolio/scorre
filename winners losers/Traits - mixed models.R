@@ -1,3 +1,10 @@
+######
+#####
+##### code to study how species traits affect response to GCDs
+##### code by M.Avolio with help from Adam Clark and Tamara Munkemuller
+#### created summer 2021, updated with new trait dataset June 20, 2022
+######
+
 library(tidyverse)
 library(lme4)
 library(emmeans)
@@ -25,23 +32,35 @@ theme_set(theme_bw(12))
 # }  
 
 #read in data
-contTraits <- read.csv('E:\\Dropbox\\sDiv_sCoRRE_shared\\Trait Data\\TRY Data\\Gap_Filled\\TRY_new.csv')%>%
-  rename(species_matched=Species)%>%
-  select(-X.1, -X, -Family, -Genus, -ObservationID)%>%
+contTraits1 <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')
+
+contTraits<-contTraits1%>%
+  select(-X.1, -X, -family, -genus, -observation)%>%
+  select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, seed_number) %>% 
   group_by(species_matched)%>%
   summarise_all(funs(mean))%>%
-  ungroup()
+  ungroup()  %>% 
+  filter(seed_dry_mass<30, seed_number<10000, plant_height_vegetative<10, rooting_depth<3, SLA<75)
 
-contTraitsSubset <- contTraits%>%
-  rename(ssd=X4, rooting_depth=X6, SLA=X11, leaf_C_mass=X13, leaf_N_mass=X14, leaf_P_mass=X15, stem_diameter=X21, seed_mass=X26, seed_length=X27, leaf_thickness=X46, LDMC=X47, leaf_dry_mass=X55, germination_rate=X95, leaf_length=X144, leaf_width=X145, leaf_CN=X146, stem_conduit_density=X169, stem_conduit_diameter=X281, seed_number=X138, SRL=X1080)%>%
-  select(-X18, -X50, -X78, -X163, -X223, -X224, -X237, -X282, -X289, -X3112, -X3113, -X3114, -X3120)
+# ##code to drop outliers
+# contLong<-contTraits %>% 
+#   pivot_longer(LDMC:seed_number, names_to = "trait", values_to = "value")
+# ggplot(data=contLong, aes(x=value))+
+#   geom_histogram()+
+#   facet_wrap(~trait, scales = "free")
 
-traits <- read.csv('E:/Dropbox/sDiv_sCoRRE_shared/CoRRE data\\CoRRE data\\trait data\\sCoRRE categorical trait data - traits_complete_pre spot check_03102021.csv')%>%
-  full_join(contTraitsSubset) %>%
-  drop_na()%>%
-  filter(leaf_P_mass<20, stem_diameter<0.5, seed_mass<50, seed_number<10000, leaf_width<40, stem_conduit_density<1000, stem_conduit_diameter<200)
 
-traitsOutliersRemoved <- traits %>%
+catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\sCoRRE categorical trait data_final_20211209.csv') %>% 
+  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
+  filter(growth_form!="moss", mycorrhizal_type!="uncertain", lifespan!="uncertain", clonal!="uncertain") %>% 
+  mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="facultative_AM"|mycorrhizal_type=="facultative_AM_EcM", "facultative", "yes"))) %>% 
+  select(-mycorrhizal_type) %>% 
+  mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
+  select(-photosynthetic_pathway)
+
+
+####stopped here.
+traitsOutliersRemoved <- allTraits %>%
   filter(!leaf_type %in% c("microphyll","frond")) %>%
   filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
 
