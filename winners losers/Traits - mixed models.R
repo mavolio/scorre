@@ -36,11 +36,11 @@ contTraits1 <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE
 
 contTraits<-contTraits1%>%
   select(-X.1, -X, -family, -genus, -observation)%>%
-  select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, seed_number) %>% 
+  select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass) %>% 
   group_by(species_matched)%>%
   summarise_all(funs(mean))%>%
   ungroup()  %>% 
-  filter(seed_dry_mass<30, seed_number<10000, plant_height_vegetative<10, rooting_depth<3, SLA<75)
+  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75)
 
 # ##code to drop outliers
 # contLong<-contTraits %>% 
@@ -52,19 +52,14 @@ contTraits<-contTraits1%>%
 
 catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\sCoRRE categorical trait data_final_20211209.csv') %>% 
   select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
-  filter(growth_form!="moss", mycorrhizal_type!="uncertain", lifespan!="uncertain", clonal!="uncertain") %>% 
+  filter(growth_form!="moss", mycorrhizal_type!="uncertain", lifespan!="uncertain", clonal!="uncertain", species_matched!="") %>% 
   mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="facultative_AM"|mycorrhizal_type=="facultative_AM_EcM", "facultative", "yes"))) %>% 
   select(-mycorrhizal_type) %>% 
   mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
   select(-photosynthetic_pathway)
 
 
-####stopped here.
-traitsOutliersRemoved <- allTraits %>%
-  filter(!leaf_type %in% c("microphyll","frond")) %>%
-  filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
-
-traitsScaled <- traitsOutliersRemoved %>% ## only scales continuous traits
+traitsScaled <- contTraits%>% ## only scales continuous traits
   mutate_at(vars(ssd:SRL), scale)
 
 
