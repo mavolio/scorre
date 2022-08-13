@@ -16,7 +16,7 @@ my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
 dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
   filter(treatment_year!=0)
 
-sp <-read.csv(paste(my.wd,"CoRRE data/CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
+sp <-read.csv(paste(my.wd,"CoRRE data/trait data/corre2trykey_2021.csv", sep=""))%>%
   select(genus_species, species_matched)%>%
   unique()
 
@@ -170,7 +170,14 @@ CT_diff<-treat_dom%>%
   right_join(trt_analysis) %>% 
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1, ifelse(pulse==1, 1, ifelse(treatDCi==0&DCi==0, 1, 0))))%>%
   filter(drop==0)
-  
+
+theme_set(theme_bw(20))
+ggplot(data=CT_diff, aes(x=diff))+
+  geom_histogram(binwidth = .08)+
+  xlab("DCi Difference")+
+  ylab("Count")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_vline(xintercept = 0)
 
 #dataset of treatment responses, ave, se, and how often species is found for phylogenetic analyses. and calculating number of sites and experiments at treatment is at.
 
