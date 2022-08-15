@@ -17,6 +17,7 @@ dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_Re
   filter(treatment_year!=0)
 
 sp <-read.csv(paste(my.wd,"CoRRE data/trait data/corre2trykey_2021.csv", sep=""))%>%
+  ungroup() %>% 
   select(genus_species, species_matched)%>%
   unique()
 
@@ -850,342 +851,342 @@ ggplot(data=aves, aes(x=trt_type2, y=mdiff, label=nobs))+
 # sum(categories$Pres)
 
 
-###contrasting different treatments
-trts2<-trts%>%
-  select(site_code, project_name, community_type, treatment, trt_type)%>%
-  unique
-
-cat_trts<-categories%>% 
-  left_join(trts2)%>%
-  mutate(cat2=ifelse(cat=="Appear"|cat=="Winner"|cat=="No Long. Rare"|cat=="Appear Rare"|cat=="Sup. Dup. Win", "Winner", ifelse(cat=="Loser"|cat=="Loose Dom.", "Loser", ifelse(cat=="Tol."|cat=="Dom. Tol."|cat=="Rare Tol.", "Tol.", "None"))))%>%
-  group_by(trt_type)%>%
-  summarize(avediff=mean(diff))
-
-ntrt<-cat_trts%>%
-  filter(trt_type=="N")
-ntrt_sum<-ntrt%>%
-  group_by(trt_type, cat2)%>%
-  summarize(n=length(cat2))%>%
-  mutate(prop=n/2249)
-
-drttrt<-cat_trts%>%
-  filter(trt_type=="drought")
-drttrt_sum<-drttrt%>%
-  group_by(trt_type,cat2)%>%
-  summarize(n=length(cat2))%>%
-  mutate(prop=n/939)
-
-irrtrt<-cat_trts%>%
-  filter(trt_type=="irr")
-irrtrt_sum<-irrtrt%>%
-  group_by(trt_type,cat2)%>%
-  summarize(n=length(cat2))%>%
-  mutate(prop=n/798)
-
-multnuttrt<-cat_trts%>%
-  filter(trt_type=="mult_nutrient")
-multnuttrt_sum<-multnuttrt%>%
-  group_by(trt_type,cat2)%>%
-  summarize(n=length(cat2))%>%
-  mutate(prop=n/3548)
-
-trt_contrast<-ntrt_sum%>%
-  bind_rows(drttrt_sum, irrtrt_sum, multnuttrt_sum)
-
-theme_set(theme_bw(16))
-
-ggplot(data=trt_contrast, aes(x=trt_type, y=prop, fill=cat2))+
-  geom_bar(stat="identity", position = position_dodge())+
-  xlab("Treatment")+
-  ylab("Proportion of Sp. Responses")+
-  scale_fill_manual(name="Response", values=c("red", "gray",'blue'))
-
-ggplot(data=filter(cat_trts, trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought"), aes(x=trt_type, y=avediff))+
-  geom_bar(stat="identity", position = position_dodge())+
-  xlab("Treatment")+
-  ylab("Average Control-Trt Diff")
-
-#exploring species specfic responses
-###example with A. gerardii
-ange<-categories%>%
-  filter(species_matched=="Andropogon gerardii")%>%
-  left_join(trts2)
-
-
-
-angecat_sum<-ange%>%
-  group_by(cat)%>%
-  summarize(n=length(cat))%>%
-  mutate(prop=n/130)
-
-ange_trt<-ange%>%
-  filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
-  group_by(trt_type)%>%
-  summarize(ave_diff=mean(diff),
-            n=length(diff),
-            sd=sd(diff))%>%
-  mutate(se=sd/sqrt(n))
-
-ggplot(data=ange_trt, aes(x=trt_type, y=ave_diff, label=n))+
-  geom_bar(stat="identity", position = position_dodge())+
-  xlab("Treatment")+
-  ylab("Average Control-Trt Diff")+
-  geom_label(hjust=1)+
-  geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
-
-
-
-#common species - get list of common species to explore
-common<-categories%>%
-  group_by(species_matched)%>%
-  summarize(n=length(species_matched))
-
-##erigeron canadensis
-erca<-categories%>%
-  filter(species_matched=="Erigeron canadensis")%>%
-  left_join(trts2)
-
-ercacat_sum<-erca%>%
-  group_by(cat)%>%
-  summarize(n=length(cat))%>%
-  mutate(prop=n/209)
-
-erca_trt<-erca%>%
-  filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
-  group_by(trt_type)%>%
-  summarize(ave_diff=mean(diff),
-            n=length(diff),
-            sd=sd(diff))%>%
-  mutate(se=sd/sqrt(n))
-
-ggplot(data=erca_trt, aes(x=trt_type, y=ave_diff, label=n))+
-  geom_bar(stat="identity", position = position_dodge())+
-  xlab("Treatment")+
-  ylab("Average Control-Trt Diff")+
-  geom_label(hjust=1)+
-  geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
-
-
-#for poa pratensis
-popr<-categories%>%
-  filter(species_matched=="Poa pratensis")%>%
-  left_join(trts2)
-
-poprcat_sum<-popr%>%
-  group_by(cat)%>%
-  summarize(n=length(cat))%>%
-  mutate(prop=n/233)
-
-popr_trt<-popr%>%
-  filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
-  group_by(trt_type)%>%
-  summarize(ave_diff=mean(diff),
-            n=length(diff),
-            sd=sd(diff))%>%
-  mutate(se=sd/sqrt(n))
-
-ggplot(data=popr_trt, aes(x=trt_type, y=ave_diff, label=n))+
-  geom_bar(stat="identity", position = position_dodge())+
-  xlab("Treatment")+
-  ylab("Average Control-Trt Diff")+
-  geom_label(hjust=1)+
-  geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
-
-
-###species repsonses
-common_site<-categories%>%
-  ungroup()%>%
-  select(species_matched, site_code)%>%
-  unique()%>%
-  group_by(species_matched)%>%
-  summarize(n=length(species_matched))%>%
-  filter(n>6)%>%
-  select(-n)
-
-#overall response
-common_trt_sp_overall<-categories%>%
-  left_join(trts2)%>%
-  right_join(common_site)%>%
-  filter(site_code!="Sil")%>%
-  group_by(species_matched)%>%
-  summarize(ave_diff=mean(diff),n=length(diff),
-            sd=sd(diff))%>%
-  mutate(se=sd/sqrt(n))%>%
-  mutate(trt_type="overall")
-
-##sp subset analysis
-common_trt_sp<-categories%>%
-  left_join(trts2)%>%
-  right_join(common_site)%>%
-  filter(trt_type=="mult_nutrient"|trt_type=="N"|trt_type=="irr"|trt_type=="drought")%>%
-  group_by(species_matched, trt_type)%>%
-  summarize(ave_diff=mean(diff),
-            n=length(diff),
-            sd=sd(diff))%>%
-  mutate(se=sd/sqrt(n))%>%
-  bind_rows(common_trt_sp_overall)
-
-##big figure to share
-ggplot(data=common_trt_sp, aes(x=trt_type, y=ave_diff, label=n))+
-  geom_bar(stat="identity", position = position_dodge())+
-  geom_text(y=-0.3)+
-  xlab("Treatment")+
-  ylab("Average Control-Trt Diff")+
-  geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)+
-  theme(axis.text.x = element_text(angle = 90))+
-  geom_vline(aes(xintercept = 4.5))+
-  facet_wrap(~species_matched)
-
-
-#investigating sil nash
-sil<-categories%>%
-  filter(site_code=="Sil")%>%
-  left_join(trts2)%>%
-  select(treatment, trt_type)%>%
-  unique()
-
-andro<-categories%>%
-  left_join(trts2)%>%
-  filter(species_matched=="Andropogon gerardii")%>%
-  filter(trt_type=="N*P"|trt_type=="N"|trt_type=='drought'|trt_type=="irr"|trt_type=="mult_nutrient")
-
-ggplot(data=andro, aes(x=trt_type, y=diff, fill=project_name))+
-  geom_bar(stat="identity", position = position_dodge())+
-  xlab("Treatment")+
-  ylab("Average Control-Trt Diff")+
-  theme(axis.text.x = element_text(angle = 90))+
-  facet_wrap(~site_code, scale="free_x")
-
-###now doing this for every year of an experiment.
-####I did this for our Sept 2020 meeting, there were no major differences and I think we shoudl not explore this further
-
-relave_yr<-allreldat%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani, treatment_year, species_matched)%>%
-  summarize(mean=mean(relcov))
-
-Crelave_yr<-relave_yr%>%
-  filter(plot_mani==0)%>%
-  ungroup()%>%
-  select(-treatment, -plot_mani)%>%
-  rename(cmean=mean)
-
-Trelave_yr<-relave_yr%>%
-  filter(plot_mani!=0)%>%
-  ungroup()%>%
-  select(-plot_mani)
-
-controlplots_yr<-allreldat%>%
-  filter(plot_mani==0)%>%
-  select(site_code, project_name, community_type, plot_id, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, treatment_year)%>%
-  summarize(ncplots=length(plot_id))
-
-control_freq_yr<-allreldat%>%
-  filter(plot_mani==0)%>%
-  select(site_code, project_name, community_type, species_matched, plot_id, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, species_matched, treatment_year)%>%
-  summarize(nplots=length(plot_id))%>%
-  left_join(controlplots)%>%
-  mutate(freq=nplots/ncplots)
-
-control_dom_yr<-control_freq_yr%>%
-  left_join(Crelave_yr)%>%
-  mutate(DCi=(cmean+freq)/2)%>%
-  select(site_code, project_name, community_type, species_matched, treatment_year, DCi)
-
-treatplots_yr<-allreldat%>%
-  filter(plot_mani!=0)%>%
-  select(site_code, project_name, community_type, treatment, plot_id, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, treatment, treatment_year)%>%
-  summarize(ntplots=length(plot_id))
-
-treat_freq_yr<-allreldat%>%
-  filter(plot_mani!=0)%>%
-  select(site_code, project_name, community_type, treatment, species_matched, plot_id, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, treatment, species_matched, treatment_year)%>%
-  summarize(nplots=length(plot_id))%>%
-  left_join(treatplots)%>%
-  mutate(freq=nplots/ntplots)
-
-treat_dom_yr<-treat_freq_yr%>%
-  left_join(Trelave_yr)%>%
-  mutate(treatDCi=(mean+freq)/2)%>%
-  select(site_code, project_name, community_type, treatment, species_matched, treatment_year, treatDCi)
-
-CT_yr<-treat_dom_yr%>%
-  full_join(control_dom_yr)#this introduces NA into the treatment column when it is present in the controls but not the treated plots.
-
-CT_yr$DCi[is.na(CT_yr$DCi)] <- 0
-CT_yr$treatDCi[is.na(CT_yr$treatDCi)] <- 0
-
-
-CT_diff_yr<-CT_yr%>%
-  mutate(diff=treatDCi-DCi,
-         absdiff=abs(diff))
-
-categories_yr<-CT_diff_yr%>%
-  na.omit%>%
-  mutate(cat=ifelse(DCi!=0&DCi<0.08&treatDCi>0.6, "Sup. Win.",
-             ifelse(DCi==0&treatDCi>0.6, "Sup. Dup. Win",
-             ifelse(DCi>0.6&treatDCi!=0&treatDCi<0.1, "Sup. Lose",
-             ifelse(DCi!=0&DCi<0.08&treatDCi!=0&treatDCi<0.08, "Rare Tol.",
-             ifelse(DCi>0.6&treatDCi>0.6, "Dom. Tol.",
-             ifelse(DCi==0&treatDCi<0.08, "Appear Rare",
-             ifelse(DCi==0&treatDCi>0.08, "Appear",
-             ifelse(DCi>0.6&treatDCi<0.6, "Loose Dom.",
-             ifelse(DCi<0.08&treatDCi>0.08, "No Long. Rare",
-             ifelse(diff>0.1, "Winner",
-             ifelse(absdiff>0.1&diff<0, "Loser",
-             ifelse(absdiff<0.1, "Tol.", "none")))))))))))),
-         DR=ifelse(DCi>0.6, "Dom",
-                   ifelse(DCi!=0&DCi<0.08, "Rare", "none")),
-         AppDis=ifelse(DCi==0&treatDCi>0, "Appear",
-                       ifelse(DCi>0&treatDCi==0, "Disapp.", "none")),
-         Pres=ifelse(DCi!=0&DCi>0.08&DCi<0.6, 1, 0),
-         cat2=ifelse(cat=="Appear"|cat=="Winner"|cat=="No Long. Rare"|cat=="Appear Rare"|cat=="Sup. Dup. Win", "Winner", ifelse(cat=="Loser"|cat=="Loose Dom."|cat=="Sup. Lose", "Loser", ifelse(cat=="Tol."|cat=="Dom. Tol."|cat=="Rare Tol.", "Tol.", "None"))))
-
-cat_sum_yr<-categories_yr%>%
-  group_by(cat)%>%
-  summarize(n=length(cat))%>%
-  mutate(prop=n/72221)
-
-dr_sum_yr<-categories_yr%>%
-  group_by(DR)%>%
-  summarize(n=length(DR))
-
-ad_sum_yr<-categories_yr%>%
-  group_by(AppDis)%>%
-  summarize(n=length(AppDis))
-
-cat2_sum_yr<-categories_yr%>%
-  group_by(cat2)%>%
-  summarise(n=length(cat2))%>%
-  mutate(prop=n/72221)
-
-####looking into trends through time for andro
-ange<-CT_diff_yr%>%
-  filter(species_matched=="Andropogon gerardii")%>%
-  left_join(trts2)
-
-ggplot(data=ange, aes(x=treatment_year, y=diff, color=treatment))+
-  geom_point()+
-  geom_smooth(method="lm")+
-  facet_wrap(~trt_type, scales="free")+
-  theme(legend.position = "none")
-
-koma<-CT_diff_yr%>%
-  filter(species_matched=="Koeleria macrantha")%>%
-  left_join(trts2)
-
-ggplot(data=koma, aes(x=treatment_year, y=diff, color=treatment))+
-  geom_point()+
-  geom_smooth(method="lm")+
-  facet_wrap(~trt_type, scales="free")+
-  theme(legend.position = "none")
+# ###contrasting different treatments
+# trts2<-trts%>%
+#   select(site_code, project_name, community_type, treatment, trt_type)%>%
+#   unique
+# 
+# cat_trts<-categories%>% 
+#   left_join(trts2)%>%
+#   mutate(cat2=ifelse(cat=="Appear"|cat=="Winner"|cat=="No Long. Rare"|cat=="Appear Rare"|cat=="Sup. Dup. Win", "Winner", ifelse(cat=="Loser"|cat=="Loose Dom.", "Loser", ifelse(cat=="Tol."|cat=="Dom. Tol."|cat=="Rare Tol.", "Tol.", "None"))))%>%
+#   group_by(trt_type)%>%
+#   summarize(avediff=mean(diff))
+# 
+# ntrt<-cat_trts%>%
+#   filter(trt_type=="N")
+# ntrt_sum<-ntrt%>%
+#   group_by(trt_type, cat2)%>%
+#   summarize(n=length(cat2))%>%
+#   mutate(prop=n/2249)
+# 
+# drttrt<-cat_trts%>%
+#   filter(trt_type=="drought")
+# drttrt_sum<-drttrt%>%
+#   group_by(trt_type,cat2)%>%
+#   summarize(n=length(cat2))%>%
+#   mutate(prop=n/939)
+# 
+# irrtrt<-cat_trts%>%
+#   filter(trt_type=="irr")
+# irrtrt_sum<-irrtrt%>%
+#   group_by(trt_type,cat2)%>%
+#   summarize(n=length(cat2))%>%
+#   mutate(prop=n/798)
+# 
+# multnuttrt<-cat_trts%>%
+#   filter(trt_type=="mult_nutrient")
+# multnuttrt_sum<-multnuttrt%>%
+#   group_by(trt_type,cat2)%>%
+#   summarize(n=length(cat2))%>%
+#   mutate(prop=n/3548)
+# 
+# trt_contrast<-ntrt_sum%>%
+#   bind_rows(drttrt_sum, irrtrt_sum, multnuttrt_sum)
+# 
+# theme_set(theme_bw(16))
+# 
+# ggplot(data=trt_contrast, aes(x=trt_type, y=prop, fill=cat2))+
+#   geom_bar(stat="identity", position = position_dodge())+
+#   xlab("Treatment")+
+#   ylab("Proportion of Sp. Responses")+
+#   scale_fill_manual(name="Response", values=c("red", "gray",'blue'))
+# 
+# ggplot(data=filter(cat_trts, trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought"), aes(x=trt_type, y=avediff))+
+#   geom_bar(stat="identity", position = position_dodge())+
+#   xlab("Treatment")+
+#   ylab("Average Control-Trt Diff")
+# 
+# #exploring species specfic responses
+# ###example with A. gerardii
+# ange<-categories%>%
+#   filter(species_matched=="Andropogon gerardii")%>%
+#   left_join(trts2)
+# 
+# 
+# 
+# angecat_sum<-ange%>%
+#   group_by(cat)%>%
+#   summarize(n=length(cat))%>%
+#   mutate(prop=n/130)
+# 
+# ange_trt<-ange%>%
+#   filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
+#   group_by(trt_type)%>%
+#   summarize(ave_diff=mean(diff),
+#             n=length(diff),
+#             sd=sd(diff))%>%
+#   mutate(se=sd/sqrt(n))
+# 
+# ggplot(data=ange_trt, aes(x=trt_type, y=ave_diff, label=n))+
+#   geom_bar(stat="identity", position = position_dodge())+
+#   xlab("Treatment")+
+#   ylab("Average Control-Trt Diff")+
+#   geom_label(hjust=1)+
+#   geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
+# 
+# 
+# 
+# #common species - get list of common species to explore
+# common<-categories%>%
+#   group_by(species_matched)%>%
+#   summarize(n=length(species_matched))
+# 
+# ##erigeron canadensis
+# erca<-categories%>%
+#   filter(species_matched=="Erigeron canadensis")%>%
+#   left_join(trts2)
+# 
+# ercacat_sum<-erca%>%
+#   group_by(cat)%>%
+#   summarize(n=length(cat))%>%
+#   mutate(prop=n/209)
+# 
+# erca_trt<-erca%>%
+#   filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
+#   group_by(trt_type)%>%
+#   summarize(ave_diff=mean(diff),
+#             n=length(diff),
+#             sd=sd(diff))%>%
+#   mutate(se=sd/sqrt(n))
+# 
+# ggplot(data=erca_trt, aes(x=trt_type, y=ave_diff, label=n))+
+#   geom_bar(stat="identity", position = position_dodge())+
+#   xlab("Treatment")+
+#   ylab("Average Control-Trt Diff")+
+#   geom_label(hjust=1)+
+#   geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
+# 
+# 
+# #for poa pratensis
+# popr<-categories%>%
+#   filter(species_matched=="Poa pratensis")%>%
+#   left_join(trts2)
+# 
+# poprcat_sum<-popr%>%
+#   group_by(cat)%>%
+#   summarize(n=length(cat))%>%
+#   mutate(prop=n/233)
+# 
+# popr_trt<-popr%>%
+#   filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
+#   group_by(trt_type)%>%
+#   summarize(ave_diff=mean(diff),
+#             n=length(diff),
+#             sd=sd(diff))%>%
+#   mutate(se=sd/sqrt(n))
+# 
+# ggplot(data=popr_trt, aes(x=trt_type, y=ave_diff, label=n))+
+#   geom_bar(stat="identity", position = position_dodge())+
+#   xlab("Treatment")+
+#   ylab("Average Control-Trt Diff")+
+#   geom_label(hjust=1)+
+#   geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
+# 
+# 
+# ###species repsonses
+# common_site<-categories%>%
+#   ungroup()%>%
+#   select(species_matched, site_code)%>%
+#   unique()%>%
+#   group_by(species_matched)%>%
+#   summarize(n=length(species_matched))%>%
+#   filter(n>6)%>%
+#   select(-n)
+# 
+# #overall response
+# common_trt_sp_overall<-categories%>%
+#   left_join(trts2)%>%
+#   right_join(common_site)%>%
+#   filter(site_code!="Sil")%>%
+#   group_by(species_matched)%>%
+#   summarize(ave_diff=mean(diff),n=length(diff),
+#             sd=sd(diff))%>%
+#   mutate(se=sd/sqrt(n))%>%
+#   mutate(trt_type="overall")
+# 
+# ##sp subset analysis
+# common_trt_sp<-categories%>%
+#   left_join(trts2)%>%
+#   right_join(common_site)%>%
+#   filter(trt_type=="mult_nutrient"|trt_type=="N"|trt_type=="irr"|trt_type=="drought")%>%
+#   group_by(species_matched, trt_type)%>%
+#   summarize(ave_diff=mean(diff),
+#             n=length(diff),
+#             sd=sd(diff))%>%
+#   mutate(se=sd/sqrt(n))%>%
+#   bind_rows(common_trt_sp_overall)
+# 
+# ##big figure to share
+# ggplot(data=common_trt_sp, aes(x=trt_type, y=ave_diff, label=n))+
+#   geom_bar(stat="identity", position = position_dodge())+
+#   geom_text(y=-0.3)+
+#   xlab("Treatment")+
+#   ylab("Average Control-Trt Diff")+
+#   geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)+
+#   theme(axis.text.x = element_text(angle = 90))+
+#   geom_vline(aes(xintercept = 4.5))+
+#   facet_wrap(~species_matched)
+# 
+# 
+# #investigating sil nash
+# sil<-categories%>%
+#   filter(site_code=="Sil")%>%
+#   left_join(trts2)%>%
+#   select(treatment, trt_type)%>%
+#   unique()
+# 
+# andro<-categories%>%
+#   left_join(trts2)%>%
+#   filter(species_matched=="Andropogon gerardii")%>%
+#   filter(trt_type=="N*P"|trt_type=="N"|trt_type=='drought'|trt_type=="irr"|trt_type=="mult_nutrient")
+# 
+# ggplot(data=andro, aes(x=trt_type, y=diff, fill=project_name))+
+#   geom_bar(stat="identity", position = position_dodge())+
+#   xlab("Treatment")+
+#   ylab("Average Control-Trt Diff")+
+#   theme(axis.text.x = element_text(angle = 90))+
+#   facet_wrap(~site_code, scale="free_x")
+# 
+# ###now doing this for every year of an experiment.
+# ####I did this for our Sept 2020 meeting, there were no major differences and I think we should not explore this further
+# 
+# relave_yr<-allreldat%>%
+#   group_by(site_code, project_name, community_type, treatment, plot_mani, treatment_year, species_matched)%>%
+#   summarize(mean=mean(relcov))
+# 
+# Crelave_yr<-relave_yr%>%
+#   filter(plot_mani==0)%>%
+#   ungroup()%>%
+#   select(-treatment, -plot_mani)%>%
+#   rename(cmean=mean)
+# 
+# Trelave_yr<-relave_yr%>%
+#   filter(plot_mani!=0)%>%
+#   ungroup()%>%
+#   select(-plot_mani)
+# 
+# controlplots_yr<-allreldat%>%
+#   filter(plot_mani==0)%>%
+#   select(site_code, project_name, community_type, plot_id, treatment_year)%>%
+#   unique()%>%
+#   group_by(site_code, project_name, community_type, treatment_year)%>%
+#   summarize(ncplots=length(plot_id))
+# 
+# control_freq_yr<-allreldat%>%
+#   filter(plot_mani==0)%>%
+#   select(site_code, project_name, community_type, species_matched, plot_id, treatment_year)%>%
+#   unique()%>%
+#   group_by(site_code, project_name, community_type, species_matched, treatment_year)%>%
+#   summarize(nplots=length(plot_id))%>%
+#   left_join(controlplots)%>%
+#   mutate(freq=nplots/ncplots)
+# 
+# control_dom_yr<-control_freq_yr%>%
+#   left_join(Crelave_yr)%>%
+#   mutate(DCi=(cmean+freq)/2)%>%
+#   select(site_code, project_name, community_type, species_matched, treatment_year, DCi)
+# 
+# treatplots_yr<-allreldat%>%
+#   filter(plot_mani!=0)%>%
+#   select(site_code, project_name, community_type, treatment, plot_id, treatment_year)%>%
+#   unique()%>%
+#   group_by(site_code, project_name, community_type, treatment, treatment_year)%>%
+#   summarize(ntplots=length(plot_id))
+# 
+# treat_freq_yr<-allreldat%>%
+#   filter(plot_mani!=0)%>%
+#   select(site_code, project_name, community_type, treatment, species_matched, plot_id, treatment_year)%>%
+#   unique()%>%
+#   group_by(site_code, project_name, community_type, treatment, species_matched, treatment_year)%>%
+#   summarize(nplots=length(plot_id))%>%
+#   left_join(treatplots)%>%
+#   mutate(freq=nplots/ntplots)
+# 
+# treat_dom_yr<-treat_freq_yr%>%
+#   left_join(Trelave_yr)%>%
+#   mutate(treatDCi=(mean+freq)/2)%>%
+#   select(site_code, project_name, community_type, treatment, species_matched, treatment_year, treatDCi)
+# 
+# CT_yr<-treat_dom_yr%>%
+#   full_join(control_dom_yr)#this introduces NA into the treatment column when it is present in the controls but not the treated plots.
+# 
+# CT_yr$DCi[is.na(CT_yr$DCi)] <- 0
+# CT_yr$treatDCi[is.na(CT_yr$treatDCi)] <- 0
+# 
+# 
+# CT_diff_yr<-CT_yr%>%
+#   mutate(diff=treatDCi-DCi,
+#          absdiff=abs(diff))
+# 
+# categories_yr<-CT_diff_yr%>%
+#   na.omit%>%
+#   mutate(cat=ifelse(DCi!=0&DCi<0.08&treatDCi>0.6, "Sup. Win.",
+#              ifelse(DCi==0&treatDCi>0.6, "Sup. Dup. Win",
+#              ifelse(DCi>0.6&treatDCi!=0&treatDCi<0.1, "Sup. Lose",
+#              ifelse(DCi!=0&DCi<0.08&treatDCi!=0&treatDCi<0.08, "Rare Tol.",
+#              ifelse(DCi>0.6&treatDCi>0.6, "Dom. Tol.",
+#              ifelse(DCi==0&treatDCi<0.08, "Appear Rare",
+#              ifelse(DCi==0&treatDCi>0.08, "Appear",
+#              ifelse(DCi>0.6&treatDCi<0.6, "Loose Dom.",
+#              ifelse(DCi<0.08&treatDCi>0.08, "No Long. Rare",
+#              ifelse(diff>0.1, "Winner",
+#              ifelse(absdiff>0.1&diff<0, "Loser",
+#              ifelse(absdiff<0.1, "Tol.", "none")))))))))))),
+#          DR=ifelse(DCi>0.6, "Dom",
+#                    ifelse(DCi!=0&DCi<0.08, "Rare", "none")),
+#          AppDis=ifelse(DCi==0&treatDCi>0, "Appear",
+#                        ifelse(DCi>0&treatDCi==0, "Disapp.", "none")),
+#          Pres=ifelse(DCi!=0&DCi>0.08&DCi<0.6, 1, 0),
+#          cat2=ifelse(cat=="Appear"|cat=="Winner"|cat=="No Long. Rare"|cat=="Appear Rare"|cat=="Sup. Dup. Win", "Winner", ifelse(cat=="Loser"|cat=="Loose Dom."|cat=="Sup. Lose", "Loser", ifelse(cat=="Tol."|cat=="Dom. Tol."|cat=="Rare Tol.", "Tol.", "None"))))
+# 
+# cat_sum_yr<-categories_yr%>%
+#   group_by(cat)%>%
+#   summarize(n=length(cat))%>%
+#   mutate(prop=n/72221)
+# 
+# dr_sum_yr<-categories_yr%>%
+#   group_by(DR)%>%
+#   summarize(n=length(DR))
+# 
+# ad_sum_yr<-categories_yr%>%
+#   group_by(AppDis)%>%
+#   summarize(n=length(AppDis))
+# 
+# cat2_sum_yr<-categories_yr%>%
+#   group_by(cat2)%>%
+#   summarise(n=length(cat2))%>%
+#   mutate(prop=n/72221)
+# 
+# ####looking into trends through time for andro
+# ange<-CT_diff_yr%>%
+#   filter(species_matched=="Andropogon gerardii")%>%
+#   left_join(trts2)
+# 
+# ggplot(data=ange, aes(x=treatment_year, y=diff, color=treatment))+
+#   geom_point()+
+#   geom_smooth(method="lm")+
+#   facet_wrap(~trt_type, scales="free")+
+#   theme(legend.position = "none")
+# 
+# koma<-CT_diff_yr%>%
+#   filter(species_matched=="Koeleria macrantha")%>%
+#   left_join(trts2)
+# 
+# ggplot(data=koma, aes(x=treatment_year, y=diff, color=treatment))+
+#   geom_point()+
+#   geom_smooth(method="lm")+
+#   facet_wrap(~trt_type, scales="free")+
+#   theme(legend.position = "none")
 
 
 ####
@@ -1251,8 +1252,19 @@ CT_Sp_nuts_other<-CT_diff%>%
   filter(nuts_other==1)%>%
   mutate(trt_type2="nuts_other")
 
+allmult_subset<-CT_diff%>%
+  filter(multtrts==1)%>%
+  ungroup()%>%
+  select(species_matched, trt_type)%>%
+  unique()%>%
+  group_by(species_matched)%>%
+  summarize(n=length(trt_type))%>%
+  filter(n>2)%>%
+  select(-n)
+
 CT_Sp_allint<-CT_diff%>%
   filter(multtrts==1)%>%
+  right_join(allmult_subset)%>%
   mutate(trt_type2="all mult")
 
 Fulldataset_mixedmodels<-CT_Sp_allint%>%
