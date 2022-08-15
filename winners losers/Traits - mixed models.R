@@ -8,7 +8,7 @@
 library(tidyverse)
 library(lme4)
 library(emmeans)
-library(relaimpo)
+#library(relaimpo)
 
 theme_set(theme_bw(12))
 
@@ -73,6 +73,11 @@ catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE d
 
 dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodels.csv") %>% 
   filter(trt_type2!='disturbance'&trt_type2!='herb_removal')
+
+test<-dcidiff_models %>% 
+   filter(trt_type2=="all mult") %>% 
+   select(species_matched) %>% 
+  unique()
 
 alldat_cont<-dcidiff_models%>%
   right_join(contTraits)%>%
@@ -294,7 +299,7 @@ toplot.cat<-plot.mpp%>%
 toplotesacat<-toplot.cat
 
 ##for now need to subset out each cat trait one by one
-ggplot(data=subset(toplotesacat, trait=="Nfix"), aes(y=emmean, x=1))+
+ggplot(data=subset(toplotesacat, trait=="lifespan"), aes(y=emmean, x=1))+
   geom_point()+
   geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.05)+
   coord_flip()+
@@ -303,12 +308,6 @@ ggplot(data=subset(toplotesacat, trait=="Nfix"), aes(y=emmean, x=1))+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
   facet_grid(trt_type2~value, scales="free")
-
-
-ESA<-toplotESA%>%
-  select(trait, Trt, Estimate, SE)%>%
-  bind_rows(toplotesacat)
-
 
 ggplot(data=ESA, aes(y=Estimate, x=1))+
   geom_point()+
@@ -319,6 +318,35 @@ ggplot(data=ESA, aes(y=Estimate, x=1))+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
   facet_grid(Trt~trait, scales="free")
+
+####making figures of it all together
+toplot.cat2<-toplot.cat %>% 
+  filter(trait!="growth_form") %>% 
+    mutate(value2=paste(trait, value, sep="_" )) %>% 
+  select(-trait) %>% 
+  rename(trait=value2, trt_type=trt_type2, Estimate=emmean) %>% 
+  filter(trait!="growth_form"&trait!="Nfix_no"&trait!='Myc_yes'&trait!='lifespan_biennial'&trait!='photo_path_CAM') %>% 
+  select(-asymp.LCL, -asymp.UCL, -df, -value)
+
+toplot.cont<-toplot %>% 
+  select(-"t value")
+         
+alltraitmodels<-toplot.cont %>% 
+  bind_rows(toplot.cat2) %>% 
+  mutate(Trait_name=ifelse(trait=='Clonal_no', "Non-Clonal", ifelse(trait=='Clonal_yes', 'Clonal', ifelse(trait=='lifespan_annual', 'Annual', ifelse(trait=='lifespan_perennial', 'Perennial', ifelse(trait=='Myc_facultative', 'Mycorrhizal', ifelse(trait=='Myc_no', 'Non-Mycorrhizal', ifelse(trait=='Nfix_yes', 'Nitrogen Fixer', ifelse(trait=='photo_path_C3', "C3", ifelse(trait=='photo_path_C4', 'C4', ifelse(trait=='PlantHeight', 'Plant Height', trait))))))))))) %>% 
+  mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorrhizal', 'Non-Mycorrhizal', 'Nitrogen Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA')))
+
+
+theme_set(theme_bw(16))
+ggplot(data=subset(alltraitmodels, trt_type=="all mult"), aes(y=Estimate, x=1))+
+  geom_point()+
+  geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
+  coord_flip()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank())+
+  xlab("")+
+  scale_x_continuous(limits=c(0, 2))+
+  geom_hline(yintercept=0, linetype="dashed")+
+  facet_wrap(~Traits2, scales='free',ncol=4)
 
 
 ###trying to do a multiple regression
@@ -355,7 +383,7 @@ summary(mCO2)
 calc.relimp(mCO2)
 
 ##N model
-mN<-lm(diff~SLA+rooting_depth+clonal+lifespan+photo_path2+n_fixation+mycorrhizal, data=subset(combined, trt_type2=="n"))
+mN<-lm(diff~LDMC+SLA+rooting_depth+lifespan+clonal+photo_path2+n_fixation+mycorrhizal, data=subset(combined, trt_type2=="n"))
 
 summary(mN)
 calc.relimp(mN)
@@ -374,7 +402,7 @@ calc.relimp(mirg)
 
 
 ##temp
-mtemp<-lm(diff~rooting_depth+plant_height_vegetative+SLA+lifespan2+photo_path2, data=subset(combined, trt_type2=="temp"))
+mtemp<-lm(diff~rooting_depth+plant_height_vegetative+SLA+lifespan2+clonal+photo_path2+n_fixation, data=subset(combined, trt_type2=="temp"))
 
 summary(mtemp)
 calc.relimp(mtemp)
@@ -387,7 +415,7 @@ calc.relimp(mP)
 
 
 #all int
-mAll<-lm(diff~plant_height_vegetative+SLA+clonal+lifespan2+photo_path2+mycorrhizal+n_fixation, data=subset(combined, trt_type2=="all mult"))
+mAll<-lm(diff~SLA+LDMC+seed_dry_mass+clonal+lifespan2+photo_path2+mycorrhizal+n_fixation, data=subset(combined, trt_type2=="all mult"))
 
 summary(mAll)
 calc.relimp(mAll)
