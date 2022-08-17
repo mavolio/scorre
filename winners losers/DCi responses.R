@@ -852,9 +852,9 @@ ggplot(data=aves, aes(x=trt_type2, y=mdiff, label=nobs))+
 
 
 # ###contrasting different treatments
-# trts2<-trts%>%
-#   select(site_code, project_name, community_type, treatment, trt_type)%>%
-#   unique
+trts2<-trts%>%
+  select(site_code, project_name, community_type, treatment, trt_type)%>%
+  unique
 # 
 # cat_trts<-categories%>% 
 #   left_join(trts2)%>%
@@ -936,114 +936,111 @@ ggplot(data=aves, aes(x=trt_type2, y=mdiff, label=nobs))+
 # 
 # 
 # 
-# #common species - get list of common species to explore
-# common<-categories%>%
-#   group_by(species_matched)%>%
-#   summarize(n=length(species_matched))
-# 
-# ##erigeron canadensis
-# erca<-categories%>%
-#   filter(species_matched=="Erigeron canadensis")%>%
-#   left_join(trts2)
-# 
-# ercacat_sum<-erca%>%
-#   group_by(cat)%>%
-#   summarize(n=length(cat))%>%
-#   mutate(prop=n/209)
-# 
-# erca_trt<-erca%>%
-#   filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
-#   group_by(trt_type)%>%
-#   summarize(ave_diff=mean(diff),
-#             n=length(diff),
-#             sd=sd(diff))%>%
-#   mutate(se=sd/sqrt(n))
-# 
-# ggplot(data=erca_trt, aes(x=trt_type, y=ave_diff, label=n))+
-#   geom_bar(stat="identity", position = position_dodge())+
-#   xlab("Treatment")+
-#   ylab("Average Control-Trt Diff")+
-#   geom_label(hjust=1)+
-#   geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
-# 
-# 
-# #for poa pratensis
-# popr<-categories%>%
-#   filter(species_matched=="Poa pratensis")%>%
-#   left_join(trts2)
-# 
-# poprcat_sum<-popr%>%
-#   group_by(cat)%>%
-#   summarize(n=length(cat))%>%
-#   mutate(prop=n/233)
-# 
-# popr_trt<-popr%>%
-#   filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
-#   group_by(trt_type)%>%
-#   summarize(ave_diff=mean(diff),
-#             n=length(diff),
-#             sd=sd(diff))%>%
-#   mutate(se=sd/sqrt(n))
-# 
-# ggplot(data=popr_trt, aes(x=trt_type, y=ave_diff, label=n))+
-#   geom_bar(stat="identity", position = position_dodge())+
-#   xlab("Treatment")+
-#   ylab("Average Control-Trt Diff")+
-#   geom_label(hjust=1)+
-#   geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
-# 
-# 
-# ###species repsonses
-# common_site<-categories%>%
-#   ungroup()%>%
-#   select(species_matched, site_code)%>%
-#   unique()%>%
-#   group_by(species_matched)%>%
-#   summarize(n=length(species_matched))%>%
-#   filter(n>6)%>%
-#   select(-n)
-# 
-# #overall response
-# common_trt_sp_overall<-categories%>%
-#   left_join(trts2)%>%
-#   right_join(common_site)%>%
-#   filter(site_code!="Sil")%>%
-#   group_by(species_matched)%>%
-#   summarize(ave_diff=mean(diff),n=length(diff),
-#             sd=sd(diff))%>%
-#   mutate(se=sd/sqrt(n))%>%
-#   mutate(trt_type="overall")
-# 
-# ##sp subset analysis
-# common_trt_sp<-categories%>%
-#   left_join(trts2)%>%
-#   right_join(common_site)%>%
-#   filter(trt_type=="mult_nutrient"|trt_type=="N"|trt_type=="irr"|trt_type=="drought")%>%
-#   group_by(species_matched, trt_type)%>%
-#   summarize(ave_diff=mean(diff),
-#             n=length(diff),
-#             sd=sd(diff))%>%
-#   mutate(se=sd/sqrt(n))%>%
-#   bind_rows(common_trt_sp_overall)
-# 
-# ##big figure to share
-# ggplot(data=common_trt_sp, aes(x=trt_type, y=ave_diff, label=n))+
-#   geom_bar(stat="identity", position = position_dodge())+
-#   geom_text(y=-0.3)+
-#   xlab("Treatment")+
-#   ylab("Average Control-Trt Diff")+
-#   geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)+
-#   theme(axis.text.x = element_text(angle = 90))+
-#   geom_vline(aes(xintercept = 4.5))+
-#   facet_wrap(~species_matched)
-# 
-# 
-# #investigating sil nash
-# sil<-categories%>%
-#   filter(site_code=="Sil")%>%
-#   left_join(trts2)%>%
-#   select(treatment, trt_type)%>%
-#   unique()
+#common species - get list of common species to explore
+common<-categories%>%
+  group_by(species_matched)%>%
+  summarize(n=length(species_matched))
+
+##erigeron canadensis
+erca<-Fulldataset%>%
+  filter(species_matched=="Erigeron canadensis")%>%
+  left_join(trts2)
+
+ercacat_sum<-erca%>%
+  group_by(cat)%>%
+  summarize(n=length(cat))%>%
+  mutate(prop=n/209)
+
+erca_trt<-erca%>%
+  filter(trt_type=="N"|trt_type=="mult_nutrient"|trt_type=="irr"|trt_type=="drought")%>%
+  group_by(trt_type)%>%
+  summarize(ave_diff=mean(diff),
+            n=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(n))
+
+ggplot(data=erca_trt, aes(x=trt_type, y=ave_diff, label=n))+
+  geom_bar(stat="identity", position = position_dodge())+
+  xlab("Treatment")+
+  ylab("Average Control-Trt Diff")+
+  geom_label(hjust=1)+
+  geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)
+
+#possibilties
+#plantago lanceolata
+#anthoxanthus odoratum
+#Achillea millefolium 155 examples
+#briza minor
+#Bromus hordeaceus - 58 obs varied responses
+#Chondrosum gracile - 90 obs nice split and varied responses
+
+#looking at a few examples
+test<-Fulldataset_mixedmodels%>%
+  filter(species_matched=="Achillea millefolium"|species_matched=="Bromus hordeaceus"|species_matched=='Chondrosum gracile')
+
+test1<-test%>%
+  filter(trt_type2=="n"|trt_type2=="all mult"|trt_type2=="co2"|trt_type2=="drought"|trt_type2=="temp")%>%
+  group_by(species_matched,trt_type2)%>%
+  summarize(ave_diff=mean(diff),
+            n=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(n))
+
+ggplot(data=test1, aes(x=trt_type2, y=ave_diff, fill=species_matched, group=species_matched))+
+  geom_bar(stat="identity", position = position_dodge())+
+  xlab("Treatment")+
+  ylab("Trt-Cntrl Difference")+
+  #geom_text(aes(label=n), position=position_dodge(.6), vjust=1)+
+  geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.2)+
+  scale_x_discrete(limits=c('n', 'co2', 'drought', 'temp', 'all mult'), labels=c('N', 'CO2', 'Drought', 'Temp.', 'Mult Trts'))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_fill_manual(name="Species", values=c('darkblue', 'darkgreen', 'green1'))
+
+
+###species repsonses
+common_site<-categories%>%
+  ungroup()%>%
+  select(species_matched, site_code)%>%
+  unique()%>%
+  group_by(species_matched)%>%
+  summarize(n=length(species_matched))%>%
+  filter(n>6)%>%
+  select(-n)
+
+#overall response
+common_trt_sp_overall<-categories%>%
+  left_join(trts2)%>%
+  right_join(common_site)%>%
+  filter(site_code!="Sil")%>%
+  group_by(species_matched)%>%
+  summarize(ave_diff=mean(diff),n=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(n))%>%
+  mutate(trt_type="overall")
+
+##sp subset analysis
+common_trt_sp<-categories%>%
+  left_join(trts2)%>%
+  right_join(common_site)%>%
+  filter(trt_type=="mult_nutrient"|trt_type=="N"|trt_type=="irr"|trt_type=="drought")%>%
+  group_by(species_matched, trt_type)%>%
+  summarize(ave_diff=mean(diff),
+            n=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(n))%>%
+  bind_rows(common_trt_sp_overall)
+
+##big figure to share
+ggplot(data=common_trt_sp, aes(x=trt_type, y=ave_diff, label=n))+
+  geom_bar(stat="identity", position = position_dodge())+
+  geom_text(y=-0.3)+
+  xlab("Treatment")+
+  ylab("Average Control-Trt Diff")+
+  geom_errorbar(aes(ymin=ave_diff-se, ymax=ave_diff+se), position = position_dodge(0.9), width=0.5)+
+  theme(axis.text.x = element_text(angle = 90))+
+  geom_vline(aes(xintercept = 4.5))+
+  facet_wrap(~species_matched)
+
 # 
 # andro<-categories%>%
 #   left_join(trts2)%>%
@@ -1272,3 +1269,5 @@ Fulldataset_mixedmodels<-CT_Sp_allint%>%
   select(site_code, project_name, community_type, species_matched, trt_type2, diff)
 
 write.csv(Fulldataset_mixedmodels, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_formixedmodels.csv", sep=""), row.names=F)
+
+
