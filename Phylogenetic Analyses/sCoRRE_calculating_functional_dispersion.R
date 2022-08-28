@@ -4,7 +4,7 @@
 
 library(FD)
 library(tidyverse)
-library(beepr)
+# library(beepr)
 # install.packages("mFD")
 # library("mFD")
 # rm(list=ls())
@@ -13,7 +13,7 @@ library(beepr)
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
 setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
 setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
-setwd("C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\") # Kim's laptop
+setwd("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\") # Kim's laptop
 
 # Standard Error Function:
 se <- function(x, na.rm=na.rm){
@@ -81,8 +81,8 @@ rm(moss_key, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
 FD_df_master <- {}
 site_proj_comm_vector <- unique(relcov_full_raw$site_proj_comm)
 
-for(PROJ in 1:4){
-#for(PROJ in 1:length(site_proj_comm_vector)){
+# for(PROJ in 1:4){
+for(PROJ in 1:length(site_proj_comm_vector)){
   relcov_df_temp <-relcov_full_clean %>%
     filter(site_proj_comm==site_proj_comm_vector[PROJ])
   
