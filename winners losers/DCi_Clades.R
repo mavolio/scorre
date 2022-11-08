@@ -22,7 +22,7 @@ my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\d
 ###
 
 #load species data (filtered after removing mosses and species missing from the phylogeny):
-species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021_newother.csv",sep=""))
+species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Nov2022.csv",sep=""))
 species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 
 #load phylogenetic tree:
