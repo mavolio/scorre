@@ -1,6 +1,9 @@
-### Calculating functional diversity and dispersion using categorical and continuous traits
-### Last updated: Dec 13, 2021
-### R version: 4.1.1
+################################################################################
+##  sCoRRE_functionalDiversityMetrics.R: Calculating functional diversity metrics.
+##
+##  Authors: Magda Garbowski, Kevin Wilcox, Kimberly Komatsu
+##  Date created: April 7, 2021
+################################################################################
 
 library(FD)
 library(tidyverse)
