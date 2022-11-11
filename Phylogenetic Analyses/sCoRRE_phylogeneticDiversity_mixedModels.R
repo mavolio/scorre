@@ -129,7 +129,10 @@ trt_analysis<-trt%>%
 allDivTrt <- allDiv%>%
   right_join(trt_analysis)%>%
   mutate(trt_binary=ifelse(plot_mani>0, 1, 0))%>%
-  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) #remove problem expts until they are fixed
+  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0')))%>% #remove problem expts until they are fixed
+  mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.))))%>% #scale site characteristics
+  filter(!(is.na(site_proj_comm)))
+
 
 
 # write.csv(allDivTrt, 'CoRRE_allDiversityMetrics_phyFunAnalysis.csv', row.names=F)
