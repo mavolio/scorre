@@ -51,6 +51,7 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
 
 
 ##### data #####
+#treatment data
 trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundance.csv')%>%
 select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id)%>%
   unique()%>%
@@ -60,25 +61,28 @@ select(site_code, project_name, community_type, treatment_year, calendar_year, t
   ungroup()%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp)
 
-
+#phylogenetic diveristy data
 pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv')%>%
   separate(identifier, into=c("site_code", "project_name", "community_type", "treatment_year", "plot_id"), sep="::")%>%
   mutate(treatment_year=as.integer(treatment_year))
 
+#functional diversity data
 fDiv <- read.csv('CoRRE_functionalDiversity_2022-07-14.csv')
 
+#species relative cover data
 relCover <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv')%>%
-  mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::'))
+  mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::')) #creating identifying column of each plot
 
+#getting community diversity metrics for each plot
 rDiv <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate")%>%
   separate(replicate, into=c("site_code", "project_name", "community_type", "plot_id"), sep='::')
 
-allDiv <- pDiv%>%
-  full_join(fDiv)%>%
-  full_join(rDiv)%>%
-  filter(site_code!='DCGS')%>%
-  filter(treatment_year>0)%>%
-  mutate(pd.raw=ifelse(richness==1, 0, pd.raw),
+#merge all data on diversity metrics (phylogenetic, functional, species), experimental treatments, and site characteristics
+allDiv <- pDiv%>% #phylogenetic metrics
+  full_join(fDiv)%>% #functional metrics
+  full_join(rDiv)%>% #species metrics
+  filter(treatment_year>0)%>% #removing pre-treatment data
+  mutate(pd.raw=ifelse(richness==1, 0, pd.raw), #mutating diversity metrics to be 0 if species richness is 1
          pd.ses=ifelse(richness==1, 0, pd.ses),
          mpd.raw=ifelse(richness==1, 0, mpd.raw),
          mpd.ses=ifelse(richness==1, 0, mpd.ses),
@@ -86,32 +90,18 @@ allDiv <- pDiv%>%
          mntd.ses=ifelse(richness==1, 0, pd.raw),
          FDis=ifelse(richness==1, 0, FDis),
          RaoQ=ifelse(richness==1, 0, RaoQ))%>%
-  left_join(trt)%>%
-  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
-  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>%
+  left_join(trt)%>% #treatments
+  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>% #site anpp and regional richness
+  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>% #site MAP and MAT
   mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='_'))%>%
   select(site_code, project_name, community_type, site_proj_comm, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp)%>%
   filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) #remove problem expts until they are fixed
 
-# control <- pDiv%>%
-#   filter(trt_type=='control')%>%
-#   rename(pd.ses_ctl=pd.ses, mpd.ses_ctl=mpd.ses, mntd.ses_ctl=mntd.ses)%>%
-#   select(site_code, project_name, community_type, treatment_year, pd.ses_ctl, mpd.ses_ctl, mntd.ses_ctl)
-# 
-# pDivRR <- pDiv%>%
-#   filter(trt_type!='control')%>%
-#   left_join(control)%>%
-#   mutate(pd_diff=(pd.ses-pd.ses_ctl), mpd_diff=(mpd.ses-mpd.ses_ctl), mntd_diff=(mntd.ses-mntd.ses_ctl))
-# 
-# pDivAvg <- pDivRR%>%
-#   group_by(site_code, project_name, community_type, treatment_year, treatment, MAP, MAT, rrich, experiment_length, anpp, trt_type, n, p, k, CO2, precip, temp, herb_removal)%>%
-#   summarise(pd_diff_avg=mean(pd_diff), mpd_diff_avg=mean(mpd_diff), mntd_diff_avg=mean(mntd_diff))%>%
-#   ungroup()
-
+#selecting relevant treatments for analysis (high resource, high stress)
 trt_analysis<-trt%>%
   mutate(alltrts=ifelse(trt_type %in% c("control", "CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0))%>%
   filter(alltrts==1)%>%
-  mutate(dist=ifelse(trt_type %in% c("mow_clip","burn","burn*graze","disturbance","burn*mow_clip"), 1, 0),
+  mutate(dist=ifelse(trt_type %in% c("mow_clip","burn","burn*graze","disturbance","burn*mow_clip"), 1, 0), #unify codes across datasets
          # tCO2=ifelse(trt_type %in% c("CO2"), 1, 0),
          drought=ifelse(trt_type %in% c("drought"), 1, 0),
          # therb_removal=ifelse(trt_type %in% c("herb_removal"), 1, 0),
@@ -123,7 +113,6 @@ trt_analysis<-trt%>%
   mutate(trt_type2=ifelse(dist==1, 'disturbance', ifelse(multtrts==1, 'multiple trts', trt_type)))%>%
   select(site_code, project_name, community_type, treatment, alltrts, dist, drought, irg, multtrts, trt_type2)%>%
   unique()
-
 
 #pick treatments here.
 allDivTrt <- allDiv%>%
@@ -138,14 +127,14 @@ allDivTrt <- allDiv%>%
 # write.csv(allDivTrt, 'CoRRE_allDiversityMetrics_phyFunAnalysis.csv', row.names=F)
 
 
-##### figures over time by site #####
-allDivYearMeans <- allDivTrt %>%
-  group_by(site_proj_comm, site_code, project_name, community_type, treatment_year, treatment, trt_type2)%>%
-  summarize_at(vars(mpd.ses, mntd.ses, FDis, richness), list(mean=mean, se=se), na.rm=T)%>%
-  ungroup()
-
-site_proj_comm_vector <- unique(allDivTrt$site_proj_comm)
-
+# ##### figures over time by site #####
+# allDivYearMeans <- allDivTrt %>%
+#   group_by(site_proj_comm, site_code, project_name, community_type, treatment_year, treatment, trt_type2)%>%
+#   summarize_at(vars(mpd.ses, mntd.ses, FDis, richness), list(mean=mean, se=se), na.rm=T)%>%
+#   ungroup()
+# 
+# site_proj_comm_vector <- unique(allDivTrt$site_proj_comm)
+# 
 # #MPD over time by project
 # for(PROJ in 1:length(site_proj_comm_vector)){
 #   ggplot(data=filter(allDivYearMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
@@ -156,7 +145,7 @@ site_proj_comm_vector <- unique(allDivTrt$site_proj_comm)
 #     geom_path() +
 #     ggtitle(site_proj_comm_vector[PROJ]) +
 #     theme_bw()
-#   ggsave(filename=paste0("C:\\Users\\kjkomatsu\\Desktop\\pd figs\\",
+#   ggsave(filename=paste0("C:\\Users\\kjkomatsu\\Desktop\\pd figs\\mpd\\",
 #                          site_proj_comm_vector[PROJ], "_mpd.png"))
 # }
 # 
@@ -170,130 +159,22 @@ site_proj_comm_vector <- unique(allDivTrt$site_proj_comm)
 #     geom_path() +
 #     ggtitle(site_proj_comm_vector[PROJ]) +
 #     theme_bw()
-#   ggsave(filename=paste0("C:\\Users\\kjkomatsu\\Desktop\\pd figs\\",
+#   ggsave(filename=paste0("C:\\Users\\kjkomatsu\\Desktop\\pd figs\\mntd\\",
 #                          site_proj_comm_vector[PROJ], "_mntd.png"))
 # }
 
 
-##### figures by plot (avg over years) #####
-allDivPlotMeans <- allDivTrt %>%
-  group_by(site_proj_comm, site_code, project_name, community_type, plot_id, treatment, trt_type2)%>%
-  summarize_at(vars(mpd.ses, mntd.ses, FDis, richness), list(mean=mean, se=se), na.rm=T)%>%
-  ungroup()
 
-
-
-
-
-# #MPD vs trait functional diversity
-# for(PROJ in 1:length(site_proj_comm_vector)){
-#   ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
-#          aes(x=mpd.ses_mean, y=FDis_mean, col=treatment)) +
-#     geom_point() +
-#     geom_smooth(method='lm', se=F) +
-#     ggtitle(site_proj_comm_vector[PROJ]) +
-#     theme_bw()
-#   ggsave(filename=paste0("C:\\Users\\kjkomatsu\\Desktop\\pd figs\\",
-#                          site_proj_comm_vector[PROJ], "_mpd_Fdis.png"))
-# }
-# 
-# #MNTD vs trait functional diversity
-# for(PROJ in 1:length(site_proj_comm_vector)){
-#   ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
-#          aes(x=mntd.ses_mean, y=FDis_mean, col=treatment)) +
-#     geom_point() +
-#     geom_smooth(method='lm', se=F) +
-#     ggtitle(site_proj_comm_vector[PROJ]) +
-#     theme_bw()
-#   ggsave(filename=paste0("C:\\Users\\kjkomatsu\\Desktop\\pd figs\\",
-#                          site_proj_comm_vector[PROJ], "_mntd_Fdis.png"))
-# }
-# 
-# #richness vs trait functional diversity
-# for(PROJ in 1:length(site_proj_comm_vector)){
-#   ggplot(data=filter(allDivPlotMeans, site_proj_comm == site_proj_comm_vector[PROJ]),
-#          aes(x=richness_mean, y=FDis_mean, col=treatment)) +
-#     geom_point() +
-#     geom_smooth(method='lm', se=F) +
-#     ggtitle(site_proj_comm_vector[PROJ]) +
-#     theme_bw()
-#   ggsave(filename=paste0("C:\\Users\\kjkomatsu\\Desktop\\pd figs\\",
-#                          site_proj_comm_vector[PROJ], "_richness_Fdis.png"))
-# }
-
-
-##### global trends - comparing diversity metrics #####
-allDivGlobal <- allDivPlotMeans %>%
-  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2)%>%
-  summarize_at(vars(mpd.ses_mean, mntd.ses_mean, FDis_mean, richness_mean), list(mean=mean, se=se), na.rm=T)%>%
-  ungroup()
-
-# ggplot(data=allDivGlobal, aes(x=mpd.ses_mean_mean, y=FDis_mean_mean)) +
-#   geom_point() +
-#   geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
-#   facet_wrap(~trt_type2)
-# 
-# ggplot(data=allDivGlobal, aes(x=mntd.ses_mean_mean, y=FDis_mean_mean)) +
-#   geom_point() +
-#   geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
-#   facet_wrap(~trt_type2)
-# 
-# ggplot(data=allDivGlobal, aes(x=richness_mean_mean, y=FDis_mean_mean)) +
-#   geom_point() +
-#   geom_smooth(method='lm', se=F, formula = y ~ x + I(x^2)) +
-#   facet_wrap(~trt_type2)
-
-
-# ### TO CONSIDER: should we look at each treatment within project and see if the slopes differ from 1 (more or less Fdiv per change in phy div), and does that differ by which treatment it is?
-# #can we identify trajectories through time for each plot?
-# 
-# #plot trajectories through time, this is not very straight forward
-# ggplot(data=subset(allDivTrt, project_name=='Fert1'&treatment %in% c('full_nut', 'control')), aes(x=mntd.ses, y=FDis, color=treatment, label=as.numeric(treatment_year))) +
-#   geom_text() +
-#   geom_path() +
-#   facet_wrap(~plot_id)
-
-
-
-
-##### causal modeling #####
-allDivTrtFixed <- allDivTrt%>%
-  mutate(site_year=paste(site_code, project_name, community_type, treatment_year, sep="::"))%>% #creates dummy site-by-year variable (time variant site effects)
-  mutate(site_trt=paste(site_code, project_name, community_type, trt_type2, sep='::'))%>% #creates dummy site-by-plot variable (time invariant plot effects)
-  mutate(site_project_comm=paste(site_code, project_name, community_type, sep='::')) #creates dummy site-experiment variable
-
-#individual treatments
-#NOTE: these do account for env variables and trt magnitude
-mpdDivCausalModel <- feols(mpd.ses ~ n + p + CO2 + drought + irg + temp + dist + multtrts | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
-summary(mpdDivCausalModel, cluster="site_year") #trt effects
-fixedEffects = fixef(mpdDivCausalModel) #env effects
-plot(fixedEffects)
-
-mntdDivCausalModel <- feols(mntd.ses ~ n + p + CO2 + drought + irg + temp + dist + multtrts | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
-summary(mntdDivCausalModel, cluster="site_year") #trt effects
-fixedEffects = fixef(mntdDivCausalModel) #env effects
-plot(fixedEffects)
-
-fdisDivCausalModel <- feols(FDis ~ n + p + CO2 + drought + irg + temp + dist + multtrts | MAP + MAT + rrich + anpp, data=allDivTrtFixed, panel.id=~site_project_comm + treatment_year)
-summary(fdisDivCausalModel, cluster="site_year") #trt effects
-fixedEffects = fixef(fdisDivCausalModel) #env effects
-plot(fixedEffects)
-
-etable(mpdDivCausalModel, mntdDivCausalModel, fdisDivCausalModel, cluster='site_year')
-
-# #all together
-# pDivCausalModel <- feols(mpd_diff_avg ~ trt_type2 | site_year, data=pDivAvgTrtFixed)
-# etable(pDivCausalModel,
-#        cluster="site_year")
-
-##### exploratory figures #####
-control <- allDivTrt%>%
+##### global trends - do environmental conditions impact FD or PD under ambient conditions? #####
+#filter control plots
+control <- allDivTrt%>% 
   filter(trt_type=='control')%>%
   rename(mpd.ses_ctl=mpd.ses, mntd.ses_ctl=mntd.ses, FDis_ctl=FDis, richness_ctl=richness)%>%
   group_by(site_code, project_name, community_type, treatment_year)%>%
   summarize_at(vars(mpd.ses_ctl, mntd.ses_ctl, FDis_ctl, richness_ctl), list(mean=mean), na.rm=T)%>%
   ungroup()
 
+#merge on site characteristics
 controlEnv <- control%>%
   group_by(site_code, project_name, community_type)%>%
   summarize_at(vars(mpd.ses_ctl_mean, mntd.ses_ctl_mean, FDis_ctl_mean, richness_ctl_mean), list(mean=mean), na.rm=T)%>%
@@ -302,68 +183,82 @@ controlEnv <- control%>%
   left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>%
   gather(key='env_variable', value='env_value', rrich, anpp, MAP, MAT, aridityValues)
 
-#env driver effect in ctl plots
-ggplot(data=controlEnv, aes(x=env_value, y=FDis_ctl_mean_mean)) +
-  geom_point() +
-  # geom_smooth(method='lm', se=F) +
-  # geom_hline(yintercept=0) +
-  xlab('') + ylab('Functional Dispersion') +
-  facet_wrap(~env_variable, scales='free')
-
-summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='anpp'))) #no effect
-summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='rrich'))) #no effect
-summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAP'))) #no effect
-summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAT'))) #no effect
-summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='aridityValues'))) #no effect
-
-ggplot(data=controlEnv, aes(x=env_value, y=mntd.ses_ctl_mean_mean)) +
-  geom_point() +
-  geom_smooth(method='lm', se=F) +
-  geom_hline(yintercept=0) +
-  xlab('') + ylab('MNTD') +
-  facet_wrap(~env_variable, scales='free')
-
-summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='anpp'))) #significant negative relationship
-summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='rrich'))) #significant positive relationship
-summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAP'))) #no effect
-summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAT'))) #significant negative relationship
-summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='aridityValues'))) #marginal
-
-# ggplot(data=controlEnv, aes(x=env_value, y=mpd.ses_ctl_mean_mean)) +
+# #env drivers of FD
+# ggplot(data=controlEnv, aes(x=env_value, y=FDis_ctl_mean_mean)) +
+#   geom_point() +
+#   # geom_smooth(method='lm', se=F) +
+#   # geom_hline(yintercept=0) +
+#   xlab('') + ylab('Functional Dispersion') +
+#   facet_wrap(~env_variable, scales='free')
+# 
+# summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='anpp'))) #no effect
+# summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='rrich'))) #no effect
+# summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAP'))) #no effect
+# summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAT'))) #no effect
+# summary(lm(FDis_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='aridityValues'))) #no effect
+# 
+# #env drivers of MNTD
+# ggplot(data=controlEnv, aes(x=env_value, y=mntd.ses_ctl_mean_mean)) +
 #   geom_point() +
 #   geom_smooth(method='lm', se=F) +
 #   geom_hline(yintercept=0) +
+#   xlab('') + ylab('MNTD') +
+#   facet_wrap(~env_variable, scales='free')
+# 
+# summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='anpp'))) #significant negative relationship
+# summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='rrich'))) #significant positive relationship
+# summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAP'))) #no effect
+# summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAT'))) #significant negative relationship
+# summary(lm(mntd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='aridityValues'))) #marginal
+# 
+# #env drivers of MPD
+# ggplot(data=controlEnv, aes(x=env_value, y=mpd.ses_ctl_mean_mean)) +
+#   geom_point() +
+#   geom_hline(yintercept=0) +
 #   xlab('') + ylab('MPD') +
 #   facet_wrap(~env_variable, scales='free')
+# 
+# summary(lm(mpd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='anpp'))) #no effect
+# summary(lm(mpd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='rrich'))) #marginal
+# summary(lm(mpd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAP'))) #no effect
+# summary(lm(mpd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='MAT'))) #no effect
+# summary(lm(mpd.ses_ctl_mean_mean~env_value, data=subset(controlEnv, env_variable=='aridityValues'))) #no effect
 
 
+
+##### calculating response ratios #####
 allDivRR <- allDivTrt%>%
   filter(trt_type!='control')%>%
   left_join(control)%>%
-  mutate(mpd_diff=(mpd.ses-mpd.ses_ctl_mean), mntd_diff=(mntd.ses-mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean))%>%
-  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))%>%
-  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
-  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>%
-  gather(key=env_variable, value=env_value, c("MAP", "MAT", "rrich", "anpp", "aridityValues"))%>%
-  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, env_variable)%>%
-  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR, env_value), list(mean=mean), na.rm=T)%>%
+  mutate(mpd_diff=(mpd.ses-mpd.ses_ctl_mean), mntd_diff=(mntd.ses-mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean))%>% #mntd and mpd are just differences because they are already standardized values
+  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
+  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2)%>%
+  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR), list(mean=mean), na.rm=T) %>%
   ungroup()
 
-#treatment responses by env drivers
-ggplot(data=allDivRR, aes(x=env_value_mean, y=FDis_RR_mean)) +
-  geom_point() +
-  geom_smooth(method='lm', se=F) +
-  geom_hline(yintercept=0) +
-  facet_grid(trt_type2~env_variable, scales='free')
 
-ggplot(data=allDivRR, aes(x=env_value_mean, y=mntd_diff_mean)) +
-  geom_point() +
-  geom_smooth(method='lm', se=F) +
-  geom_hline(yintercept=0) +
-  facet_grid(trt_type2~env_variable, scales='free')
+# ##### treatment responses by env drivers - no strong trends #####
+# allDivRRenv <- allDivRR %>% 
+#   gather(key=env_variable, value=env_value, c("MAP", "MAT", "rrich", "anpp"))%>%
+#   group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, env_variable)%>%
+#   ungroup()
+# 
+# ggplot(data=allDivRRenv, aes(x=env_value_mean, y=FDis_RR_mean)) +
+#   geom_point() +
+#   geom_smooth(method='lm', se=F) +
+#   geom_hline(yintercept=0) +
+#   facet_grid(trt_type2~env_variable, scales='free')
+# 
+# ggplot(data=allDivRRenv, aes(x=env_value_mean, y=mntd_diff_mean)) +
+#   geom_point() +
+#   geom_smooth(method='lm', se=F) +
+#   geom_hline(yintercept=0) +
+#   facet_grid(trt_type2~env_variable, scales='free')
+
+
 
 ##### mixed effects model #####
-#NOTE: these models do not account for biotic or abiotic env drivers at a site or for trt magnitude
+#NOTE: these models do not account for biotic or abiotic env drivers at a site or for trt magnitude (but do include a random effect of site)
 library(nlme)
 library(emmeans)
 library(performance)
@@ -380,7 +275,7 @@ meansFDisModelOutput <- as.data.frame(meansFDisModel$emmeans)
 
 FDisFig <- ggplot(data=meansFDisModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
   geom_point(size=5) +
-  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.2) +
+  geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
   geom_hline(yintercept=0) +
   coord_flip() +
   ylab('Functional Dispersion\nEffect Size') + xlab('') +
@@ -398,7 +293,7 @@ meansMNTDModelOutput <- as.data.frame(meansMNTDModel$emmeans)
 
 MNTDFig <- ggplot(data=meansMNTDModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
   geom_point(size=5) +
-  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.2) +
+  geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
   geom_hline(yintercept=0) +
   coord_flip() +
   ylab('Phylogenetic Distance\nEffect Size') + xlab('') +
@@ -417,3 +312,6 @@ print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 # drought example of increasing FDis and MNTD effect size: SFREC::GrazePrecip::G4 D or HAYS::Precip::0 reduction
 
 
+##### trends in PD and FD - vote counting across experiments #####
+countTrends <- allDivRR %>% 
+  mutate(trend=ifelse()) ### start here to count up how many were +/+, +/- etc and then make bar graphs for why
