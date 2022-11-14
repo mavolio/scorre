@@ -64,15 +64,14 @@ catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE d
   mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
   select(-photosynthetic_pathway)
 
-
+pairs(contTraits[,2:6])
 
 
 # Read in dci diff
 
 # dcidiff<-read.csv("C:/Users/megha/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_newtrts.csv")
 
-dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodels.csv") %>% 
-  filter(trt_type2!='disturbance'&trt_type2!='herb_removal')
+dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
 
 test<-dcidiff_models %>% 
    filter(trt_type2=="all mult") %>% 
@@ -221,10 +220,10 @@ toplot<-toplot.SLA%>%
 
 colnames(toplot)[2] <- "SE"
 
-# toplotESA<-toplot%>%
-#   filter(trt_type=="n"|trt_type=="all mult",
-#          trait=="SLA"|trait=="Rooting Depth"|trait=="Seed Mass")%>%
-#   mutate(Trt=ifelse(trt_type=="all mult", "Multiple Trts.", "N"))
+toplot$trt_type2=factor(toplot$trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))
+
+#gave up here trying to nicely label figures
+trt.labels=c("CO2", "Drt", "Irg", "Temp", "N", "P", "Nutrients", "Interacting")
 
 ggplot(data=toplot, aes(y=Estimate, x=1))+
   geom_point()+
@@ -234,8 +233,7 @@ ggplot(data=toplot, aes(y=Estimate, x=1))+
   xlab("")+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
-  facet_grid(trt_type~trait, scales="free")
-
+  facet_grid(trt_type2~trait, scales="free", labeller = labeller(trt_type2=trt.labels))
 
 
 ####Categorical data
@@ -338,7 +336,7 @@ alltraitmodels<-toplot.cont %>%
 
 
 theme_set(theme_bw(16))
-ggplot(data=subset(alltraitmodels, trt_type=="all mult"), aes(y=Estimate, x=1))+
+ggplot(data=subset(alltraitmodels), aes(y=Estimate, x=1))+
   geom_point()+
   geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
   coord_flip()+
@@ -346,7 +344,7 @@ ggplot(data=subset(alltraitmodels, trt_type=="all mult"), aes(y=Estimate, x=1))+
   xlab("")+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
-  facet_wrap(~Traits2, scales='free',ncol=4)
+  facet_grid(trt_type~Traits2, scales="free")
 
 
 ###trying to do a multiple regression
