@@ -27,9 +27,7 @@ library(dplyr)
 
 #Load data
 tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep="")) #load tree
-dd<-read.csv(paste(my.wd,"Species_DCiDiff_Dec2021_newother.csv",sep=""), header=T)
-dd<-dd%>%
-  filter(trt_type2!="n_other_two"&trt_type2!="n_alone_otherexmpt")
+dd<-read.csv(paste(my.wd,"Species_DCiDiff_Nov2022.csv",sep=""), header=T)
 
 dd$species_matched<-gsub(" ", "_", dd$species_matched) #unify nomenclature
 str(dd)
@@ -38,9 +36,6 @@ str(tree)
 #get levels of treatments:
 trt<-levels(as.factor(dd$trt_type2))
 
-#[1] "all mult"       "co2"            "co2_other"      "dist_other"     "disturbance"    "drought"        "drt_other"     
-#[8] "herb_rem_other" "herb_removal"   "irg_other"      "irrigation"     "n"              "n_other"        "p"             
-#[15] "p_other"        "temp"           "temp_other"
 
 #re-arrange table:
 final.dd<-as.data.frame(unique(dd$species_matched))
