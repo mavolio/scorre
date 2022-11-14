@@ -1,7 +1,9 @@
-
-######
-# Script to calculate phylogenetic diversity/structure
-#####
+################################################################################
+##  PhyloDiv_metrics.R: Calculating phylogenetic diversity metrics for the CoRRE database.
+##
+##  Author: Josep Padulles Cubino
+##  Date created: December 10, 2019
+################################################################################
 
 #load packages:
 library(tidyverse)

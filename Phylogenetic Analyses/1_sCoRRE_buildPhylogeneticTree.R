@@ -1,7 +1,9 @@
-
-#####
-# Script to build phylogenies for sCoRre
-#####
+################################################################################
+##  build_phylo_tree.R: Building a phylogenetic tree for the species in the CoRRE database.
+##
+##  Author: Josep Padulles Cubino
+##  Date created: December 19, 2021
+################################################################################
 
 #load libraries:
 library(V.PhyloMaker) #reference paper: https://doi.org/10.1111/ecog.04434
