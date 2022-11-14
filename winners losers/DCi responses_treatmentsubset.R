@@ -47,7 +47,8 @@ trt_analysis<-trts%>%
          temp=ifelse(trt_type %in% c("temp"), 1, 0),
          n=ifelse(trt_type=="N", 1, 0),
          p=ifelse(trt_type=="P", 1, 0),
-         multtrts=ifelse(trt_type %in% c("mult_nutrient","N*P","CO2*temp", "drought*CO2*temp","irr*CO2","irr*CO2*temp","N*CO2*temp","N*irr*CO2", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*drought","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","drought*temp","irr*temp"),1,0))
+         multnuts=ifelse(trt_type %in% c("mult_nutrient","N*P"), 1, 0),
+         multtrts=ifelse(trt_type %in% c("CO2*temp", "drought*CO2*temp","irr*CO2","irr*CO2*temp","N*CO2*temp","N*irr*CO2", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*drought","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","drought*temp","irr*temp"),1,0))
 
 
 ##Getting DCI
@@ -300,27 +301,26 @@ p_mean<-CT_diff%>%
   select(-sd)
 
 
-##multiple treatments only use species that are found in 3 or more experiments
-
-allmult_subset<-CT_diff%>%
-  filter(multtrts==1)%>%
-  ungroup()%>%
-  select(species_matched, trt_type)%>%
-  unique()%>%
-  group_by(species_matched)%>%
-  summarize(n=length(trt_type))%>%
-  filter(n>2)%>%
-  select(-n)
+# ##multiple treatments only use species that are found in 3 or more experiments
+## deciding to no longer do this b/c we are changing the mult trt
+# 
+# allmult_subset<-CT_diff%>%
+#   filter(multtrts==1)%>%
+#   ungroup()%>%
+#   select(species_matched, trt_type)%>%
+#   unique()%>%
+#   group_by(species_matched)%>%
+#   summarize(n=length(trt_type))%>%
+#   filter(n>2)%>%
+#   select(-n)
 
 allmult_sites<-CT_diff%>%
   filter(multtrts==1)%>%
-  right_join(allmult_subset)%>%
   select(site_code)%>%
   unique()
 
 allmult_exmt<-CT_diff%>%
   filter(multtrts==1)%>%
-  right_join(allmult_subset)%>%
   select(site_code, project_name, community_type)%>%
   unique()%>%
   mutate(presmult=1)
@@ -328,8 +328,7 @@ allmult_exmt<-CT_diff%>%
 
 allmult_mean<-CT_diff%>%
   filter(multtrts==1)%>%
-  right_join(allmult_subset)%>%
-  group_by(trt_type)%>%
+  group_by(species_matched)%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
             sd=sd(diff))%>%
@@ -337,9 +336,43 @@ allmult_mean<-CT_diff%>%
   mutate(trt_type2="all mult")%>%
   select(-sd)
  
+##what are the treatments here, what % have N?
+allmult_treats<-CT_diff%>%
+  filter(multtrts==1)%>%
+  right_join(allmult_subset) %>% 
+  select(site_code, project_name, community_type, trt_type) %>% 
+  unique() %>% 
+  group_by(trt_type)%>%
+  summarize(nobs=length(community_type))
+
+sum(allmult_treats$nobs)
+
+##multiple nutrients
+allnuts_sites<-CT_diff%>%
+  filter(multnuts==1)%>%
+  select(site_code)%>%
+  unique()
+
+allnuts_exmt<-CT_diff%>%
+  filter(multnuts==1)%>%
+  select(site_code, project_name, community_type, trt_type)%>%
+  unique()%>%
+  mutate(presmult=1)
+
+
+allnut_mean<-CT_diff%>%
+  filter(multnuts==1)%>%
+  group_by(species_matched)%>%
+  summarize(ave_diff=mean(diff),
+            nobs=length(diff),
+            sd=sd(diff))%>%
+  mutate(se=sd/sqrt(nobs))%>%
+  mutate(trt_type2="all nuts")%>%
+  select(-sd)
+
 
 Fulldataset<-allmult_mean%>%
-  bind_rows(co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
+  bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 
 write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Nov2022.csv", sep=""), row.names=F)
 
@@ -739,54 +772,21 @@ ggplot(data=common_trt_sp, aes(x=trt_type, y=ave_diff, label=n))+
 
 ####
 ###dataset of all responses for trait mixed models
-CT_Sp_herb<-CT_diff%>%
-  filter(herb_removal==1)%>%
-  mutate(trt_type2="herb_removal")
-
-CT_Sp_herb_other<-CT_diff%>%
-  filter(herb_removal_other==1)%>%
-  mutate(trt_type2="herb_rem_other")
-
 CT_Sp_temp<-CT_diff%>%
   filter(temp==1)%>%
   mutate(trt_type2="temp")
-
-CT_Sp_temp_other<-CT_diff%>%
-  filter(temp_other==1)%>%
-  mutate(trt_type2="temp_other")
 
 CT_Sp_co2<-CT_diff%>%
   filter(CO2==1)%>%
   mutate(trt_type2="co2")
 
-
-CT_Sp_co2_other<-CT_diff%>%
-  filter(CO2_other==1)%>%
-  mutate(trt_type2="co2_other")
-
-CT_Sp_dist<-CT_diff%>%
-  filter(dist==1)%>%
-  mutate(trt_type2="disturbance")
-
-CT_Sp_dist_other<-CT_diff%>%
-  filter(dist_other==1)%>%
-  mutate(trt_type2="dist_other")
-
 CT_Sp_irg<-CT_diff%>%
   filter(irg==1)%>%
   mutate(trt_type2="irrigation")
 
-CT_Sp_irg_other<-CT_diff%>%
-  filter(irg_other==1)%>%
-  mutate(trt_type2="irg_other")
-
 CT_Sp_drt<-CT_diff%>%
   filter(drought==1)%>%
   mutate(trt_type2="drought")
-
-CT_Sp_drt_other<-CT_diff%>%
-  filter(drought_other==1)%>%
-  mutate(trt_type2="drt_other")
 
 CT_Sp_N<-CT_diff%>%
   filter(n==1)%>%
@@ -796,29 +796,18 @@ CT_Sp_P<-CT_diff%>%
   filter(p==1)%>%
   mutate(trt_type2="p")
 
-CT_Sp_nuts_other<-CT_diff%>%
-  filter(nuts_other==1)%>%
-  mutate(trt_type2="nuts_other")
-
-allmult_subset<-CT_diff%>%
-  filter(multtrts==1)%>%
-  ungroup()%>%
-  select(species_matched, trt_type)%>%
-  unique()%>%
-  group_by(species_matched)%>%
-  summarize(n=length(trt_type))%>%
-  filter(n>2)%>%
-  select(-n)
+CT_Sp_multnuts<-CT_diff%>%
+  filter(multnuts==1)%>%
+  mutate(trt_type2="multnuts")
 
 CT_Sp_allint<-CT_diff%>%
   filter(multtrts==1)%>%
-  right_join(allmult_subset)%>%
   mutate(trt_type2="all mult")
 
 Fulldataset_mixedmodels<-CT_Sp_allint%>%
-  bind_rows(CT_Sp_co2, CT_Sp_dist, CT_Sp_drt, CT_Sp_herb, CT_Sp_irg, CT_Sp_N, CT_Sp_P, CT_Sp_temp)%>%
+  bind_rows(CT_Sp_co2, CT_Sp_drt, CT_Sp_irg, CT_Sp_N, CT_Sp_P, CT_Sp_temp, CT_Sp_multnuts)%>%
   select(site_code, project_name, community_type, species_matched, trt_type2, diff)
 
-write.csv(Fulldataset_mixedmodels, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_formixedmodels.csv", sep=""), row.names=F)
+write.csv(Fulldataset_mixedmodels, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv", sep=""), row.names=F)
 
 
