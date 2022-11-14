@@ -48,7 +48,7 @@ tree2<-keep.tip(tree, rownames(dat))
 ###
 
 res<-node.mean(tree2, dat, 999)
-write.table(res, paste(my.wd, "res_phylo_all_mult.csv", sep="")) #save the result
+write.table(res, paste(my.wd, "res_phylo_all_mult_Nov22.csv", sep="")) #save the result
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -112,7 +112,7 @@ famf<-join(famf,list.nod)
 ###
 
 #get vector with names of families containing more species:
-toplot<-as.character(head(famf$Var1, n=50)) #select the top 50 families with 5 for more species
+toplot<-as.character(head(famf$Var1, n=35)) #select the top 15 families with 5 for more species
 
 #Plot tree 
 #remember to change angle = "auto" everywheree to avoid overlap in names. Consider also unifying "barsize" (to 0.1, for example):
@@ -133,52 +133,33 @@ p <-
   geom_cladelabel(node=subset(famf, Var1=="Ranunculaceae")$num, label="Ranunculaceae", fontsize=2.5, barsize = 0.5,  hjust= 1, angle = 294) +
 
   geom_cladelabel(node=subset(famf, Var1=="Lamiaceae")$num, label="Lamiaceae",  fontsize=2.5, barsize = 0.1, angle ="auto") +
-  geom_cladelabel(node=subset(famf, Var1=="Onagraceae")$num, label="Onagraceae", fontsize=2.5, barsize = 0.5, hjust= 1, angle = 307) +
+  geom_cladelabel(node=subset(famf, Var1=="Onagraceae")$num, label="Onagraceae", fontsize=2.5, barsize = 0.5, hjust= 1, angle = 320) +
   geom_cladelabel(node=subset(famf, Var1=="Polygonaceae")$num, label="Polygonaceae", fontsize=2.5, barsize=0.1, hjust= 1, angle = 35) +
   geom_cladelabel(node=subset(famf, Var1=="Gentianaceae")$num, label="Gentianaceae", fontsize=2.5, barsize = 0.5,  hjust= 1, angle = 70) +
-  geom_cladelabel(node=subset(famf, Var1=="Orobanchaceae")$num, label="Orobanchaceae", fontsize=2.5, barsize = 0.1,  hjust= 1, angle = 90) +
+  geom_cladelabel(node=subset(famf, Var1=="Orobanchaceae")$num, label="Orobanchaceae", fontsize=2.5, barsize = 0.1, angle ="auto") +
 
-  geom_cladelabel(node=subset(famf, Var1=="Euphorbiaceae")$num, label="Euphorbiaceae",  fontsize=2.5, barsize = 0.5, hjust= 1, angle = 325) +
+  geom_cladelabel(node=subset(famf, Var1=="Euphorbiaceae")$num, label="Euphorbiaceae",  fontsize=2.5, barsize = 0.5, hjust= 1, angle = 330) +
   geom_cladelabel(node=subset(famf, Var1=="Boraginaceae")$num, label="Boraginaceae", fontsize=2.5, barsize = 0.5, hjust= 1, angle = 83) +
   geom_cladelabel(node=subset(famf, Var1=="Amaranthaceae")$num, label="Amaranthaceae", fontsize=2.5, barsize=0.5, hjust= 1, angle = 42) +
-  geom_cladelabel(node=subset(famf, Var1=="Ericaceae")$num, label="Ericaceae", fontsize=2.5, barsize = 0.1,  hjust= 1, angle = 50) +
+  geom_cladelabel(node=subset(famf, Var1=="Ericaceae")$num, label="Ericaceae", fontsize=2.5, barsize = 0.1,  hjust= 1, angle = 55) +
   geom_cladelabel(node=subset(famf, Var1=="Rubiaceae")$num, label="Rubiaceae", fontsize=2.5, barsize = 0.5,  hjust= 1, angle = 65) +
 
   geom_cladelabel(node=subset(famf, Var1=="Juncaceae")$num, label="Juncaceae",  fontsize=2.5, barsize = 0.1,angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1=="Solanaceae")$num, label="Solanaceae", fontsize=2.5, barsize = 0.5, hjust= 1, angle = 64) +
-  geom_cladelabel(node=subset(famf, Var1=="Geraniaceae")$num, label="Geraniaceae", fontsize=2.5, barsize=0.5, hjust= 1, angle = 303) +
-  geom_cladelabel(node=subset(famf, Var1=="Apocynaceae")$num, label="Apocynaceae", fontsize=2.5, barsize = 0.1,  hjust= 1, angle = 70) +
-  geom_cladelabel(node=subset(famf, Var1=="Violaceae")$num, label="Violaceae", fontsize=2.5, barsize = 0.1,  hjust= 1, angle = 325) +
-
+  geom_cladelabel(node=subset(famf, Var1=="Geraniaceae")$num, label="Geraniaceae", fontsize=2.5, barsize=0.5, hjust= 1, angle = 320) +
   geom_cladelabel(node=subset(famf, Var1=="Amaryllidaceae")$num, label="Amaryllidaceae",  fontsize=2.5, barsize = 0.1, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1=="Asparagaceae")$num, label="Asparagaceae", fontsize=2.5, barsize = 0.1, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1=="Campanulaceae")$num, label="Campanulaceae", fontsize=2.5, barsize=0.5, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1=="Saxifragaceae")$num, label="Saxifragaceae", fontsize=2.5, barsize = 0.5,  hjust= 1, angle = 300) +
+
   geom_cladelabel(node=subset(famf, Var1=="Polemoniaceae")$num, label="Polemoniaceae", fontsize=2.5, barsize = 0.1,  hjust= 1, angle = 51) +
-  
   geom_cladelabel(node=subset(famf, Var1=="Caprifoliaceae")$num, label="Caprifoliaceae",  fontsize=2.5, barsize = 0.1, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1=="Convolvulaceae")$num, label="Convolvulaceae", fontsize=2.5, barsize = 0.1, hjust= 1, angle = 60) +
   geom_cladelabel(node=subset(famf, Var1=="Malvaceae")$num, label="Malvaceae", fontsize=2.5, barsize=0.5, hjust= 1, angle = 315) +
   geom_cladelabel(node=subset(famf, Var1=="Primulaceae")$num, label="Primulaceae", fontsize=2.5, barsize = 0.5,  hjust= 1, angle = 55) +
   geom_cladelabel(node=subset(famf, Var1=="Salicaceae")$num, label="Salicaceae", fontsize=2.5, barsize = 0.1, hjust= 1, angle = 325) +
   
-  geom_cladelabel(node=subset(famf, Var1=="Verbenaceae")$num, label="Verbenaceae",  fontsize=2.5, barsize = 0.1, hjust= 1, angle = 90) +
-  geom_cladelabel(node=subset(famf, Var1=="Oxalidaceae")$num, label="Oxalidaceae", fontsize=2.5, barsize = 0.1, hjust= 1, angle = 322) +
   geom_cladelabel(node=subset(famf, Var1=="Iridaceae")$num, label="Iridaceae", fontsize=2.5, barsize=0.1, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1=="Anacardiaceae")$num, label="Anacardiaceae", fontsize=2.5, barsize = 0.1,  hjust= 1, angle = 310) +
-  geom_cladelabel(node=subset(famf, Var1=="Betulaceae")$num, label="Betulaceae", fontsize=2.5, barsize = 0.5,  hjust= 1, angle = 347) +
-  
-  geom_cladelabel(node=subset(famf, Var1=="Fagaceae")$num, label="Fagaceae",  fontsize=2.5, barsize = 0.5, hjust= 1, angle = 340) +
-  geom_cladelabel(node=subset(famf, Var1=="Nyctaginaceae")$num, label="Nyctaginaceae", fontsize=2.5, barsize = 0.1, hjust= 1, angle = 39) +
-  geom_cladelabel(node=subset(famf, Var1=="Orchidaceae")$num, label="Orchidaceae", fontsize=2.5, barsize=0.1, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1=="Crassulaceae")$num, label="Crassulaceae", fontsize=2.5, barsize = 0.5,  hjust= 1, angle = 300) +
-  geom_cladelabel(node=subset(famf, Var1=="Liliaceae")$num, label="Liliaceae", fontsize=2.5, barsize = 0.5,  angle = "auto") +
-  
   geom_cladelabel(node=subset(famf, Var1=="Cactaceae")$num, label="Cactaceae",  fontsize=2.5, barsize = 0.5, hjust= 1, angle = 40) +
-  geom_cladelabel(node=subset(famf, Var1=="Cistaceae")$num, label="Cistaceae", fontsize=2.5, barsize = 0.5, hjust= 1, angle = 312) +
-  geom_cladelabel(node=subset(famf, Var1=="Commelinaceae")$num, label="Commelinaceae", fontsize=2.5, barsize=0.5, angle = 'auto') +
-  geom_cladelabel(node=subset(famf, Var1=="Equisetaceae")$num, label="Equisetaceae", fontsize=2.5, barsize = 0.5,  angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1=="Lycopodiaceae")$num, label="Lycopodiaceae", fontsize=2.5, barsize = 0.5,  angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1=="Equisetaceae")$num, label="Linaceae", fontsize=2.5, barsize = 0.5,  angle = "auto") +
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_blank(), 
         legend.text=element_text(size=16),
@@ -186,7 +167,7 @@ p <-
         legend.position="bottom")
 
 #save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult.png",
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_multNov22.png",
     res=300,height=8,width=8,units="in"); 
 #png("phylo_ring_all_mult_dec.png", res=300,height=8,width=8,units="in"); 
 p
