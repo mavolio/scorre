@@ -5,7 +5,6 @@ library(BAT)
 library(reshape2)
 library(lmerTest)
 library(ggpubr)
-
 library(vegan)
 
 
@@ -228,13 +227,16 @@ lrr.df.conf <- lrr.df%>%
                   num_experiments = length(x$expgroup)
                 ))
 
-ggplot(lrr.df.conf, aes(trt_type, lrr.mean))+
+lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "N", "P", "mult_nutrient"))
+
+ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   #geom_point()+
   #geom_errorbar(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error))+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
-  geom_hline(yintercept = 0, size = 1)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   xlab("")+
-  ylab("Bray-Curtis LRR Distance between plots within sites")+
+  ylab("Species composition LRR distance between plots within treatment")+
+  scale_color_manual(values = c("#df0000","#0099f6","#00b844","#f2c300","#6305dc"))+
   theme_bw()
 
 lrr.df_species <- lrr.df
@@ -310,8 +312,8 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.trt/dist.con)
 
-#lrr.df_traits <- read.csv("~/lrr.df_traits.csv")
-lrr.df_traits <- lrr.df
+lrr.df_traits <- read.csv("~/lrr.df_traits5.csv")
+#lrr.df_traits <- lrr.df
 
 lrr.df.conf <- lrr.df_traits%>%
   ddply(.(trt_type.1), function(x)data.frame(
@@ -322,19 +324,23 @@ lrr.df.conf <- lrr.df_traits%>%
 lrr.df.conf$lrr.min <- lrr.df.conf$lrr.mean - lrr.df.conf$lrr.error
 lrr.df.conf$lrr.max <- lrr.df.conf$lrr.mean + lrr.df.conf$lrr.error
 
-ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean))+
+
+lrr.df.conf$trt_type.1 <- factor(lrr.df.conf$trt_type.1, levels = c("drought", "irr", "N", "P", "mult_nutrient"))
+
+ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean, color = trt_type.1))+
   #geom_point()+
   #geom_errorbar(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error))+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
-  geom_hline(yintercept = 0, size = 1)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   xlab("")+
-  ylab("Trait space LRR Distance between plots within sites")+
+  ylab("Trait composition LRR distance between plots within treatment")+
+  scale_color_manual(values = c("#df0000","#0099f6","#00b844","#f2c300","#6305dc"))+
   theme_bw()
 
 
 
 
-write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits5.csv")
+#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits5.csv")
 
 #############################################
 ###########################################
@@ -357,6 +363,7 @@ ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
   geom_smooth(aes( color = trt_type), method = "lm")+
   theme_bw()
 
+lrr_comparison$trt_type <- factor(lrr_comparison$trt_type, levels = c("drought", "irr", "N", "P", "mult_nutrient"))
 
 ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
@@ -366,6 +373,7 @@ ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
   geom_vline(xintercept = 0)+
   xlab("LRR species composition")+
   ylab("LRR trait composition")+
+  scale_color_manual(values = c("#df0000","#0099f6","#00b844","#f2c300","#6305dc"))+
   theme_bw()+
   theme(legend.position="none")
 
@@ -500,7 +508,7 @@ tdistances_full        <-   tdistances_master%>%
 
 
 #write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full5.csv")
-#tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full5.csv")
+tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full5.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
 
@@ -543,12 +551,15 @@ finalframe.irr <- explist.irr%>%
 mod <- lm(Freq~trt_type, data = finalframe.mult_nutrient)
 summary(mod)  
 
-ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.mult_nutrient, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Multiple nutrients ")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#6305dc"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 ggplot(finalframe.mult_nutrient, aes(trt_type, Freq, color = trt_type))+
@@ -572,12 +583,15 @@ ggplot(finalframe.mult_nutrient, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.drought)
 summary(mod)  
 
-ggplot(finalframe.drought, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.drought, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Drought")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#df0000"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 ggplot(finalframe.drought, aes(trt_type, Freq))+
@@ -603,12 +617,15 @@ ggplot(finalframe.drought, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.P)
 summary(mod)  
 
-ggplot(finalframe.P, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.P, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Phosphorus")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#f2c300"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 hist(subset(finalframe.P, trt_type == "P")$Freq)
@@ -629,12 +646,15 @@ ggplot(finalframe.P, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.N)
 summary(mod)
 
-ggplot(finalframe.N, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.N, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Nitrogen")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#00b844"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 hist(subset(finalframe.N, trt_type == "N")$Freq)
@@ -654,12 +674,15 @@ ggplot(finalframe.N, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.irr)
 summary(mod)
 
-ggplot(finalframe.irr, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.irr, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Irrigation")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#0099f6"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
   theme_bw()
 
 hist(subset(finalframe.irr, trt_type == "irr")$Freq)
