@@ -111,10 +111,10 @@ allDiv <- pDiv %>% #phylogenetic metrics
   left_join(trt) %>% #treatments
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>% #site anpp and regional richness
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
-  mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='_')) %>%
-  mutate(site_proj_comm_trt=paste(site_proj_comm, trt)) %>% 
+  mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='::')) %>%
+  mutate(site_proj_comm_trt=paste(site_proj_comm, treatment, sep='::')) %>% 
   select(site_code, project_name, community_type, site_proj_comm, site_proj_comm_trt, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp) %>%
-  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) %>%  #remove problem expts until they are fixed
+  filter(!(site_proj_comm %in% c('DL::NSFC::0', 'Naiman::Nprecip::0', 'DCGS::gap::0', 'Sil::NA::NA', 'SORBAS::NA::NA'))) %>%  #remove problem expts until they are fixed
   filter(!(site_code %in% c('SERC', 'CAR', 'PIE', 'NANT'))) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
 
 #selecting relevant treatments for analysis (high resource, high stress)
@@ -138,7 +138,7 @@ trt_analysis <- trt %>%
 allDivTrt <- allDiv %>%
   right_join(trt_analysis) %>%
   mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>%
-  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) %>% #remove problem expts until they are fixed
+  filter(!(site_proj_comm %in% c('DL::NSFC::0', 'Naiman::Nprecip::0', 'DCGS::gap::0'))) %>% #remove problem expts until they are fixed
   mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.)))) %>% #scale site characteristics
   filter(!(is.na(site_proj_comm)))
 
@@ -497,56 +497,82 @@ print(precipMNTDFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 anovaResults=data.frame(row.names=1) #creates dataframe to put results into
 
 forANOVA <- allDiv %>% 
-  select(site_proj_comm_trt) %>% 
+  select(site_proj_comm) %>% 
   unique()
+
 
 #running an anova for each treatment independently
 #includes one for functional dispersion response and one for phylogenetic diversity
-for(i in 1:length(forANOVA$site_proj_comm_trt)) {
+for(i in 1:length(forANOVA$site_proj_comm)) {
   
   #creates a dataset for each unique year, trt, exp combo
-  subset <- allDiv[allDiv$site_proj_comm_trt==as.character(forANOVA$allDiv[i]),] %>%
+  subset <- allDiv[allDiv$site_proj_comm==as.character(forANOVA$site_proj_comm[i]),] %>%
     select(site_proj_comm_trt, calendar_year, treatment, plot_mani, plot_id, mntd.ses, FDis) %>%
     mutate(treatment2=ifelse(plot_mani==0, 'TRUECONTROL', as.character(treatment)))
   
-  #need this to keep track of treatment
-  treatments <- subset%>%
-    select(plot_id, treatment)%>%
+  #control data only
+  controls <- subset %>% 
+    filter(plot_mani==0)
+  
+  #treatments only
+  treatments <- subset %>%
+    filter(plot_mani!=0) %>% 
+    select(treatment) %>%
     unique()
   
-  #calculating composition difference and abs(dispersion difference)
-  multivariate <- multivariate_difference(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'relcov', replicate.var = 'plot_id', treatment.var='treatment2', reference.treatment='TRUECONTROL')%>%
-    rename(treatment=treatment22)%>%
-    select(-treatment2, -trt_greater_disp)
-  
-  #calculating univariate community metrics for each plot
-  univariate <- community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')%>%
-    left_join(treatments)%>%
-    group_by(calendar_year, treatment)%>%
-    summarise(S=mean(richness))%>%
-    ungroup()
-  
-  #calculate e^H
-  species=subset%>%
-    spread(genus_species, relcov, fill=0)
-  H <- diversity(species[,7:ncol(species)])%>%
-    cbind(species[,1:6])%>%
-    mutate(expH=exp(.))%>%
-    group_by(calendar_year, treatment)%>%
-    summarise(exp_H=mean(expH))%>%
-    ungroup()
-  
-  #merge multivariate and univariate metrics
-  all <- univariate%>%
-    full_join(H)%>%
-    full_join(multivariate)%>%
-    mutate(site_project_comm=exp_year$site_project_comm[i])
-  
-  #pasting dispersions into the dataframe made for this analysis
-  for.analysis=rbind(all, for.analysis)  
+  #splitting into separate anovas for each treatment
+  for(j in 1:length(treatments$treatment)) {
+    
+    #bind control data to treatment data
+    subset2 <- subset[subset$treatment==as.character(treatments$treatment[j]),] %>% 
+      rbind(controls)
+    
+    #treatment label
+    trt_label=as.character(treatments$treatment[j])
+    site_proj_comm_label=as.character(forANOVA$site_proj_comm[i])
+    
+    
+    #ANOVAs
+    anovaFDis <- as.data.frame(summary(aov(FDis~treatment, data=subset2))[[1]]) %>% #generate anova statistics
+      mutate(treatment=trt_label, site_proj_comm=site_proj_comm_label) %>% #add treatment and site_proj_comm labels
+      mutate(variable='FDis')
+    anovaFDis <- anovaFDis[rownames(anovaFDis) %in% c('treatment  '), ]
+    
+    anovaMNTD <- as.data.frame(summary(aov(mntd.ses~treatment, data=subset2))[[1]]) %>% #generate anova statistics
+      mutate(treatment=trt_label, site_proj_comm=site_proj_comm_label) %>% #add treatment and site_proj_comm labels
+      mutate(variable='MNTD')
+    anovaMNTD <- anovaMNTD[rownames(anovaMNTD) %in% c('treatment  '), ]
+      
+    #bind data together
+    anovaResults <- rbind(anovaResults, anovaFDis, anovaMNTD)
+  }
 }
 
+#generate dataframe of the response ratios
+allDivRRpivot <- allDivRR %>% 
+  select(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, mntd_diff_mean, FDis_RR_mean) %>%
+  pivot_longer(cols=mntd_diff_mean:FDis_RR_mean, names_to='var', values_to='RR') %>% 
+  mutate(variable=ifelse(var=='mntd_diff_mean', 'MNTD', 'FDis')) %>% 
+  select(-var)
 
+names(anovaResults) <- c('df', 'sum_sq', 'mean_sq', 'F_value', 'p_value', 'treatment', 'site_proj_comm', 'variable')
+
+anovaResultsCorrected <- anovaResults %>%  #need to figure out the NAs (were these where there is no RR because richness is 1?)
+  left_join(allDivRRpivot) %>% 
+  mutate(effect=ifelse(p_value<0.00008 & RR>0, 'increasing',
+                       ifelse(p_value<0.00008 & RR<0, 'decreasing', 'no effect'))) %>%  
+  #bonferonni correction: p<0.00008 for 622 comparisons (for each variable type)
+  select(treatment, site_proj_comm, variable, site_code, project_name, community_type, trt_type2, effect) %>% 
+  pivot_wider(names_from='variable', values_from='effect') %>% 
+  filter(!is.na(FDis), !is.na(MNTD)) %>%  #lose 34 treatments to not having complete cases
+  mutate(effect=paste(FDis, MNTD, sep='::'))
+
+#get numbers of each kind of response
+summary(as.factor(anovaResultsCorrected$effect))
+# decreasing::decreasing  decreasing::no effect increasing::decreasing  increasing::no effect  no effect::decreasing  no effect::increasing 
+# 34                     15                      3                     25                     44                      5 
+# no effect::no effect 
+# 462
 
 
 
