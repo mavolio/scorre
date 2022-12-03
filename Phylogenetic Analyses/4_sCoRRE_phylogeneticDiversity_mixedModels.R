@@ -12,7 +12,7 @@ library(lme4)
 library(tidyverse)
 
 
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\')  #kim's laptop
+setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\')  #kim's computer
 
 ##### functions and themes #####
 ###standard error function
@@ -40,6 +40,24 @@ barGraphStats <- function(data, variable, byFactorNames) {
   return(finalSummaryStats)
 }  
 
+#model summary table (from Peter Wilfahrt)
+summary.tablefunc <- function(mod) {  
+  dat <- data.frame(summary(mod)$tTable) %>%
+    tibble::rownames_to_column(var = 'Effect') %>%
+    rename_with(stringr::str_replace, 
+                pattern = "-", replacement = ".", 
+                matches("Length")) %>% 
+    dplyr::mutate(Estimate = signif(Value, digits = 3),
+                  Std.Error = signif(Std.Error, digits = 2),
+                  t.value = signif(t.value, digits = 2),
+                  p.value = signif(p.value, digits = 2)) %>%
+    dplyr::mutate(p.value = ifelse(p.value <= 0.001, '< 0.001', p.value)) %>% 
+    dplyr::select(-Value) %>% 
+    relocate(Estimate,.before = Std.Error)
+  return(dat)
+}
+
+
 #theme set
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
@@ -52,36 +70,36 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
 
 ##### data #####
 #treatment data
-trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundance.csv')%>%
-select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id)%>%
-  unique()%>%
-  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\ExperimentInfo.csv'))%>%
-  group_by(site_code, project_name, community_type)%>%
-  mutate(experiment_length=max(treatment_year))%>%
-  ungroup()%>%
+trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundance.csv') %>%
+select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
+  unique() %>%
+  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\ExperimentInfo.csv')) %>%
+  group_by(site_code, project_name, community_type) %>%
+  mutate(experiment_length=max(treatment_year)) %>%
+  ungroup() %>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp)
 
 #phylogenetic diveristy data
-pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv')%>%
-  separate(identifier, into=c("site_code", "project_name", "community_type", "treatment_year", "plot_id"), sep="::")%>%
+pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv') %>%
+  separate(identifier, into=c("site_code", "project_name", "community_type", "treatment_year", "plot_id"), sep="::") %>%
   mutate(treatment_year=as.integer(treatment_year))
 
 #functional diversity data
 fDiv <- read.csv('CoRRE_functionalDiversity_2022-07-14.csv')
 
 #species relative cover data
-relCover <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv')%>%
+relCover <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv') %>%
   mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::')) #creating identifying column of each plot
 
 #getting community diversity metrics for each plot
-rDiv <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate")%>%
+rDiv <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate") %>%
   separate(replicate, into=c("site_code", "project_name", "community_type", "plot_id"), sep='::')
 
 #merge all data on diversity metrics (phylogenetic, functional, species), experimental treatments, and site characteristics
-allDiv <- pDiv%>% #phylogenetic metrics
-  full_join(fDiv)%>% #functional metrics
-  full_join(rDiv)%>% #species metrics
-  filter(treatment_year>0)%>% #removing pre-treatment data
+allDiv <- pDiv %>% #phylogenetic metrics
+  full_join(fDiv) %>% #functional metrics
+  full_join(rDiv) %>% #species metrics
+  filter(treatment_year>0) %>% #removing pre-treatment data
   mutate(pd.raw=ifelse(richness==1, 0, pd.raw), #mutating diversity metrics to be 0 if species richness is 1
          pd.ses=ifelse(richness==1, 0, pd.ses),
          mpd.raw=ifelse(richness==1, 0, mpd.raw),
@@ -89,18 +107,20 @@ allDiv <- pDiv%>% #phylogenetic metrics
          mntd.raw=ifelse(richness==1, 0, mntd.raw),
          mntd.ses=ifelse(richness==1, 0, pd.raw),
          FDis=ifelse(richness==1, 0, FDis),
-         RaoQ=ifelse(richness==1, 0, RaoQ))%>%
-  left_join(trt)%>% #treatments
-  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>% #site anpp and regional richness
-  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>% #site MAP and MAT
-  mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='_'))%>%
-  select(site_code, project_name, community_type, site_proj_comm, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp)%>%
-  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) #remove problem expts until they are fixed
+         RaoQ=ifelse(richness==1, 0, RaoQ)) %>%
+  left_join(trt) %>% #treatments
+  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>% #site anpp and regional richness
+  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
+  mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='_')) %>%
+  mutate(site_proj_comm_trt=paste(site_proj_comm, trt)) %>% 
+  select(site_code, project_name, community_type, site_proj_comm, site_proj_comm_trt, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp) %>%
+  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) %>%  #remove problem expts until they are fixed
+  filter(!(site_code %in% c('SERC', 'CAR', 'PIE', 'NANT'))) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
 
 #selecting relevant treatments for analysis (high resource, high stress)
-trt_analysis<-trt%>%
-  mutate(alltrts=ifelse(trt_type %in% c("control", "CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0))%>%
-  filter(alltrts==1)%>%
+trt_analysis <- trt %>%
+  mutate(alltrts=ifelse(trt_type %in% c("control", "CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0)) %>%
+  filter(alltrts==1) %>%
   mutate(dist=ifelse(trt_type %in% c("mow_clip","burn","burn*graze","disturbance","burn*mow_clip"), 1, 0), #unify codes across datasets
          # tCO2=ifelse(trt_type %in% c("CO2"), 1, 0),
          drought=ifelse(trt_type %in% c("drought"), 1, 0),
@@ -109,17 +129,17 @@ trt_analysis<-trt%>%
          # ttemp=ifelse(trt_type %in% c("temp"), 1, 0),
          # tn=ifelse(trt_type %in% c("N"), 1, 0),
          # tp=ifelse(trt_type %in% c("P"), 1, 0),
-         multtrts=ifelse(trt_type %in% c("CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp","mult_nutrient","N*P"),1,0))%>%
-  mutate(trt_type2=ifelse(dist==1, 'disturbance', ifelse(multtrts==1, 'multiple trts', trt_type)))%>%
-  select(site_code, project_name, community_type, treatment, alltrts, dist, drought, irg, multtrts, trt_type2)%>%
+         multtrts=ifelse(trt_type %in% c("CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp","mult_nutrient","N*P"),1,0)) %>%
+  mutate(trt_type2=ifelse(dist==1, 'disturbance', ifelse(multtrts==1, 'multiple trts', trt_type))) %>%
+  select(site_code, project_name, community_type, treatment, alltrts, dist, drought, irg, multtrts, trt_type2) %>%
   unique()
 
-#pick treatments here.
-allDivTrt <- allDiv%>%
-  right_join(trt_analysis)%>%
-  mutate(trt_binary=ifelse(plot_mani>0, 1, 0))%>%
-  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0')))%>% #remove problem expts until they are fixed
-  mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.))))%>% #scale site characteristics
+#pick treatments here
+allDivTrt <- allDiv %>%
+  right_join(trt_analysis) %>%
+  mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>%
+  filter(!(site_proj_comm %in% c('DL_NSFC_0', 'Naiman_Nprecip_0', 'DCGS_gap_0'))) %>% #remove problem expts until they are fixed
+  mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.)))) %>% #scale site characteristics
   filter(!(is.na(site_proj_comm)))
 
 
@@ -128,9 +148,9 @@ allDivTrt <- allDiv%>%
 
 
 # ##### figures over time by site #####
-# allDivYearMeans <- allDivTrt %>%
-#   group_by(site_proj_comm, site_code, project_name, community_type, treatment_year, treatment, trt_type2)%>%
-#   summarize_at(vars(mpd.ses, mntd.ses, FDis, richness), list(mean=mean, se=se), na.rm=T)%>%
+# allDivYearMeans <- allDivTrt  %>%
+#   group_by(site_proj_comm, site_code, project_name, community_type, treatment_year, treatment, trt_type2) %>%
+#   summarize_at(vars(mpd.ses, mntd.ses, FDis, richness), list(mean=mean, se=se), na.rm=T) %>%
 #   ungroup()
 # 
 # site_proj_comm_vector <- unique(allDivTrt$site_proj_comm)
@@ -167,23 +187,58 @@ allDivTrt <- allDiv%>%
 
 ##### global trends - do environmental conditions impact FD or PD under ambient conditions? #####
 #filter control plots
-control <- allDivTrt%>% 
-  filter(trt_type=='control')%>%
-  rename(mpd.ses_ctl=mpd.ses, mntd.ses_ctl=mntd.ses, FDis_ctl=FDis, richness_ctl=richness)%>%
-  group_by(site_code, project_name, community_type, treatment_year)%>%
-  summarize_at(vars(mpd.ses_ctl, mntd.ses_ctl, FDis_ctl, richness_ctl), list(mean=mean), na.rm=T)%>%
+control <- allDivTrt %>% 
+  filter(trt_type=='control') %>%
+  rename(mpd.ses_ctl=mpd.ses, mntd.ses_ctl=mntd.ses, FDis_ctl=FDis, richness_ctl=richness) %>%
+  group_by(site_code, project_name, community_type, treatment_year) %>%
+  summarize_at(vars(mpd.ses_ctl, mntd.ses_ctl, FDis_ctl, richness_ctl), list(mean=mean), na.rm=T) %>% #average aross plots and years
   ungroup()
 
 #merge on site characteristics
-controlEnv <- control%>%
-  group_by(site_code, project_name, community_type)%>%
-  summarize_at(vars(mpd.ses_ctl_mean, mntd.ses_ctl_mean, FDis_ctl_mean, richness_ctl_mean), list(mean=mean), na.rm=T)%>%
-  ungroup()%>%
-  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv'))%>%
-  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv'))%>%
+controlEnv <- control %>%
+  group_by(site_code, project_name, community_type) %>%
+  summarize_at(vars(mpd.ses_ctl_mean, mntd.ses_ctl_mean, FDis_ctl_mean, richness_ctl_mean), list(mean=mean), na.rm=T) %>% #average aross plots and years
+  ungroup() %>%
+  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>%
+  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>%
   gather(key='env_variable', value='env_value', rrich, anpp, MAP, MAT, aridityValues)
 
-# #env drivers of FD
+# ##### mapping functional and phylogenetic diversity globally #####
+# library('wesanderson')
+# library("rnaturalearth")
+# library("rnaturalearthdata")
+# library("rgeos")
+# world <- ne_countries(scale = "medium", returnclass = "sf")
+# 
+# z.pal<-wes_palette("Zissou1", 100, type = "continuous")
+# 
+# #map of functional dispersion
+# ggplot(data=world)+
+#   theme(panel.background=element_rect(fill="aliceblue", color="aliceblue"))+
+#   theme(text=element_text(size=20, colour="black"),axis.text.x=element_text(size=20, colour="black"),
+#         axis.text.y=element_text(size=20, colour="black"))+
+#   geom_sf(color="black", fill="antiquewhite")+
+#   geom_point(data=subset(controlEnv, env_variable=='rrich'), mapping=aes(x=Longitude,y=Latitude,fill=FDis_ctl_mean_mean),size=4.5,shape=21)+
+#   scale_fill_gradientn(colours = z.pal) +
+#   labs(fill="Phylogenetic Diversity (MNTD)")+
+#   theme(legend.position = "top")+
+#   ylab(expression("Latitude "*degree*""))+
+#   xlab(expression("Longitude "*degree*""))
+# 
+# #map of phylogenetic diversity (MNTD)
+# ggplot(data=world)+
+#   theme(panel.background=element_rect(fill="aliceblue", color="aliceblue"))+
+#   theme(text=element_text(size=20, colour="black"),axis.text.x=element_text(size=20, colour="black"),
+#         axis.text.y=element_text(size=20, colour="black"))+
+#   geom_sf(color="black", fill="antiquewhite")+
+#   geom_point(data=subset(controlEnv, env_variable=='rrich'), mapping=aes(x=Longitude,y=Latitude,fill=mntd.ses_ctl_mean_mean),size=4.5,shape=21)+
+#   scale_fill_gradientn(colours = z.pal) +
+#   labs(fill="Phylogenetic Diversity (MNTD)")+
+#   theme(legend.position = "top")+
+#   ylab(expression("Latitude "*degree*""))+
+#   xlab(expression("Longitude "*degree*""))
+
+# ##### env drivers of FD #####
 # ggplot(data=controlEnv, aes(x=env_value, y=FDis_ctl_mean_mean)) +
 #   geom_point() +
 #   # geom_smooth(method='lm', se=F) +
@@ -227,20 +282,20 @@ controlEnv <- control%>%
 
 
 ##### calculating response ratios #####
-allDivRR <- allDivTrt%>%
-  filter(trt_type!='control')%>%
-  left_join(control)%>%
-  mutate(mpd_diff=(mpd.ses-mpd.ses_ctl_mean), mntd_diff=(mntd.ses-mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean))%>% #mntd and mpd are just differences because they are already standardized values
-  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2)%>%
-  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR), list(mean=mean), na.rm=T) %>%
+allDivRR <- allDivTrt %>%
+  filter(trt_type!='control') %>%
+  left_join(control) %>%
+  mutate(mpd_diff=((mpd.ses-mpd.ses_ctl_mean)/mpd.ses_ctl_mean), mntd_diff=((mntd.ses-mntd.ses_ctl_mean)/mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean)) %>% 
+  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))  %>% 
+  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2) %>%
+  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR), list(mean=mean), na.rm=T)  %>%
   ungroup()
 
 
 # ##### treatment responses by env drivers - no strong trends #####
-# allDivRRenv <- allDivRR %>% 
-#   gather(key=env_variable, value=env_value, c("MAP", "MAT", "rrich", "anpp"))%>%
-#   group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, env_variable)%>%
+# allDivRRenv <- allDivRR  %>% 
+#   gather(key=env_variable, value=env_value, c("MAP", "MAT", "rrich", "anpp")) %>%
+#   group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, env_variable) %>%
 #   ungroup()
 # 
 # ggplot(data=allDivRRenv, aes(x=env_value_mean, y=FDis_RR_mean)) +
@@ -296,7 +351,7 @@ MNTDFig <- ggplot(data=meansMNTDModelOutput, aes(x=trt_type2, y=emmean, color=tr
   geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
   geom_hline(yintercept=0) +
   coord_flip() +
-  ylab('Phylogenetic Distance\nEffect Size') + xlab('') +
+  ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab('') +
   scale_x_discrete(limits=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), breaks=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), labels=c('Multiple Trts', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'P', 'N')) + 
   scale_color_manual(values=c('blue', 'orange', 'orange', 'blue', 'dark grey', 'blue', 'blue', 'orange')) +
   theme(legend.position='none')
@@ -312,6 +367,221 @@ print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 # drought example of increasing FDis and MNTD effect size: SFREC::GrazePrecip::G4 D or HAYS::Precip::0 reduction
 
 
+##### treatment magnitude #####
+allDivRRtrt <- allDivRR %>% 
+  left_join(trt)
+
+#N additions
+nDivRR <- allDivRRtrt %>% 
+  filter(trt_type2=='N')
+
+summary(nFDisModel <- lme(FDis_RR_mean ~ poly(n,2),
+                          data=na.omit(subset(nDivRR, FDis_RR_mean<5)),
+                          random=~1|site_proj_comm))
+anova.lme(nFDisModel, type='sequential')
+coef(nFDisModel)
+summary.tablefunc(nFDisModel)
+
+nFDisFig <- ggplot(data=nDivRR, aes(x=n, y=FDis_RR_mean)) +
+  geom_point(size=2)+
+  # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
+  geom_smooth(method='lm', formula=y~poly(x,2), color='black') +
+  geom_hline(yintercept=0) +
+  coord_cartesian(ylim=c(-0.75,1.25)) +
+  ylab('Functional Dispersion\nEffect Size') + xlab(bquote('N added '(gm^-2)))
+
+
+
+summary(nMNTDModel <- lme(mntd_diff_mean ~ poly(n,2),
+                         data=nDivRR,
+                         random=~1|site_proj_comm))
+anova.lme(nMNTDModel, type='sequential')
+coef(nMNTDModel)
+summary.tablefunc(nMNTDModel)
+
+nMNTDFig <- ggplot(data=nDivRR, aes(x=n, y=mntd_diff_mean)) +
+  geom_point(size=2)+
+  # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
+  geom_smooth(method='lm', formula=y~poly(x,2), color='black') +
+  geom_hline(yintercept=0) +
+  coord_cartesian(ylim=c(-0.75,1.25)) +
+  ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab(bquote('N added '(gm^-2)))
+
+
+#precip
+precipDivRR <- allDivRRtrt %>% 
+  filter(precip!=0)
+
+summary(precipFDisModel <- lme(FDis_RR_mean ~ precip, #tried a polynomial model, but linear was better fit
+                          data=na.omit(subset(precipDivRR, FDis_RR_mean<5)),
+                          random=~1|site_proj_comm))
+anova.lme(precipFDisModel, type='sequential')
+coef(precipFDisModel)
+summary.tablefunc(precipFDisModel)
+
+precipFDisFig <- ggplot(data=precipDivRR, aes(x=precip, y=FDis_RR_mean)) +
+  geom_point(size=2)+
+  # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
+  geom_smooth(method='lm', formula=y~x, color='black') +
+  geom_hline(yintercept=0) +
+  coord_cartesian(ylim=c(-0.5,1.25)) +
+  ylab('Functional Dispersion\nEffect Size') + xlab('Precipitation Manipulation (%)')
+
+
+
+summary(precipMNTDModel <- lme(mntd_diff_mean ~ poly(precip,2),
+                          data=precipDivRR,
+                          random=~1|site_proj_comm))
+anova.lme(precipMNTDModel, type='sequential')
+coef(precipMNTDModel)
+summary.tablefunc(precipMNTDModel)
+
+precipMNTDFig <- ggplot(data=precipDivRR, aes(x=precip, y=mntd_diff_mean)) +
+  geom_point(size=2)+
+  # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
+  geom_smooth(method='lm', formula=y~poly(x,2), color='black') +
+  geom_hline(yintercept=0) +
+  coord_cartesian(ylim=c(-0.5,1.25)) +
+  ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab('Precipitation Manipulation (%)')
+
+
+#combined N and precip magnitude figure
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(nFDisFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(nMNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(precipFDisFig, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(precipMNTDFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+
+
+# #temp
+# tempDivRR <- allDivRRtrt %>% 
+#   filter(temp!=0)
+# 
+# summary(tempFDisModel <- lme(FDis_RR_mean ~ temp, #tried a polynomial model, but linear was better fit
+#                                data=na.omit(subset(tempDivRR, FDis_RR_mean<5)),
+#                                random=~1|site_proj_comm))
+# anova.lme(tempFDisModel, type='sequential')
+# coef(tempFDisModel)
+# summary.tablefunc(tempFDisModel)
+# 
+# ggplot(data=tempDivRR, aes(x=temp, y=FDis_RR_mean)) +
+#   geom_point(size=2)+
+#   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
+#   geom_smooth(method='lm', formula=y~x, color='black') +
+#   geom_hline(yintercept=0) +
+#   coord_cartesian(ylim=c(-0.5,1.25)) +
+#   ylab('Functional Dispersion\nEffect Size') + xlab('Temperature Manipulation')
+# 
+# 
+# summary(tempMNTDModel <- lme(mntd_diff_mean ~ temp, #tried a polynomial model, but linear was better fit
+#                                data=tempDivRR,
+#                                random=~1|site_proj_comm))
+# anova.lme(tempMNTDModel, type='sequential')
+# coef(tempMNTDModel)
+# summary.tablefunc(tempMNTDModel)
+# 
+# ggplot(data=tempDivRR, aes(x=temp, y=mntd_diff_mean)) +
+#   geom_point(size=2)+
+#   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
+#   geom_smooth(method='lm', formula=y~x, color='black') +
+#   geom_hline(yintercept=0) +
+#   coord_cartesian(ylim=c(-0.5,1.25)) +
+#   ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab('Temperature Manipulation')
+
+
+
+
+
 ##### trends in PD and FD - vote counting across experiments #####
-countTrends <- allDivRR %>% 
-  mutate(trend=ifelse()) ### start here to count up how many were +/+, +/- etc and then make bar graphs for why
+
+anovaResults=data.frame(row.names=1) #creates dataframe to put results into
+
+forANOVA <- allDiv %>% 
+  select(site_proj_comm_trt) %>% 
+  unique()
+
+#running an anova for each treatment independently
+#includes one for functional dispersion response and one for phylogenetic diversity
+for(i in 1:length(forANOVA$site_proj_comm_trt)) {
+  
+  #creates a dataset for each unique year, trt, exp combo
+  subset <- allDiv[allDiv$site_proj_comm_trt==as.character(forANOVA$allDiv[i]),] %>%
+    select(site_proj_comm_trt, calendar_year, treatment, plot_mani, plot_id, mntd.ses, FDis) %>%
+    mutate(treatment2=ifelse(plot_mani==0, 'TRUECONTROL', as.character(treatment)))
+  
+  #need this to keep track of treatment
+  treatments <- subset%>%
+    select(plot_id, treatment)%>%
+    unique()
+  
+  #calculating composition difference and abs(dispersion difference)
+  multivariate <- multivariate_difference(subset, time.var = 'calendar_year', species.var = "genus_species", abundance.var = 'relcov', replicate.var = 'plot_id', treatment.var='treatment2', reference.treatment='TRUECONTROL')%>%
+    rename(treatment=treatment22)%>%
+    select(-treatment2, -trt_greater_disp)
+  
+  #calculating univariate community metrics for each plot
+  univariate <- community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')%>%
+    left_join(treatments)%>%
+    group_by(calendar_year, treatment)%>%
+    summarise(S=mean(richness))%>%
+    ungroup()
+  
+  #calculate e^H
+  species=subset%>%
+    spread(genus_species, relcov, fill=0)
+  H <- diversity(species[,7:ncol(species)])%>%
+    cbind(species[,1:6])%>%
+    mutate(expH=exp(.))%>%
+    group_by(calendar_year, treatment)%>%
+    summarise(exp_H=mean(expH))%>%
+    ungroup()
+  
+  #merge multivariate and univariate metrics
+  all <- univariate%>%
+    full_join(H)%>%
+    full_join(multivariate)%>%
+    mutate(site_project_comm=exp_year$site_project_comm[i])
+  
+  #pasting dispersions into the dataframe made for this analysis
+  for.analysis=rbind(all, for.analysis)  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
