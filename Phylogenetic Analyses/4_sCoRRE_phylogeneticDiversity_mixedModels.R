@@ -490,89 +490,87 @@ print(precipMNTDFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 
 
 
-
-
-##### trends in PD and FD - vote counting across experiments #####
-
-anovaResults=data.frame(row.names=1) #creates dataframe to put results into
-
-forANOVA <- allDiv %>% 
-  select(site_proj_comm) %>% 
-  unique()
-
-
-#running an anova for each treatment independently
-#includes one for functional dispersion response and one for phylogenetic diversity
-for(i in 1:length(forANOVA$site_proj_comm)) {
-  
-  #creates a dataset for each unique year, trt, exp combo
-  subset <- allDiv[allDiv$site_proj_comm==as.character(forANOVA$site_proj_comm[i]),] %>%
-    select(site_proj_comm_trt, calendar_year, treatment, plot_mani, plot_id, mntd.ses, FDis) %>%
-    mutate(treatment2=ifelse(plot_mani==0, 'TRUECONTROL', as.character(treatment)))
-  
-  #control data only
-  controls <- subset %>% 
-    filter(plot_mani==0)
-  
-  #treatments only
-  treatments <- subset %>%
-    filter(plot_mani!=0) %>% 
-    select(treatment) %>%
-    unique()
-  
-  #splitting into separate anovas for each treatment
-  for(j in 1:length(treatments$treatment)) {
-    
-    #bind control data to treatment data
-    subset2 <- subset[subset$treatment==as.character(treatments$treatment[j]),] %>% 
-      rbind(controls)
-    
-    #treatment label
-    trt_label=as.character(treatments$treatment[j])
-    site_proj_comm_label=as.character(forANOVA$site_proj_comm[i])
-    
-    
-    #ANOVAs
-    anovaFDis <- as.data.frame(summary(aov(FDis~treatment, data=subset2))[[1]]) %>% #generate anova statistics
-      mutate(treatment=trt_label, site_proj_comm=site_proj_comm_label) %>% #add treatment and site_proj_comm labels
-      mutate(variable='FDis')
-    anovaFDis <- anovaFDis[rownames(anovaFDis) %in% c('treatment  '), ]
-    
-    anovaMNTD <- as.data.frame(summary(aov(mntd.ses~treatment, data=subset2))[[1]]) %>% #generate anova statistics
-      mutate(treatment=trt_label, site_proj_comm=site_proj_comm_label) %>% #add treatment and site_proj_comm labels
-      mutate(variable='MNTD')
-    anovaMNTD <- anovaMNTD[rownames(anovaMNTD) %in% c('treatment  '), ]
-      
-    #bind data together
-    anovaResults <- rbind(anovaResults, anovaFDis, anovaMNTD)
-  }
-}
-
-#generate dataframe of the response ratios
-allDivRRpivot <- allDivRR %>% 
-  select(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, mntd_diff_mean, FDis_RR_mean) %>%
-  pivot_longer(cols=mntd_diff_mean:FDis_RR_mean, names_to='var', values_to='RR') %>% 
-  mutate(variable=ifelse(var=='mntd_diff_mean', 'MNTD', 'FDis')) %>% 
-  select(-var)
-
-names(anovaResults) <- c('df', 'sum_sq', 'mean_sq', 'F_value', 'p_value', 'treatment', 'site_proj_comm', 'variable')
-
-anovaResultsCorrected <- anovaResults %>%  #need to figure out the NAs (were these where there is no RR because richness is 1?)
-  left_join(allDivRRpivot) %>% 
-  mutate(effect=ifelse(p_value<0.00008 & RR>0, 'increasing',
-                       ifelse(p_value<0.00008 & RR<0, 'decreasing', 'no effect'))) %>%  
-  #bonferonni correction: p<0.00008 for 622 comparisons (for each variable type)
-  select(treatment, site_proj_comm, variable, site_code, project_name, community_type, trt_type2, effect) %>% 
-  pivot_wider(names_from='variable', values_from='effect') %>% 
-  filter(!is.na(FDis), !is.na(MNTD)) %>%  #lose 34 treatments to not having complete cases
-  mutate(effect=paste(FDis, MNTD, sep='::'))
-
-#get numbers of each kind of response
-summary(as.factor(anovaResultsCorrected$effect))
-# decreasing::decreasing  decreasing::no effect increasing::decreasing  increasing::no effect  no effect::decreasing  no effect::increasing 
-# 34                     15                      3                     25                     44                      5 
-# no effect::no effect 
-# 462
+# ##### trends in PD and FD - vote counting across experiments #####
+# 
+# anovaResults=data.frame(row.names=1) #creates dataframe to put results into
+# 
+# forANOVA <- allDiv %>% 
+#   select(site_proj_comm) %>% 
+#   unique()
+# 
+# 
+# #running an anova for each treatment independently
+# #includes one for functional dispersion response and one for phylogenetic diversity
+# for(i in 1:length(forANOVA$site_proj_comm)) {
+#   
+#   #creates a dataset for each unique year, trt, exp combo
+#   subset <- allDiv[allDiv$site_proj_comm==as.character(forANOVA$site_proj_comm[i]),] %>%
+#     select(site_proj_comm_trt, calendar_year, treatment, plot_mani, plot_id, mntd.ses, FDis) %>%
+#     mutate(treatment2=ifelse(plot_mani==0, 'TRUECONTROL', as.character(treatment)))
+#   
+#   #control data only
+#   controls <- subset %>% 
+#     filter(plot_mani==0)
+#   
+#   #treatments only
+#   treatments <- subset %>%
+#     filter(plot_mani!=0) %>% 
+#     select(treatment) %>%
+#     unique()
+#   
+#   #splitting into separate anovas for each treatment
+#   for(j in 1:length(treatments$treatment)) {
+#     
+#     #bind control data to treatment data
+#     subset2 <- subset[subset$treatment==as.character(treatments$treatment[j]),] %>% 
+#       rbind(controls)
+#     
+#     #treatment label
+#     trt_label=as.character(treatments$treatment[j])
+#     site_proj_comm_label=as.character(forANOVA$site_proj_comm[i])
+#     
+#     
+#     #ANOVAs
+#     anovaFDis <- as.data.frame(summary(aov(FDis~treatment, data=subset2))[[1]]) %>% #generate anova statistics
+#       mutate(treatment=trt_label, site_proj_comm=site_proj_comm_label) %>% #add treatment and site_proj_comm labels
+#       mutate(variable='FDis')
+#     anovaFDis <- anovaFDis[rownames(anovaFDis) %in% c('treatment  '), ]
+#     
+#     anovaMNTD <- as.data.frame(summary(aov(mntd.ses~treatment, data=subset2))[[1]]) %>% #generate anova statistics
+#       mutate(treatment=trt_label, site_proj_comm=site_proj_comm_label) %>% #add treatment and site_proj_comm labels
+#       mutate(variable='MNTD')
+#     anovaMNTD <- anovaMNTD[rownames(anovaMNTD) %in% c('treatment  '), ]
+#       
+#     #bind data together
+#     anovaResults <- rbind(anovaResults, anovaFDis, anovaMNTD)
+#   }
+# }
+# 
+# #generate dataframe of the response ratios
+# allDivRRpivot <- allDivRR %>% 
+#   select(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, mntd_diff_mean, FDis_RR_mean) %>%
+#   pivot_longer(cols=mntd_diff_mean:FDis_RR_mean, names_to='var', values_to='RR') %>% 
+#   mutate(variable=ifelse(var=='mntd_diff_mean', 'MNTD', 'FDis')) %>% 
+#   select(-var)
+# 
+# names(anovaResults) <- c('df', 'sum_sq', 'mean_sq', 'F_value', 'p_value', 'treatment', 'site_proj_comm', 'variable')
+# 
+# anovaResultsCorrected <- anovaResults %>%  #need to figure out the NAs (were these where there is no RR because richness is 1?)
+#   left_join(allDivRRpivot) %>% 
+#   mutate(effect=ifelse(p_value<0.00008 & RR>0, 'increasing',
+#                        ifelse(p_value<0.00008 & RR<0, 'decreasing', 'no effect'))) %>%  
+#   #bonferonni correction: p<0.00008 for 622 comparisons (for each variable type)
+#   select(treatment, site_proj_comm, variable, site_code, project_name, community_type, trt_type2, effect) %>% 
+#   pivot_wider(names_from='variable', values_from='effect') %>% 
+#   filter(!is.na(FDis), !is.na(MNTD)) %>%  #lose 34 treatments to not having complete cases
+#   mutate(effect=paste(FDis, MNTD, sep='::'))
+# 
+# #get numbers of each kind of response
+# summary(as.factor(anovaResultsCorrected$effect))
+# # decreasing::decreasing  decreasing::no effect increasing::decreasing  increasing::no effect  no effect::decreasing  no effect::increasing 
+# # 34                     15                      3                     25                     44                      5 
+# # no effect::no effect 
+# # 462
 
 
 
