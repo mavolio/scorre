@@ -369,13 +369,15 @@ print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 
 ##### treatment magnitude #####
 allDivRRtrt <- allDivRR %>% 
-  left_join(trt)
+  left_join(trt) %>% 
+  select(-treatment_year, -calendar_year, -plot_id) %>% 
+  unique()
 
 #N additions
 nDivRR <- allDivRRtrt %>% 
   filter(trt_type2=='N')
 
-summary(nFDisModel <- lme(FDis_RR_mean ~ poly(n,2),
+summary(nFDisModel <- lme(FDis_RR_mean ~ n, #tried polynomial, but linear was better
                           data=na.omit(subset(nDivRR, FDis_RR_mean<5)),
                           random=~1|site_proj_comm))
 anova.lme(nFDisModel, type='sequential')
@@ -385,14 +387,14 @@ summary.tablefunc(nFDisModel)
 nFDisFig <- ggplot(data=nDivRR, aes(x=n, y=FDis_RR_mean)) +
   geom_point(size=2)+
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
-  geom_smooth(method='lm', formula=y~poly(x,2), color='black') +
+  geom_smooth(method='lm', formula=y~x, color='black') +
   geom_hline(yintercept=0) +
   coord_cartesian(ylim=c(-0.75,1.25)) +
   ylab('Functional Dispersion\nEffect Size') + xlab(bquote('N added '(gm^-2)))
 
 
 
-summary(nMNTDModel <- lme(mntd_diff_mean ~ poly(n,2),
+summary(nMNTDModel <- lme(mntd_diff_mean ~ n, #tried polynomial, but linear was better
                          data=nDivRR,
                          random=~1|site_proj_comm))
 anova.lme(nMNTDModel, type='sequential')
@@ -402,7 +404,7 @@ summary.tablefunc(nMNTDModel)
 nMNTDFig <- ggplot(data=nDivRR, aes(x=n, y=mntd_diff_mean)) +
   geom_point(size=2)+
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
-  geom_smooth(method='lm', formula=y~poly(x,2), color='black') +
+  geom_smooth(method='lm', formula=y~x, color='black') +
   geom_hline(yintercept=0) +
   coord_cartesian(ylim=c(-0.75,1.25)) +
   ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab(bquote('N added '(gm^-2)))
@@ -429,7 +431,7 @@ precipFDisFig <- ggplot(data=precipDivRR, aes(x=precip, y=FDis_RR_mean)) +
 
 
 
-summary(precipMNTDModel <- lme(mntd_diff_mean ~ poly(precip,2),
+summary(precipMNTDModel <- lme(mntd_diff_mean ~ precip,
                           data=precipDivRR,
                           random=~1|site_proj_comm))
 anova.lme(precipMNTDModel, type='sequential')
@@ -439,7 +441,7 @@ summary.tablefunc(precipMNTDModel)
 precipMNTDFig <- ggplot(data=precipDivRR, aes(x=precip, y=mntd_diff_mean)) +
   geom_point(size=2)+
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
-  geom_smooth(method='lm', formula=y~poly(x,2), color='black') +
+  # geom_smooth(method='lm', formula=y~poly(x,2), color='black') + #no significant effect
   geom_hline(yintercept=0) +
   coord_cartesian(ylim=c(-0.5,1.25)) +
   ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab('Precipitation Manipulation (%)')
