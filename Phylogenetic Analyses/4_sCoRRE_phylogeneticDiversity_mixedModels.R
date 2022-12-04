@@ -287,7 +287,7 @@ allDivRR <- allDivTrt %>%
   left_join(control) %>%
   mutate(mpd_diff=((mpd.ses-mpd.ses_ctl_mean)/mpd.ses_ctl_mean), mntd_diff=((mntd.ses-mntd.ses_ctl_mean)/mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean)) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))  %>% 
-  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2) %>%
+  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
   summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR), list(mean=mean), na.rm=T)  %>%
   ungroup()
 
@@ -370,7 +370,7 @@ print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 ##### treatment magnitude #####
 allDivRRtrt <- allDivRR %>% 
   left_join(trt) %>% 
-  select(-treatment_year, -calendar_year, -plot_id) %>% 
+  select(-treatment_year, -calendar_year) %>% 
   unique()
 
 #N additions
@@ -573,41 +573,3 @@ print(precipMNTDFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 # # 34                     15                      3                     25                     44                      5 
 # # no effect::no effect 
 # # 462
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
