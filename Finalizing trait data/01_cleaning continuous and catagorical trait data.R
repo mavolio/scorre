@@ -15,8 +15,7 @@ library(PerformanceAnalytics)
 library(tidyverse)
 
 # setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
-# setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\') #Kim's desktop
-# setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\') #Kim's laptop
+# setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\') #Kim's 
 
 
 ############################
@@ -62,11 +61,12 @@ imputedSubset <- imputedRaw %>%
 #   filter(moss=='non-moss')
 
 
-write.csv(imputedSubset, 'C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')
+# write.csv(imputedSubset, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')
 
 
 ##### outlier check #####
 hierarchy <- read.csv('Imputed Continuous_Traits\\hierarchy_info.txt')
+# hierarchy2 <- filter(hierarchy, X0>0)
 
 imputedMean <- read.delim('Imputed Continuous_Traits\\mean_gap_filled2.txt', header=T)
 imputedSD <- read.delim('Imputed Continuous_Traits\\std_gap_filled2.txt', header=T)

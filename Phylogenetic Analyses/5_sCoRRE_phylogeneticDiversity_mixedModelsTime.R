@@ -2,7 +2,7 @@
 ##  sCoRRE_phylogeneticDiversity_causalModels.R: Examining differences in phylogenetic and functional diversity with causal modeling of the CoRRE database.
 ##
 ##  Author: Kimberly Komatsu
-##  Date created: December 13, 2021
+##  Date created: December 4, 2022
 ################################################################################
 
 library(data.table)
@@ -287,9 +287,18 @@ allDivRR <- allDivTrt %>%
   left_join(control) %>%
   mutate(mpd_diff=((mpd.ses-mpd.ses_ctl_mean)/mpd.ses_ctl_mean), mntd_diff=((mntd.ses-mntd.ses_ctl_mean)/mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean)) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))  %>% 
-  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
+  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, treatment_year) %>%
   summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR), list(mean=mean), na.rm=T)  %>%
   ungroup()
+
+#exploratory figures
+hist(allDivRR$mntd_diff_mean)
+boxplot(mntd_diff_mean ~ treatment_year, data = allDivRR)
+boxplot(mntd_diff_mean ~ treatment, data = allDivRR)
+
+hist(allDivRR$FDis_RR_mean)
+boxplot(FDis_RR_mean ~ treatment_year, data = allDivRR)
+boxplot(FDis_RR_mean ~ treatment, data = allDivRR)
 
 
 # ##### treatment responses by env drivers - no strong trends #####
@@ -314,28 +323,38 @@ allDivRR <- allDivTrt %>%
 
 ##### mixed effects model #####
 #NOTE: these models do not account for biotic or abiotic env drivers at a site or for trt magnitude (but do include a random effect of site)
-library(nlme)
-library(emmeans)
-library(performance)
+library(lme4)
+library(car)
+library(ggeffects)
+# library(emmeans)
+# library(performance)
 library(grid)
 
 options(contrasts=c('contr.sum','contr.poly')) 
 
-summary(FDisModel <- lme(FDis_RR_mean ~ as.factor(trt_type2),
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<5 & trt_type2!='herb_removal')),
-                         random=~1|site_proj_comm))
-anova.lme(FDisModel, type='sequential')
-meansFDisModel <- emmeans(FDisModel, pairwise~as.factor(trt_type2), adjust="tukey")
-meansFDisModelOutput <- as.data.frame(meansFDisModel$emmeans)
+summary(FDisModel <- lmer(FDis_RR_mean ~ poly(treatment_year,2)*as.factor(trt_type2) + (1 + trt_type2|site_proj_comm),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<5 & trt_type2!='herb_removal' & treatment_year<50))))
+Anova(FDisModel, type='III')
+plot(FDisModel)
+qqnorm(resid(FDisModel)) #not a great line
+predictionsFDisModel <- ggpredict(FDisModel, terms = c("treatment_year", "trt_type2 [all]"))  # this gives overall predictions for the model
 
-FDisFig <- ggplot(data=meansFDisModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
-  geom_point(size=5) +
-  geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
-  geom_hline(yintercept=0) +
-  coord_flip() +
-  ylab('Functional Dispersion\nEffect Size') + xlab('') +
-  scale_x_discrete(limits=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), breaks=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), labels=c('Multiple Trts', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'P', 'N')) + 
-  scale_color_manual(values=c('blue', 'orange', 'orange', 'blue', 'dark grey', 'blue', 'blue', 'orange')) +
+(ggplot(predictionsFDisModel) + 
+    geom_line(aes(x = x, y = predicted)) +          # slope
+    geom_ribbon(aes(x = x, ymin = predicted - std.error, ymax = predicted + std.error), 
+                fill = "lightgrey", alpha = 0.5) +  # error band
+    geom_point(data = na.omit(subset(allDivRR, FDis_RR_mean<5 & trt_type2!='herb_removal' & treatment_year<50)), # adding the raw data (scaled values)
+               aes(x = treatment_year, y = FDis_RR_mean, colour = trt_type2)) + 
+    labs(x = "Treatment Year", y = "Functional Dispersion\nEffect Size")
+)
+
+FDisFig <- 
+  
+ggplot(data=na.omit(subset(allDivRR, FDis_RR_mean<5 & trt_type2!='herb_removal' & treatment_year<50)), aes(x=treatment_year, y=FDis_RR_mean, color=interaction(trt_type2, site_proj_comm)) +
+  # geom_point() +
+  geom_smooth(method='lm', formula=y~poly(x,2)) +
+  geom_smooth(method='lm', formula=y~x, aes(color=as.factor(site_proj_comm))) +
+  ylab('Functional Dispersion\nEffect Size') + xlab('Treatment Year') +
   theme(legend.position='none')
 
 
@@ -370,7 +389,7 @@ print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 ##### treatment magnitude #####
 allDivRRtrt <- allDivRR %>% 
   left_join(trt) %>% 
-  select(-treatment_year, -calendar_year) %>% 
+  select(-treatment_year, -calendar_year, -plot_id) %>% 
   unique()
 
 #N additions
@@ -573,3 +592,41 @@ print(precipMNTDFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 # # 34                     15                      3                     25                     44                      5 
 # # no effect::no effect 
 # # 462
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

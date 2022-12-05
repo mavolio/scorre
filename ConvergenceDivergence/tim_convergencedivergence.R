@@ -5,59 +5,74 @@ library(BAT)
 library(reshape2)
 library(lmerTest)
 library(ggpubr)
-
 library(vegan)
 
 
 #Read in data
-traits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/trait data/Final Cleaned Traits/Continuous_Traits/Backtrans_GapFilled_sCorre.csv")
+#traits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/trait data/Final Cleaned Traits/Continuous_Traits/Backtrans_GapFilled_sCorre.csv")
+
+
+traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv")
 
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv")
+
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv")
+corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
+corre2trykey <- unique(corre2trykey)
+cover <- left_join(cover, corre2trykey, by = "genus_species", all.x = TRUE)
 
 experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")
 
 
-#create average trait values per species
-traits <- ddply(traits,.(species_matched),
-      function(x)data.frame(
-        seed_dry_mass = mean(x$seed_dry_mass),
-        stem_spec_density = mean(x$stem_spec_density),
-        leaf_N = mean(x$leaf_N),
-        leaf_P = mean(x$leaf_P),
-        LDMC = mean(x$LDMC),
-        leaf_C = mean(x$leaf_C),
-        leaf_dry_mass = mean(x$leaf_dry_mass),
-        plant_height_vegetative = mean(x$plant_height_vegetative),
-        leaf_C.N = mean(x$leaf_C.N),
-        SLA = mean(x$SLA),
-        water_content = mean(x$water_content),
-        rooting_depth = mean(x$rooting_depth),
-        SRL = mean(x$SRL),
-        seed_number = mean(x$seed_number)
-      ))
-
+#create average trait values per species and clean outliers
+#traits <- ddply(traits,.(species_matched),
+#      function(x)data.frame(
+#        seed_dry_mass = mean(x$seed_dry_mass),
+#        stem_spec_density = mean(x$stem_spec_density),
+#        leaf_N = mean(x$leaf_N),
+#        leaf_P = mean(x$leaf_P),
+#        LDMC = mean(x$LDMC),
+#        leaf_C = mean(x$leaf_C),
+#        leaf_dry_mass = mean(x$leaf_dry_mass),
+#        plant_height_vegetative = mean(x$plant_height_vegetative),
+#        leaf_C.N = mean(x$leaf_C.N),
+#        SLA = mean(x$SLA),
+#        water_content = mean(x$water_content),
+#        rooting_depth = mean(x$rooting_depth),
+#        SRL = mean(x$SRL),
+#        seed_number = mean(x$seed_number)
+#      ))
+traits<-traits1%>%
+  select(-X.1, -X, -family, -genus, -observation)%>%
+  select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass) %>%
+  group_by(species_matched)%>%
+  summarise_all(funs(mean))%>%
+  ungroup()  %>%
+  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75)
 
 
 #standardize the scale of all the traits
 cols <- c( "seed_dry_mass", 
-            "stem_spec_density",
-           "leaf_N",
-           "leaf_P",
+           # "stem_spec_density",
+           #"leaf_N",
+           #"leaf_P",
            "LDMC",
-           "leaf_C",
-           "leaf_dry_mass",
+           #"leaf_C",
+           #"leaf_dry_mass",
            "plant_height_vegetative",
-           "leaf_C.N",
+           #"leaf_C.N",
            "SLA",
-           "water_content",
-           "rooting_depth",
-           "SRL",
-           "seed_number")
+           #"water_content",
+           "rooting_depth"#,
+           #"SRL",
+           #"seed_number"
+           )
 
 traits[cols] <- scale(traits[cols])
 
 #make the species column merge-able
-traits$species_matched <- tolower(traits$species_matched)
+#traits$species_matched <- tolower(traits$species_matched)
 
 
 
@@ -103,18 +118,24 @@ nyear <- experimentinfo[c("site_code", "project_name", "community_type", "treatm
 
 
 
-#Merge all the datasets above to create columns so subset by
+#Merge all the datasets above to create columns to subset by
+#crest <- cover %>%
+#  merge(nyear,by = c("site_code", "project_name", "community_type"), all.x = TRUE)%>%
+#  merge(lastyear, by = c("site_code", "project_name", "community_type"), all.x = TRUE)%>%
+#  merge( experimentinfo, by = c("site_code", "project_name", "community_type", "treatment", "calendar_year", "treatment_year"), all.x = TRUE)%>%
+#  merge(foctrt, by = c("site_code", "project_name", "community_type"), all.x = TRUE)%>%
+#  merge(repnum, by = c("site_code", "project_name", "community_type"), all.x = TRUE)
+
 crest <- cover %>%
-  merge(nyear,by = c("site_code", "project_name", "community_type"))%>%
-  merge(lastyear, by = c("site_code", "project_name", "community_type"))%>%
-  merge( experimentinfo, by = c("site_code", "project_name", "community_type", "treatment", "calendar_year", "treatment_year"), all.x = TRUE)%>%
-  merge(foctrt, by = c("site_code", "project_name", "community_type"), all.x = TRUE)%>%
-  merge(repnum, by = c("site_code", "project_name", "community_type"), all.x = TRUE)
+  left_join(nyear,by = c("site_code", "project_name", "community_type"))%>%
+  left_join(lastyear, by = c("site_code", "project_name", "community_type"))%>%
+  left_join( experimentinfo, by = c("site_code", "project_name", "community_type", "treatment", "calendar_year", "treatment_year"))%>%
+  left_join(repnum, by = c("site_code", "project_name", "community_type", "treatment"))
 
 
 #subset by criteria
 test <- crest %>%
-  subset(treats_wanted != "NA")%>%
+  #subset(treats_wanted != "NA")%>%
         subset( n.trt.yrs >=4)%>%
         subset(last_trt_yr == calendar_year)%>%
   subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
@@ -141,39 +162,40 @@ test <- bind_rows(N, P, irr, mult_nutrient, drought, control)
 
 #test$trt_type <- revalue(test$trt_type, c("N*P" = "mult_nutrient"))
 
-test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "genus_species", "relcov", "trt_type", "plot_mani", "treatment.x")]%>%
+test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "species_matched", "relcov", "trt_type", "plot_mani", "treatment")]%>%
         unique()
 
 
-plot.treatment <- test[c("site_code", "project_name", "community_type", "plot_id", "trt_type", "treatment.x")]%>%
+plot.treatment <- test[c("site_code", "project_name", "community_type", "plot_id", "trt_type", "treatment")]%>%
                   unique()
 plot.treatment <- tidyr::unite(plot.treatment, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
 
-df <- merge(test, traits, by.x = "genus_species", by.y = "species_matched", all.x = TRUE)
+df <- left_join(test, traits, by = "species_matched", all.x = TRUE)
 
 df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
 
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 df$ok <- complete.cases(df[,c(#"seed_dry_mass",
-  "stem_spec_density",
+  #"stem_spec_density",
   #"leaf_N",
   #"leaf_P",
   "LDMC",
   "plant_height_vegetative",
   "SLA",
-  "rooting_depth"
+  "rooting_depth",
+  "seed_dry_mass"
   #"leaf_C.N"
                               )])
 df <- subset(df, ok == TRUE)
 
-length(unique(df$genus_species))
+length(unique(df$species_matched))
 
 ########################
 ##Summarize sites being used
 
 sites <- test%>%
-  dplyr::select(site_code, project_name, community_type, treatment_year, trt_type, treatment.x)%>%
+  dplyr::select(site_code, project_name, community_type, treatment_year, trt_type, treatment)%>%
           unique()%>%
           subset(trt_type != "control")
           
@@ -200,10 +222,10 @@ for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(kevin, expgroup == expgroup_vector[i])
 
   temp.wide <- temp.df%>%
-                  pivot_wider(names_from = genus_species, values_from = relcov, values_fill = 0)
+                  pivot_wider(names_from = species_matched, values_from = relcov, values_fill = 0)
   temp.distances <- vegdist(temp.wide[10:ncol(temp.wide)], method = "bray")
   temp.mod <- betadisper(temp.distances, group = temp.wide$trt_type, type = "centroid")
-  distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment.x, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist)
+  distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist)
   distances_master <- rbind(distances_master, distances_temp )
   rm(temp.df, temp.wide, temp.distances, temp.mod, distances_temp)
 }
@@ -228,13 +250,16 @@ lrr.df.conf <- lrr.df%>%
                   num_experiments = length(x$expgroup)
                 ))
 
-ggplot(lrr.df.conf, aes(trt_type, lrr.mean))+
+lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "N", "P", "mult_nutrient"))
+
+ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   #geom_point()+
   #geom_errorbar(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error))+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
-  geom_hline(yintercept = 0, size = 1)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   xlab("")+
-  ylab("Bray-Curtis LRR Distance between plots within sites")+
+  ylab("Species composition LRR distance between plots within treatment")+
+  scale_color_manual(values = c("#df0000","#0099f6","#00b844","#f2c300","#6305dc"))+
   theme_bw()
 
 lrr.df_species <- lrr.df
@@ -287,11 +312,11 @@ for(i in 1:length(expgroup_vector)) {
 
 tdistances_full        <-   tdistances_master%>%
   merge(plot.treatment, by.x = c("Var1"), by.y = c("rep"))%>%
-  dplyr::select(Var1, Var2, Freq, trt_type, treatment.x)%>%
-  dplyr::rename(c(trt_type.1 = trt_type, treatment.1 = treatment.x))%>%
+  dplyr::select(Var1, Var2, Freq, trt_type, treatment)%>%
+  dplyr::rename(c(trt_type.1 = trt_type, treatment.1 = treatment))%>%
   merge(plot.treatment, by.x = "Var2", by.y = "rep")%>%
-    dplyr::select(Var2, Var2, Freq, trt_type.1, treatment.1, trt_type, treatment.x, site_code, project_name, community_type )%>%
-  dplyr::rename(c(trt_type.2 = trt_type, treatment.2 = treatment.x))%>%
+    dplyr::select(Var2, Var2, Freq, trt_type.1, treatment.1, trt_type, treatment, site_code, project_name, community_type )%>%
+  dplyr::rename(c(trt_type.2 = trt_type, treatment.2 = treatment))%>%
   unite( expgroup, c("site_code", "project_name", "community_type"), sep = "::", remove = TRUE)%>%
   dplyr::filter(trt_type.1 == trt_type.2)
 
@@ -310,8 +335,8 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.trt/dist.con)
 
-#lrr.df_traits <- read.csv("~/lrr.df_traits.csv")
-lrr.df_traits <- lrr.df
+lrr.df_traits <- read.csv("~/lrr.df_traits5.csv")
+#lrr.df_traits <- lrr.df
 
 lrr.df.conf <- lrr.df_traits%>%
   ddply(.(trt_type.1), function(x)data.frame(
@@ -322,19 +347,23 @@ lrr.df.conf <- lrr.df_traits%>%
 lrr.df.conf$lrr.min <- lrr.df.conf$lrr.mean - lrr.df.conf$lrr.error
 lrr.df.conf$lrr.max <- lrr.df.conf$lrr.mean + lrr.df.conf$lrr.error
 
-ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean))+
+
+lrr.df.conf$trt_type.1 <- factor(lrr.df.conf$trt_type.1, levels = c("drought", "irr", "N", "P", "mult_nutrient"))
+
+ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean, color = trt_type.1))+
   #geom_point()+
   #geom_errorbar(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error))+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
-  geom_hline(yintercept = 0, size = 1)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   xlab("")+
-  ylab("Trait space LRR Distance between plots within sites")+
+  ylab("Trait composition LRR distance between plots within treatment")+
+  scale_color_manual(values = c("#df0000","#0099f6","#00b844","#f2c300","#6305dc"))+
   theme_bw()
 
 
 
 
-write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits5.csv")
+#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits5.csv")
 
 #############################################
 ###########################################
@@ -357,6 +386,7 @@ ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
   geom_smooth(aes( color = trt_type), method = "lm")+
   theme_bw()
 
+lrr_comparison$trt_type <- factor(lrr_comparison$trt_type, levels = c("drought", "irr", "N", "P", "mult_nutrient"))
 
 ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
@@ -366,6 +396,7 @@ ggplot(lrr_comparison, aes(lrr.species, lrr.traits))+
   geom_vline(xintercept = 0)+
   xlab("LRR species composition")+
   ylab("LRR trait composition")+
+  scale_color_manual(values = c("#df0000","#0099f6","#00b844","#f2c300","#6305dc"))+
   theme_bw()+
   theme(legend.position="none")
 
@@ -408,8 +439,8 @@ test_w0_master <- {}
 
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(test, expgroup == expgroup_vector[i])
-  temp.wide <- pivot_wider(temp.df, names_from = genus_species, values_from = relcov, values_fill = 0)
-  temp.test_w0 <- pivot_longer(temp.wide, cols = 10:ncol(temp.wide), names_to = "genus_species", values_to = "cover")
+  temp.wide <- pivot_wider(temp.df, names_from = species_matched, values_from = relcov, values_fill = 0)
+  temp.test_w0 <- pivot_longer(temp.wide, cols = 10:ncol(temp.wide), names_to = "species_matched", values_to = "cover")
   
   
   test_w0_master <- rbind(test_w0_master, temp.test_w0 )
@@ -420,10 +451,10 @@ for(i in 1:length(expgroup_vector)) {
 }
 
 site.df <- test_w0_master%>%
-            ddply(.(expgroup, site_code, project_name, community_type, treatment_year, trt_type, plot_mani, treatment.x, genus_species), function(x)data.frame( cover = mean(x$cover)))
+            ddply(.(expgroup, site_code, project_name, community_type, treatment_year, trt_type, plot_mani, treatment, species_matched), function(x)data.frame( cover = mean(x$cover)))
 
 #start editing here
-site.traits <- merge(site.df, traits, by.x = "genus_species", by.y = "species_matched", all.x = TRUE)
+site.traits <- merge(site.df, traits, by.x = "species_matched", by.y = "species_matched", all.x = TRUE)
 
 site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community_type", "trt_type", "treatment.x"), sep = "::", remove = FALSE)
 
@@ -500,7 +531,7 @@ tdistances_full        <-   tdistances_master%>%
 
 
 #write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full5.csv")
-#tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full5.csv")
+tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full5.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
 
@@ -543,12 +574,15 @@ finalframe.irr <- explist.irr%>%
 mod <- lm(Freq~trt_type, data = finalframe.mult_nutrient)
 summary(mod)  
 
-ggplot(finalframe.mult_nutrient, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.mult_nutrient, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Multiple nutrients ")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#6305dc"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 ggplot(finalframe.mult_nutrient, aes(trt_type, Freq, color = trt_type))+
@@ -572,12 +606,15 @@ ggplot(finalframe.mult_nutrient, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.drought)
 summary(mod)  
 
-ggplot(finalframe.drought, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.drought, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Drought")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#df0000"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 ggplot(finalframe.drought, aes(trt_type, Freq))+
@@ -603,12 +640,15 @@ ggplot(finalframe.drought, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.P)
 summary(mod)  
 
-ggplot(finalframe.P, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.P, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Phosphorus")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#f2c300"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 hist(subset(finalframe.P, trt_type == "P")$Freq)
@@ -629,12 +669,15 @@ ggplot(finalframe.P, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.N)
 summary(mod)
 
-ggplot(finalframe.N, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.N, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Nitrogen")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#00b844"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
     theme_bw()
 
 hist(subset(finalframe.N, trt_type == "N")$Freq)
@@ -654,12 +697,15 @@ ggplot(finalframe.N, aes(Freq, color = trt_type))+
 mod <- lm(Freq~trt_type, data = finalframe.irr)
 summary(mod)
 
-ggplot(finalframe.irr, aes(trt_type, Freq))+
-  geom_boxplot()+
+ggplot(finalframe.irr, aes(trt_type, Freq, fill = trt_type))+
+  geom_boxplot(alpha = 0.75)+
   #stat_compare_means(method = "t.test")+
   ylab("Trait distance between sites")+
   ggtitle("Irrigation")+
   xlab("")+
+  scale_fill_manual(values = c("grey","#0099f6"))+
+  ylim(0,4)+
+  guides(fill = FALSE)+
   theme_bw()
 
 hist(subset(finalframe.irr, trt_type == "irr")$Freq)

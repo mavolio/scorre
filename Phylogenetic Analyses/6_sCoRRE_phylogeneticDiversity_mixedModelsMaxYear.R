@@ -287,10 +287,14 @@ allDivRR <- allDivTrt %>%
   left_join(control) %>%
   mutate(mpd_diff=((mpd.ses-mpd.ses_ctl_mean)/mpd.ses_ctl_mean), mntd_diff=((mntd.ses-mntd.ses_ctl_mean)/mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean)) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))  %>% 
-  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
-  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR), list(mean=mean), na.rm=T)  %>%
-  ungroup()
-
+  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2) %>%
+  mutate(max_year=ifelse(treatment_year==max(treatment_year), 1, 0)) %>% 
+  ungroup() %>% 
+  filter(max_year==1) #%>% 
+  # group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2) %>% 
+  # summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, richness_RR), list(mean=mean), na.rm=T)  %>%
+  # ungroup()
+  
 
 # ##### treatment responses by env drivers - no strong trends #####
 # allDivRRenv <- allDivRR  %>% 
@@ -321,8 +325,8 @@ library(grid)
 
 options(contrasts=c('contr.sum','contr.poly')) 
 
-summary(FDisModel <- lme(FDis_RR_mean ~ as.factor(trt_type2),
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<5 & trt_type2!='herb_removal')),
+summary(FDisModel <- lme(FDis_RR ~ as.factor(trt_type2),
+                         data=na.omit(subset(allDivRR, FDis_RR<5 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(FDisModel, type='sequential')
 meansFDisModel <- emmeans(FDisModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -339,7 +343,7 @@ FDisFig <- ggplot(data=meansFDisModelOutput, aes(x=trt_type2, y=emmean, color=tr
   theme(legend.position='none')
 
 
-summary(MNTDModel <- lme(mntd_diff_mean ~ as.factor(trt_type2),
+summary(MNTDModel <- lme(mntd_diff ~ as.factor(trt_type2),
                          data=na.omit(subset(allDivRR, trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(MNTDModel, type='sequential')
@@ -370,7 +374,7 @@ print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 ##### treatment magnitude #####
 allDivRRtrt <- allDivRR %>% 
   left_join(trt) %>% 
-  select(-treatment_year, -calendar_year) %>% 
+  select(-treatment_year, -calendar_year, -plot_id) %>% 
   unique()
 
 #N additions
@@ -573,3 +577,41 @@ print(precipMNTDFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 # # 34                     15                      3                     25                     44                      5 
 # # no effect::no effect 
 # # 462
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
