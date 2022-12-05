@@ -59,7 +59,7 @@ contTraits<-contTraits1%>%
 catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\sCoRRE categorical trait data_final_20211209.csv') %>% 
   select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
   filter(growth_form!="moss",species_matched!="", growth_form!="lycophyte") %>% 
-  mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="facultative_AM"|mycorrhizal_type=="facultative_AM_EcM", "facultative", ifelse(mycorrhizal_type=="uncertain", "unk", "yes")))) %>% 
+  mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
   select(-mycorrhizal_type) %>% 
   mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
   select(-photosynthetic_pathway)
@@ -216,16 +216,16 @@ toplot.hgt<-plot.hght%>%
 
 
 toplot<-toplot.SLA%>%
-  bind_rows(toplot.SM, toplot.RD, toplot.LDMC, toplot.hgt)
-
-colnames(toplot)[2] <- "SE"
-
-toplot$trt_type2=factor(toplot$trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))
+  bind_rows(toplot.SM, toplot.RD, toplot.LDMC, toplot.hgt) %>% 
+  rename(SE="Std. Error") %>% 
+  mutate(trt_type2=factor(trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
+  mutate(min=Estimate-SE, max=Estimate+SE) %>% 
+  mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", "")))
 
 #gave up here trying to nicely label figures
-trt.labels=c("CO2", "Drt", "Irg", "Temp", "N", "P", "Nutrients", "Interacting")
+trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Nutrients","all mult" ="Interact.")
 
-ggplot(data=toplot, aes(y=Estimate, x=1))+
+ggplot(data=toplot, aes(y=Estimate, x=1, label=sig))+
   geom_point()+
   geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
   coord_flip()+
@@ -233,7 +233,8 @@ ggplot(data=toplot, aes(y=Estimate, x=1))+
   xlab("")+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
-  facet_grid(trt_type2~trait, scales="free", labeller = labeller(trt_type2=trt.labels))
+  geom_text(nudge_x = 0.2, nudge_y = 0.01, size=10, color="red")+
+  facet_grid(trt_type2~trait, labeller = labeller(trt_type2=trt.labels))
 
 
 ####Categorical data
@@ -294,7 +295,30 @@ plot.myc<-as.data.frame(emmeans(mmyc, ~ value*trt_type2))%>%
 toplot.cat<-plot.mpp%>%
   bind_rows(plot.ml, plot.mgf, plot.mc, plot.nf, plot.myc)
 
-toplotesacat<-toplot.cat
+toplotesacat<-toplot.cat %>% 
+  mutate(trt_type3=factor(trt_type2, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
+  mutate(value2=paste(trait, value, sep="_" )) %>% 
+  mutate(min=emmean-SE, max=emmean+SE) %>% 
+  mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", ""))) %>% 
+  mutate(Trait_name=ifelse(value2=='Clonal_no', "Non-Clonal", ifelse(value2=='Clonal_yes', 'Clonal', ifelse(value2=='lifespan_annual', 'Annual', ifelse(value2=='lifespan_perennial', 'Perennial', ifelse(value2=='Myc_yes', 'Mycorr.', ifelse(value2=='Myc_no', 'Non-Mycorr.', ifelse(value2=='Nfix_yes', 'N-Fixer', ifelse(value2=='photo_path_C3', "C3", ifelse(value2=='photo_path_C4', 'C4', "TODO")))))))))) %>% 
+  mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA'))) %>% 
+  na.omit()
+
+  trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Nutrients","all mult" ="Interact.")
+  ##all cat in one fig
+
+ggplot(data=toplotesacat, aes(y=emmean, x=1, label=sig))+
+  geom_point()+
+  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0.05)+
+  scale_y_continuous(breaks = c(-0.05, 0, 0.05))+
+  coord_flip()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank())+
+  xlab("")+
+  ylab("Estimate")+
+  scale_x_continuous(limits=c(0, 2))+
+  geom_hline(yintercept=0, linetype="dashed")+
+  geom_text(nudge_x = 0.2, nudge_y = 0.01, size=10, color="red")+
+  facet_grid(trt_type3~Traits2, labeller = labeller(trt_type3=trt.labels))
 
 ##for now need to subset out each cat trait one by one
 ggplot(data=subset(toplotesacat, trait=="lifespan"), aes(y=emmean, x=1))+
