@@ -188,6 +188,7 @@ df$ok <- complete.cases(df[,c(#"seed_dry_mass",
   #"leaf_C.N"
                               )])
 df <- subset(df, ok == TRUE)
+df <- subset(df, species_matched != "NA")
 
 length(unique(df$species_matched))
 
@@ -213,6 +214,11 @@ sites <- unite(sites, temp, c("project_name", "community_type"), sep = "::", rem
 #For each treatment at each site, pull the treatment and control data, spread, calculate distance matrix, then betadisper 
 
 kevin <- unite(test, expgroup, c("site_code", "project_name", "community_type"), remove = FALSE, sep = "::" )
+kevin <- subset(kevin, species_matched != "NA")%>%
+        ddply(.(expgroup, site_code, project_name, community_type, treatment_year, plot_id, species_matched, trt_type, plot_mani, treatment),
+              function(x)data.frame(
+                relcov = sum(x$relcov)
+              ))
 
 expgroup_vector <- unique(kevin$expgroup)
 
@@ -283,7 +289,7 @@ hv_func <- function(x) {
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(df, expgroup == expgroup_vector[i])
   temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
-    "stem_spec_density",
+    "seed_dry_mass",
     #"leaf_N",
     #"leaf_P",
     "LDMC",
@@ -335,7 +341,7 @@ lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.trt/dist.con)
 
-lrr.df_traits <- read.csv("~/lrr.df_traits5.csv")
+lrr.df_traits <- read.csv("~/lrr.df_traits6.csv")
 #lrr.df_traits <- lrr.df
 
 lrr.df.conf <- lrr.df_traits%>%
@@ -363,7 +369,7 @@ ggplot(lrr.df.conf, aes(trt_type.1, lrr.mean, color = trt_type.1))+
 
 
 
-#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits5.csv")
+#write.csv(lrr.df_traits, "C:/Users/ohler/Documents/lrr.df_traits6.csv")
 
 #############################################
 ###########################################
@@ -438,14 +444,18 @@ test_w0_master <- {}
 
 
 for(i in 1:length(expgroup_vector)) {
-  temp.df <- subset(test, expgroup == expgroup_vector[i])
+  temp.df1 <- subset(test, expgroup == expgroup_vector[i])
+  temp.df <- ddply(temp.df1, .(site_code, expgroup, project_name, community_type, treatment_year, plot_id, species_matched, trt_type, plot_mani, treatment),
+                   function(x)data.frame(
+                     relcov = sum(x$relcov)
+                   ))
   temp.wide <- pivot_wider(temp.df, names_from = species_matched, values_from = relcov, values_fill = 0)
   temp.test_w0 <- pivot_longer(temp.wide, cols = 10:ncol(temp.wide), names_to = "species_matched", values_to = "cover")
   
   
   test_w0_master <- rbind(test_w0_master, temp.test_w0 )
   
-  rm(temp.df, temp.wide,temp.test_w0)
+  rm(temp.df1,temp.df, temp.wide,temp.test_w0)
 
   
 }
@@ -456,12 +466,13 @@ site.df <- test_w0_master%>%
 #start editing here
 site.traits <- merge(site.df, traits, by.x = "species_matched", by.y = "species_matched", all.x = TRUE)
 
-site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community_type", "trt_type", "treatment.x"), sep = "::", remove = FALSE)
+site.traits <- unite(site.traits, rep, c("site_code", "project_name", "community_type", "trt_type", "treatment"), sep = "::", remove = FALSE)
 
 #df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
-site.traits$ok <- stats::complete.cases(site.traits[,c(#"seed_dry_mass",
-  "stem_spec_density",
+site.traits$ok <- stats::complete.cases(site.traits[,c(
+  "seed_dry_mass",
+  #"stem_spec_density",
   #"leaf_N",
   #"leaf_P",
   "LDMC",
@@ -491,8 +502,9 @@ hv_func <- function(x) {
 
 for(i in 1:length(trt_type_vector)) {
   temp.df <- subset(site.traits, trt_type == trt_type_vector[i])
-  temp.hv_split <- base::split(temp.df[,c(#"seed_dry_mass",
-    "stem_spec_density",
+  temp.hv_split <- base::split(temp.df[,c(
+    "seed_dry_mass",
+    #"stem_spec_density",
     #"leaf_N",
     #"leaf_P",
     "LDMC",
@@ -530,8 +542,8 @@ tdistances_full        <-   tdistances_master%>%
   dplyr::select(exp_pair, Freq, trt_type)
 
 
-#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full5.csv")
-tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full5.csv")
+#write.csv(tdistances_full, "C:/Users/ohler/Documents/tdistances_full6.csv")
+tdistances_full <- read.csv("C:/Users/ohler/Documents/tdistances_full6.csv")
 
 explist.mult_nutrient <- data.frame(exp_pair = unique(tdistances_full$exp_pair[tdistances_full$trt_type %in% "mult_nutrient"]))
 
