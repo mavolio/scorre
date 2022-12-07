@@ -222,7 +222,6 @@ toplot<-toplot.SLA%>%
   mutate(min=Estimate-SE, max=Estimate+SE) %>% 
   mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", "")))
 
-#gave up here trying to nicely label figures
 trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Nutrients","all mult" ="Interact.")
 
 ggplot(data=toplot, aes(y=Estimate, x=1, label=sig))+
@@ -265,13 +264,13 @@ summary(ml)
 plot.ml<-as.data.frame(emmeans(ml, ~ value*trt_type2)) %>% 
   mutate(trait="lifespan")
 
-#growth form
-mgf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"&value!="cactus"))
-summary(mgf)
-
-plot.mgf<-as.data.frame(emmeans(mgf, ~ value*trt_type2)) %>% 
-  mutate(trait="growth_form")
-
+# #growth form
+# mgf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"&value!="cactus"))
+# summary(mgf)
+# 
+# plot.mgf<-as.data.frame(emmeans(mgf, ~ value*trt_type2)) %>% 
+#   mutate(trait="growth_form")
+# 
 ###clonaltiy
 mc<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="clonal"&value!='uncertain'))
 
@@ -293,7 +292,7 @@ plot.myc<-as.data.frame(emmeans(mmyc, ~ value*trt_type2))%>%
 
 
 toplot.cat<-plot.mpp%>%
-  bind_rows(plot.ml, plot.mgf, plot.mc, plot.nf, plot.myc)
+  bind_rows(plot.ml, plot.mc, plot.nf, plot.myc)
 
 toplotesacat<-toplot.cat %>% 
   mutate(trt_type3=factor(trt_type2, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
@@ -342,25 +341,26 @@ ggplot(data=ESA, aes(y=Estimate, x=1))+
   facet_grid(Trt~trait, scales="free")
 
 ####making figures of it all together
-toplot.cat2<-toplot.cat %>% 
+toplot.cat2<-toplotesacat %>% 
   filter(trait!="growth_form") %>% 
     mutate(value2=paste(trait, value, sep="_" )) %>% 
   select(-trait) %>% 
   rename(trait=value2, trt_type=trt_type2, Estimate=emmean) %>% 
-  filter(trait!="growth_form"&trait!="Nfix_no"&trait!='Myc_yes'&trait!='lifespan_biennial'&trait!='photo_path_CAM') %>% 
+  filter(trait!="growth_form"&trait!="Nfix_no"&trait!='lifespan_biennial'&trait!='photo_path_CAM') %>% 
   select(-asymp.LCL, -asymp.UCL, -df, -value)
 
 toplot.cont<-toplot %>% 
   select(-"t value")
          
 alltraitmodels<-toplot.cont %>% 
+  mutate(Trait_name=trait) %>% 
+  rename(trt_type3=trt_type2) %>% 
   bind_rows(toplot.cat2) %>% 
-  mutate(Trait_name=ifelse(trait=='Clonal_no', "Non-Clonal", ifelse(trait=='Clonal_yes', 'Clonal', ifelse(trait=='lifespan_annual', 'Annual', ifelse(trait=='lifespan_perennial', 'Perennial', ifelse(trait=='Myc_facultative', 'Mycorrhizal', ifelse(trait=='Myc_no', 'Non-Mycorrhizal', ifelse(trait=='Nfix_yes', 'Nitrogen Fixer', ifelse(trait=='photo_path_C3', "C3", ifelse(trait=='photo_path_C4', 'C4', ifelse(trait=='PlantHeight', 'Plant Height', trait))))))))))) %>% 
-  mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorrhizal', 'Non-Mycorrhizal', 'Nitrogen Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA')))
+  mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'PlantHeight', 'Rooting Depth', 'Seed Mass', 'SLA')))
 
 
-theme_set(theme_bw(16))
-ggplot(data=subset(alltraitmodels), aes(y=Estimate, x=1))+
+theme_set(theme_bw(20))
+ggplot(data=subset(alltraitmodels, trt_type3=="all mult"&Trait_name=="Annual"| trt_type3=="all mult"&Trait_name=="Mycorr."| trt_type3=="all mult"&Trait_name=="Non-Clonal"| trt_type3=="all mult"&Trait_name=="PlantHeight"| trt_type3=="all mult"&Trait_name=="C3"| trt_type3=="all mult"&Trait_name=="Rooting Depth"), aes(y=Estimate, x=1))+
   geom_point()+
   geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
   coord_flip()+
@@ -368,7 +368,7 @@ ggplot(data=subset(alltraitmodels), aes(y=Estimate, x=1))+
   xlab("")+
   scale_x_continuous(limits=c(0, 2))+
   geom_hline(yintercept=0, linetype="dashed")+
-  facet_grid(trt_type~Traits2, scales="free")
+  facet_wrap(~Traits2)
 
 
 ###trying to do a multiple regression
@@ -399,7 +399,7 @@ str(combined) #check categorial variables are factors
 ##just putting in each model what came out significant in previous analyses
 
 ##co2 model
-mCO2<-lm(diff~SLA+plant_height_vegetative+rooting_depth+seed_dry_mass+photo_path2+n_fixation, data=subset(combined, trt_type2=="co2"))
+mCO2<-lm(diff~SLA+plant_height_vegetative+rooting_depth+photo_path2+n_fixation, data=subset(combined, trt_type2=="co2"))
 
 summary(mCO2)
 calc.relimp(mCO2)
@@ -417,7 +417,7 @@ summary(mdrt)
 calc.relimp(mdrt)
 
 ##irrigation
-mirg<-lm(diff~seed_dry_mass+plant_height_vegetative+clonal+lifespan2+photo_path2+mycorrhizal, data=subset(combined, trt_type2=="irrigation"))
+mirg<-lm(diff~seed_dry_mass+plant_height_vegetative+clonal+lifespan2+photo_path2, data=subset(combined, trt_type2=="irrigation"))
 
 summary(mirg)
 calc.relimp(mirg)
@@ -430,17 +430,21 @@ summary(mtemp)
 calc.relimp(mtemp)
 
 ##P
-mP<-lm(diff~seed_dry_mass+SLA+clonal+lifespan2+photo_path2+mycorrhizal, data=subset(combined, trt_type2=="p"))
+mP<-lm(diff~seed_dry_mass+SLA+clonal+n_fixation+mycorrhizal, data=subset(combined, trt_type2=="p"))
 
 summary(mP)
 calc.relimp(mP)
 
-
-#all int
-mAll<-lm(diff~SLA+LDMC+seed_dry_mass+clonal+lifespan2+photo_path2+mycorrhizal+n_fixation, data=subset(combined, trt_type2=="all mult"))
+#all nuts
+mAll<-lm(diff~SLA+rooting_depth+plant_height_vegetative+clonal+lifespan2+photo_path2+mycorrhizal, data=subset(combined, trt_type2=="allnuts"))
 
 summary(mAll)
 calc.relimp(mAll)
+#all int
+mnuts<-lm(diff~SLA+rooting_depth+plant_height_vegetative+clonal+lifespan2+photo_path2+mycorrhizal+n_fixation, data=subset(combined, trt_type2=="multnuts"))
+
+summary(mnuts)
+calc.relimp(mnuts)
 
 
 
