@@ -124,8 +124,12 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   relcov_only_temp <- relcov_wide_temp %>%
     dplyr::select(-site_code:-version) 
   
-  row.names(relcov_only_temp) <- paste(plot_info_temp$calendar_year, plot_info_temp$plot_id, sep="::")
+  # change to dataframe from tibble 
+  relcov_only_temp <- as.data.frame(relcov_only_temp)
   
+  # add rownames 
+  row.names(relcov_only_temp) <- paste(plot_info_temp$calendar_year, plot_info_temp$plot_id, sep="::")
+
   #dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
   traits_df_temp <- traits_df_raw_temp %>%
     arrange(species_matched) %>%
@@ -134,19 +138,22 @@ for(PROJ in 1:length(site_proj_comm_vector)){
     mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
     select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, seed_dry_mass, stem_spec_density, leaf_N, leaf_P, LDMC, leaf_C, leaf_dry_mass, plant_height_vegetative, leaf_C.N, SLA, water_content, rooting_depth, seed_number)
 
+  # change to dataframe from tibble 
+  traits_df_temp <- as.data.frame(traits_df_temp)
+  
   #changing all categorical traits to factors
-  traits_df_temp$growth_form <- as.factor(traits_df_temp$growth_form)
-  traits_df_temp$photosynthetic_pathway <- as.factor(traits_df_temp$photosynthetic_pathway)
-  traits_df_temp$lifespan <- as.factor(traits_df_temp$lifespan)
-  traits_df_temp$clonal <- as.factor(traits_df_temp$clonal)
-  traits_df_temp$mycorrhizal_type <- as.factor(traits_df_temp$mycorrhizal_type)
-  traits_df_temp$n_fixation <- as.factor(traits_df_temp$n_fixation)
+  traits_df_temp[,c(1:6)] <- lapply(traits_df_temp[,c(1:6)], as.factor)
+  
+  #changing all continuous to numerical (looked like these were read in as matrices?)
+  #seemed to solve the issue because FD:dbDF works now 
+  traits_df_temp[,c(7:19)] <- lapply(traits_df_temp[,c(7:19)], as.numeric)
   
   #create distance matrix for incorporation into dbFD function
-  gowdis_temp <- gowdis(traits_df_temp) #broken needs fixing
+  #this isn't needed... MG 
+  #gowdis_temp <- gowdis(traits_df_temp) #broken needs fixing
   
   ### Calculate functional diversity metrics -- had to use Cailliez correlations becuase Euclidean distances could be calculated
-  FD_temp <- dbFD(x=gowdis_temp, a=relcov_only_temp, cor="cailliez", calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
+  FD_temp <- dbFD(x=traits_df_temp, a=relcov_only_temp, cor="cailliez", calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
   
   FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
     mutate(year_plotid = row.names(.)) %>%
