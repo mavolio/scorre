@@ -336,6 +336,7 @@ dev.off()
 ###
 
 dat<-subset(species.data, trt_type2=="n")[,c(1,2)] #select "all mult" treatment from original data
+dat<-sample_n(dat, 240)
 dat<-aggregate(dat[, 2], list(dat$species_matched), mean, na.rm=T) #get mean DCi value per species
 dat<-dat[dat$Group.1 %in% tree$tip.label, ] #make sure all species in the data are on the tree
 rownames(dat)<-dat$Group.1 #set species names as rownames
@@ -347,11 +348,11 @@ tree2<-keep.tip(tree, rownames(dat))
 
 ###
 # Run function to calculate if each node has significantly higher or lower mean DCi than
-# expected if phylogenetic relationships were at random (laod function in the "DCi_nodes_scorre.R" script)
+# expected if phylogenetic relationships were at random (load function in the "DCi_nodes_scorre.R" script)
 ###
 
 res<-node.mean(tree2, dat, 999)
-write.table(res, paste(my.wd, "res_phylo_n.csv", sep="")) #save the result
+#write.table(res, paste(my.wd, "res_phylo_n.csv", sep="")) #save the result
 res<-read.table(paste(my.wd, "res_phylo_n.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
@@ -411,6 +412,8 @@ famf<-join(famf,list.nod)
 ###
 # Plot phylogenetic tree hihglighting nodes and families
 ###
+
+##you can pick up big patterns with fewer species.
 
 #get vector with names of families containing more species:
 toplot<-as.character(head(famf$Var1, n=38)) #select the top 38 families with 5 or more species
