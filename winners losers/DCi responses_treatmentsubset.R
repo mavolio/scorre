@@ -376,6 +376,11 @@ Fulldataset<-allmult_mean%>%
 
 write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Nov2022.csv", sep=""), row.names=F)
 
+###checking normality of DCI values
+ggplot(data=Fulldataset, aes(x=ave_diff))+
+  geom_histogram()+
+  facet_wrap(~trt_type2)
+
 #figure
 aves<-Fulldataset%>%
   group_by(trt_type2)%>%
