@@ -1579,3 +1579,5 @@ grid.text("(High DCi)", x = unit(0.725, "npc"), y = unit(0.06, "npc"), gp=gpar(f
 grid.text("(Low DCi)", x = unit(0.35, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 dev.off()
 
+#clean-up:
+rm(list = ls())
