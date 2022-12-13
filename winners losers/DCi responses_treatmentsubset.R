@@ -9,7 +9,8 @@ library(gridExtra)
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
-
+my.wd <- "C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\"
+  
 #read in the data
 
 #raw abundance data and drop pretreatment years
@@ -375,6 +376,11 @@ Fulldataset<-allmult_mean%>%
   bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 
 write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Nov2022.csv", sep=""), row.names=F)
+
+###checking normality of DCI values
+ggplot(data=Fulldataset, aes(x=ave_diff))+
+  geom_histogram()+
+  facet_wrap(~trt_type2)
 
 #figure
 aves<-Fulldataset%>%
