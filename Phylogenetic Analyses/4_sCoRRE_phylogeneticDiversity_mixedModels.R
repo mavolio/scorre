@@ -1,5 +1,5 @@
 ################################################################################
-##  sCoRRE_phylogeneticDiversity_causalModels.R: Examining differences in phylogenetic and functional diversity with causal modeling of the CoRRE database.
+##  sCoRRE_phylogeneticDiversity_mixedModels.R: Examining differences in phylogenetic and functional diversity within the CoRRE database.
 ##
 ##  Author: Kimberly Komatsu
 ##  Date created: December 13, 2021
@@ -113,9 +113,9 @@ allDiv <- pDiv %>% #phylogenetic metrics
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
   mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='::')) %>%
   mutate(site_proj_comm_trt=paste(site_proj_comm, treatment, sep='::')) %>% 
-  select(site_code, project_name, community_type, site_proj_comm, site_proj_comm_trt, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp) %>%
-  filter(!(site_proj_comm %in% c('DL::NSFC::0', 'Naiman::Nprecip::0', 'DCGS::gap::0', 'Sil::NA::NA', 'SORBAS::NA::NA'))) %>%  #remove problem expts until they are fixed
-  filter(!(site_code %in% c('SERC', 'CAR', 'PIE', 'NANT'))) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
+  select(site_code, project_name, community_type, site_proj_comm, site_proj_comm_trt, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp) # %>%
+  # filter(!(site_proj_comm %in% c('DL::NSFC::0', 'Naiman::Nprecip::0', 'DCGS::gap::0', 'Sil::NA::NA', 'SORBAS::NA::NA'))) %>%  #remove problem expts until they are fixed
+  # filter(!(site_code %in% c('SERC', 'CAR', 'PIE', 'NANT'))) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
 
 #selecting relevant treatments for analysis (high resource, high stress)
 trt_analysis <- trt %>%
@@ -178,6 +178,9 @@ library(PerformanceAnalytics)
 chart.Correlation(allDivRR[8:12])
 
 
+hist(allDivRR$FDis_RR_mean)
+hist(allDivRR$RaoQ_RR_mean)
+
 
 ##### mixed effects model #####
 #NOTE: these models do not account for biotic or abiotic env drivers at a site or for trt magnitude (but do include a random effect of site)
@@ -209,7 +212,7 @@ FDisFig <- ggplot(data=meansFDisModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 summary(RaoQModel <- lme(RaoQ_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<5 & trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, RaoQ_RR_mean<13 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(RaoQModel, type='sequential')
 meansRaoQModel <- emmeans(RaoQModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -228,7 +231,7 @@ RaoQFig <- ggplot(data=meansRaoQModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 summary(MNTDModel <- lme(mntd_diff_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, mntd_diff_mean<4 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(MNTDModel, type='sequential')
 meansMNTDModel <- emmeans(MNTDModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -247,7 +250,7 @@ MNTDFig <- ggplot(data=meansMNTDModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 pushViewport(viewport(layout=grid.layout(1,2)))
-print(RaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(FDisFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 #export at 1000x500
 
