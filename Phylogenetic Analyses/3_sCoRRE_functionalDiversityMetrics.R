@@ -27,11 +27,12 @@ se <- function(x, na.rm=na.rm){
 
 # continuous trait data
 contTraits <- read.csv('CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')%>%
-  select(-X.1, -X, -family, -genus, -observation)%>%
+  select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)%>%
   group_by(species_matched)%>%
   summarise_all(funs(mean))%>%
   ungroup()%>%
-  mutate_at(vars(seed_dry_mass:seed_number), scale) #scale continuous traits
+  mutate_at(vars(LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
+colnames(contTraits) <- c('species_matched', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass')
 
 traitsAll <- read.csv('CoRRE data\\trait data\\sCoRRE categorical trait data_11302021.csv')%>% #categorical trait data
   full_join(contTraits) %>% #merge continuous and categorical traits
@@ -136,7 +137,7 @@ for(PROJ in 1:length(site_proj_comm_vector)){
     column_to_rownames("species_matched") %>%
     dplyr::select(-family) %>%
     mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
-    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, seed_dry_mass, stem_spec_density, leaf_N, leaf_P, LDMC, leaf_C, leaf_dry_mass, plant_height_vegetative, leaf_C.N, SLA, water_content, rooting_depth, seed_number)
+    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
 
   # change to dataframe from tibble 
   traits_df_temp <- as.data.frame(traits_df_temp)
@@ -144,13 +145,8 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   #changing all categorical traits to factors
   traits_df_temp[,c(1:6)] <- lapply(traits_df_temp[,c(1:6)], as.factor)
   
-  #changing all continuous to numerical (looked like these were read in as matrices?)
-  #seemed to solve the issue because FD:dbDF works now 
-  traits_df_temp[,c(7:19)] <- lapply(traits_df_temp[,c(7:19)], as.numeric)
-  
-  #create distance matrix for incorporation into dbFD function
-  #this isn't needed... MG 
-  #gowdis_temp <- gowdis(traits_df_temp) #broken needs fixing
+  #changing all continuous to numerical
+  traits_df_temp[,c(7:11)] <- lapply(traits_df_temp[,c(7:11)], as.numeric)
   
   ### Calculate functional diversity metrics -- had to use Cailliez correlations becuase Euclidean distances could be calculated
   FD_temp <- dbFD(x=traits_df_temp, a=relcov_only_temp, cor="cailliez", calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
@@ -167,7 +163,6 @@ for(PROJ in 1:length(site_proj_comm_vector)){
 }
 
 
-write.csv(FD_df_master, file=paste0("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\Dec2021\\Functional diversity metrics_", Sys.Date(),".csv"),
-                                    row.names=F)
+# write.csv(FD_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\CoRRE_functionalDiversity_2022-12-13.csv',row.names=F)
 
 
