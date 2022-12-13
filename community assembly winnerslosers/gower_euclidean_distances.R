@@ -1,9 +1,5 @@
 # functional dissimilarity - winners and losers 
 # code up until line 50 is from 3_sCoRRE_functionalDiversityMetrics.R" 
-<<<<<<< HEAD
-=======
-# this results in a dataset with 
->>>>>>> c8cd2f96b5d5cabe4e5d7bd9080bfcacd474d693
 
 setwd("/Users/MagdaGarbowski 1/Dropbox/sDiv_sCoRRE_shared/")
 
@@ -51,11 +47,8 @@ relcov_full_clean <- relcov_full_raw %>%
   filter(!(site_code == "EGN" & project_name == "Nmow" & community_type == "0" & 
              plot_id == "19" & calendar_year==2015 & treatment=="Control")) ## Stipa species just has an incorrect treatment I think, needs to be fixed in absolute abundance data frame but I'm just removing it for now
 
-<<<<<<< HEAD
+
 #----------------------------- calculating distances ---------------------------
-=======
-#----------------------------- merge abundance data with trait data ---------------------------
->>>>>>> c8cd2f96b5d5cabe4e5d7bd9080bfcacd474d693
 
 # split into site_proj_comm-level datasets 
 site_splits <- split(relcov_full_clean, list(relcov_full_clean$site_proj_comm))
