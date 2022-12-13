@@ -9,7 +9,8 @@ library(gridExtra)
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
-
+my.wd <- "C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\"
+  
 #read in the data
 
 #raw abundance data and drop pretreatment years
