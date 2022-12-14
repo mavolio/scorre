@@ -2,6 +2,8 @@
 # code up until line 50 is from 3_sCoRRE_functionalDiversityMetrics.R" 
 
 setwd("/Users/MagdaGarbowski 1/Dropbox/sDiv_sCoRRE_shared/")
+library(tidyverse)
+library(funrar)
 
 # continuous trait data
 contTraits <- read.csv("CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")%>%
@@ -56,7 +58,6 @@ site_splits <- split(relcov_full_clean, list(relcov_full_clean$site_proj_comm))
 distances_function <- function(site_df){
   # split to plot level 
   plot_splits <- split(site_df, list(site_df$plot_id, site_df$calendar_year), drop = TRUE)
-  
   distances_function_2 <- function(plot_df){
     # species vector from relative cover for pulling traits 
     sp_df_temp <- unique(plot_df$species_matched)[!is.na(unique(plot_df$species_matched))] 
@@ -74,41 +75,24 @@ distances_function <- function(site_df){
     relcov_unkn_sp_rm_temp <- plot_df[!plot_df$genus_species %in% c(sp_to_remove_temp),]
     
     # dataframe for categorical and continuous traits
-    traits_df_temp_cat_cont <- traits_df_raw_temp[c("species_matched", "leaf_type", "leaf_compoundness", "growth_form", "photosynthetic_pathway",
-                                                    "lifespan", "mycorrhizal", "mycorrhizal_type", "n_fixation", "rhizobial", "clonal",
-                                                    "seed_dry_mass", "stem_spec_density", "leaf_N", "leaf_P","LDMC",
-                                                    "leaf_C", "leaf_dry_mass", "plant_height_vegetative","leaf_C.N", "SLA", "water_content",
-                                                    "rooting_depth", "seed_number")]
+    traits_df_temp_cat_cont <- traits_df_raw_temp[c("species_matched", "photosynthetic_pathway","lifespan",  "mycorrhizal_type", "n_fixation","clonal",
+                                                    "seed_dry_mass","LDMC","plant_height_vegetative", "SLA", "rooting_depth")]
     
     # make values numeric (continuous traits) and factors (categorical traits)
     # will need to be careful if selected traits change 
-    traits_df_temp_cat_cont[,c(12:length(traits_df_temp_cat_cont))] <- lapply(traits_df_temp_cat_cont[,c(12:length(traits_df_temp_cat_cont))],
+    traits_df_temp_cat_cont[,c(7:length(traits_df_temp_cat_cont))] <- lapply(traits_df_temp_cat_cont[,c(7:length(traits_df_temp_cat_cont))],
                                                                               as.numeric)
-    traits_df_temp_cat_cont[,c(2:11)] <- lapply(traits_df_temp_cat_cont[,c(2:11)], as.factor)
+    traits_df_temp_cat_cont[,c(2:6)] <- lapply(traits_df_temp_cat_cont[,c(2:6)], as.factor)
     
-    # dataframe for continuous traits only
-    traits_df_temp_cont <- traits_df_raw_temp[c("species_matched", "seed_dry_mass", "stem_spec_density", "leaf_N", "leaf_P","LDMC",
-                                                "leaf_C", "leaf_dry_mass", "plant_height_vegetative","leaf_C.N", "SLA", "water_content",
-                                                "rooting_depth", "seed_number")]
+    rownames(traits_df_temp_cat_cont) <- traits_df_temp_cat_cont$species_matched
     
-    traits_df_temp_cont[,c(2:length(traits_df_temp_cont))] <- lapply(traits_df_temp_cont[,c(2:length(traits_df_temp_cont))], as.numeric)
-    
-    # make species_names rownames 
-    ls_out <- lapply(list(traits_df_temp_cat_cont = traits_df_temp_cat_cont, traits_df_temp_cont = traits_df_temp_cont),
-                     function(x) {rownames(x) <- x$species_matched; return(x)})
-    
-    # drop species names 
-    ls_out <- lapply(ls_out, function(x) {x$species_matched <- NULL; return(x)})
-    
-    # calculate distance matrices 
-    gower_dist_cat_cont <- as.data.frame(compute_dist_matrix(ls_out$traits_df_temp_cat_cont, "gower"))
-    gower_dist_cont <- as.data.frame(compute_dist_matrix(ls_out$traits_df_temp_cat_cont[11:length(ls_out$traits_df_temp_cat_cont)], "gower"))
-    euclidean_dist_cont <- as.data.frame(compute_dist_matrix(ls_out$traits_df_temp_cont, "euclidean")) 
-    
-    dist_mat_ls <- list(gower_dist_cat_cont=gower_dist_cat_cont,
-                        gower_dist_cont = gower_dist_cont,
-                        euclidean_dist_cont = euclidean_dist_cont)
+    traits_df_temp_cat_cont$species_matched <- NULL 
 
+    # calculate gower distance 
+    gower_dist<- as.data.frame(compute_dist_matrix(traits_df_temp_cat_cont, "gower"))
+
+    dist_mat_ls <- list(gower_dist = gower_dist)
+    
     distance_avg_function <- function(dis_mat){
       avg_fun <- function(df){
         out_avg <- data.frame(species = rownames(df),
