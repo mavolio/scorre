@@ -79,7 +79,7 @@ select(site_code, project_name, community_type, treatment_year, calendar_year, t
   ungroup() %>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp)
 
-#phylogenetic diveristy data
+#phylogenetic diversity data
 pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv') %>%
   separate(identifier, into=c("site_code", "project_name", "community_type", "treatment_year", "plot_id"), sep="::") %>%
   mutate(treatment_year=as.integer(treatment_year))
@@ -113,8 +113,8 @@ allDiv <- pDiv %>% #phylogenetic metrics
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
   mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='::')) %>%
   mutate(site_proj_comm_trt=paste(site_proj_comm, treatment, sep='::')) %>% 
-  select(site_code, project_name, community_type, site_proj_comm, site_proj_comm_trt, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp) # %>%
-  # filter(!(site_proj_comm %in% c('DL::NSFC::0', 'Naiman::Nprecip::0', 'DCGS::gap::0', 'Sil::NA::NA', 'SORBAS::NA::NA'))) %>%  #remove problem expts until they are fixed
+  select(site_code, project_name, community_type, site_proj_comm, site_proj_comm_trt, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp) %>%
+  filter(richness>3) #filter plots with richness less than 4 because they have volatile values for functional and phylogenetic diversity responses
   # filter(!(site_code %in% c('SERC', 'CAR', 'PIE', 'NANT'))) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
 
 #selecting relevant treatments for analysis (high resource, high stress)
@@ -137,8 +137,10 @@ trt_analysis <- trt %>%
 #pick treatments here
 allDivTrt <- allDiv %>%
   right_join(trt_analysis) %>%
-  mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>%
-  filter(!(site_proj_comm %in% c('DL::NSFC::0', 'Naiman::Nprecip::0', 'DCGS::gap::0'))) %>% #remove problem expts until they are fixed
+  mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>% 
+  mutate(drop=ifelse(site_code=="CDR"&treatment %in% c(2, 3, 4, 5, 7), 1, 0)) %>% #drop some of the CDR e001 and e002 treatments to prevent over-representation
+  filter(drop==0) %>%
+  filter(!(site_proj_comm %in% c('DCGS::gap::0'))) %>% #remove pulse light expt
   mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.)))) %>% #scale site characteristics
   filter(!(is.na(site_proj_comm)))
 
@@ -177,9 +179,25 @@ allDivRR <- allDivTrt %>%
 library(PerformanceAnalytics)
 chart.Correlation(allDivRR[8:12])
 
-
 hist(allDivRR$FDis_RR_mean)
+qqPlot(allDivRR$FDis_RR_mean)
+shapiro.test(allDivRR$FDis_RR_mean)
+
 hist(allDivRR$RaoQ_RR_mean)
+qqPlot(allDivRR$RaoQ_RR_mean)
+shapiro.test(allDivRR$RaoQ_RR_mean)
+
+hist(allDivRR$RaoQ_RR_mean)
+qqPlot(allDivRR$RaoQ_RR_mean)
+shapiro.test(allDivRR$RaoQ_RR_mean)
+
+hist(allDivRR$RaoQ_RR_mean)
+qqPlot(allDivRR$RaoQ_RR_mean)
+shapiro.test(allDivRR$RaoQ_RR_mean)
+
+hist(allDivRR$RaoQ_RR_mean)
+qqPlot(allDivRR$RaoQ_RR_mean)
+shapiro.test(allDivRR$RaoQ_RR_mean)
 
 
 ##### mixed effects model #####
@@ -222,6 +240,7 @@ plot_model(RaoQModel, type = "pred", terms = c("trt_type2", "richness_RR_mean"))
 RaoQFig <- ggplot(data=meansRaoQModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
   geom_point(size=5) +
   geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
+  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0, size=3) +
   geom_hline(yintercept=0) +
   coord_flip() +
   ylab('Rao Q\nEffect Size') + xlab('') +
@@ -241,18 +260,19 @@ plot_model(MNTDModel, type = "pred", terms = c("trt_type2", "richness_RR_mean"))
 MNTDFig <- ggplot(data=meansMNTDModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
   geom_point(size=5) +
   geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
+  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0, size=3) +
   geom_hline(yintercept=0) +
   coord_flip() +
-  ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab('') +
+  ylab('SES MNTD\nEffect Size') + xlab('') +
   scale_x_discrete(limits=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), breaks=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), labels=c('Multiple Trts', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'P', 'N')) + 
   scale_color_manual(values=c('blue', 'orange', 'orange', 'blue', 'dark grey', 'blue', 'blue', 'orange')) +
   theme(legend.position='none')
 
 
 pushViewport(viewport(layout=grid.layout(1,2)))
-print(FDisFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(RaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-#export at 1000x500
+#export at 1200x500
 
 ### see sCoRRE_dCCA_traits script to find PCA of case study examples of extreme responses for each trt type
 # N example of FDis and MNTD decreasing effect size: 	KUFS::E2::0::N1S0H0 or YMN::NitAdd::0::N80 (not CUL::Culardoch::0 N50 or maerc::fireplots::0 unuu)
