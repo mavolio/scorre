@@ -302,7 +302,7 @@ nFDisFig <- ggplot(data=nDivRR, aes(x=n, y=FDis_RR_mean)) +
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   geom_smooth(method='lm', formula=y~x, color='black') +
   geom_hline(yintercept=0) +
-  coord_cartesian(ylim=c(-0.75,1.25)) +
+  coord_cartesian(ylim=c(-1,2.2)) +
   ylab('Functional Dispersion\nEffect Size') + xlab(bquote('N added '(gm^-2)))
 
 
@@ -318,7 +318,7 @@ nRaoQFig <- ggplot(data=nDivRR, aes(x=n, y=RaoQ_RR_mean)) +
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   geom_smooth(method='lm', formula=y~x, color='black') +
   geom_hline(yintercept=0) +
-  coord_cartesian(ylim=c(-0.75,1.25)) +
+  coord_cartesian(ylim=c(-1,2.2)) +
   ylab('Rao Q\nEffect Size') + xlab(bquote('N added '(gm^-2)))
 
 
@@ -334,8 +334,8 @@ nMNTDFig <- ggplot(data=nDivRR, aes(x=n, y=mntd_diff_mean)) +
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   geom_smooth(method='lm', formula=y~x, color='black') +
   geom_hline(yintercept=0) +
-  coord_cartesian(ylim=c(-0.75,1.25)) +
-  ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab(bquote('N added '(gm^-2)))
+  coord_cartesian(ylim=c(-1,2.2)) +
+  ylab('SES MNTD\nEffect Size') + xlab(bquote('N added '(gm^-2)))
 
 
 #precip
@@ -354,7 +354,7 @@ precipFDisFig <- ggplot(data=precipDivRR, aes(x=precip, y=FDis_RR_mean)) +
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   geom_smooth(method='lm', formula=y~x, color='black') +
   geom_hline(yintercept=0) +
-  coord_cartesian(ylim=c(-0.5,1.25)) +
+  coord_cartesian(ylim=c(-1,2.2)) +
   ylab('Functional Dispersion\nEffect Size') + xlab('Precipitation Manipulation (%)')
 
 
@@ -370,7 +370,7 @@ precipRaoQFig <- ggplot(data=precipDivRR, aes(x=precip, y=RaoQ_RR_mean)) +
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   geom_smooth(method='lm', formula=y~x, color='black') +
   geom_hline(yintercept=0) +
-  coord_cartesian(ylim=c(-0.5,1.25)) +
+  coord_cartesian(ylim=c(-1,2.2)) +
   ylab('Rao Q\nEffect Size') + xlab('Precipitation Manipulation (%)')
 
 
@@ -386,8 +386,8 @@ precipMNTDFig <- ggplot(data=precipDivRR, aes(x=precip, y=mntd_diff_mean)) +
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   # geom_smooth(method='lm', formula=y~poly(x,2), color='black') + #no significant effect
   geom_hline(yintercept=0) +
-  coord_cartesian(ylim=c(-0.5,1.25)) +
-  ylab('Phylogenetic Diversity (MNTD)\nEffect Size') + xlab('Precipitation Manipulation (%)')
+  coord_cartesian(ylim=c(-1,2.2)) +
+  ylab('SES MNTD\nEffect Size') + xlab('Precipitation Manipulation (%)')
 
 
 #combined N and precip magnitude figure
@@ -396,7 +396,7 @@ print(nRaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(nMNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 print(precipRaoQFig, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 print(precipMNTDFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
-
+#export at 1000x1000
 
 # #temp
 # tempDivRR <- allDivRRtrt %>% 
