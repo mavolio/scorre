@@ -711,11 +711,12 @@ p <-
   ggtree(treef, layout="circular", size=0.5)+ # build circular tree
   geom_tree(aes(color=trait), continuous = 'colour', show.legend = F) +
   scale_color_scico(palette = "vik", direction=-1, na.value = "gray48", limits = c(-1, 1)) +
-  
+
   ggnewscale::new_scale("color") +
   
   geom_point(aes(color=as.factor(significant)), size=2, alpha=1, show.legend = F) + # highlight nodes
   scale_colour_manual(values=c("#8A6000", "#006FA4"), labels=c("Loss", "Gain"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
+  #geom_text(aes(label=node), size=1)+
   
   geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], offset=12, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], offset=12, fontsize=2.8, barsize = 0.2, angle = "auto") +
@@ -803,6 +804,11 @@ grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsi
 grid.text("(High DCi)", x = unit(0.725, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 grid.text("(Low DCi)", x = unit(0.35, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 dev.off()
+
+#Get list of species for groups within families:
+
+#Section Poaceae (increase) <-- node 1272 (unlock line in ggtree to see the name of the node)
+caper::clade.members(1272, tree2, tip.labels = T, include.nodes=FALSE)
 
 
 ###
@@ -1104,6 +1110,7 @@ p <-
   
   geom_point(aes(color=as.factor(significant)), size=2, alpha=1, show.legend = F) + # highlight nodes
   scale_colour_manual(values=c("#8A6000", "#006FA4"), labels=c("Loss", "Gain"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
+  #geom_text(aes(label=node), size=1)+
   
   geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], offset=6, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], offset=6, fontsize=2.8, barsize = 0.2, angle = "auto") +
@@ -1190,6 +1197,14 @@ grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsi
 grid.text("(High DCi)", x = unit(0.725, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 grid.text("(Low DCi)", x = unit(0.35, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 dev.off()
+
+#Section Fabaceae (decrease) <-- node 775 (unlock line in ggtree to see the name of the node)
+caper::clade.members(775, tree2, tip.labels = T, include.nodes=FALSE)
+
+#Section Poaceae (decrease) <-- node 971 (unlock line in ggtree to see the name of the node)
+caper::clade.members(971, tree2, tip.labels = T, include.nodes=FALSE)
+
+
 
 
 ###
@@ -1298,6 +1313,7 @@ p <-
   
   geom_point(aes(color=as.factor(significant)), size=2, alpha=1, show.legend = F) + # highlight nodes
   scale_colour_manual(values=c("#8A6000", "#006FA4"), labels=c("Loss", "Gain"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
+  #geom_text(aes(label=node), size=1)+
   
   geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], offset=12,  fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], offset=12,  fontsize=2.8, barsize = 0.2, angle = "auto") +
@@ -1385,6 +1401,17 @@ grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsi
 grid.text("(High DCi)", x = unit(0.725, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 grid.text("(Low DCi)", x = unit(0.35, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 dev.off()
+
+#Get list of species for groups within families:
+
+#Section Fabaceae (increase) <-- node 978 (unlock line in ggtree to see the name of the node)
+caper::clade.members(978, tree2, tip.labels = T, include.nodes=FALSE)
+
+#Section Asteraceae (increase) <-- node 797 (unlock line in ggtree to see the name of the node)
+caper::clade.members(797, tree2, tip.labels = T, include.nodes=FALSE)
+
+
+
 
 ###
 # Filter by treatment == temp
