@@ -5,8 +5,6 @@
 
 rm(list=ls())
 
-#investigate winners losers
-
 library(tidyverse)
 library(gridExtra)
 
@@ -37,7 +35,7 @@ sp <-read.csv(paste(my.wd,"CoRRE data/trait data/CoRRE2trykey_2021.csv", sep="")
 my_cat=read.csv(paste(my.wd, "CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv", sep="")) %>%
   select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal, n_fixation)
 
-#combine relative abundance data with treatment, cleaned species names, categorical traits, of life forms keep only graminoids, forbs, vines, woody. 
+#combine relative abundance data with treatment, cleaned species names, categorical traits, of life forms keep only graminoids, forbs, vines, woody.
 myreldat<-reldat%>%
   left_join(trts)%>%
   left_join(sp)%>% #this drops the unknowns??
@@ -49,9 +47,7 @@ myreldat<-reldat%>%
   summarize(relcov=sum(relcov)) %>% 
   mutate(site_project_comm=as.factor(paste(site_code, project_name, community_type, sep="::")))
 
-
 #adding in zeros for species that were absent from a plot
-
 spc=unique(myreldat$site_project_comm)
 myreldat_filled=NULL
 
@@ -63,7 +59,6 @@ for (j in 1:length(spc)) {
     pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "trt_type", "site_project_comm"), names_to="species_matched", values_to="relcov")
   myreldat_filled=rbind(myreldat_filled, dat.keep)
 }
-
 
 #get average relative cover for each species in a treatment, over all plots
 relave<-myreldat_filled%>%
