@@ -25,7 +25,8 @@ diff_quantile <- CT_diff_working %>%
             )
 
 CT_diff_full <- CT_diff_working %>%
-  left_join(diff_quantile, by=c("site_proj_comm", "treatment")) %>%
+  left_join(diff_quantile, by=c("site_proj_comm", "treatment")) 
+CT_diff_full <- CT_diff_full %>%
   mutate(species_status_95 = ifelse(DCi==0 & treatDCi>0, "colonizer",
                                  ifelse(diff < CT_diff_full$p05, "loser",
                                         ifelse(diff > CT_diff_full$p95, "winner",
