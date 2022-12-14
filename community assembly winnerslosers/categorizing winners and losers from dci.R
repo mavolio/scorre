@@ -92,7 +92,18 @@ loser_richness_fig95 <- ggplot(species_status_95_table, aes(x=richness, y= loser
 grid.arrange(loser_richness_fig80, loser_richness_fig90,loser_richness_fig95, nrow = 2)
 
 
+# winners versus richness
+colonizer_richness_fig80 <- ggplot(species_status_80_table, aes(x=richness, y= colonizer)) +
+  geom_point() +ylim(0,30) +ggtitle("p20, p80")
 
+colonizer_richness_fig90 <- ggplot(species_status_90_table, aes(x=richness, y= colonizer)) +
+  geom_point() +ylim(0,30)+ggtitle("p10, p90")
+
+colonizer_richness_fig95 <- ggplot(species_status_95_table, aes(x=richness, y= colonizer)) +
+  geom_point() +ylim(0,30)+ggtitle("p05, p95")
+
+
+grid.arrange(colonizer_richness_fig80, colonizer_richness_fig90,colonizer_richness_fig95, nrow = 2)
 ### exploratory code below
 
 print(zzz)
