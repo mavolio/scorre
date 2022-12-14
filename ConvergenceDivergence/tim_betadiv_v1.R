@@ -7,6 +7,7 @@ library(reshape2)
 library(lmerTest)
 library(ggpubr)
 library(vegan)
+library(FD)
 
 
 #Read in data
@@ -270,41 +271,133 @@ sites <- test%>%
 
 ######
 ###Try the same stuff with traits but they include categorical traits
+CoRRE_CWMtraits <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
+CoRRE_CWMtraits_cat <- CoRRE_CWMtraits[, c(   "site_code", "project_name","community_type", "plot_id", "treatment_year", "CWM.growth_form", "CWM.photosynthetic_pathway", "CWM.lifespan", "CWM.clonal", "CWM.mycorrhizal_type", "CWM.n_fixation")]
 
-View(df)
+CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = TRUE)
+
+CoRRE_CWMtraits_cat$is.graminoid <- ifelse(CoRRE_CWMtraits_cat$CWM.growth_form == "graminoid", 1, 0)
+CoRRE_CWMtraits_cat$is.C4 <- ifelse(CoRRE_CWMtraits_cat$CWM.photosynthetic_pathway == "C$", 1, 0)
+CoRRE_CWMtraits_cat$is.perennial <- ifelse(CoRRE_CWMtraits_cat$CWM.growth_form == "perennial", 1, 0)
+CoRRE_CWMtraits_cat$is.clonal <- ifelse(CoRRE_CWMtraits_cat$CWM.clonal == "yes", 1, 0)
+CoRRE_CWMtraits_cat$is.AM <- ifelse(CoRRE_CWMtraits_cat$CWM.mycorrhizal_type == "arbuscular", 1, 0)
+CoRRE_CWMtraits_cat$is.n_fixer <- ifelse(CoRRE_CWMtraits_cat$CWM.n_fixation == "yes", 1, 0)
+CoRRE_CWMtraits_cat <- CoRRE_CWMtraits_cat[,c("rep", "treatment_year", "is.graminoid", "is.C4", "is.perennial", "is.clonal", "is.AM", "is.n_fixer")]
+
+
+#make columns rep, expgroup,treatment_year, plot_id, trt_type, treatment
+
+
+#df.cwm <- ddply(df, .(rep, expgroup, treatment_year, plot_id),
+#      function(x)data.frame(
+#        seed_dry_mass.cwm = sum(x$seed_dry_mass*x$relcov) 
+#      )
+#        )
+
+#                           #"leaf_type",
+#                           #"leaf_compoundness",
+#                           #"growth_form",
+#                           #"photosynthetic_pathway",
+#                           #"lifespan",
+#                           #"clonal",
+#                           #"mycorrhizal",
+#                           #"n_fixation"
+summarize.cwm <-   # New dataframe where we can inspect the result
+  df %>%   # First step in the next string of statements
+  dplyr::group_by(rep, expgroup, treatment_year, plot_id, trt_type, treatment, plot_mani) %>%   # Groups the summary file by Plot number
+  dplyr::summarize(           # Coding for how we want our CWMs summarized
+    seed_dry_mass.cwm = weighted.mean(seed_dry_mass, relcov),   # Actual calculation of CWMs
+    LDMC.cwm = weighted.mean(LDMC, relcov),
+    plant_vegetative_height.cwm = weighted.mean(plant_height_vegetative, relcov),
+    SLA.cwm = weighted.mean(SLA, relcov),
+    rooting_depth.cwm = weighted.mean(rooting_depth, relcov)
+    )%>%
+  left_join(CoRRE_CWMtraits_cat, by = c("rep", "treatment_year"))
+
+
 
 expgroup_vector <- unique(df$expgroup)
 
 tdistances_master <- {}
 
-for_tree <- traits[,c(    "seed_dry_mass",
-                           "LDMC",
-                           "plant_height_vegetative",
-                           "SLA",
-                           "rooting_depth",
-                           "leaf_type",
-                           "leaf_compoundness",
-                           "growth_form",
-                           "photosynthetic_pathway",
-                           "lifespan",
-                           "clonal",
-                           "mycorrhizal",
-                           "n_fixation")]
+#for_tree <- traits[,c(    "species_matched",
+#                            "seed_dry_mass",
+#                           "LDMC",
+#                           "plant_height_vegetative",
+#                           "SLA",
+#                           "rooting_depth"#,
+#                           #"leaf_type",
+#                           #"leaf_compoundness",
+#                           #"growth_form",
+#                           #"photosynthetic_pathway",
+#                           #"lifespan",
+#                           #"clonal",
+#                           #"mycorrhizal",
+#                           #"n_fixation"
+#                          )]
+#for_tree <- unique(for_tree) 
+#rownames(for_tree)<-for_tree$species_matched
+#for_tree$species_matched <- NULL
+#library(betapart)
 
+for(i in 1:length(expgroup_vector)) {
+  temp.df <- subset(summarize.cwm, expgroup == expgroup_vector[i])
 
+  
+  temp.gow <- gowdis(temp.df[7:ncol(temp.df)])
+  temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
+  
+  tdistances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = plot_mani)
+  tdistances_master <- rbind(tdistances_master, tdistances_temp )
+  rm(temp.df, temp.gow, temp.beta, tdistances_temp)
+  
+}
+  
+  
+  test <- beta(
+    comm = temp.wide[10:ncol(temp.wide)],
+    tree = for_tree,
+    func = "jaccard",
+    abund = TRUE,
+    raref = 0,
+    runs = 1,
+    comp = FALSE
+  )
+  
+  
+  temp.beta.core <- functional.betapart.core(temp.wide[10:ncol(temp.wide)], traits = x, multi = TRUE, warning.time = TRUE,
+                           return.details = FALSE, fbc.step = FALSE,
+                           parallel = FALSE, opt.parallel = beta.para.control(),
+                           convhull.opt = qhull.opt(),
+                           progress = FALSE)
+  
+  functional.beta.pair(temp.wide[10:ncol(temp.wide)], for_tree, index.family="jaccard")
+}
+  
+#temp.df <- subset(kevin, expgroup == expgroup_vector[i])
+#
+#temp.wide <- temp.df%>%
+#  pivot_wider(names_from = species_matched, values_from = relcov, values_fill = 0)
+#temp.distances <- vegdist(temp.wide[10:ncol(temp.wide)], method = "bray")
+#          #calculate gower matrix
+#          #calculate dissimilarity matrix including abundance weighted and gower
+#temp.mod <- betadisper(temp.distances, group = temp.wide$trt_type, type = "centroid")
+#distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist)#
+#distances_master <- rbind(distances_master, distances_temp )
+#rm(temp.df, temp.wide, temp.distances, temp.mod, distances_temp)
 
 
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(df, expgroup == expgroup_vector[i])[,1:7]
   temp.trait.matrix <- subset(df, expgroup == expgroup_vector[i])[,c(    "seed_dry_mass",
                                                                          "LDMC",
-                                                                         "plant_height_vegetative",
+                                                                    "plant_height_vegetative",
                                                                          "SLA",
                                                                          "rooting_depth",
                                                                          "leaf_type",
                                                                          "leaf_compoundness",
                                                                          "growth_form",
-                                                                         "photosynthetic_pathway",
+                                                                     "photosynthetic_pathway",
                                                                          "lifespan",
                                                                          "clonal",
                                                                          "mycorrhizal",
@@ -324,7 +417,7 @@ for(i in 1:length(expgroup_vector)) {
     abund = TRUE,
     raref = 0,
     runs = 100,
-    comp 
+    comp )
   
   
   x = gowdis(focal_list[[i]])
@@ -339,7 +432,11 @@ for(i in 1:length(expgroup_vector)) {
 }
 
 
-
+functional.betapart.core(x, traits, multi = TRUE, warning.time = TRUE,
+                         return.details = FALSE, fbc.step = FALSE,
+                         parallel = FALSE, opt.parallel = beta.para.control(),
+                         convhull.opt = qhull.opt(),
+                         progress = FALSE)
 
 
 
