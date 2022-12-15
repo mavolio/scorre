@@ -194,3 +194,6 @@ p <-
 png("phylo_ring_main.png", res=600,height=8,width=8,units="in"); 
 p
 dev.off()
+
+#clean-up:
+rm(list = ls())
