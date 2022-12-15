@@ -14,7 +14,7 @@ my.wd <- "C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_
 #read in the data
 
 #raw abundance data and drop pretreatment years
-dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
+dat<-read.csv(paste(my.wd, "CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
   filter(treatment_year!=0)
 
 sp <-read.csv(paste(my.wd,"CoRRE data/trait data/corre2trykey_2021.csv", sep=""))%>%
@@ -34,7 +34,7 @@ dat_cleansp<-dat%>%
 
 
 #info on treatments
-trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
+trts<-read.csv(paste(my.wd, "CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
   select(site_code, project_name, community_type, treatment, trt_type, pulse, plot_mani,resource_mani)%>%
   unique()
 
