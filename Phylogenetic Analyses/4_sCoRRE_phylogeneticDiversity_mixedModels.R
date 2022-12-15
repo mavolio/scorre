@@ -113,11 +113,34 @@ allDiv <- pDiv %>% #phylogenetic metrics
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
   mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='::')) %>%
   mutate(site_proj_comm_trt=paste(site_proj_comm, treatment, sep='::')) %>% 
-  select(site_code, project_name, community_type, site_proj_comm, site_proj_comm_trt, treatment_year, calendar_year, treatment, plot_id, mpd.ses, mntd.ses, FDis, RaoQ, richness, Evar, trt_type, experiment_length, plot_mani, rrich, anpp, MAP, MAT, n, p, CO2, precip, temp) %>%
+  select(-pd.ses, -pd.raw, -pd.pval, -nbsp, -sing.sp, -FEve, -FDiv, -block, -data_type, -version, -Evar, -trt_type, -experiment_length, -Location, -Continent, -PubLat, -PubLong, -Offset) %>%
   filter(richness>3) #filter plots with richness less than 4 because they have volatile values for functional and phylogenetic diversity responses
-  # filter(!(site_code %in% c('SERC', 'CAR', 'PIE', 'NANT'))) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
 
-#selecting relevant treatments for analysis (high resource, high stress)
+##### determine which sites don't have adequate cover to species for these analyses #####
+corre_to_try <- read.csv("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
+  dplyr::select(genus_species, species_matched) %>%
+  unique(.)
+
+exptN <- relCover %>% 
+  select(site_code, project_name, community_type, treatment, treatment_year) %>% 
+  unique() %>%
+  group_by(site_code, project_name, community_type, treatment) %>% 
+  summarise(length=length(treatment_year)) %>% 
+  ungroup() 
+
+lowTraitCover <- relCover %>% 
+  left_join(corre_to_try) %>% 
+  left_join(trt) %>% 
+  mutate(unknown_spp=ifelse(is.na(species_matched), 1, 0)) %>% 
+  group_by(site_code, project_name, community_type, trt_type, treatment, treatment_year, plot_id, unknown_spp) %>% 
+  summarise(relcover=sum(relcov)) %>% 
+  ungroup() %>% 
+  filter(unknown_spp==1, relcover>0.2) %>% 
+  select(-relcover, -trt_type)
+#2876 plot*yr combinations will be dropped from analysis for too little trait data going into calculations
+
+
+##### selecting relevant treatments for analysis (high resource, high stress) #####
 trt_analysis <- trt %>%
   mutate(alltrts=ifelse(trt_type %in% c("control", "CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0)) %>%
   filter(alltrts==1) %>%
@@ -142,7 +165,13 @@ allDivTrt <- allDiv %>%
   filter(drop==0) %>%
   filter(!(site_proj_comm %in% c('DCGS::gap::0'))) %>% #remove pulse light expt
   mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.)))) %>% #scale site characteristics
-  filter(!(is.na(site_proj_comm)))
+  filter(!(is.na(site_proj_comm))) %>% 
+  left_join(lowTraitCover) %>% #filter out any experimental treatment where N<3 for a given year, removes 651 data points
+  filter(is.na(unknown_spp)) %>% 
+  group_by(site_code, project_name, community_type, treatment, treatment_year, trt_type2) %>% 
+  mutate(length=length(unique(plot_id))) %>% 
+  ungroup() %>% 
+  filter(length>2)
 
 
 # write.csv(allDivTrt, 'CoRRE_allDiversityMetrics_phyFunAnalysis.csv', row.names=F)
@@ -151,7 +180,7 @@ allDivTrt <- allDiv %>%
 ##### calculating response ratios #####
 #filter control plots
 control <- allDivTrt %>% 
-  filter(trt_type=='control') %>%
+  filter(trt_type2=='control') %>%
   rename(mpd.ses_ctl=mpd.ses, mntd.ses_ctl=mntd.ses, FDis_ctl=FDis, richness_ctl=richness, RaoQ_ctl=RaoQ) %>%
   group_by(site_code, project_name, community_type, treatment_year) %>%
   summarize_at(vars(mpd.ses_ctl, mntd.ses_ctl, FDis_ctl, RaoQ_ctl, richness_ctl), list(mean=mean), na.rm=T) %>% #average aross plots and years
@@ -160,19 +189,20 @@ control <- allDivTrt %>%
 #merge on site characteristics
 controlEnv <- control %>%
   group_by(site_code, project_name, community_type) %>%
-  summarize_at(vars(mpd.ses_ctl_mean, mntd.ses_ctl_mean, FDis_ctl_mean, RaoQ_ctl_mean, richness_ctl_mean), list(mean=mean), na.rm=T) %>% #average aross plots and years
+  summarize_at(vars(mpd.ses_ctl_mean, mntd.ses_ctl_mean, FDis_ctl_mean, RaoQ_ctl_mean, richness_ctl_mean), list(mean=mean), na.rm=T) %>% #average across plots and years
   ungroup() %>%
   left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>%
   left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>%
   gather(key='env_variable', value='env_value', rrich, anpp, MAP, MAT, aridityValues)
 
 allDivRR <- allDivTrt %>%
-  filter(trt_type!='control') %>%
+  filter(trt_type2!='control') %>%
   left_join(control) %>%
+  filter(!is.na(RaoQ_ctl_mean)) %>%  #remove lines where there was no control to compare to due to lack of spp cover for traits; lose 550 lines
   mutate(mpd_diff=((mpd.ses-mpd.ses_ctl_mean)/mpd.ses_ctl_mean), mntd_diff=((mntd.ses-mntd.ses_ctl_mean)/mntd.ses_ctl_mean), FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), RaoQ_RR=((RaoQ-RaoQ_ctl_mean)/RaoQ_ctl_mean), richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean)) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))  %>% 
   group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
-  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, RaoQ_RR, richness_RR), list(mean=mean), na.rm=T)  %>%
+  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, RaoQ_RR, richness_RR), list(mean=mean), na.rm=T) %>%
   ungroup()
 
 ##### check if richness difference is correlated with other diversity metrics #####
@@ -210,8 +240,28 @@ library(grid)
 
 options(contrasts=c('contr.sum','contr.poly')) 
 
+summary(richModel <- lme(richness_RR_mean ~ as.factor(trt_type2),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & trt_type2!='herb_removal')),
+                         random=~1|site_proj_comm))
+anova.lme(richModel, type='sequential')
+meansRichModel <- emmeans(richModel, pairwise~as.factor(trt_type2), adjust="tukey")
+meansRichModelOutput <- as.data.frame(meansRichModel$emmeans)
+plot_model(richModel, type = "pred", terms = c("trt_type2", "richness_RR_mean"))
+
+richFig <- ggplot(data=meansRichModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
+  geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0, size=3) +
+  geom_hline(yintercept=0) +
+  coord_flip() +
+  ylab('Species Richness\nEffect Size') + xlab('') +
+  scale_x_discrete(limits=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), breaks=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), labels=c('Multiple Trts', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'P', 'N')) + 
+  scale_color_manual(values=c('blue', 'orange', 'orange', 'blue', 'dark grey', 'blue', 'blue', 'orange')) +
+  theme(legend.position='none')
+
+
 summary(FDisModel <- lme(FDis_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<5 & trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(FDisModel, type='sequential')
 meansFDisModel <- emmeans(FDisModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -230,7 +280,7 @@ FDisFig <- ggplot(data=meansFDisModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 summary(RaoQModel <- lme(RaoQ_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, RaoQ_RR_mean<13 & trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(RaoQModel, type='sequential')
 meansRaoQModel <- emmeans(RaoQModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -250,7 +300,7 @@ RaoQFig <- ggplot(data=meansRaoQModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 summary(MNTDModel <- lme(mntd_diff_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, mntd_diff_mean<4 & trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3  & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(MNTDModel, type='sequential')
 meansMNTDModel <- emmeans(MNTDModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -269,10 +319,11 @@ MNTDFig <- ggplot(data=meansMNTDModelOutput, aes(x=trt_type2, y=emmean, color=tr
   theme(legend.position='none')
 
 
-pushViewport(viewport(layout=grid.layout(1,2)))
-print(RaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+pushViewport(viewport(layout=grid.layout(1,3)))
+print(richFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(MNTDFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-#export at 1200x500
+print(RaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+#export at 1800x600
 
 ### see sCoRRE_dCCA_traits script to find PCA of case study examples of extreme responses for each trt type
 # N example of FDis and MNTD decreasing effect size: 	KUFS::E2::0::N1S0H0 or YMN::NitAdd::0::N80 (not CUL::Culardoch::0 N50 or maerc::fireplots::0 unuu)
@@ -288,7 +339,8 @@ allDivRRtrt <- allDivRR %>%
 
 #N additions
 nDivRR <- allDivRRtrt %>% 
-  filter(trt_type2=='N')
+  filter(trt_type2=='N') %>% 
+  mutate(n=ifelse(site_proj_comm=='DL::NSFC::0'&trt_type2=='N', 10, n))
 
 summary(nFDisModel <- lme(FDis_RR_mean ~ n, #tried polynomial, but linear was better
                           data=na.omit(subset(nDivRR, FDis_RR_mean<5)),
