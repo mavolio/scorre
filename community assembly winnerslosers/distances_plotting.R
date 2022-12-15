@@ -64,3 +64,62 @@ drought_NN_diff <- plot_function(dat_focal_all_drought, dat_focal_all_drought$av
 nitrogen_all_DCi <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_all, dat_focal_all_N$DCi, "DCi", "Nitrogen TRT - All Comparisons")
 nitrogen_NN_DCi <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_NN,dat_focal_all_N$DCi, "DCi", "Nitrogen TRT - Nearest neighbor")
 
+# just boxplots of comparisons between groups 
+dat_groups_N <- dat_focal_all_sps_df_merged[(dat_focal_all_sps_df_merged$trt_type == "N" & 
+                                               dat_focal_all_sps_df_merged$data_set %in% c("winner_winner", "winner_neutral", "winner_loser")),]
+
+dat_groups_mult <- dat_focal_all_sps_df_merged[(dat_focal_all_sps_df_merged$trt_type == "mult_nutrient" & 
+                                               dat_focal_all_sps_df_merged$data_set %in% c("winner_winner", "winner_neutral", "winner_loser")),]
+
+dat_groups_drought <- dat_focal_all_sps_df_merged[(dat_focal_all_sps_df_merged$trt_type == "drought" & 
+                                                  dat_focal_all_sps_df_merged$data_set %in% c("winner_winner", "winner_neutral", "winner_loser")),]
+
+# keep datasets with all three groups 
+
+dat_prep_2 <- function(df){
+  len = length(levels(as.factor(df$data_set)))
+if(len  > 2)
+  return(df)
+}
+
+dat_groups_N_splits <- split(dat_groups_N, list(dat_groups_N$site_code))
+out_N <- lapply(dat_groups_N_splits, dat_prep_2)
+out_N[sapply(out_N, is.null)] <- NULL
+out_N <- do.call(rbind, out_N)
+
+dat_groups_mult_splits <- split(dat_groups_mult, list(dat_groups_mult$site_code))
+out_mult <- lapply(dat_groups_mult_splits, dat_prep_2)
+out_mult[sapply(out_mult, is.null)] <- NULL
+out_mult <- do.call(rbind, out_mult)
+
+dat_groups_drought_splits <- split(dat_groups_drought, list(dat_groups_drought$site_code))
+out_drought <- lapply(dat_groups_drought_splits, dat_prep_2)
+out_drought[sapply(out_drought, is.null)] <- NULL
+out_drought <- do.call(rbind, out_drought)
+
+
+
+
+
+
+
+
+N <- ggplot(out_N, aes(x = data_set, y = avg_distance_all)) + 
+  geom_boxplot() + 
+  facet_wrap(~site_code)+ labs(title = "Nitrogen")
+
+mult <- ggplot(out_mult, aes(x = data_set, y = avg_distance_all)) + 
+  geom_boxplot() + 
+  facet_wrap(~site_code)+ labs(title = "Mult Nutrients")
+
+drought <- ggplot(out_drought, aes(x = data_set, y = avg_distance_all)) + 
+  geom_boxplot() + 
+  facet_wrap(~site_code) + labs(title = "Drought")
+
+# just boxplots of comparisons between groups 
+
+
+
+
+
+
