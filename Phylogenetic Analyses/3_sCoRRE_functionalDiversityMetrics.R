@@ -32,7 +32,7 @@ contTraits <- read.csv('CoRRE data\\trait data\\Final TRY Traits\\Imputed Contin
   group_by(species_matched) %>%
   summarise_all(funs(mean)) %>%
   ungroup() %>%
-  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75) 
+  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75, leaf_C.N<100) 
 
 #testing normality
 hist(contTraits$leaf_C.N)
@@ -71,7 +71,7 @@ hist(contTraitsScaled$leaf_C.N)
 qqPlot(contTraitsScaled$leaf_C.N)
 shapiro.test(contTraitsScaled$leaf_C.N)
 #sqrt W = 0.66313, p-value < 2.2e-16
-#log W = 0.87271, p-value < 2.2e-16
+#log W = 0.95638, p-value < 2.2e-16
 
 
 hist(contTraitsScaled$LDMC)
@@ -239,6 +239,6 @@ for(PROJ in 1:length(site_proj_comm_vector)){
 }
 
 
-# write.csv(FD_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\CoRRE_functionalDiversity_2022-12-13.csv',row.names=F)
+# write.csv(FD_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2022-12-13.csv',row.names=F)
 
 

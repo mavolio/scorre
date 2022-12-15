@@ -30,13 +30,13 @@ trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\Co
 
 #merge CWM and trt data
 allDiv <- fDiv %>% #functional metrics
-  select(plot_id, treatment_year, site_code, project_name, community_type, site_proj_comm, treatment, CWM.growth_form, CWM.photosynthetic_pathway, CWM.lifespan, CWM.clonal, CWM.mycorrhizal_type, CWM.n_fixation, CWM.LDMC, CWM.SLA, CWM.plant_height_vegetative, CWM.rooting_depth, CWM.seed_dry_mass) %>% 
+  select(plot_id, treatment_year, site_code, project_name, community_type, site_proj_comm, treatment, CWM.growth_form, CWM.photosynthetic_pathway, CWM.lifespan, CWM.clonal, CWM.mycorrhizal_type, CWM.n_fixation, CWM.leaf_C.N, CWM.LDMC, CWM.SLA, CWM.plant_height_vegetative, CWM.rooting_depth, CWM.seed_dry_mass) %>% 
   left_join(trt) %>% #treatments
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>% #site anpp and regional richness
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
   mutate(site_proj_comm_trt=paste(site_proj_comm, treatment, sep='::')) %>% 
   select(-PubLat, -PubLong, -Offset, -Location) %>%
-  filter(!(site_code %in% c('SERC', 'CAR', 'PIE', 'NANT'))) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
+  filter(richness>3) #remove wetlands, which have very few species and therefore don't nicely fit into these response types (about 2000 data points)
 
 #selecting relevant treatments for analysis (high resource, high stress)
 trt_analysis <- trt %>%
@@ -64,36 +64,27 @@ allDivTrt <- allDiv %>%
 # write.csv(allDivTrt, 'CoRRE_CWMtraits_12142022.csv')
 
 
-##### calculate response ratios #####
+##### calculate continuous response ratios #####
 #filter control plots
 controlCont <- allDivTrt %>% 
   filter(trt_type=='control') %>%
   group_by(site_code, project_name, community_type, treatment_year) %>%
-  summarize_at(vars(CWM.LDMC, CWM.SLA, CWM.plant_height_vegetative, CWM.rooting_depth, CWM.seed_dry_mass), list(ctl=mean), na.rm=T) %>% #average aross plots and years
+  summarize_at(vars(CWM.leaf_C.N, CWM.LDMC, CWM.SLA, CWM.plant_height_vegetative, CWM.rooting_depth, CWM.seed_dry_mass), list(ctl=mean), na.rm=T) %>% #average across plots and years
   ungroup()
-
-controlCat <- allDivTrt %>% 
-  filter(trt_type=='control') %>%
-  group_by(site_code, project_name, community_type, treatment_year) %>%
-  summarize_at(vars(CWM.growth_form, CWM.photosynthetic_pathway, CWM.lifespan, CWM.clonal, CWM.mycorrhizal_type, CWM.n_fixation), list(ctl=max), na.rm=T) %>% #average aross plots and years
-  ungroup()
-
-control <- controlCont %>% 
-  left_join(controlCat)
 
 allDivRRCont <- allDivTrt %>%
   filter(trt_type!='control') %>%
   left_join(controlCont) %>%
-  mutate(CWM.LDMC_RR=(CWM.LDMC-CWM.LDMC_ctl)/CWM.LDMC_ctl, CWM.SLA_RR=(CWM.SLA-CWM.SLA_ctl)/CWM.SLA_ctl, CWM.plant_height_vegetative_RR=(CWM.plant_height_vegetative-CWM.plant_height_vegetative_ctl)/CWM.plant_height_vegetative_ctl, CWM.rooting_depth_RR=(CWM.rooting_depth-CWM.rooting_depth_ctl)/CWM.rooting_depth_ctl, CWM.seed_dry_mass_RR=(CWM.seed_dry_mass-CWM.seed_dry_mass_ctl)/CWM.seed_dry_mass_ctl) %>% 
+  mutate(CWM.leaf_C.N_RR=(CWM.leaf_C.N-CWM.leaf_C.N_ctl)/CWM.leaf_C.N_ctl, CWM.LDMC_RR=(CWM.LDMC-CWM.LDMC_ctl)/CWM.LDMC_ctl, CWM.SLA_RR=(CWM.SLA-CWM.SLA_ctl)/CWM.SLA_ctl, CWM.plant_height_vegetative_RR=(CWM.plant_height_vegetative-CWM.plant_height_vegetative_ctl)/CWM.plant_height_vegetative_ctl, CWM.rooting_depth_RR=(CWM.rooting_depth-CWM.rooting_depth_ctl)/CWM.rooting_depth_ctl, CWM.seed_dry_mass_RR=(CWM.seed_dry_mass-CWM.seed_dry_mass_ctl)/CWM.seed_dry_mass_ctl) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
   group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
-  summarise_at(vars(CWM.LDMC_RR, CWM.SLA_RR, CWM.plant_height_vegetative_RR, CWM.rooting_depth_RR, CWM.seed_dry_mass_RR), list(mean=mean), na.rm=T) %>%
+  summarise_at(vars(CWM.leaf_C.N_RR, CWM.LDMC_RR, CWM.SLA_RR, CWM.plant_height_vegetative_RR, CWM.rooting_depth_RR, CWM.seed_dry_mass_RR), list(mean=mean), na.rm=T) %>%
   ungroup()
 
-allDivRRCat <- allDivTrt 
+##### checking continuous trait data #####
+hist(allDivRRCont$CWM.leaf_C.N_RR)
+qqPlot(allDivRRCont$CWM.leaf_C.N_RR)
 
-
-##### checking data #####
 hist(allDivRRCont$CWM.LDMC_RR_mean)
 qqPlot(allDivRRCont$CWM.LDMC_RR_mean)
 
@@ -110,7 +101,7 @@ hist(allDivRRCont$CWM.seed_dry_mass_RR_mean)
 qqPlot(allDivRRCont$CWM.seed_dry_mass_RR_mean)
 
 
-##### mixed models #####
+##### continuous trait mixed models #####
 library(nlme)
 library(emmeans)
 library(sjPlot)
@@ -118,6 +109,24 @@ library(performance)
 library(grid)
 
 options(contrasts=c('contr.sum','contr.poly')) 
+
+#leaf C:N model
+summary(cnModel <- lme(CWM.leaf_C.N_RR ~ as.factor(trt_type2),
+                        data=na.omit(subset(allDivRRCont, trt_type2!='herb_removal')),
+                        random=~1|site_proj_comm))
+anova.lme(cnModel, type='sequential')
+meansCNModel <- emmeans(cnModel, pairwise~as.factor(trt_type2), adjust="tukey")
+meansCNModelOutput <- as.data.frame(meansCNModel$emmeans)
+
+cnFig <- ggplot(data=meansCNModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
+  geom_point(size=5) +
+  geom_errorbar(aes(ymin=emmean-SE*1.96, ymax=emmean+SE*1.96), width=0.2) +
+  geom_hline(yintercept=0) +
+  coord_flip() +
+  ylab('CWM SLA\nEffect Size') + xlab('') +
+  scale_x_discrete(limits=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), breaks=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), labels=c('Multiple Trts', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'P', 'N')) + 
+  scale_color_manual(values=c('blue', 'orange', 'orange', 'blue', 'dark grey', 'blue', 'blue', 'orange')) +
+  theme(legend.position='none')
 
 #LDMC model
 summary(ldmcModel <- lme(CWM.LDMC_RR_mean ~ as.factor(trt_type2),
@@ -211,9 +220,30 @@ seedFig <- ggplot(data=meansSeedModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 pushViewport(viewport(layout=grid.layout(3,2)))
-print(slaFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(ldmcFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-print(heightFig, vp=viewport(layout.pos.row=2, layout.pos.col=1))
-print(rootFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
-print(seedFig, vp=viewport(layout.pos.row=3, layout.pos.col=1))
+print(cnFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(seedFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(slaFig, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(ldmcFig, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+print(heightFig, vp=viewport(layout.pos.row=3, layout.pos.col=1))
+print(rootFig, vp=viewport(layout.pos.row=3, layout.pos.col=2))
 #export at 1000x1500
+
+
+##### calculate categorical trait responses #####
+#filter control plots
+controlCat <- allDivTrt %>% 
+  filter(trt_type=='control') %>%
+  group_by(site_code, project_name, community_type, treatment_year) %>%
+  summarize_at(vars(CWM.growth_form, CWM.photosynthetic_pathway, CWM.lifespan, CWM.clonal, CWM.mycorrhizal_type, CWM.n_fixation), list(ctl=max), na.rm=T) %>% #average aross plots and years
+  ungroup()
+
+allDivRRCat <- allDivTrt %>% 
+  left_join(controlCat) 
+  
+  
+  
+  
+  
+  
+  
+  

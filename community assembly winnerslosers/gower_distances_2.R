@@ -1,3 +1,7 @@
+# sCoRRe - Winners losers community assembly 
+# December 14, 2022 
+# Authors: Magda Garbowski
+
 # functional dissimilarity - winners and losers 
 # code up until line 50 is from 3_sCoRRE_functionalDiversityMetrics.R" 
 
@@ -248,6 +252,58 @@ distances_function <- function(plot_df){
 plots_out_splits_2 <- plots_out_splits[-c(1388, 4752,7205,7248,7542,7715,7847,7879,7885,8264,8750,8753,10002)]
 sites_distances_out_comparisons <- do.call(rbind, lapply(plots_out_splits_2, distances_function)) 
 
+#----------------------------- calculating averages ---------------------------
+
+# select out "focal_all" dataset - can later work with winner_winner or other subset 
+dat_focal_all <- sites_distances_out_comparisons[sites_distances_out_comparisons$comparison == "focal_all",]
+# split by site_proj_comm, species, and treatment for averages 
+dat_focal_all_sps_splits <- split(dat_focal_all, 
+                                  list(dat_focal_all$site_proj_comm, dat_focal_all$species, dat_focal_all$treatment), drop = TRUE)
+
+# winner winner 
+dat_winner_winner <- sites_distances_out_comparisons[sites_distances_out_comparisons$comparison == "winner_winner",]
+# split by site_proj_comm, species, and treatment for averages 
+dat_winner_winner_sps_splits <- split(dat_focal_winner_winner, 
+                                            list(dat_winner_winner$site_proj_comm, dat_winner_winner$species, dat_winner_winner$treatment), drop = TRUE)
+
+# winner loser
+dat_winner_loser <- sites_distances_out_comparisons[sites_distances_out_comparisons$comparison == "winner_loser",]
+# split by site_proj_comm, species, and treatment for averages 
+dat_winner_loser_sps_splits <- split(dat_winner_loser, 
+                                            list(dat_winner_loser$site_proj_comm, dat_winner_loser$species, dat_winner_loser$treatment), drop = TRUE)
+
+# winner neutral
+dat_winner_neutral <- sites_distances_out_comparisons[sites_distances_out_comparisons$comparison == "winner_neutral",]
+# split by site_proj_comm, species, and treatment for averages 
+dat_winner_neutral_sps_splits <- split(dat_winner_neutral, 
+                                     list(dat_winner_neutral$site_proj_comm, dat_winner_neutral$species, dat_winner_neutral$treatment), drop = TRUE)
+
+# get averages
+avg_function <- function(df, datset){
+  out <-  data.frame(site_proj_comm = df$site_proj_comm[1],
+                     treatment = df$treatment[1], 
+                     site_code = df$site_code[1],
+                     project_name = df$project_name[1],
+                     data_type = df$data_type[1],
+                     species_matched = df$species[1],
+                     avg_distance_all = mean(df$distance, na.rm = TRUE), 
+                     avg_distance_NN = mean(df$NN, na.rm = TRUE),
+                     sd_distance_all = sd(df$distance, na.rm = TRUE), 
+                     sd_distance_NN = sd(df$NN, na.rm = TRUE), 
+                     n_obs = nrow(df),
+                     data_set = datset)
+  return(out)
+}
+
+dat_focal_all_sps_df <- do.call(rbind, lapply(dat_focal_all_sps_splits, avg_function, "full_all"))
+dat_winner_winner_sps_df <- do.call(rbind, lapply(dat_winner_winner_sps_splits, avg_function, "winner_winner"))
+dat_winner_loser_sps_df <- do.call(rbind, lapply(dat_winner_loser_sps_splits, avg_function, "winner_loser"))
+dat_winner_neutral_sps_df <- do.call(rbind, lapply(dat_winner_neutral_sps_splits, avg_function, "winner_neutral"))
+
+dat_avgs <- do.call(rbind, list(dat_focal_all_sps_df, dat_winner_winner_sps_df, dat_winner_loser_sps_df, dat_winner_neutral_sps_df ))
+
+
 write.csv(sites_distances_out, "/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/distances.csv")
-write.csv(sites_distances_out_comparisons, "/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/distances_winner_comparisons.csv")
+write.csv(sites_distances_out_comparisons, "/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/distances_winner_comparisons.csv")
+write.csv(dat_avgs, "/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/distances_avgs.csv")
 

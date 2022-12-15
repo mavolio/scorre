@@ -5,6 +5,9 @@
 
 # Load libraries:
 library(phytools)
+library(plyr)
+library(ggtree)
+library(ggplot2)
 
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
@@ -21,13 +24,13 @@ fam$species_matched<-gsub(" ", "_", fam$species_matched) #unify nomenclature
 # Get list of taxa that are not in the tree but they are in the table (only two):
 in_tree_not_fam<-setdiff(tree$tip.label, fam$species_matched)
 tree<-drop.tip(tree, in_tree_not_fam)
-
+unique(fam$family)
 ###
 #get number of nodes per family:
 list.r<-c("Poaceae", "Asteraceae", "Brassicaceae", "Solanaceae", "Cyperaceae",
         "Gentianaceae", "Plantaginaceae", "Euphorbiaceae", "Amaranthaceae",
         "Orchidaceae", "Fabaceae", "Gentianaceae", "Orobanchaceae", "Lamiaceae", 
-        "Polimonaceae")
+        "Polemoniaceae")
   
 #get nodes for families:
 list.nod1<-NULL
@@ -191,3 +194,6 @@ p <-
 png("phylo_ring_main.png", res=600,height=8,width=8,units="in"); 
 p
 dev.off()
+
+#clean-up:
+rm(list = ls())
