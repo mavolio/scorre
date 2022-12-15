@@ -12,11 +12,25 @@ collst = RColorBrewer::brewer.pal(n = 8, name = "Dark2")
 #make Legend
 pie(pie$value, labels=pie$trt, col=collst, border="white")
 
-#for poaceae
-labellistpoa<-c("", "-","","", "+","","+","+")
+#for poaceae overall
+labellistpoa<-c("", "","","", "","","+","+")
 colactive<-collst
 colactive[labellistpoa==""]="darkgray"
 pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white")
+
+#for poaceae sub1
+labellistpoa<-c("", "","","", "","+","","")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white")
+
+#for poaceae sub2
+labellistpoa<-c("", "-","","", "","","","")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white")
+
+
 
 #for cyperaceae
 labellistcyp<-c("", "","","", "","","+","+")
@@ -30,8 +44,14 @@ colactive<-collst
 colactive[labellistorc==""]="darkgray"
 pie2(pie$value, labels=labellistorc, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white")
 
-#for asteraceae
-labellistast<-c("", "","+","", "-","","","")
+#for asteraceae sub1
+labellistast<-c("", "","","", "-","","","")
+colactive<-collst
+colactive[labellistast==""]="darkgray"
+pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white")
+
+#for asteraceae sub2
+labellistast<-c("", "","+","", "","","","")
 colactive<-collst
 colactive[labellistast==""]="darkgray"
 pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white")
