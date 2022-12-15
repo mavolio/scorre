@@ -8,6 +8,8 @@ library(phytools)
 library(plyr)
 library(ggtree)
 library(ggplot2)
+library(cowplot)
+library(tidyverse)
 
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
@@ -189,44 +191,138 @@ p <-
         legend.key.size = unit(1, "cm"),
         legend.position="none")
 
-#save output:
-#png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult_withheat.png",
+
+
+####
+#run pie2_function first
+
+trt<-c("CO2", "Drt.","Irg.", "Temp.", "N", "P", "Mult. Nuts.","Inter.")
+value<-c(1,1,1,1,1,1,1,1)
+pie<-data.frame(trt, value)
+
+##doing this in baseR
+collst = RColorBrewer::brewer.pal(n = 8, name = "Dark2")
+
+#make Legend
+lg<-as.grob(~pie(pie$value, labels=pie$trt, col=collst, border="white"))
+
+#for poaceae overall
+labellistpoa<-c("", "","","", "","","+","+")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+pot<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for poaceae sub1
+labellistpoa<-c("", "","","", "","+","","")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+po1<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for poaceae sub2
+labellistpoa<-c("", "-","","", "","","","")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+po2<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.8, textcol = "white"))
+
+#for cyperaceae
+labellistcyp<-c("", "","","", "","","+","+")
+colactive<-collst
+colactive[labellistcyp==""]="darkgray"
+cyp<-as.grob(~pie2(pie$value, labels=labellistcyp, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for orchidaceae
+labellistorc<-c("", "","","", "","","-","")
+colactive<-collst
+colactive[labellistorc==""]="darkgray"
+orc<-as.grob(~pie2(pie$value, labels=labellistorc, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for asteraceae sub1
+labellistast<-c("", "","","", "-","","","")
+colactive<-collst
+colactive[labellistast==""]="darkgray"
+ast1<-as.grob(~pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for asteraceae sub2
+labellistast<-c("", "","+","", "","","","")
+colactive<-collst
+colactive[labellistast==""]="darkgray"
+ast2<-as.grob(~pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Lamiacea and Orobanaceae and Polimoniaceae
+labellistLO<-c("", "","","", "-","","","")
+colactive<-collst
+colactive[labellistLO==""]="darkgray"
+lop<-as.grob(~pie2(pie$value, labels=labellistLO, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Plantaginaceae
+labellistpla<-c("", "","","", "","","","-")
+colactive<-collst
+colactive[labellistpla==""]="darkgray"
+plt<-as.grob(~pie2(pie$value, labels=labellistpla, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Gentinaceae
+labellistgen<-c("", "","","", "-","","-","-")
+colactive<-collst
+colactive[labellistgen==""]="darkgray"
+gen<-as.grob(~pie2(pie$value, labels=labellistgen, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Solaneaceae
+labellistsol<-c("", "","","", "+","","+","")
+colactive<-collst
+colactive[labellistsol==""]="darkgray"
+sol<-as.grob(~pie2(pie$value, labels=labellistsol, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Amaranth
+labellistama<-c("", "+","-","", "+","-","","")
+colactive<-collst
+colactive[labellistama==""]="darkgray"
+ama<-as.grob(~pie2(pie$value, labels=labellistama, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Fabaceae
+labellistfab<-c("", "-","+","", "-","","-","")
+colactive<-collst
+colactive[labellistfab==""]="darkgray"
+fab<-as.grob(~pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Euphorb
+labellisteup<-c("", "","","+", "","","","")
+colactive<-collst
+colactive[labellisteup==""]="darkgray"
+eup<-as.grob(~pie2(pie$value, labels=labellisteup, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Brassicaceae
+labellistbra<-c("", "","","", "","","","+")
+colactive<-collst
+colactive[labellistbra==""]="darkgray"
+bra<-as.grob(~pie2(pie$value, labels=labellistbra, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+# Create layout to print:
+h <- ggdraw(p)
+
+# Add pie charts to the tree:
+p2<- h + draw_grob(lg, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)+ #central one
+         draw_grob(orc, x=.76, y=.57, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(cyp, x=.756, y=.655, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(pot, x=.70, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(po1, x=.59, y=.80, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(po2, x=.49, y=.835, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(bra, x=.31, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(eup, x=.26, y=.65, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(fab, x=.24, y=.50, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ama, x=.20, y=.44, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.27, y=.315, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(sol, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(gen, x=.372, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(plt, x=.428, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.495, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.561, y=.192, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ast1, x=.72, y=.25, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ast2, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
+
 png("phylo_ring_main.png", res=600,height=8,width=8,units="in"); 
-p
+p2
 dev.off()
 
 #clean-up:
 rm(list = ls())
 
-library(cowplot)
-
-# Simple Pie Chart
-slices <- c(5, 5, 5, 5, 5, 5, 5, 5)
-o<-as.grob(~pie(slices, labels=""))
-
-# Create layout to print:
-h <- ggdraw(p)
-
-
-p2<- h + draw_grob(o, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)+ #central one
-         draw_grob(o, x=.76, y=.57, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.756, y=.655, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.70, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-  draw_grob(o, x=.59, y=.80, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-  draw_grob(o, x=.49, y=.835, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.31, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.26, y=.65, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.24, y=.51, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.20, y=.44, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.27, y=.315, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.372, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.428, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.495, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.561, y=.192, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.72, y=.25, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(o, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
-
-png("phylo_ring_main.png", res=600,height=8,width=8,units="in"); 
-p2
-dev.off()

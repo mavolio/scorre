@@ -96,7 +96,7 @@ pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length =
 labellisteup<-c("", "","","+", "","","","")
 colactive<-collst
 colactive[labellisteup==""]="darkgray"
-pie2(pie$value, labels=labellisteup, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white")
+pie2(pie$value, labels=labellisteup, col=colactive, border="white", line_length = 1, text_center = 0.6, textcol = "white")
 
 
 #for Brassicaceae

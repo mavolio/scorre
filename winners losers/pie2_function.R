@@ -48,13 +48,14 @@ pie2 = function (x, labels = names(x), edges = 200, radius = 0.8, clockwise = FA
     P <- t2xy(mean(x[i + 0:1]))
     lab <- as.character(labels[i])
     if (!is.na(lab) && nzchar(lab)) {
-      lines(c(1, line_length) * P$x, c(1, line_length) * P$y)
+      #lines(c(1, line_length) * P$x, c(1, line_length) * P$y)
       if(doubleplot_text) {
         text(text_center * P$x, text_center * P$y, labels[i], xpd = TRUE, 
              adj = ifelse(P$x < 0, 1, 0), cex = 1.1, col = 1, ...)
       }
       text(text_center * P$x, text_center * P$y, labels[i], xpd = TRUE, 
-           adj = ifelse(P$x < 0, 1, 0), col = textcol, ...)
+           #adj = ifelse(P$x < 0, 1, 0),
+           col = textcol, ...)
     }
   }
   title(main = main, ...)
