@@ -105,7 +105,7 @@ DCi.cat.per.year<-DCi.species.per.year %>%
   mutate(my_trt=ifelse(trt_type %in% c("control", "temp", "CO2", "N", "irr", "drought", "P", "mult_nutrient"), trt_type, ifelse(trt_type %in% c("drought*temp", "irr*temp", "N*P", "N*temp", "mult_nutrient*drought", "N*CO2", "CO2*temp", "drought*CO2*temp", "N*irr", "mult_nutrient*temp", "N*drought", "N*CO2*temp", "irr*CO2*temp", "N*irr*CO2*temp", "irr*CO2", "N*irr*CO2", "N*irr*temp", "N*P*temp", "mult_nutrient*irr"), "GCD", "other"))) %>%
   filter(!my_trt=="other") %>%
   filter(treatment_year>0) %>% 
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, calendar_year, treatment_year, successional, expt_length, value) %>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, my_trt, calendar_year, treatment_year, successional, expt_length, value) %>%
   summarize(mean.sp.DCi=mean(DCi), sum.sp.relabund=sum(mean.relabund))
 
 #plotting functional group abundances through time:
@@ -137,7 +137,7 @@ for(i in 1:length(spc_list)) {
     for(k in 1:length(trait_list)) {
       datk=datj[datj$value==as.character(trait_list[k]),]
       reg=lm(sum.sp.relabund~treatment_year, data=datk)
-      change_over_timek=data.frame(row.names=k, site_code=datk[1,c("site_code")], project_name=datk[1,c("project_name")], community_type=datk[1,c("community_type")], site_project_comm=as.character(spc_list[i]), treatment=as.character(trt_list[j]), trait=as.character(trait_list[k]), slope=reg$coefficients[2], R2=summary(reg)$r.squared)
+      change_over_timek=data.frame(row.names=k, site_code=datk[1,c("site_code")], project_name=datk[1,c("project_name")], community_type=datk[1,c("community_type")], site_project_comm=as.character(spc_list[i]), expt_length=datk[1, "expt_length"], treatment=as.character(trt_list[j]), my_trt=datk[1,c("my_trt")], trait=as.character(trait_list[k]), slope=reg$coefficients[2], R2=summary(reg)$r.squared)
       change_over_timej=rbind(change_over_timej, change_over_timek)
     }
     change_over_timei=rbind(change_over_timei, change_over_timej)
@@ -145,17 +145,21 @@ for(i in 1:length(spc_list)) {
   change_over_time=rbind(change_over_time, change_over_timei)
 }
 
-all_slopes=merge(change_over_time, trts, by=c("site_project_comm", "treatment"), all=T)
 
 
 #compare slope against study length to see if there is an obvious cutoff
-qplot()
-
+qplot(expt_length, R2, data=change_over_time[change_over_time$my_trt=="control",], alpha=I(0.1)) + facet_wrap(~trait)
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/slopes of summed species relative abundances vs treatment length, control plots.pdf", sep=""), width=7, height=7)
 
 
 
 
   
+
+
+
+
+
   
   pivot_wider(names_from="species_matched", values_from="relcov", values_fill=0)
   summarize(mean.sp.DCi=mean(DCi), sum.sp.relabund=sum(mean.relabund))
