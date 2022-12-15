@@ -22,9 +22,9 @@ dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_Ra
 reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv", sep=""))
 
 #info on treatments
-trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
-  select(site_code, project_name, community_type, treatment, trt_type, pulse, resource_mani)%>%
-  unique()
+trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep="")) %>%
+  group_by(site_code, project_name, community_type, treatment, trt_type, successional) %>%
+  summarize(expt_length=max(treatment_year))
 
 #cleaned species names
 sp <-read.csv(paste(my.wd,"CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
@@ -32,18 +32,19 @@ sp <-read.csv(paste(my.wd,"CoRRE data/trait data/CoRRE2trykey_2021.csv", sep="")
   unique
 
 #reading in categorical traits
-my_cat=read.csv(paste(my.wd, "CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv", sep="")) %>%
-  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal, n_fixation)
+my_cat=read.csv(paste(my.wd, "CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv", sep="")) %>%
+  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal, n_fixation) %>%
+  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
+  filter(drop==0) 
 
-#combine relative abundance data with treatment, cleaned species names, categorical traits, of life forms keep only graminoids, forbs, vines, woody.
+#combine relative abundance data with treatment, cleaned species names
 myreldat<-reldat%>%
   left_join(trts)%>%
   left_join(sp)%>% #this drops the unknowns??
-  left_join(my_cat)%>% # this adds ~5k rows. why?
   na.omit()%>% 
-  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, ifelse(growth_form %in% c("forb", "graminoid", "vine"), 0, 1))) %>% 
+  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
   filter(drop==0) %>% 
-  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, trt_type, species_matched) %>% 
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, successional, expt_length, block, plot_id, trt_type, species_matched) %>% 
   summarize(relcov=sum(relcov)) %>% 
   mutate(site_project_comm=as.factor(paste(site_code, project_name, community_type, sep="::")))
 
@@ -53,47 +54,130 @@ myreldat_filled=NULL
 
 for (j in 1:length(spc)) {
   dat.filled=myreldat[myreldat$site_project_comm==as.character(spc[j]),] %>% 
-    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, relcov, trt_type, species_matched, site_project_comm) %>% 
+    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, successional, expt_length, block, plot_id, relcov, trt_type, species_matched, site_project_comm) %>% 
     pivot_wider(names_from="species_matched", values_from="relcov", values_fill=0)
   dat.keep=dat.filled %>% 
-    pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "trt_type", "site_project_comm"), names_to="species_matched", values_to="relcov")
+    pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "trt_type", "site_project_comm", "successional", "expt_length"), names_to="species_matched", values_to="relcov")
   myreldat_filled=rbind(myreldat_filled, dat.keep)
 }
 
 #get average relative cover for each species in a treatment, over all plots
 relave<-myreldat_filled%>%
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year)%>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, successional, expt_length)%>%
   summarize(mean.relabund=mean(relcov)) %>% 
   ungroup()
 
 #getting frequency of each plot type
 myplots<-myreldat_filled%>%
-  select(site_code, project_name, community_type, site_project_comm, treatment, block, trt_type, plot_id, calendar_year, treatment_year)%>%
+  select(site_code, project_name, community_type, site_project_comm, treatment, block, trt_type, plot_id, calendar_year, treatment_year, successional, expt_length)%>%
   unique()%>%
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, calendar_year, treatment_year)%>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, calendar_year, treatment_year, successional, expt_length)%>%
   summarize(ntotplots=length(plot_id)) %>% 
   ungroup()
 
 #getting number of plots of each type in which a species was present
 freq<-myreldat_filled %>%
-  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, block, plot_id, calendar_year, treatment_year, relcov) %>%
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, block, plot_id, calendar_year, treatment_year, successional, expt_length, relcov) %>%
   unique() %>%
   filter(relcov>0) %>% 
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year) %>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, successional, expt_length) %>%
   summarize(nplots=length(plot_id)) %>%
   left_join(myplots) %>%
   mutate(freq=nplots/ntotplots)
 
-DCi.through.time<-relave %>%
+#calculate DCi per species
+DCi.species.per.year<-relave %>%
   left_join(freq) %>%
   mutate(freq=replace_na(freq, 0)) %>%
   mutate(nplots=replace_na(nplots, 0)) %>%
   mutate(DCi=(mean.relabund+freq)/2) %>%
-  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, mean.relabund, nplots, freq, DCi)
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, successional, expt_length, mean.relabund, nplots, freq, DCi)
 
-filename=(paste(my.wd, "/WinnersLosers paper/DCi/ DCi trends through time.csv", sep="")); write.csv(DCi.through.time, filename, row.names=F)
+#summarize across trait groups (lumping annuals and biennials; selecting only the traits we want), arranging/selecting treatments we want, removing pre-treatment data
+DCi.cat.per.year<-DCi.species.per.year %>%
+  left_join(my_cat) %>% 
+  mutate(lifespan=ifelse(lifespan=="annual", "ann.bien", ifelse(lifespan=="biennial", "ann.bien", lifespan))) %>%
+  mutate(clonal=ifelse(clonal=="yes", "clonal", ifelse(clonal=="no", "nonclonal", clonal))) %>%
+  mutate(mycorrhizal=ifelse(mycorrhizal=="yes", "mycorrhizal", ifelse(mycorrhizal=="no", "nonmycorrhizal", mycorrhizal))) %>%
+  mutate(n_fixation=ifelse(n_fixation=="yes", "Nfixer", ifelse(n_fixation=="no", "nonNfixer", n_fixation))) %>%
+  pivot_longer(growth_form:n_fixation, names_to="trait") %>%
+  filter(value %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "woody", "Nfixer", "vine")) %>%
+  mutate(my_trt=ifelse(trt_type %in% c("control", "temp", "CO2", "N", "irr", "drought", "P", "mult_nutrient"), trt_type, ifelse(trt_type %in% c("drought*temp", "irr*temp", "N*P", "N*temp", "mult_nutrient*drought", "N*CO2", "CO2*temp", "drought*CO2*temp", "N*irr", "mult_nutrient*temp", "N*drought", "N*CO2*temp", "irr*CO2*temp", "N*irr*CO2*temp", "irr*CO2", "N*irr*CO2", "N*irr*temp", "N*P*temp", "mult_nutrient*irr"), "GCD", "other"))) %>%
+  filter(!my_trt=="other") %>%
+  filter(treatment_year>0) %>% 
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, my_trt, calendar_year, treatment_year, successional, expt_length, value) %>%
+  summarize(mean.sp.DCi=mean(DCi), sum.sp.relabund=sum(mean.relabund))
 
-#DCi.through.time=read.csv(paste(my.wd, "/WinnersLosers paper/DCi/ DCi trends through time.csv", sep=""))
+#plotting functional group abundances through time:
+qplot(treatment_year, sum.sp.relabund, data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$value %in% c("C3", "C4"),], color=value) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F)
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/C3 C4 sum relabund through time.pdf", sep=""), width=20, height=12)
+
+qplot(treatment_year, mean.sp.DCi, data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$value %in% c("C3", "C4"),], color=value) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F)
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/C3 C4 mean DCi through time.pdf", sep=""), width=20, height=12)
+
+#which metric to use? 
+qplot(sum.sp.relabund, mean.sp.DCi, data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$value %in% c("C3", "C4"),], color=value) + facet_wrap(~site_project_comm) + geom_smooth(method="lm", se=F)
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/C3 C4 comparing metrics through time.pdf", sep=""), width=20, height=16)
+#sum.sp.relabund seems more sensitive, so using that one!
+
+#get slopes of sum.sp.abund through time separately for each treatment
+spc_list=as.character(unique(DCi.cat.per.year$site_project_comm))
+change_over_time=numeric(0)
+
+for(i in 1:length(spc_list)) {
+  dati=DCi.cat.per.year[DCi.cat.per.year$site_project_comm==as.character(spc_list[i]),]
+  trt_list=as.character(unique(dati$treatment))
+  change_over_timei=numeric(0)
+  
+  for(j in 1:length(trt_list)) {
+    datj=dati[dati$treatment==as.character(trt_list[j]),]
+    trait_list=as.character(unique(datj$value))
+    change_over_timej=numeric(0)
+    
+    for(k in 1:length(trait_list)) {
+      datk=datj[datj$value==as.character(trait_list[k]),]
+      reg=lm(sum.sp.relabund~treatment_year, data=datk)
+      change_over_timek=data.frame(row.names=k, site_code=datk[1,c("site_code")], project_name=datk[1,c("project_name")], community_type=datk[1,c("community_type")], site_project_comm=as.character(spc_list[i]), expt_length=datk[1, "expt_length"], treatment=as.character(trt_list[j]), my_trt=datk[1,c("my_trt")], trait=as.character(trait_list[k]), slope=reg$coefficients[2], R2=summary(reg)$r.squared)
+      change_over_timej=rbind(change_over_timej, change_over_timek)
+    }
+    change_over_timei=rbind(change_over_timei, change_over_timej)
+  }
+  change_over_time=rbind(change_over_time, change_over_timei)
+}
+
+
+
+#compare slope against study length to see if there is an obvious cutoff
+qplot(expt_length, R2, data=change_over_time[change_over_time$my_trt=="control",], alpha=I(0.1)) + facet_wrap(~trait)
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/slopes of summed species relative abundances vs treatment length, control plots.pdf", sep=""), width=7, height=7)
+
+
+
+
+  
+
+
+
+
+
+  
+  pivot_wider(names_from="species_matched", values_from="relcov", values_fill=0)
+  summarize(mean.sp.DCi=mean(DCi), sum.sp.relabund=sum(mean.relabund))
+  
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal, n_fixation, calendar_year, treatment_year) %>%
+
+
+
+
+
+
+
+
+
+
+filename=(paste(my.wd, "/", sep="")); write.csv(DCi.through.time, filename, row.names=F)
+
+#DCi.through.time=read.csv(paste(my.wd, "/", sep=""))
 
 #add handy labels
 DCi.through.time$site_project_comm=as.factor(paste(DCi.through.time$site_code, DCi.through.time$project_name, DCi.through.time$community_type, sep="_")); spc=unique(DCi.through.time$site_project_comm); length(spc)

@@ -5,11 +5,16 @@
 
 # Load libraries:
 library(phytools)
+library(plyr)
+library(ggtree)
+library(ggplot2)
+library(cowplot)
+library(tidyverse)
 
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
-my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
-my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+#my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+#my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 
 # Load the tree:
 tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep="")) #why not using the original tree? I detected that some species are missing from the other.
@@ -24,10 +29,9 @@ tree<-drop.tip(tree, in_tree_not_fam)
 
 ###
 #get number of nodes per family:
-list.r<-c("Poaceae", "Asteraceae", "Brassicaceae", "Solanaceae", "Cyperaceae",
+list.r<-c("Poaceae", "Brassicaceae", "Solanaceae", "Cyperaceae", "Polemoniaceae",
         "Gentianaceae", "Plantaginaceae", "Euphorbiaceae", "Amaranthaceae",
-        "Orchidaceae", "Fabaceae", "Gentianaceae", "Orobanchaceae", "Lamiaceae", 
-        "Polimonaceae")
+        "Orchidaceae", "Fabaceae", "Gentianaceae", "Orobanchaceae", "Lamiaceae")
   
 #get nodes for families:
 list.nod1<-NULL
@@ -89,41 +93,42 @@ famf<-join(famf,list.nod)
 toplot<-as.character(head(famf$Var1, n=70)) #select the top 9 families with 5 for more species
 
 #get groups by nodes:
-tree2 <- groupClade(tree, list.nod1$num)
+tree2 <- groupClade(tree, c(list.nod1$num, 2597, 2381)) #the two extra nodes are from Asteraceae 
 
 # Plot tree:
 p <- 
   ggtree(tree2, aes(color=group), layout="circular", size=0.5)+ # build circular tree
-  scale_color_manual(values=c("grey80", rep("black", 14)))+
+  scale_color_manual(values=c("grey80", rep("black", 16)))+
+  #geom_text(aes(label=node), size=1, col="red")+
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[3])$num, label=toplot[3], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[4])$num, label=toplot[4], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[3])$num, label=toplot[3], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[4])$num, label=toplot[4], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[5])$num, label=toplot[5], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[6])$num, label=toplot[6], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[6])$num, label=toplot[6], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[7])$num, label=toplot[7], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[8])$num, label=toplot[8], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[9])$num, label=toplot[9], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[10])$num, label=toplot[10], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[10])$num, label=toplot[10], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   
   geom_cladelabel(node=subset(famf, Var1==toplot[11])$num, label=toplot[11], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[12])$num, label=toplot[12], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[12])$num, label=toplot[12], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[13])$num, label=toplot[13], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[14])$num, label=toplot[14], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[15])$num, label=toplot[15], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[14])$num, label=toplot[14], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[15])$num, label=toplot[15], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   
   geom_cladelabel(node=subset(famf, Var1==toplot[16])$num, label=toplot[16], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[17])$num, label=toplot[17], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[18])$num, label=toplot[18], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[17])$num, label=toplot[17], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[18])$num, label=toplot[18], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[19])$num, label=toplot[19], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[20])$num, label=toplot[20], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[20])$num, label=toplot[20], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   
   geom_cladelabel(node=subset(famf, Var1==toplot[21])$num, label=toplot[21], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[22])$num, label=toplot[22], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[23])$num, label=toplot[23], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[24])$num, label=toplot[24], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[24])$num, label=toplot[24], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[25])$num, label=toplot[25], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
   geom_cladelabel(node=subset(famf, Var1==toplot[26])$num, label=toplot[26], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
@@ -140,7 +145,7 @@ p <-
   
   geom_cladelabel(node=subset(famf, Var1==toplot[36])$num, label=toplot[36], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[37])$num, label=toplot[37], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[38])$num, label=toplot[38], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[38])$num, label=toplot[38], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[39])$num, label=toplot[39], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[40])$num, label=toplot[40], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
@@ -186,8 +191,138 @@ p <-
         legend.key.size = unit(1, "cm"),
         legend.position="none")
 
-#save output:
-#png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult_withheat.png",
+
+
+####
+#run pie2_function first
+
+trt<-c("CO2", "Drt.","Irg.", "Temp.", "N", "P", "Mult. Nuts.","Inter.")
+value<-c(1,1,1,1,1,1,1,1)
+pie<-data.frame(trt, value)
+
+##doing this in baseR
+collst = RColorBrewer::brewer.pal(n = 8, name = "Dark2")
+
+#make Legend
+lg<-as.grob(~pie(pie$value, labels=pie$trt, col=collst, border="white"))
+
+#for poaceae overall
+labellistpoa<-c("", "","","", "","","+","+")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+pot<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for poaceae sub1
+labellistpoa<-c("", "","","", "","+","","")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+po1<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for poaceae sub2
+labellistpoa<-c("", "-","","", "","","","")
+colactive<-collst
+colactive[labellistpoa==""]="darkgray"
+po2<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.8, textcol = "white"))
+
+#for cyperaceae
+labellistcyp<-c("", "","","", "","","+","+")
+colactive<-collst
+colactive[labellistcyp==""]="darkgray"
+cyp<-as.grob(~pie2(pie$value, labels=labellistcyp, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for orchidaceae
+labellistorc<-c("", "","","", "","","-","")
+colactive<-collst
+colactive[labellistorc==""]="darkgray"
+orc<-as.grob(~pie2(pie$value, labels=labellistorc, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for asteraceae sub1
+labellistast<-c("", "","","", "-","","","")
+colactive<-collst
+colactive[labellistast==""]="darkgray"
+ast1<-as.grob(~pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for asteraceae sub2
+labellistast<-c("", "","+","", "","","","")
+colactive<-collst
+colactive[labellistast==""]="darkgray"
+ast2<-as.grob(~pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Lamiacea and Orobanaceae and Polimoniaceae
+labellistLO<-c("", "","","", "-","","","")
+colactive<-collst
+colactive[labellistLO==""]="darkgray"
+lop<-as.grob(~pie2(pie$value, labels=labellistLO, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Plantaginaceae
+labellistpla<-c("", "","","", "","","","-")
+colactive<-collst
+colactive[labellistpla==""]="darkgray"
+plt<-as.grob(~pie2(pie$value, labels=labellistpla, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Gentinaceae
+labellistgen<-c("", "","","", "-","","-","-")
+colactive<-collst
+colactive[labellistgen==""]="darkgray"
+gen<-as.grob(~pie2(pie$value, labels=labellistgen, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Solaneaceae
+labellistsol<-c("", "","","", "+","","+","")
+colactive<-collst
+colactive[labellistsol==""]="darkgray"
+sol<-as.grob(~pie2(pie$value, labels=labellistsol, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Amaranth
+labellistama<-c("", "+","-","", "+","-","","")
+colactive<-collst
+colactive[labellistama==""]="darkgray"
+ama<-as.grob(~pie2(pie$value, labels=labellistama, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Fabaceae
+labellistfab<-c("", "-","+","", "-","","-","")
+colactive<-collst
+colactive[labellistfab==""]="darkgray"
+fab<-as.grob(~pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Euphorb
+labellisteup<-c("", "","","+", "","","","")
+colactive<-collst
+colactive[labellisteup==""]="darkgray"
+eup<-as.grob(~pie2(pie$value, labels=labellisteup, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Brassicaceae
+labellistbra<-c("", "","","", "","","","+")
+colactive<-collst
+colactive[labellistbra==""]="darkgray"
+bra<-as.grob(~pie2(pie$value, labels=labellistbra, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+# Create layout to print:
+h <- ggdraw(p)
+
+# Add pie charts to the tree:
+p2<- h + draw_grob(lg, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)+ #central one
+         draw_grob(orc, x=.76, y=.57, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(cyp, x=.756, y=.655, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(pot, x=.70, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(po1, x=.59, y=.80, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(po2, x=.49, y=.835, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(bra, x=.31, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(eup, x=.26, y=.65, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(fab, x=.24, y=.50, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ama, x=.20, y=.44, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.27, y=.315, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(sol, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(gen, x=.372, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(plt, x=.428, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.495, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.561, y=.192, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ast1, x=.72, y=.25, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ast2, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
+
 png("phylo_ring_main.png", res=600,height=8,width=8,units="in"); 
-p
+p2
 dev.off()
+
+#clean-up:
+rm(list = ls())
+

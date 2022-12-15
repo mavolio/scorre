@@ -6,6 +6,7 @@
 # code up until line 50 is from 3_sCoRRE_functionalDiversityMetrics.R" 
 
 setwd("/Users/MagdaGarbowski 1/Dropbox/sDiv_sCoRRE_shared/")
+setwd("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\")
 library(tidyverse)
 library(funrar)
 
@@ -17,7 +18,7 @@ contTraits <- read.csv("CoRRE data/trait data/Final TRY Traits/Imputed Continuou
   ungroup()%>%
   mutate_at(vars(seed_dry_mass:seed_number), scale) #scale continuous traits
 
-traitsAll <- read.csv("CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv")%>% #categorical trait data
+traitsAll <- read.csv("CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv")%>% #categorical trait data
   full_join(contTraits) %>% #merge continuous and categorical traits
   drop_na()
 
@@ -33,6 +34,9 @@ sp_without_catag_data <- filter(traitsAll, is.na(clonal)) #none, we did a great 
 relcov_full_raw <- read.csv("CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
   dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
+# relcov_full_raw <- read.csv("CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv") %>%
+#   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
+#   dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
 
 # corre to try species names key
 corre_to_try <- read.csv("CoRRE data/trait data/corre2trykey_2021.csv") %>%
@@ -41,7 +45,7 @@ corre_to_try <- read.csv("CoRRE data/trait data/corre2trykey_2021.csv") %>%
 
 ### merge species names and remove all mosses
 # moss key to remove mosses from species comp data
-moss_sp_vec <- read.csv("CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv") %>%
+moss_sp_vec <- read.csv("CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") %>%
   dplyr::select(species_matched, leaf_type) %>%
   mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
   filter(moss=="moss") %>%
@@ -57,7 +61,10 @@ relcov_full_clean <- relcov_full_raw %>%
 
 diff_quantiles <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/diff_quantile.csv")
 CT_diff <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/CT_diff.csv")
-
+diff_quantiles <- read.csv("diff_quantile_2022Dec15.csv") %>%# for KW
+  mutate(site_proj_comm = gsub(" ", "_", diff_quantiles$site_proj_comm))
+CT_diff <- read.csv("CT_diff_2022Dec15.csv") %>% # for KW
+  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_"))
 # merge datasets to get winners and losers 
 CT_diff_quantiles <- merge(CT_diff, diff_quantiles, by = c("site_proj_comm", "treatment"), all.x= TRUE)
 
