@@ -30,7 +30,7 @@ trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\Co
 
 #merge CWM and trt data
 allDiv <- fDiv %>% #functional metrics
-  select(plot_id, treatment_year, site_code, project_name, community_type, site_proj_comm, treatment, CWM.growth_form, CWM.photosynthetic_pathway, CWM.lifespan, CWM.clonal, CWM.mycorrhizal_type, CWM.n_fixation, CWM.LDMC, CWM.SLA, CWM.plant_height_vegetative, CWM.rooting_depth, CWM.seed_dry_mass) %>% 
+  select(plot_id, treatment_year, site_code, project_name, community_type, site_proj_comm, treatment, CWM.growth_form, CWM.photosynthetic_pathway, CWM.lifespan, CWM.clonal, CWM.mycorrhizal_type, CWM.n_fixation, CWM.leaf_C.N, CWM.LDMC, CWM.SLA, CWM.plant_height_vegetative, CWM.rooting_depth, CWM.seed_dry_mass) %>% 
   left_join(trt) %>% #treatments
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>% #site anpp and regional richness
   full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
