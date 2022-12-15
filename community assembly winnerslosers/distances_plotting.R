@@ -19,10 +19,13 @@ CT_diff_ss$site_proj_comm <- gsub(" ", "_", CT_diff_ss$site_proj_comm)
 dat_focal_all_sps_df_merged <- merge(dat_focal_all_sps_df, CT_diff_ss, 
                                      by = c("site_code", "project_name", "treatment", "species_matched", "site_proj_comm"), all.x = TRUE)
 
+# selected out "full" dataset 
+dat_focal_all <- dat_focal_all_sps_df_merged[dat_focal_all_sps_df_merged$data_set == "full_all",]
+
 # get different treatment datasets  
-dat_focal_all_N <- dat_focal_all_sps_df_merged[dat_focal_all_sps_df_merged$trt_type %in% c("N"),] # nitrogen 
-dat_focal_all_mult <- dat_focal_all_sps_df_merged[dat_focal_all_sps_df_merged$trt_type %in% c("mult_nutrient"),] # multiple nutrients
-dat_focal_all_drought <- dat_focal_all_sps_df_merged[dat_focal_all_sps_df_merged$trt_type %in% c("drought"),] # drought 
+dat_focal_all_N <- dat_focal_all[dat_focal_all$trt_type %in% c("N"),] # nitrogen 
+dat_focal_all_mult <- dat_focal_all[dat_focal_all$trt_type %in% c("mult_nutrient"),] # multiple nutrients
+dat_focal_all_drought <- dat_focal_all[dat_focal_all$trt_type %in% c("drought"),] # drought 
 
 dat_prep <- function(df){
   dat_ls <- split(df, list(df$site_proj_comm))
