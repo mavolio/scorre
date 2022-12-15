@@ -12,7 +12,7 @@ library(tidyverse)
 ##### set working directory #####
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
 setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
-setwd("C:\\Users\\wilco\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\") # Kevin's laptop wd
+setwd("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\") # Kevin's laptop wd
 setwd("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\") # Kim's laptop/desktop
 
 
@@ -124,7 +124,7 @@ traitsClean <- traitsAll %>%
   filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
 
 # species relative cover data
-relcov_full_raw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv") %>%
+relcov_full_raw <- read.csv("CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
   dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
 
@@ -134,7 +134,7 @@ corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
   unique(.)
 
 # merge species names and remove all mosses -- moss key to remove mosses from species comp data
-moss_sp_vec <- read.csv("CoRRE data\\trait data\\sCoRRE categorical trait data_11302021.csv") %>%
+moss_sp_vec <- read.csv("CoRRE data\\trait data\\sCoRRE categorical trait data_12142022.csv") %>%
   dplyr::select(species_matched, leaf_type) %>%
   mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
   filter(moss=="moss") %>%
@@ -150,7 +150,7 @@ rm(moss_key, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
 
 
 ##### calculate functional dispersion - loop through sites #####
-FD_df_master <- {}
+distance_df_master <- {}
 site_proj_comm_vector <- unique(relcov_full_raw$site_proj_comm)
 
 # for(PROJ in 1:4){
@@ -224,7 +224,7 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   #changing all continuous to numerical
   traits_df_temp[,c(7:12)] <- lapply(traits_df_temp[,c(7:12)], as.numeric)
   
-  ### Calculate functional diversity metrics -- had to use Cailliez correlations becuase Euclidean distances could be calculated
+  ### Calculate MNTD and functional diversity metrics -- had to use Cailliez correlations becuase Euclidean distances could be calculated
   FD_temp <- dbFD(x=traits_df_temp, a=relcov_only_temp, cor="cailliez", calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
   
   FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
@@ -233,12 +233,24 @@ for(PROJ in 1:length(site_proj_comm_vector)){
     mutate(calendar_year = as.numeric(calendar_year)) %>%
     full_join(plot_info_temp, by=c("calendar_year","plot_id"))
   
-  FD_df_master <- rbind(FD_df_master, FD_df_temp)
+  comp_matrix_temp <- as.matrix(relcov_only_temp)
+  trait_dist_temp <- as.matrix(gowdis(traits_df_temp))
+
+  MNTD_df_temp <- data.frame(
+    plot_info_temp[,c("calendar_year", "plot_id")],
+    MNTD_traits = picante::mntd(comp_matrix_temp, trait_dist_temp)
+    )
   
+ distance_df_temp <- FD_df_temp %>%
+   full_join(MNTD_df_temp, by=c("calendar_year","plot_id"))
+ 
+ distance_df_master <- rbind(distance_df_master, distance_df_temp)
+ 
   rm(list=ls()[grep("temp", ls())])
 }
 
 
 # write.csv(FD_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2022-12-13.csv',row.names=F)
+# write.csv(distance_df_master, 'CoRRE_functionalDiversity_2022-12-15.csv',row.names=F)
 
 
