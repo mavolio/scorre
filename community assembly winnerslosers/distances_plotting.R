@@ -8,12 +8,18 @@
 
 library(ggplot2)
 
+my.wd <- "C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\"
+  
 dat_focal_all_sps_df <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/distances_avgs.csv")
 CT_diff <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/CT_diff.csv")
+# reading Kevin's files in
+dat_focal_all_sps_df <- read.csv(paste0(my.wd, "distances_avgs.csv"))
+CT_diff <- read.csv(paste0(my.wd, "CT_diff_2022Dec15.csv")) %>%
+  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_"))
 
 # get plot information from CT diff
 CT_diff_ss <- CT_diff[c("site_code", "project_name", "treatment", "treatDCi", "DCi", "diff", "trt_type", "species_matched", "site_proj_comm")]
-CT_diff_ss$site_proj_comm <- gsub(" ", "_", CT_diff_ss$site_proj_comm)
+#CT_diff_ss$site_proj_comm <- gsub(" ", "_", CT_diff_ss$site_proj_comm)
 
 
 dat_focal_all_sps_df_merged <- merge(dat_focal_all_sps_df, CT_diff_ss, 
@@ -57,6 +63,16 @@ mult_NN_diff <- plot_function(dat_focal_all_mult, dat_focal_all_mult$avg_distanc
 
 drought_all_diff <- plot_function(dat_focal_all_drought, dat_focal_all_drought$avg_distance_all, dat_focal_all_drought$diff, "diff", "Drought TRT - All Comparisons")
 drought_NN_diff <- plot_function(dat_focal_all_drought, dat_focal_all_drought$avg_distance_NN, dat_focal_all_drought$diff, "diff", "Drought  TRT - Nearest neighbor")
+
+# plot absolute values of delta Dci and color by species catagory
+nitrogen_all_absdiff <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_all, abs(dat_focal_all_N$diff), "|diff|", "Nitrogen TRT - All Comparisons")
+nitrogen_NN_absdiff <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_NN,abs(dat_focal_all_N$diff), "|diff|", "Nitrogen TRT - Nearest neighbor")
+
+mult_all_absdiff <- plot_function(dat_focal_all_mult, dat_focal_all_mult$avg_distance_all, abs(dat_focal_all_mult$diff), "|diff|", "Mult Nutrient TRT - All Comparisons")
+mult_NN_absdiff <- plot_function(dat_focal_all_mult, dat_focal_all_mult$avg_distance_NN, abs(dat_focal_all_mult$diff), "|diff|", "Mult Nutrient TRT - Nearest neighbor")
+
+drought_all_absdiff <- plot_function(dat_focal_all_drought, dat_focal_all_drought$avg_distance_all, abs(dat_focal_all_drought$diff), "|diff|", "Drought TRT - All Comparisons")
+drought_NN_absdiff <- plot_function(dat_focal_all_drought, dat_focal_all_drought$avg_distance_NN, abs(dat_focal_all_drought$diff), "|diff|", "Drought  TRT - Nearest neighbor")
 
 
 # check a few plots with DCi 

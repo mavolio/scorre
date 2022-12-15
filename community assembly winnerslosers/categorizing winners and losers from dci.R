@@ -11,7 +11,11 @@ library(tidyverse)
 rm(list=ls()[!ls() %in% c('CT_diff')])
 
 CT_diff_working <- CT_diff %>%
-  mutate(site_proj_comm = paste(site_code, project_name, community_type))
+  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_"))
+
+glen_ctdiff_sp_vec <- unique(filter(CT_diff_working, site_proj_comm == "Glen Fert 0")$species_matched)
+sort(glen_ctdiff_sp_vec)
+
 
 ### Calculate quanitles of Dci diff
 diff_quantile <- CT_diff_working %>%
@@ -24,18 +28,24 @@ diff_quantile <- CT_diff_working %>%
             p95 = quantile(diff, probs = 0.95, na.rm = FALSE)
             )
 
+write.csv(diff_quantile, file="diff_quantile_2022Dec15.csv", row.names=F)
+
+# test_quantile3 <- filter(diff_quantile, site_proj_comm == "CAR_salt marsh_MonArth" & treatment=="NPK")
+# test_quantile4 <- filter(CT_diff_working, site_proj_comm == "CAR_salt marsh_MonArth" & treatment=="NPK")
+# quantile(test_quantile4$diff, probs=0.05)
+
 CT_diff_full <- CT_diff_working %>%
   left_join(diff_quantile, by=c("site_proj_comm", "treatment")) 
 CT_diff_full <- CT_diff_full %>%
-  mutate(species_status_95 = ifelse(DCi==0 & treatDCi>0, "colonizer",
+  mutate(species_status_95 = ifelse(DCi==0 & treatDCi>=0, "colonizer",
                                  ifelse(diff < CT_diff_full$p05, "loser",
                                         ifelse(diff > CT_diff_full$p95, "winner",
                                                "neutral")))) %>%
-  mutate(species_status_90 = ifelse(DCi==0 & treatDCi>0, "colonizer",
+  mutate(species_status_90 = ifelse(DCi==0 & treatDCi>=0, "colonizer",
                                     ifelse(diff < CT_diff_full$p10, "loser",
                                            ifelse(diff > CT_diff_full$p90, "winner",
                                                   "neutral")))) %>%
-  mutate(species_status_80 = ifelse(DCi==0 & treatDCi>0, "colonizer",
+  mutate(species_status_80 = ifelse(DCi==0 & treatDCi>=0, "colonizer",
                                     ifelse(diff < CT_diff_full$p20, "loser",
                                            ifelse(diff > CT_diff_full$p80, "winner",
                                                   "neutral")))) %>%
