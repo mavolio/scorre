@@ -8,7 +8,8 @@ library(lmerTest)
 library(ggpubr)
 library(vegan)
 library(FD)
-
+library(visreg)
+library(ggthemes)
 
 #Read in data
 #traits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/trait data/Final Cleaned Traits/Continuous_Traits/Backtrans_GapFilled_sCorre.csv")
@@ -260,11 +261,15 @@ mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_mast
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "irr"))
 summary(mod)
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "CO2"))
+summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "N"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "P"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
+summary(mod)
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 summary(mod)
             
             
@@ -370,9 +375,12 @@ ggplot(lrr.df, aes(trt_type, lrr, color = trt_type))+
 lrr.df_traits <- lrr.df
 
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "drought"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "irr"))
+summary(mod)
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "CO2"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "N"))
 summary(mod)
@@ -380,7 +388,8 @@ mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_mas
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
 summary(mod)
-
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
+summary(mod)
 
 
 #####################
@@ -392,9 +401,19 @@ lrr_sp.tr <- merge(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type",
 ggplot(lrr_sp.tr, aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
   geom_point()+
-  geom_smooth(method = "lm")+
+  geom_smooth(method = "lm", ribbon = FALSE)+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 0)+
   theme_bw()
 
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "drought")))
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "irr")))
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "CO2")))
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "N")))
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "P")))
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "mult_nutrient")))
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "mult_GCD")))
+summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "temp")))
 
 
 ############
@@ -418,23 +437,25 @@ lrr_covariate_traits <- left_join(lrr.df_traits, CoRRE_project_summary, by = c("
 ##DROUGHT
 drought <- subset(lrr_covariate, trt_type == "drought")
 mod <- lmer(lrr~MAP + (1|site_code), data = drought)
+#mod <- lm(lrr~MAP, data = drought)
 summary(mod)
-visreg(mod)
+visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
 mod <- lmer(lrr~MAT + (1|site_code), data = drought)
 summary(mod)
-visreg(mod)
+visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
 mod <- lmer(lrr~rrich + (1|site_code), data = drought)
 summary(mod)
-visreg(mod)
+visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
 mod <- lmer(lrr~experiment_length + (1|site_code), data = drought)
 summary(mod)
-visreg(mod)
+visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
+
 
 ##IRRIGATION
 irrigation <- subset(lrr_covariate, trt_type == "irr")
 mod <- lmer(lrr~MAP + (1|site_code), data = irrigation)
 summary(mod)
-visreg(mod)
+visreg(mod, ylab = "lrr beta diversity", main = "Irrigation treatment")
 mod <- lmer(lrr~MAT + (1|site_code), data = irrigation)
 summary(mod)
 visreg(mod)
@@ -587,18 +608,18 @@ lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site
 
 ##ANY WATER MANIPULATION
 water_mani <- subset(lrr_treat_species, trt_type == "drought"| trt_type == "irr")
-mod <- lmer(lrr~precip + (1|site_code) ,data = water_mani)
+mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 summary(mod)
 
 ##Nitrogen gradient
 temp <- subset(lrr_treat_species, trt_type == "N")
-mod <- lmer(lrr~n + (1|site_code) ,data = temp)
+mod <- lmer(lrr~n + (1|expgroup) ,data = temp)
 summary(mod)
 visreg(mod)
 
 ##traits
 water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
-mod <- lmer(lrr~precip + (1|site_code) ,data = water_mani)
+mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 summary(mod)
 
 visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Precipitation treatment", gg = TRUE)+
@@ -606,7 +627,9 @@ visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr beta diversity", xlab = "
   theme_base()
   
 N <- subset(lrr_treat_traits, trt_type == "N")
-mod <- lmer(lrr~n  + (1|site_code) ,data = N)
+mod <- lmer(lrr~n  + (1|expgroup) ,data = N)
 summary(mod)
-visreg(mod)
+visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
+  geom_hline(yintercept = 0)+
+  theme_base()
 
