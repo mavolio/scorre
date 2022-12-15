@@ -485,7 +485,7 @@ make_boxplot = function(toplot_data = toplot, # data to plot
   }
 }
 
-trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Nutrients","all mult" ="Interact.")
+trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
 trait.labels=c(LDMC="LDMC", leaf_C.N="C:N",
                PlantHeight="Plant Height", "Rooting Depth"="Rooting Depth",
                "Seed Mass"="Seed Mass", SLA="SLA")
@@ -628,7 +628,7 @@ toplotesacat$value = factor(toplotesacat$value)
 unique(data.frame(toplotesacat$value, toplotesacat$Trait_name))
 
 
-trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Nutrients","all mult" ="Interact.")
+trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
 trait.labels = sort(unique(as.character(toplotesacat$value)))
 tmp = trait.labels
 trait.labels = paste(toupper(substr(trait.labels,1,1)),
@@ -700,8 +700,8 @@ dev.off()
 }
 
 
-tord1 = rev(c(2,11,7,12,4,6,14))
-tord2 = rev(c(3,8,10,1,9,5,13))
+tord1 = rev(c(2,11,7,12,4,5,14))
+tord2 = rev(c(3,8,10,1,9,6,13))
 gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
                          rep("blue",2),
                          rep("orange",2),
