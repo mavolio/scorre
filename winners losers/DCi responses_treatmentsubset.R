@@ -348,6 +348,13 @@ allmult_treats<-CT_diff%>%
 
 sum(allmult_treats$nobs)
 
+###are certain families only in some treatments?
+fam<-read.csv("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\species_families_trees_2021.csv")
+
+allmult_sp<-allmult_mean %>% 
+  left_join(fam)
+
+
 ##multiple nutrients
 allnuts_sites<-CT_diff%>%
   filter(multnuts==1)%>%
