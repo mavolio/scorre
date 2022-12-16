@@ -23,6 +23,7 @@ library(funrar)
 
 #----------------------------- datasets  ---------------------------
 rel_cov <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/relcov.csv")
+traitsClean <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/traitsClean.csv")
 diff_quantiles <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/diff_quantile.csv")
 CT_diff <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/CT_diff.csv")
 
@@ -57,127 +58,74 @@ CT_diff_quantiles_ss$site_proj_comm <- gsub(" ", "_", CT_diff_quantiles_ss$site_
 
 relcov_full_clean_control <- relcov_full_clean[relcov_full_clean$treatment == "control",]
 
-relcov_full_clean_win_los <- merge(relcov_full_clean, CT_diff_quantiles_ss, 
-                                   by = c("site_proj_comm", "treatment", "site_code", "project_name", "species_matched"),
-                                   all.x = TRUE)
-
-# pull out only sites/treatments with winners, losers, colonizers, neutrals identified 
-relcov_full_clean_win_los_splits <- split(relcov_full_clean_win_los, 
-                                          list(relcov_full_clean_win_los$site_proj_comm, relcov_full_clean_win_los$treatment),
+# split by site_proj_comm, plot_id, and year 
+relcov_full_clean_control_splits <- split(relcov_full_clean_control , 
+                                          list(relcov_full_clean_control$site_proj_comm,
+                                               relcov_full_clean_control$plot_id, 
+                                               relcov_full_clean_control$calendar_year),
                                           drop = TRUE)
 
-# keep only datasets with some winners and losers in them 
-return_df_function <- function(x){
-  if(sum(is.na(x$species_status_90_10)) != nrow(x))
-    return(x)
-}
-
-
-#----------------- merge winners and losers with relcov_full_clean CONTROL only  -------------------------
-
-relcov_full_clean_control <- relcov_full_clean[relcov_full_clean$treatment == "control",]
-
-relcov_full_clean_win_los_control <- merge(relcov_full_clean_control, CT_diff_quantiles_ss[], 
-                                   by = c("site_proj_comm", "site_code", "project_name", "species_matched"),
-                                   all.x = TRUE)
-
-# pull out only sites/treatments with winners, losers, colonizers, neutrals identified 
-relcov_full_clean_win_los_control_splits <- split(relcov_full_clean_win_los_control , 
-                                          list(relcov_full_clean_win_los_control$site_proj_comm, relcov_full_clean_win_los_control$treatment),
-                                          drop = TRUE)
-
-
+# keep plots with >1 species  
+relcov_full_clean_control_splits <- relcov_full_clean_control_splits[sapply(relcov_full_clean_control_splits, nrow)>1] 
 
 #----------------------------- calculating distances ---------------------------
 
-# split into site_proj_comm_trt level datasets 
-site_splits <- lapply(relcov_full_clean_win_los_splits, return_df_function)
-site_splits[sapply(site_splits, is.null)] <- NULL
-site_splits <- lapply(site_splits, function(x) {xx = x[!is.na(x$species_status_90_10),]; return(xx)})
+# all distances of species to one another in given plot (so far in controls)
 
-prep_function <- function(site_df){
-  # split to plot level 
-  plot_splits <- split(site_df, list(site_df$plot_id, site_df$calendar_year), drop = TRUE)
+all_distances_function <- function(plot_df){
   
-  # keep communities with more than one species 
-  plot_splits_2 <- plot_splits[sapply(plot_splits, nrow)>1] 
-  
-  # drop NA from winner_loser column 
-  plot_splits_2 <- lapply(plot_splits_2, function(x) {xx = x[!is.na(x$species_status_90_10),]; return(xx)})
-  
-  # keep plots with winners 
-  winners_keep_function <- function(df){
-    if(any(df == "winner")){
-      return(df)
-    }
-  }
-  
-  # keep plots with more than one species 
-  plot_splits_w_winners <- lapply(plot_splits_2, winners_keep_function)
-  plot_splits_w_winners[sapply(plot_splits_w_winners, is.null)] <- NULL
-  plot_splits_w_winners <- plot_splits_w_winners[sapply(plot_splits_w_winners, nrow)>1]
-  
-  if(length(plot_splits_w_winners) > 0){
-    plots_out <- do.call(rbind, plot_splits_w_winners)
-    return(plots_out)
-  }
-}
-
-plots_out_ls <- lapply(site_splits, prep_function)
-plots_out_ls[sapply(plots_out_ls, is.null)] <- NULL
-
-plots_out_df <- do.call(rbind, plots_out_ls)
-
-plots_out_splits <- split(plots_out_df, list(plots_out_df$site_proj_comm, plots_out_df$treatment, plots_out_df$calendar_year, plots_out_df$plot_id), drop = TRUE)
-  
-distances_function <- function(plot_df){
-
   # species vector from relative cover for pulling traits 
   sp_df_temp <- unique(plot_df$species_matched)[!is.na(unique(plot_df$species_matched))] 
   
-  #subset trait data to just include the species present subset relative cover data
+  # subset trait data to just include the species present subset relative cover data
   traits_df_raw_temp <- traitsClean[traitsClean$species_matched %in% c(sp_df_temp),]
-
-  #vector of species for which trait data are available 
+  
+  if(nrow(traits_df_raw_temp) > 2){
+  
+  # vector of species for which trait data are available 
   traits_df_raw_temp_vec <- unique(traits_df_raw_temp$species_matched)
   
-  #vector of species not in trait database (but in relative abundance data) to remove from species abundance data
+  # vector of species not in trait database (but in relative abundance data) to remove from species abundance data
   sp_to_remove_temp <- plot_df[is.na(plot_df$species_matched),]$genus_species
   
-  #abundance dataset with species removed that do not have trait information
+  # abundance dataset with species removed that do not have trait information
   relcov_unkn_sp_rm_temp <- plot_df[!plot_df$genus_species %in% c(sp_to_remove_temp),]
   
   # dataframe for categorical and continuous traits
   traits_df_temp_cat_cont <- traits_df_raw_temp[c("species_matched", "photosynthetic_pathway","lifespan",  "mycorrhizal_type", "n_fixation","clonal",
                                                   "seed_dry_mass","LDMC","plant_height_vegetative", "SLA", "rooting_depth")]
-  
-  # make values numeric (continuous traits) and factors (categorical traits)
-  # will need to be careful if selected traits change 
-  traits_df_temp_cat_cont[,c(7:length(traits_df_temp_cat_cont))] <- lapply(traits_df_temp_cat_cont[,c(7:length(traits_df_temp_cat_cont))],
-                                                                           as.numeric)
+  # make categorical traits factors
   traits_df_temp_cat_cont[,c(2:6)] <- lapply(traits_df_temp_cat_cont[,c(2:6)], as.factor)
   
-  # winner loser dataframe 
-  win_los_df <- plot_df[c("species_matched", "species_status_90_10")]
-  win_los_df <- win_los_df[win_los_df$species_matched %in% traits_df_raw_temp_vec,]
-  
-  # set 1 to get gower distances out
-  set_1 <- traits_df_temp_cat_cont
-  rownames(set_1) <- set_1$species_matched
-  set_1$species_matched <- NULL 
+  # get data read for compute_dist_matrix 
+  rownames(traits_df_temp_cat_cont) <- traits_df_temp_cat_cont$species_matched
+  traits_df_temp_cat_cont$species_matched <- NULL
   
   # calculate gower distance 
-  gower_dist <- as.data.frame(compute_dist_matrix(set_1, "gower"))
-  gower_dist$species_matched <- rownames(gower_dist)
+  gower_dist <- as.matrix(compute_dist_matrix(traits_df_temp_cat_cont, "gower"))
   
-  # get into same order for cbind 
-  gower_dist <- gower_dist[order(gower_dist$species_matched),]
-  win_los_df <- win_los_df[order(win_los_df$species_matched),]
-  win_los_df <- unique(win_los_df)
+  # create output dataset 
+  out <- as.data.frame(matrix(gower_dist, dimnames=list(t(outer(colnames(gower_dist), rownames(gower_dist), FUN=paste, sep = "_")), NULL)))
+  out$species_1 <- sub("_.*", "", rownames(out)) 
+  out$species_2 <- sub(".*_", "", rownames(out)) 
   
-  gower_w_winners_losers <- cbind(win_los_df,gower_dist[,!names(gower_dist) %in% c("species_matched")])
-  row.names(gower_w_winners_losers) <- gower_w_winners_losers$species_matched
+  colnames(out)[1] <- "distance"
+  rownames(out) <- NULL
   
+  out <- out[c("species_1", "species_2", "distance")]
+  
+  # cbind with plot info and export 
+  info_dat <- plot_df[1,c(1:11)][rep(seq_len(nrow(plot_df[1,c(1:11)])), nrow(out)),]
+  out_3 <- cbind(info_dat, out)
+  return(out_3)
+  }
+}
+
+out <- lapply(relcov_full_clean_control_splits, all_distances_function)
+
+# These datasets can now be used to get specific averages? 
+
+
   
   # create subset datasets for comparisons 
   # full dataset
@@ -306,4 +254,100 @@ dat_avgs <- do.call(rbind, list(dat_focal_all_sps_df, dat_winner_winner_sps_df, 
 write.csv(sites_distances_out, "/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/distances.csv")
 write.csv(sites_distances_out_comparisons, "/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/distances_winner_comparisons.csv")
 write.csv(dat_avgs, "/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/distances_avgs.csv")
+
+
+
+# ---------------------------------
+# to delete 
+relcov_full_clean_win_los <- merge(relcov_full_clean, CT_diff_quantiles_ss, 
+                                   by = c("site_proj_comm", "treatment", "site_code", "project_name", "species_matched"),
+                                   all.x = TRUE)
+
+# pull out only sites/treatments with winners, losers, colonizers, neutrals identified 
+relcov_full_clean_win_los_splits <- split(relcov_full_clean_win_los, 
+                                          list(relcov_full_clean_win_los$site_proj_comm, relcov_full_clean_win_los$treatment),
+                                          drop = TRUE)
+
+# keep only datasets with some winners and losers in them 
+return_df_function <- function(x){
+  if(sum(is.na(x$species_status_90_10)) != nrow(x))
+    return(x)
+}
+
+
+#----------------- merge winners and losers with relcov_full_clean CONTROL only  -------------------------
+
+relcov_full_clean_control <- relcov_full_clean[relcov_full_clean$treatment == "control",]
+
+relcov_full_clean_win_los_control <- merge(relcov_full_clean_control, CT_diff_quantiles_ss[], 
+                                           by = c("site_proj_comm", "site_code", "project_name", "species_matched"),
+                                           all.x = TRUE)
+
+# pull out only sites/treatments with winners, losers, colonizers, neutrals identified 
+relcov_full_clean_win_los_control_splits <- split(relcov_full_clean_win_los_control , 
+                                                  list(relcov_full_clean_win_los_control$site_proj_comm, relcov_full_clean_win_los_control$treatment),
+                                                  drop = TRUE)
+prep_function <- function(plot_df){
+  # split to plot level 
+  plot_splits <- split(plot_df, list(plot_df$plot_id, plot_df$calendar_year), drop = TRUE)
+  
+  # keep communities with more than one species 
+  plot_splits_2 <- plot_splits[sapply(plot_splits, nrow)>1] 
+  
+  # drop NA from winner_loser column 
+  plot_splits_2 <- lapply(plot_splits_2, function(x) {xx = x[!is.na(x$species_status_90_10),]; return(xx)})
+  
+  # keep plots with winners 
+  winners_keep_function <- function(df){
+    if(any(df == "winner")){
+      return(df)
+    }
+  }
+  
+  # keep plots with more than one species 
+  plot_splits_w_winners <- lapply(plot_splits_2, winners_keep_function)
+  plot_splits_w_winners[sapply(plot_splits_w_winners, is.null)] <- NULL
+  plot_splits_w_winners <- plot_splits_w_winners[sapply(plot_splits_w_winners, nrow)>1]
+  
+  if(length(plot_splits_w_winners) > 0){
+    plots_out <- do.call(rbind, plot_splits_w_winners)
+    return(plots_out)
+  }
+}
+
+plots_out_ls <- lapply(site_splits, prep_function)
+plots_out_ls[sapply(plots_out_ls, is.null)] <- NULL
+
+plots_out_df <- do.call(rbind, plots_out_ls)
+
+plots_out_splits <- split(plots_out_df, list(plots_out_df$site_proj_comm, plots_out_df$treatment, plots_out_df$calendar_year, plots_out_df$plot_id), drop = TRUE)
+
+
+
+
+
+
+
+
+
+# winner loser dataframe 
+win_los_df <- plot_df[c("species_matched", "species_status_90_10")]
+win_los_df <- win_los_df[win_los_df$species_matched %in% traits_df_raw_temp_vec,]
+
+# set 1 to get gower distances out
+set_1 <- traits_df_temp_cat_cont
+rownames(set_1) <- set_1$species_matched
+set_1$species_matched <- NULL 
+
+# calculate gower distance 
+gower_dist <- as.data.frame(compute_dist_matrix(set_1, "gower"))
+gower_dist$species_matched <- rownames(gower_dist)
+
+# get into same order for cbind 
+gower_dist <- gower_dist[order(gower_dist$species_matched),]
+win_los_df <- win_los_df[order(win_los_df$species_matched),]
+win_los_df <- unique(win_los_df)
+
+gower_w_winners_losers <- cbind(win_los_df,gower_dist[,!names(gower_dist) %in% c("species_matched")])
+row.names(gower_w_winners_losers) <- gower_w_winners_losers$species_matched
 
