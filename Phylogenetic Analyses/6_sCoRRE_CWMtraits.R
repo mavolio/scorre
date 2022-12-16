@@ -1,5 +1,5 @@
 ################################################################################
-##  7_sCoRRE_phylogeneticDiversity_CWMtraits.R: Examining community weighted mean trait responses to treatments in the CoRRE database.
+##  5_sCoRRE_CWMtraits.R: Examining community weighted mean trait responses to treatments in the CoRRE database.
 ##
 ##  Author: Kimberly Komatsu
 ##  Date created: December 13, 2022

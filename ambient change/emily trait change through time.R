@@ -7,6 +7,12 @@ rm(list=ls())
 
 library(tidyverse)
 library(gridExtra)
+library(lme4)
+library(car)
+
+#emily's plotting preferences:
+theme_set(theme_bw())
+theme_eg=theme_update(panel.grid.minor=element_blank(), strip.background=element_blank())
 
 ###read in data
 
@@ -101,7 +107,7 @@ DCi.cat.per.year<-DCi.species.per.year %>%
   mutate(mycorrhizal=ifelse(mycorrhizal=="yes", "mycorrhizal", ifelse(mycorrhizal=="no", "nonmycorrhizal", mycorrhizal))) %>%
   mutate(n_fixation=ifelse(n_fixation=="yes", "Nfixer", ifelse(n_fixation=="no", "nonNfixer", n_fixation))) %>%
   pivot_longer(growth_form:n_fixation, names_to="trait") %>%
-  filter(value %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "woody", "Nfixer", "vine")) %>%
+  filter(value %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "woody", "Nfixer", "nonNfixer", "vine")) %>%
   mutate(my_trt=ifelse(trt_type %in% c("control", "temp", "CO2", "N", "irr", "drought", "P", "mult_nutrient"), trt_type, ifelse(trt_type %in% c("drought*temp", "irr*temp", "N*P", "N*temp", "mult_nutrient*drought", "N*CO2", "CO2*temp", "drought*CO2*temp", "N*irr", "mult_nutrient*temp", "N*drought", "N*CO2*temp", "irr*CO2*temp", "N*irr*CO2*temp", "irr*CO2", "N*irr*CO2", "N*irr*temp", "N*P*temp", "mult_nutrient*irr"), "GCD", "other"))) %>%
   filter(!my_trt=="other") %>%
   filter(treatment_year>0) %>% 
@@ -145,15 +151,88 @@ for(i in 1:length(spc_list)) {
   change_over_time=rbind(change_over_time, change_over_timei)
 }
 
+write.csv(change_over_time, paste(my.wd, "ambient change paper/slopes of summed sp abund.csv", sep=""), row.names=F)
 
 
 #compare slope against study length to see if there is an obvious cutoff
 qplot(expt_length, R2, data=change_over_time[change_over_time$my_trt=="control",], alpha=I(0.1)) + facet_wrap(~trait)
 ggsave(paste(my.wd, "ambient change paper/figs dec 2022/slopes of summed species relative abundances vs treatment length, control plots.pdf", sep=""), width=7, height=7)
 
+hist(change_over_time[change_over_time$my_trt=="control",]$expt_length)
+
+
+# PLOT AMBIENT SLOPE VS T-C SLOPE FOR EACH TREATMENT AND EACH TRAIT GROUP
+
+#first, identify the sites with each treatment (so we know which control slopes to average)
+#then calculate treatment-control slope for each spc
+
+control_change_over_time <- change_over_time %>%
+  filter(my_trt=="control") %>%
+  mutate(control.slope=slope, abs.control.slope=abs(slope)) %>%
+  select(site_code, project_name, community_type, site_project_comm, expt_length, trait, control.slope, abs.control.slope)
+
+trt_change_over_time <- change_over_time %>%
+  filter(!my_trt=="control") %>%
+  mutate(trt.slope=slope, abs.trt.slope=abs(slope)) %>%
+  select(site_code, project_name, community_type, site_project_comm, expt_length, treatment, my_trt, trait, trt.slope, abs.trt.slope) %>%
+  left_join(control_change_over_time) %>%
+  mutate(TminusC=trt.slope-control.slope, TminusCabs=abs.trt.slope-abs.control.slope) %>%
+  filter(!is.na(control.slope)) %>%
+  filter(!is.na(trt.slope)) %>%
+  group_by(my_trt, trait) %>%
+  summarize(avgT=mean(trt.slope), sdT=sd(trt.slope), avgTminusC=mean(TminusC), sdTminusC=sd(TminusC), n=length(TminusC), avgC=mean(control.slope), sdC=sd(control.slope), avgTminusCabs=mean(TminusCabs), sdTminusCabs=sd(TminusCabs)) %>%
+  mutate(TminusCcolor=ifelse(avgC>0 & avgT>0, "consistent increases", ifelse(avgC<0 & avgT<0, "consistent decreases", "disagreement")), trait.to.plot=factor(trait, levels=c("ann.bien", "perennial", "C3", "C4", "clonal", "nonclonal", "Nfixer", "nonNfixer", "mycorrhizal", "nonmycorrhizal", "forb", "graminoid", "woody", "vine")), seTminusCabs=sdTminusCabs/sqrt(n))
+
+qplot(trait.to.plot, avgTminusCabs, data=trt_change_over_time, color=TminusCcolor) + facet_wrap(~my_trt) + geom_errorbar(aes(ymin=avgTminusCabs-seTminusCabs, ymax=avgTminusCabs+seTminusCabs, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Difference between treatment and control\nin absolute value of change\nin relative abundance over time") + scale_color_manual(values=c("orange", "cornflowerblue", "darkblue"), name="Trait group changes\nin treated and control plots") + geom_hline(yintercept=0, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/trait groups responses, treatment minus control.pdf", sep=""), width=10, height=6)
+
+# we are not happy with this figure but we want a single metric that will communicate whether the treatment and controls have similar magnitudes and similar directions. 
+
+
+toplot.trt<-trt_change_over_time %>%
+  select(my_trt, trait.to.plot, avgT, sdT, n) %>%
+  mutate(se=sdT/sqrt(n), avg=avgT, trt="treatment") %>%
+  select(my_trt, trait.to.plot, avg, se, trt)
+toplot.TminusC<-trt_change_over_time %>%
+  select(my_trt, trait.to.plot, avgTminusC, sdTminusC, n) %>%
+  mutate(se=sdTminusC/sqrt(n), avg=avgTminusC, trt="T-C") %>%
+  select(my_trt, trait.to.plot, avg, se, trt)
+toplot.control<-trt_change_over_time %>%
+  select(my_trt, trait.to.plot, avgC, sdC, n) %>%
+  mutate(se=sdC/sqrt(n), avg=avgC, trt="control") %>%
+  select(my_trt, trait.to.plot, avg, se, trt)
+toplot=rbind(toplot.trt, toplot.TminusC, toplot.control)
+
+qplot(trait.to.plot, avg, data=toplot[toplot$trt %in% c("control", "treatment"),], color=trt) + facet_wrap(~my_trt, scales="free_y") + geom_errorbar(aes(ymin=avg-se, ymax=avg+se, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time") + scale_color_manual(values=c("orange", "cornflowerblue", "darkblue")) + geom_hline(yintercept=0, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/trait groups responses, treatment vs control.pdf", sep=""), width=8, height=6)
+
+#plot just T-C, color code whether both treatment and control are increasing vs decreasing vs disagreement. absolute value at each experiment and then calculate T-C and then average and SE across experiments? 
+
+
+# DOES SITE-LEVEL N DEPOSITION PREDICT HOW STRONGLY N FIXERS DECLINE OVER TIME?
+
+ndep=read.csv(paste(my.wd, "ambient change paper/CoRRE_siteLocationClimateNdep_Dec2021.csv", sep="")) %>%
+  left_join(change_over_time) %>%
+  filter(my_trt=="control" & trait %in% c("Nfixer", "nonNfixer"))
+
+qplot(ndep_2016, slope, data=ndep, alpha=log(expt_length), color=trait) + geom_smooth(method="lm") + scale_color_manual(values=c("forestgreen", "black")) + guides(alpha=FALSE) + xlab("N deposition in 2016") + ylab("Change in relative abundance\n over time in control plots")
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/N deposition N fixers.pdf", sep=""), width=5, height=3)
+
+try=lmer(slope~trait*ndep_2016 + (1|site_code/site_project_comm), data=ndep)
+Anova(try) #interaction p=0.002
+tryN=lmer(slope~ndep_2016 + (1|site_code), data=ndep[ndep$trait=="Nfixer",]) #ndep p=0.096
+trynonN=lmer(slope~ndep_2016 + (1|site_code), data=ndep[ndep$trait=="nonNfixer",]) #ndep p=0.02
 
 
 
+
+
+
+
+
+
+
+####### OLD JUNK CODE ##################3
   
 
 

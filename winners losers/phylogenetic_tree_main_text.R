@@ -10,6 +10,7 @@ library(ggtree)
 library(ggplot2)
 library(cowplot)
 library(tidyverse)
+library(ggplotify)
 
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
@@ -93,7 +94,7 @@ famf<-join(famf,list.nod)
 toplot<-as.character(head(famf$Var1, n=70)) #select the top 9 families with 5 for more species
 
 #get groups by nodes:
-tree2 <- groupClade(tree, c(list.nod1$num, 2597, 2381)) #the two extra nodes are from Asteraceae 
+tree2 <- groupClade(tree, c(list.nod1$num, 2597, 2381, 2725)) #the two extra nodes are from Asteraceae 
 
 # Plot tree:
 p <- 
@@ -196,7 +197,7 @@ p <-
 ####
 #run pie2_function first
 
-trt<-c("CO2", "Drt.","Irg.", "Temp.", "N", "P", "Mult. Nuts.","Inter.")
+trt<-c("CO2", "Drt.","Irg.", "Temp.", "N", "P", " Mult.","Inter.")
 value<-c(1,1,1,1,1,1,1,1)
 pie<-data.frame(trt, value)
 
@@ -204,7 +205,19 @@ pie<-data.frame(trt, value)
 collst = RColorBrewer::brewer.pal(n = 8, name = "Dark2")
 
 #make Legend
-lg<-as.grob(~pie(pie$value, labels=pie$trt, col=collst, border="white"))
+lg<-as.grob(~pie2(pie$value, labels=pie$trt, col=collst, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for orchidaceae
+labellistorc<-c("", "","","", "","","-","")
+colactive<-collst
+colactive[labellistorc==""]="darkgray"
+orc<-as.grob(~pie2(pie$value, labels=labellistorc, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for cyperaceae
+labellistcyp<-c("", "","","", "+","","+","")
+colactive<-collst
+colactive[labellistcyp==""]="darkgray"
+cyp<-as.grob(~pie2(pie$value, labels=labellistcyp, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for poaceae overall
 labellistpoa<-c("", "","","", "","","+","+")
@@ -224,17 +237,29 @@ colactive<-collst
 colactive[labellistpoa==""]="darkgray"
 po2<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.8, textcol = "white"))
 
-#for cyperaceae
-labellistcyp<-c("", "","","", "","","+","+")
+#for Brassicaceae
+labellistbra<-c("", "","","", "","","+","")
 colactive<-collst
-colactive[labellistcyp==""]="darkgray"
-cyp<-as.grob(~pie2(pie$value, labels=labellistcyp, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+colactive[labellistbra==""]="darkgray"
+bra<-as.grob(~pie2(pie$value, labels=labellistbra, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
-#for orchidaceae
-labellistorc<-c("", "","","", "","","-","")
+#for Euphorbiaceae
+labellisteup<-c("", "","","+", "","","","")
 colactive<-collst
-colactive[labellistorc==""]="darkgray"
-orc<-as.grob(~pie2(pie$value, labels=labellistorc, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+colactive[labellisteup==""]="darkgray"
+eup<-as.grob(~pie2(pie$value, labels=labellisteup, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Fabaceae
+labellistfab<-c("", "-","+","", "-","","-","")
+colactive<-collst
+colactive[labellistfab==""]="darkgray"
+fab<-as.grob(~pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for section Fabaceae
+labellistfab<-c("", "-","+", "", "", "", "","")
+colactive<-collst
+colactive[labellistfab==""]="darkgray"
+fab1<-as.grob(~pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for asteraceae sub1
 labellistast<-c("", "","","", "-","","","")
@@ -278,23 +303,6 @@ colactive<-collst
 colactive[labellistama==""]="darkgray"
 ama<-as.grob(~pie2(pie$value, labels=labellistama, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
-#for Fabaceae
-labellistfab<-c("", "-","+","", "-","","-","")
-colactive<-collst
-colactive[labellistfab==""]="darkgray"
-fab<-as.grob(~pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
-
-#for Euphorb
-labellisteup<-c("", "","","+", "","","","")
-colactive<-collst
-colactive[labellisteup==""]="darkgray"
-eup<-as.grob(~pie2(pie$value, labels=labellisteup, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
-
-#for Brassicaceae
-labellistbra<-c("", "","","", "","","","+")
-colactive<-collst
-colactive[labellistbra==""]="darkgray"
-bra<-as.grob(~pie2(pie$value, labels=labellistbra, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 # Create layout to print:
 h <- ggdraw(p)
@@ -304,20 +312,20 @@ p2<- h + draw_grob(lg, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)
          draw_grob(orc, x=.76, y=.57, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(cyp, x=.756, y=.655, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(pot, x=.70, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(po1, x=.59, y=.80, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(po2, x=.49, y=.835, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(po2, x=.59, y=.80, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(po1, x=.49, y=.835, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(bra, x=.31, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(eup, x=.26, y=.65, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(fab, x=.24, y=.50, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(ama, x=.20, y=.44, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(lop, x=.27, y=.315, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(sol, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(gen, x=.372, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(plt, x=.428, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(lop, x=.495, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(lop, x=.561, y=.192, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(ast1, x=.72, y=.25, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(ast2, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
+         draw_grob(fab1, x=.20, y=.44, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ama, x=.27, y=.315, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(sol, x=.372, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(gen, x=.428, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(plt, x=.494, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop, x=.554, y=.177, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ast2, x=.72, y=.25, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(ast1, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
 
 png("phylo_ring_main.png", res=600,height=8,width=8,units="in"); 
 p2
