@@ -88,12 +88,8 @@ pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv') %>%
 fDiv <- read.csv('CoRRE_functionalDiversity_2022-12-15.csv')
 
 #species relative cover data
-relCover <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv') %>%
-  mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::')) #creating identifying column of each plot
+rDiv <- read.csv('CoRRE_taxonomicDiversity_2022-12-15.csv')
 
-#getting community diversity metrics for each plot
-rDiv <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate") %>%
-  separate(replicate, into=c("site_code", "project_name", "community_type", "plot_id"), sep='::')
 
 #merge all data on diversity metrics (phylogenetic, functional, species), experimental treatments, and site characteristics
 allDiv <- pDiv %>% #phylogenetic metrics
