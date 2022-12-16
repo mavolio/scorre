@@ -1,14 +1,13 @@
 ################################################################################
-##  sCoRRE_communityResponses_mixedModels.R: Examining differences in phylogenetic and functional diversity within the CoRRE database.
+##  sCoRRE_taxonomicDiversityMetrics.R: Examining differences in taxonomic diveristy within the CoRRE database.
 ##
 ##  Author: Kimberly Komatsu
-##  Date created: December 13, 2021
+##  Date created: December 16, 2022
 ################################################################################
 
 library(data.table)
 library(codyn)
-library(fixest)
-library(lme4)
+library(hillR)
 library(tidyverse)
 
 
@@ -20,54 +19,6 @@ se <- function(x, na.rm=na.rm){
   SE=sd(x,na.rm=TRUE)/sqrt(length(x))
   return(SE)
 }
-
-###bar graph summary statistics function
-#barGraphStats(data=, variable="", byFactorNames=c(""))
-barGraphStats <- function(data, variable, byFactorNames) {
-  count <- length(byFactorNames)
-  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
-  names(N)[1:count] <- byFactorNames
-  names(N) <- sub("^x$", "N", names(N))
-  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
-  names(mean)[1:count] <- byFactorNames
-  names(mean) <- sub("^x$", "mean", names(mean))
-  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
-  names(sd)[1:count] <- byFactorNames
-  names(sd) <- sub("^x$", "sd", names(sd))
-  preSummaryStats <- merge(N, mean, by=byFactorNames)
-  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
-  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
-  return(finalSummaryStats)
-}  
-
-#model summary table (from Peter Wilfahrt)
-summary.tablefunc <- function(mod) {  
-  dat <- data.frame(summary(mod)$tTable) %>%
-    tibble::rownames_to_column(var = 'Effect') %>%
-    rename_with(stringr::str_replace, 
-                pattern = "-", replacement = ".", 
-                matches("Length")) %>% 
-    dplyr::mutate(Estimate = signif(Value, digits = 3),
-                  Std.Error = signif(Std.Error, digits = 2),
-                  t.value = signif(t.value, digits = 2),
-                  p.value = signif(p.value, digits = 2)) %>%
-    dplyr::mutate(p.value = ifelse(p.value <= 0.001, '< 0.001', p.value)) %>% 
-    dplyr::select(-Value) %>% 
-    relocate(Estimate,.before = Std.Error)
-  return(dat)
-}
-
-
-#theme set
-theme_set(theme_bw())
-theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
-             axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
-             plot.title = element_text(size=24, vjust=2),
-             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
-             legend.title=element_blank(), legend.text=element_text(size=20))
-
-
-
 
 ##### data #####
 #treatment data
@@ -85,5 +36,31 @@ relCover <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working group
   mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::')) #creating identifying column of each plot
 
 #getting community diversity metrics for each plot
-rDiv <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate") %>%
+richness <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate") %>%
   separate(replicate, into=c("site_code", "project_name", "community_type", "plot_id"), sep='::')
+
+#hill numbers
+sppMatrix <- relCover %>% 
+  mutate(site_proj_comm_year_plot=paste(site_code, project_name, community_type, treatment_year, plot_id, sep='::')) %>% 
+  select(site_proj_comm_year_plot, genus_species, relcov) %>% 
+  pivot_wider(names_from=genus_species, values_from=relcov, values_fill=0)
+#START HERE fix fill with null problem
+
+hill <- hill_taxa(sppMatrix, q = 1, MARGIN = 1, base = exp(1))
+
+
+#combine taxonomic diversity
+rDiv <- richness %>% left_join(hill)
+
+# print(rDiv, 'CoRRE_taxonomicDiversity_2022-12-15.csv')
+
+
+
+
+
+
+
+
+
+
+
