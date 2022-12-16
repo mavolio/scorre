@@ -14,7 +14,7 @@ library(emmeans)
 require(RColorBrewer)
 #library(relaimpo)
 
-theme_set(theme_bw(12))
+#theme_set(theme_bw(12))
 
 scale_fun = function(x) {
   x.new = log(x)
@@ -52,22 +52,16 @@ contTraits<-contTraits1%>%
   group_by(species_matched)%>%
   summarise_all(funs(mean))%>%
   ungroup()  %>% 
-  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75)
+  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75, leaf_C.N<150)
 
 # # ##code to drop outliers
 # contLong<-contTraits %>%
-#   pivot_longer(LDMC:seed_dry_mass, names_to = "trait", values_to = "value")
+#   pivot_longer(LDMC:leaf_C.N, names_to = "trait", values_to = "value")
 # ggplot(data=contLong, aes(x=value))+
 #   geom_histogram()+
 #   facet_wrap(~trait, scales = "free")
 
-#why do I need to scale? Kim, Kevin and I discussed this on 8/10/22 and decided I did not have to do this.
-# traitsScaled <- contTraits%>%
-#   mutate_at(vars(LDMC:seed_dry_mass), scale)
-
-
-
-#catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\sCoRRE categorical trait data_final_20211209.csv') %>% 
+#catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\sCoRRE categorical trait data_final_20211209.csv')
 catTraits <- read.csv('~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/sCoRRE categorical trait data_final_20211209.csv')
 catTraits <- catTraits %>% 
   select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
@@ -92,7 +86,6 @@ pairs(contTraits[,2:6])
 
 
 # Read in dci diff
-# dcidiff<-read.csv("C:/Users/megha/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_newtrts.csv")
 #dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
 dcidiff_models<-read.csv("~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
 
@@ -121,7 +114,7 @@ alldat_cont<-dcidiff_models%>%
 #(1|species matches) = each species can have a different ave regardless of trt type
 #fixef(m1) #should give fixed effects of model
 
-
+#getting number of species per trait
 tmp = alldat_cont
 tmp = tmp[!is.na(tmp$diff),]
 cont_n_data = table(unique(tmp[,c("species_matched", "trt_type2", "trait")]))
@@ -485,7 +478,7 @@ make_boxplot = function(toplot_data = toplot, # data to plot
   }
 }
 
-trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Nutrients","all mult" ="Interact.")
+trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
 trait.labels=c(LDMC="LDMC", leaf_C.N="C:N",
                PlantHeight="Plant Height", "Rooting Depth"="Rooting Depth",
                "Seed Mass"="Seed Mass", SLA="SLA")
@@ -503,7 +496,7 @@ make_boxplot(toplot_data = toplot,
                         p_alpha = 0.05,
                         lower_margin = 6.8,
                         sigadj = -0.03,
-                        traitorder = rev(c(2,1,6,4,3,5)),
+                        traitorder = rev(c(2,1,6,4,3,5)),#number refers to position in trt label vector, do in reverse
                         group_colors = adjustcolor(rev(c("darkgreen",
                                                          "darkgreen",
                                                          "darkgreen",
@@ -628,7 +621,7 @@ toplotesacat$value = factor(toplotesacat$value)
 unique(data.frame(toplotesacat$value, toplotesacat$Trait_name))
 
 
-trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Nutrients","all mult" ="Interact.")
+trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
 trait.labels = sort(unique(as.character(toplotesacat$value)))
 tmp = trait.labels
 trait.labels = paste(toupper(substr(trait.labels,1,1)),
@@ -700,15 +693,15 @@ dev.off()
 }
 
 
-tord1 = rev(c(2,11,7,12,4,6,14))
-tord2 = rev(c(3,8,10,1,9,5,13))
+tord1 = rev(c(2,11,7,12,4,5,14))
+tord2 = rev(c(3,8,10,1,9,6,13))
 gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
                          rep("blue",2),
                          rep("orange",2),
                          rep("red", 2))), alpha.f = 0.08)
 
 pdf("traits_by_treat_cat_2col.pdf", width = 10.4, height=10)
-par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))
+par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
              trait.labels_data=trait.labels,
