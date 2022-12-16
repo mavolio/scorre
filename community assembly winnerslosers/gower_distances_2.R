@@ -1,84 +1,61 @@
 # sCoRRe - Winners losers community assembly 
-# December 14, 2022 
+# December 16, 2022 
 # Authors: Magda Garbowski
 
-# functional dissimilarity - winners and losers 
-# code up until line 50 is from 3_sCoRRE_functionalDiversityMetrics.R" 
+# goals: datasets: 
 
-setwd("/Users/MagdaGarbowski 1/Dropbox/sDiv_sCoRRE_shared/")
-setwd("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\")
+# (1) control_distances_all: dataset with every species compared to every other species in control plots 
+# include distance of colonizers to control plots 
+# do this for presence/absence distances and abundance weighted distances 
+
+# (2) treatment_distances_all: dataset with every species compared to every other species in treatment plots 
+# colonizers are just part of the community
+# do this for presence/absence distances and abundance weighted distances
+
+# (3) comparisons_dataset: dataset with w_w, w_c, w_l, w_n, c_c, c_l, c_n, c_l, l_n, n_n
+# (3a) do this with distances from control plots, both presence/abs and abundance weighted 
+# (3b) do this with ditances from treatment plots,both presence/abs and abundance weighted 
+
+setwd("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/")
+# setwd("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\")
 library(tidyverse)
 library(funrar)
 
-# continuous trait data
-contTraits <- read.csv("CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")%>%
-  select(-X.1, -X, -family, -genus, -observation)%>%
-  group_by(species_matched)%>%
-  summarise_all(funs(mean))%>%
-  ungroup()%>%
-  mutate_at(vars(seed_dry_mass:seed_number), scale) #scale continuous traits
-
-traitsAll <- read.csv("CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv")%>% #categorical trait data
-  full_join(contTraits) %>% #merge continuous and categorical traits
-  drop_na()
-
-#remove non-target species (ferns, lycophytes, mosses) that somehow snuck into the trait data
-traitsClean <- traitsAll %>%
-  filter(!leaf_type %in% c("microphyll","frond")) %>%
-  filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
-
-#test - are we missing any categorical data?
-sp_without_catag_data <- filter(traitsAll, is.na(clonal)) #none, we did a great job collecting categorical data!
-
-# species relative cover data
-relcov_full_raw <- read.csv("CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv") %>%
-  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
-  dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
-# relcov_full_raw <- read.csv("CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv") %>%
-#   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
-#   dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
-
-# corre to try species names key
-corre_to_try <- read.csv("CoRRE data/trait data/corre2trykey_2021.csv") %>%
-  dplyr::select(genus_species, species_matched) %>%
-  unique(.)
-
-### merge species names and remove all mosses
-# moss key to remove mosses from species comp data
-moss_sp_vec <- read.csv("CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") %>%
-  dplyr::select(species_matched, leaf_type) %>%
-  mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
-  filter(moss=="moss") %>%
-  pull(species_matched)
-
-relcov_full_clean <- relcov_full_raw %>%
-  dplyr::left_join(corre_to_try, by="genus_species") %>%
-  filter(!species_matched  %in% moss_sp_vec) %>%
-  filter(!(site_code == "EGN" & project_name == "Nmow" & community_type == "0" & 
-             plot_id == "19" & calendar_year==2015 & treatment=="Control")) ## Stipa species just has an incorrect treatment I think, needs to be fixed in absolute abundance data frame but I'm just removing it for now
-
-#----------------------------- winners losers data  ---------------------------
-
+#----------------------------- datasets  ---------------------------
+rel_cov <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/relcov.csv")
 diff_quantiles <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/diff_quantile.csv")
 CT_diff <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslosers/generated_data/CT_diff.csv")
-diff_quantiles <- read.csv("diff_quantile_2022Dec15.csv") %>%# for KW
-  mutate(site_proj_comm = gsub(" ", "_", diff_quantiles$site_proj_comm))
-CT_diff <- read.csv("CT_diff_2022Dec15.csv") %>% # for KW
-  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_"))
+
 # merge datasets to get winners and losers 
 CT_diff_quantiles <- merge(CT_diff, diff_quantiles, by = c("site_proj_comm", "treatment"), all.x= TRUE)
 
 # get species status based on 90 and 10 quantiles 
 
-CT_diff_quantiles$species_status_90_10 <- ifelse(CT_diff_quantiles$DCi==0 & CT_diff_quantiles$treatDCi>0, "colonizer",
-                                                 ifelse(CT_diff_quantiles$diff < CT_diff_quantiles$p10, "loser",
-                                                        ifelse(CT_diff_quantiles$diff > CT_diff_quantiles$p90, "winner","neutral")))
-# select out columns of interest 
-CT_diff_quantiles_ss <- CT_diff_quantiles[c("site_proj_comm", "treatment", "site_code", "project_name", "species_matched", "species_status_90_10")]
+win_lose_function <- function(df, quant_low, quant_high, quantile){
+  df$status <- ifelse(df$DCi==0 & df$treatDCi>0, "colonizer",
+                                     ifelse(df$diff < df[[quant_low]], "loser",
+                                            ifelse(df$diff > df[[quant_high]], "winner","neutral")))
+  df$quant <- quantile
+  return(df)
+}
 
+CT_diff_quantiles_out <- do.call(rbind, list(win_lose_function(CT_diff_quantiles, "p05", "p95", "p05_p95"),
+                                             win_lose_function(CT_diff_quantiles, "p10", "p90", "p10_p90"),
+                                             win_lose_function(CT_diff_quantiles, "p20", "p80", "p20_p80")))
+
+
+# select out quantiles and columns of interest 
+CT_diff_quantiles_ss <- 
+  CT_diff_quantiles_out[CT_diff_quantiles_out$quant == "p05_p95",][c("site_proj_comm", "treatment", "site_code", "project_name", "species_matched", "status", "quant")]
+                          
+# add "_" to site_proj_comm for matching 
 CT_diff_quantiles_ss$site_proj_comm <- gsub(" ", "_", CT_diff_quantiles_ss$site_proj_comm)
 
-#----------------- merge winners and losers with relcov_full_clean -------------------------
+# ---------------- control distances all along with colonizers  ---------------- 
+# need plot_level species list (controls)
+# need trt_site_comm level species list for colonizers 
+
+relcov_full_clean_control <- relcov_full_clean[relcov_full_clean$treatment == "control",]
 
 relcov_full_clean_win_los <- merge(relcov_full_clean, CT_diff_quantiles_ss, 
                                    by = c("site_proj_comm", "treatment", "site_code", "project_name", "species_matched"),
@@ -94,6 +71,22 @@ return_df_function <- function(x){
   if(sum(is.na(x$species_status_90_10)) != nrow(x))
     return(x)
 }
+
+
+#----------------- merge winners and losers with relcov_full_clean CONTROL only  -------------------------
+
+relcov_full_clean_control <- relcov_full_clean[relcov_full_clean$treatment == "control",]
+
+relcov_full_clean_win_los_control <- merge(relcov_full_clean_control, CT_diff_quantiles_ss[], 
+                                   by = c("site_proj_comm", "site_code", "project_name", "species_matched"),
+                                   all.x = TRUE)
+
+# pull out only sites/treatments with winners, losers, colonizers, neutrals identified 
+relcov_full_clean_win_los_control_splits <- split(relcov_full_clean_win_los_control , 
+                                          list(relcov_full_clean_win_los_control$site_proj_comm, relcov_full_clean_win_los_control$treatment),
+                                          drop = TRUE)
+
+
 
 #----------------------------- calculating distances ---------------------------
 
