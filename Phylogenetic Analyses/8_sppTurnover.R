@@ -82,8 +82,10 @@ trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\Co
 
 #species relative cover data
 relCover <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv') %>%
+  left_join(trt) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-  mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::')) #creating identifying column of each plot
+  mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::')) %>%  #creating identifying column of each plot
+  mutate(treatment=ifelse(trt_type=='control', 'control', as.character(treatment)))
 
 #getting community turnover for each plot
 turnover <- RAC_difference(subset(relCover, !(site_proj_comm %in% c('CHY::EDGE::0', 'HYS::EDGE::0','SGS::EDGE::0'))),
@@ -91,7 +93,8 @@ turnover <- RAC_difference(subset(relCover, !(site_proj_comm %in% c('CHY::EDGE::
                            species.var='genus_species',
                            abundance.var='relcov',
                            replicate.var='replicate',
-                           treatment.var='treatment')
+                           treatment.var='treatment',
+                           reference.treatment='control')
 
   
   
