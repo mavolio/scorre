@@ -120,24 +120,26 @@ test$trt_type <-  revalue(test$trt_type, c("N*P" = "mult_nutrient","CO2*temp" = 
 
 test <- test%>%
   subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" | 
-            trt_type == "drought" | trt_type == "CO2" | trt_type == "temp"| trt_type == "mult_nutrient" |trt_type == "mult_GCD"
+            trt_type == "drought"  | trt_type == "temp"| trt_type == "mult_nutrient" #|trt_type == "mult_GCD"| trt_type == "CO2"
   )#%>%
 
 
 #test$trt_type <- 
 #  test %>% ifelse(trt_type %in% c("CO2*temp", "drought*CO2*temp","irr*CO2","irr*CO2*temp","N*CO2*temp","N*irr*CO2", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*drought","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","drought*temp","irr*temp"),1,0)
 
-N <-  subset(test[test$trt_type %in% "N",], n.trt.yrs >= 5)
-P <-  subset(test[test$trt_type %in% "P",], n.trt.yrs >= 5)
-irr <-  subset(test[test$trt_type %in% "irr",], n.trt.yrs >= 5)
-CO2 <-  subset(test[test$trt_type %in% "CO2",], n.trt.yrs >= 5)
-temp <-  subset(test[test$trt_type %in% "temp",], n.trt.yrs >= 5)
-mult_nutrient <-  subset(test[test$trt_type %in% "mult_nutrient",], n.trt.yrs >= 5)
-mult_GCD <-  subset(test[test$trt_type %in% "mult_GCD",], n.trt.yrs >= 5)
+N <-  subset(test[test$trt_type %in% "N",], n.trt.yrs >= 6)
+P <-  subset(test[test$trt_type %in% "P",], n.trt.yrs >= 6)
+irr <-  subset(test[test$trt_type %in% "irr",], n.trt.yrs >= 6)
+#CO2 <-  subset(test[test$trt_type %in% "CO2",], n.trt.yrs >= 6)
+temp <-  subset(test[test$trt_type %in% "temp",], n.trt.yrs >= 6)
+mult_nutrient <-  subset(test[test$trt_type %in% "mult_nutrient",], n.trt.yrs >= 6)
+#mult_GCD <-  subset(test[test$trt_type %in% "mult_GCD",], n.trt.yrs >= 6)
 drought <-  subset(test[test$trt_type %in% "drought",], n.trt.yrs >= 4)
 control <-  subset(test[test$trt_type %in% "control",], n.trt.yrs >= 4)
 
-test <- bind_rows(N, P, irr, CO2, temp, mult_nutrient, mult_GCD, drought, control)
+test <- bind_rows(N, P, irr, CO2, temp, mult_nutrient, drought, control
+                  #, mult_GCD
+                  )
 
 test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "species_matched", "relcov", "trt_type", "plot_mani", "treatment")]%>%
   unique()
@@ -209,7 +211,7 @@ for(i in 1:length(expgroup_vector)) {
   temp.distances <- vegdist(temp.wide[10:ncol(temp.wide)], method = "bray")
   temp.mod <- betadisper(temp.distances, group = temp.wide$trt_type, type = "centroid")
   distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist)
-  distances_temp <- subset(distances_temp, dist > 0.00000000001)
+  #distances_temp <- subset(distances_temp, dist > 0.00000000001) #not necessary when cO2 treatment excluded
   #distances_temp$dist <- ifelse(distances_temp$dist > 0.00000000001, distances_temp$dist, 0.001) #changes value for single serc experiment where distance equals essentially 0 which doesn't work with response ratios
   distances_master <- rbind(distances_master, distances_temp )
   rm(temp.df, temp.wide, temp.distances, temp.mod, distances_temp)
@@ -236,7 +238,8 @@ lrr.df.conf <- lrr.df%>%
     num_experiments = length(x$expgroup)
   ))
 
-lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "CO2", "N", "P", "mult_nutrient", "mult_GCD"))
+lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient"#, "mult_GCD", "CO2"
+                                                                ))
 
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   #geom_point()+
@@ -261,16 +264,16 @@ mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_mast
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "irr"))
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "CO2"))
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "CO2"))
+#summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "N"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "P"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
+#summary(mod)
             
             
 lrr.df_species <- lrr.df
@@ -294,7 +297,7 @@ CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "
 
 CoRRE_CWMtraits_cat$is.graminoid <- ifelse(CoRRE_CWMtraits_cat$CWM.growth_form == "graminoid", 1, 0)
 CoRRE_CWMtraits_cat$is.C4 <- ifelse(CoRRE_CWMtraits_cat$CWM.photosynthetic_pathway == "C$", 1, 0)
-CoRRE_CWMtraits_cat$is.perennial <- ifelse(CoRRE_CWMtraits_cat$CWM.growth_form == "perennial", 1, 0)
+CoRRE_CWMtraits_cat$is.perennial <- ifelse(CoRRE_CWMtraits_cat$CWM.lifespan == "perennial", 1, 0)
 CoRRE_CWMtraits_cat$is.clonal <- ifelse(CoRRE_CWMtraits_cat$CWM.clonal == "yes", 1, 0)
 CoRRE_CWMtraits_cat$is.AM <- ifelse(CoRRE_CWMtraits_cat$CWM.mycorrhizal_type == "arbuscular", 1, 0)
 CoRRE_CWMtraits_cat$is.n_fixer <- ifelse(CoRRE_CWMtraits_cat$CWM.n_fixation == "yes", 1, 0)
@@ -307,15 +310,126 @@ summarize.cwm <-   # New dataframe where we can inspect the result
   dplyr::summarize(           # Coding for how we want our CWMs summarized
     seed_dry_mass.cwm = weighted.mean(seed_dry_mass, relcov),   # Actual calculation of CWMs
     LDMC.cwm = weighted.mean(LDMC, relcov),
-    plant_vegetative_height.cwm = weighted.mean(plant_height_vegetative, relcov),
+    plant_height_vegetative.cwm = weighted.mean(plant_height_vegetative, relcov),
     SLA.cwm = weighted.mean(SLA, relcov),
     rooting_depth.cwm = weighted.mean(rooting_depth, relcov),
     leaf_C.N.cwm = weighted.mean(rooting_depth, relcov)
     )%>%
   left_join(CoRRE_CWMtraits_cat, by = c("rep", "treatment_year"))
 
+summarize.traits.continuous <- traits[,c("species_matched", "seed_dry_mass", "LDMC", "plant_height_vegetative", "SLA", "rooting_depth", "leaf_C.N")]
+summarize.traits.continuous <- unique(summarize.traits.continuous)
+summarize.traits.categorical <- traits[,c("species_matched", "growth_form", "photosynthetic_pathway", "lifespan", "clonal", "mycorrhizal_type", "n_fixation")]
+summarize.traits.categorical <- subset(summarize.traits.categorical, photosynthetic_pathway == "C3" | photosynthetic_pathway == "C4" | photosynthetic_pathway == "CAM")
+                                       
+summarize.traits <- left_join(summarize.traits.continuous, summarize.traits.categorical, by = "species_matched")                                       
+# reassigning row names
+summarize.traits <- unique(summarize.traits)
 
 
+
+#########CALCULATE ALPHA FDIS TO COMPARE
+
+
+
+##### calculate functional dispersion - loop through sites #####
+distance_df_master <- {}
+site_proj_comm_vector <- unique(df$expgroup)
+
+
+for(i in 1:length(site_proj_comm_vector)){
+
+  temp.df.comm <- subset(kevin, expgroup == site_proj_comm_vector[i])
+
+  
+  #species vector for pulling traits from relative cover
+  sp_df_temp <- data.frame(species_matched = unique(temp.df.comm$species_matched), dummy=1) 
+  site.traits.temp <- left_join(sp_df_temp, summarize.traits, by = "species_matched")
+  rownames(site.traits.temp) <- site.traits.temp$species_matched
+  site.traits.temp <- site.traits.temp[ , -which(names(site.traits.temp) %in% c("species_matched", "dummy"))]
+  
+  temp.wide.comm <- temp.df.comm%>%
+    pivot_wider(names_from = species_matched, values_from = relcov, values_fill = 0)
+  
+  temp.alpha <- dbFD(x = site.traits.temp, a = temp.wide.comm[10:ncol(temp.wide.comm)], m = 2)
+  
+  
+  
+  sp_vec_temp <- sp_df_temp %>%
+    pull(species_matched)
+  
+  #subset trait data to just include the species present subset relative cover data
+  traits_df_raw_temp <- traitsClean %>%
+    filter(species_matched %in% sp_vec_temp)
+  
+  #dataframe with species in trait database and in relative cover data base
+  species_in_trait_data_temp <- data.frame(species_matched = unique(traits_df_raw_temp$species_matched),
+                                           dummy_traits=2) %>% #there are fewer species in the unique trait dataset than in the species comp data because there are thing like "unknown forb"
+    arrange(species_matched)
+  
+  #vector of species not in trait database (but in relative abundance data) to remove from species abundance data
+  sp_to_remove_temp <- sp_df_temp %>%
+    full_join(species_in_trait_data_temp, by="species_matched") %>%
+    filter(is.na(dummy_traits)) %>%
+    pull(genus_species)
+  
+  #abundance dataset with species removed that do not have trait information
+  relcov_unkn_sp_rm_temp <- relcov_df_temp %>%
+    filter(!genus_species %in% sp_to_remove_temp) #removing species without trait information
+  
+  #abundance data into wide format
+  relcov_wide_temp <- 
+    
+  # add rownames 
+  row.names(relcov_only_temp) <- paste(plot_info_temp$calendar_year, plot_info_temp$plot_id, sep="::")
+  
+  #dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
+  traits_df_temp <- traits_df_raw_temp %>%
+    arrange(species_matched) %>%
+    column_to_rownames("species_matched") %>%
+    dplyr::select(-family) %>%
+    mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
+    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
+  
+  # change to dataframe from tibble 
+  traits_df_temp <- as.data.frame(traits_df_temp)
+  
+  #changing all categorical traits to factors
+  traits_df_temp[,c(1:6)] <- lapply(traits_df_temp[,c(1:6)], as.factor)
+  
+  #changing all continuous to numerical
+  traits_df_temp[,c(7:12)] <- lapply(traits_df_temp[,c(7:12)], as.numeric)
+  
+  ### Calculate MNTD and functional diversity metrics -- had to use Cailliez correlations becuase Euclidean distances could be calculated
+  FD_temp <- dbFD(x=traits_df_temp, a=relcov_only_temp, cor="cailliez", calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
+  
+  FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
+    mutate(year_plotid = row.names(.)) %>%
+    separate(year_plotid, into=c("calendar_year","plot_id"), sep="::") %>%
+    mutate(calendar_year = as.numeric(calendar_year)) %>%
+    full_join(plot_info_temp, by=c("calendar_year","plot_id"))
+  
+  comp_matrix_temp <- as.matrix(relcov_only_temp)
+  trait_dist_temp <- as.matrix(gowdis(traits_df_temp))
+  
+  MNTD_df_temp <- data.frame(
+    plot_info_temp[,c("calendar_year", "plot_id")],
+    MNTD_traits = picante::mntd(comp_matrix_temp, trait_dist_temp)
+  )
+  
+  distance_df_temp <- FD_df_temp %>%
+    full_join(MNTD_df_temp, by=c("calendar_year","plot_id"))
+  
+  distance_df_master <- rbind(distance_df_master, distance_df_temp)
+  
+  rm(list=ls()[grep("temp", ls())])
+}
+
+
+
+
+
+###########CALCULATE BETA DIVERSITY WITH TRAITS
 expgroup_vector <- unique(df$expgroup)
 
 tdistances_master <- {}
@@ -327,13 +441,17 @@ for(i in 1:length(expgroup_vector)) {
   temp.gow <- gowdis(temp.df[7:ncol(temp.df)])
   temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
   
+
+  
   tdistances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani)
-  tdistances_temp <- subset(tdistances_temp, dist > 0.00000000001)
+#  tdistances_temp <- subset(tdistances_temp, dist > 0.00000000001) #not necesssary when excluding CO2 treatment
 #  tdistances_temp$dist <- ifelse(tdistances_temp$dist > 0.00000000001, tdistances_temp$dist, 0.001) #changes value for single serc experiment where distance equals essentially 0 which doesn't work with response ratios
   tdistances_master <- rbind(tdistances_master, tdistances_temp )
   rm(temp.df, temp.gow, temp.beta, tdistances_temp)
   
 }
+
+
   
 mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani), function(x)data.frame( mean_dist = mean(x$dist)))
 
@@ -354,7 +472,9 @@ lrr.df.conf <- lrr.df%>%
     num_experiments = length(x$expgroup)
   ))
 
-lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "CO2", "N", "P", "mult_nutrient" ,"mult_GCD"))
+lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" 
+                                                                #,"mult_GCD", "CO2"
+                                                                ))
 
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
@@ -380,16 +500,18 @@ mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_mas
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "irr"))
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "CO2"))
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "CO2"))
+#summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "N"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "P"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
+#summary(mod)
+
+
 
 
 #####################
@@ -408,11 +530,11 @@ ggplot(lrr_sp.tr, aes(lrr.species, lrr.traits))+
 
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "drought")))
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "irr")))
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "CO2")))
+#summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "CO2")))
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "N")))
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "P")))
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "mult_nutrient")))
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "mult_GCD")))
+#summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "mult_GCD")))
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "temp")))
 
 
@@ -468,19 +590,19 @@ visreg(mod)
 
 
 ##CO2
-CO2 <- subset(lrr_covariate, trt_type == "CO2")
-mod <- lmer(lrr~MAP + (1|site_code), data = CO2)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = CO2)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = CO2)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = CO2)
-summary(mod)
-visreg(mod)
+#CO2 <- subset(lrr_covariate, trt_type == "CO2")
+#mod <- lmer(lrr~MAP + (1|site_code), data = CO2)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~MAT + (1|site_code), data = CO2)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~rrich + (1|site_code), data = CO2)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~experiment_length + (1|site_code), data = CO2)
+#summary(mod)
+#visreg(mod)
 
 
 ##NITROGEN
@@ -531,19 +653,19 @@ summary(mod)
 visreg(mod)
 
 #MULT_GCD
-mult_GCD <- subset(lrr_covariate, trt_type == "mult_GCD")
-mod <- lmer(lrr~MAP + (1|site_code), data = mult_GCD)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = mult_GCD)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = mult_GCD)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = mult_GCD)
-summary(mod)
-visreg(mod)
+#mult_GCD <- subset(lrr_covariate, trt_type == "mult_GCD")
+#mod <- lmer(lrr~MAP + (1|site_code), data = mult_GCD)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~MAT + (1|site_code), data = mult_GCD)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~rrich + (1|site_code), data = mult_GCD)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~experiment_length + (1|site_code), data = mult_GCD)
+#summary(mod)
+#visreg(mod)
 
 
 
@@ -610,7 +732,7 @@ lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site
 water_mani <- subset(lrr_treat_species, trt_type == "drought"| trt_type == "irr")
 mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 summary(mod)
-
+visreg(mod)
 ##Nitrogen gradient
 temp <- subset(lrr_treat_species, trt_type == "N")
 mod <- lmer(lrr~n + (1|expgroup) ,data = temp)
