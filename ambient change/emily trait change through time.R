@@ -168,19 +168,45 @@ hist(change_over_time[change_over_time$my_trt=="control",]$expt_length)
 
 control_change_over_time <- change_over_time %>%
   filter(my_trt=="control") %>%
-  mutate(control.slope=slope) %>%
-  select(site_code, project_name, community_type, site_project_comm, expt_length, trait, control.slope)
+  mutate(control.slope=slope, abs.control.slope=abs(slope)) %>%
+  select(site_code, project_name, community_type, site_project_comm, expt_length, trait, control.slope, abs.control.slope)
 
 trt_change_over_time <- change_over_time %>%
   filter(!my_trt=="control") %>%
-  mutate(trt.slope=slope) %>%
-  select(site_code, project_name, community_type, site_project_comm, expt_length, treatment, my_trt, trait, trt.slope) %>%
+  mutate(trt.slope=slope, abs.trt.slope=abs(slope)) %>%
+  select(site_code, project_name, community_type, site_project_comm, expt_length, treatment, my_trt, trait, trt.slope, abs.trt.slope) %>%
   left_join(control_change_over_time) %>%
-  mutate(TminusC=trt.slope-control.slope) %>%
+  mutate(TminusC=trt.slope-control.slope, TminusCabs=abs.trt.slope-abs.control.slope) %>%
+  filter(!is.na(control.slope)) %>%
+  filter(!is.na(trt.slope)) %>%
   group_by(my_trt, trait) %>%
-  summarize(avgTminusC=mean(TminusC), avgC=mean(control.slope))
+  summarize(avgT=mean(trt.slope), sdT=sd(trt.slope), avgTminusC=mean(TminusC), sdTminusC=sd(TminusC), n=length(TminusC), avgC=mean(control.slope), sdC=sd(control.slope), avgTminusCabs=mean(TminusCabs), sdTminusCabs=sd(TminusCabs)) %>%
+  mutate(TminusCcolor=ifelse(avgC>0 & avgT>0, "consistent increases", ifelse(avgC<0 & avgT<0, "consistent decreases", "disagreement")), trait.to.plot=factor(trait, levels=c("ann.bien", "perennial", "C3", "C4", "clonal", "nonclonal", "Nfixer", "nonNfixer", "mycorrhizal", "nonmycorrhizal", "forb", "graminoid", "woody", "vine")), seTminusCabs=sdTminusCabs/sqrt(n))
+
+qplot(trait.to.plot, avgTminusCabs, data=trt_change_over_time, color=TminusCcolor) + facet_wrap(~my_trt) + geom_errorbar(aes(ymin=avgTminusCabs-seTminusCabs, ymax=avgTminusCabs+seTminusCabs, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Difference between treatment and control\nin absolute value of change\nin relative abundance over time") + scale_color_manual(values=c("orange", "cornflowerblue", "darkblue"), name="Trait group changes\nin treated and control plots") + geom_hline(yintercept=0, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/trait groups responses, treatment minus control.pdf", sep=""), width=10, height=6)
+
+# we are not happy with this figure but we want a single metric that will communicate whether the treatment and controls have similar magnitudes and similar directions. 
 
 
+toplot.trt<-trt_change_over_time %>%
+  select(my_trt, trait.to.plot, avgT, sdT, n) %>%
+  mutate(se=sdT/sqrt(n), avg=avgT, trt="treatment") %>%
+  select(my_trt, trait.to.plot, avg, se, trt)
+toplot.TminusC<-trt_change_over_time %>%
+  select(my_trt, trait.to.plot, avgTminusC, sdTminusC, n) %>%
+  mutate(se=sdTminusC/sqrt(n), avg=avgTminusC, trt="T-C") %>%
+  select(my_trt, trait.to.plot, avg, se, trt)
+toplot.control<-trt_change_over_time %>%
+  select(my_trt, trait.to.plot, avgC, sdC, n) %>%
+  mutate(se=sdC/sqrt(n), avg=avgC, trt="control") %>%
+  select(my_trt, trait.to.plot, avg, se, trt)
+toplot=rbind(toplot.trt, toplot.TminusC, toplot.control)
+
+qplot(trait.to.plot, avg, data=toplot[toplot$trt %in% c("control", "treatment"),], color=trt) + facet_wrap(~my_trt, scales="free_y") + geom_errorbar(aes(ymin=avg-se, ymax=avg+se, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time") + scale_color_manual(values=c("orange", "cornflowerblue", "darkblue")) + geom_hline(yintercept=0, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/trait groups responses, treatment vs control.pdf", sep=""), width=8, height=6)
+
+#plot just T-C, color code whether both treatment and control are increasing vs decreasing vs disagreement. absolute value at each experiment and then calculate T-C and then average and SE across experiments? 
 
 
 # DOES SITE-LEVEL N DEPOSITION PREDICT HOW STRONGLY N FIXERS DECLINE OVER TIME?
