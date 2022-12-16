@@ -166,12 +166,19 @@ hist(change_over_time[change_over_time$my_trt=="control",]$expt_length)
 #first, identify the sites with each treatment (so we know which control slopes to average)
 #then calculate treatment-control slope for each spc
 
-control_change_over_time_6 <- change_over_time %>%
-  filter(expt_length>5 & my_trt=="control")
-trt_change_over_time_6 <- change_over_time %>%
-  filter(expt_length>5 & !my_trt=="control") %>%
-  left_join(control_change_over_time_6)
+control_change_over_time <- change_over_time %>%
+  filter(my_trt=="control") %>%
+  mutate(control.slope=slope) %>%
+  select(site_code, project_name, community_type, site_project_comm, expt_length, trait, control.slope)
 
+trt_change_over_time <- change_over_time %>%
+  filter(!my_trt=="control") %>%
+  mutate(trt.slope=slope) %>%
+  select(site_code, project_name, community_type, site_project_comm, expt_length, treatment, my_trt, trait, trt.slope) %>%
+  left_join(control_change_over_time) %>%
+  mutate(TminusC=trt.slope-control.slope) %>%
+  group_by(my_trt, trait) %>%
+  summarize(avgTminusC=mean(TminusC), avgC=mean(control.slope))
 
 
 

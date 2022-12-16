@@ -8,13 +8,13 @@ library(gridExtra)
 
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
-my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\"
 my.wd <- "C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\"
   
 #read in the data
 
 #raw abundance data and drop pretreatment years
-dat<-read.csv(paste(my.wd, "CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
+dat<-read.csv(paste(my.wd, "CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
   filter(treatment_year!=0)
 
 sp <-read.csv(paste(my.wd,"CoRRE data/trait data/corre2trykey_2021.csv", sep=""))%>%
@@ -34,7 +34,7 @@ dat_cleansp<-dat%>%
 
 
 #info on treatments
-trts<-read.csv(paste(my.wd, "CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
+trts<-read.csv(paste(my.wd, "CoRRE data\\CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
   select(site_code, project_name, community_type, treatment, trt_type, pulse, plot_mani,resource_mani)%>%
   unique()
 
@@ -351,8 +351,17 @@ sum(allmult_treats$nobs)
 ###are certain families only in some treatments?
 fam<-read.csv("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\species_families_trees_2021.csv")
 
-allmult_sp<-allmult_mean %>% 
-  left_join(fam)
+allmult_sp<-CT_diff %>% 
+  left_join(fam) %>% 
+  left_join(trt_analysis) %>% 
+  filter(multtrts==1) %>% 
+  select(species_matched, family, trt_type) %>% 
+  unique() %>% 
+  group_by(family, trt_type) %>% 
+  summarise(n=length(species_matched))
+
+
+
 
 
 ##multiple nutrients
