@@ -6,7 +6,6 @@
 ################################################################################
 
 library(data.table)
-library(codyn)
 library(fixest)
 library(lme4)
 library(tidyverse)
@@ -87,7 +86,7 @@ pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv') %>%
 #functional diversity data
 fDiv <- read.csv('CoRRE_functionalDiversity_2022-12-15.csv')
 
-#species relative cover data
+#taxonomic diversity data
 rDiv <- read.csv('CoRRE_taxonomicDiversity_2022-12-15.csv')
 
 
