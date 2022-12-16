@@ -10,6 +10,7 @@ library(ggtree)
 library(ggplot2)
 library(cowplot)
 library(tidyverse)
+library(ggplotify)
 
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
