@@ -7,6 +7,12 @@ rm(list=ls())
 
 library(tidyverse)
 library(gridExtra)
+library(lme4)
+library(car)
+
+#emily's plotting preferences:
+theme_set(theme_bw())
+theme_eg=theme_update(panel.grid.minor=element_blank(), strip.background=element_blank())
 
 ###read in data
 
@@ -101,7 +107,7 @@ DCi.cat.per.year<-DCi.species.per.year %>%
   mutate(mycorrhizal=ifelse(mycorrhizal=="yes", "mycorrhizal", ifelse(mycorrhizal=="no", "nonmycorrhizal", mycorrhizal))) %>%
   mutate(n_fixation=ifelse(n_fixation=="yes", "Nfixer", ifelse(n_fixation=="no", "nonNfixer", n_fixation))) %>%
   pivot_longer(growth_form:n_fixation, names_to="trait") %>%
-  filter(value %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "woody", "Nfixer", "vine")) %>%
+  filter(value %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "woody", "Nfixer", "nonNfixer", "vine")) %>%
   mutate(my_trt=ifelse(trt_type %in% c("control", "temp", "CO2", "N", "irr", "drought", "P", "mult_nutrient"), trt_type, ifelse(trt_type %in% c("drought*temp", "irr*temp", "N*P", "N*temp", "mult_nutrient*drought", "N*CO2", "CO2*temp", "drought*CO2*temp", "N*irr", "mult_nutrient*temp", "N*drought", "N*CO2*temp", "irr*CO2*temp", "N*irr*CO2*temp", "irr*CO2", "N*irr*CO2", "N*irr*temp", "N*P*temp", "mult_nutrient*irr"), "GCD", "other"))) %>%
   filter(!my_trt=="other") %>%
   filter(treatment_year>0) %>% 
@@ -145,15 +151,55 @@ for(i in 1:length(spc_list)) {
   change_over_time=rbind(change_over_time, change_over_timei)
 }
 
+write.csv(change_over_time, paste(my.wd, "ambient change paper/slopes of summed sp abund.csv", sep=""), row.names=F)
 
 
 #compare slope against study length to see if there is an obvious cutoff
 qplot(expt_length, R2, data=change_over_time[change_over_time$my_trt=="control",], alpha=I(0.1)) + facet_wrap(~trait)
 ggsave(paste(my.wd, "ambient change paper/figs dec 2022/slopes of summed species relative abundances vs treatment length, control plots.pdf", sep=""), width=7, height=7)
 
+hist(change_over_time[change_over_time$my_trt=="control",]$expt_length)
+
+
+# PLOT AMBIENT SLOPE VS T-C SLOPE FOR EACH TREATMENT AND EACH TRAIT GROUP
+
+#first, identify the sites with each treatment (so we know which control slopes to average)
+#then calculate treatment-control slope for each spc
+
+control_change_over_time_6 <- change_over_time %>%
+  filter(expt_length>5 & my_trt=="control")
+trt_change_over_time_6 <- change_over_time %>%
+  filter(expt_length>5 & !my_trt=="control") %>%
+  left_join(control_change_over_time_6)
 
 
 
+
+
+# DOES SITE-LEVEL N DEPOSITION PREDICT HOW STRONGLY N FIXERS DECLINE OVER TIME?
+
+ndep=read.csv(paste(my.wd, "ambient change paper/CoRRE_siteLocationClimateNdep_Dec2021.csv", sep="")) %>%
+  left_join(change_over_time) %>%
+  filter(my_trt=="control" & trait %in% c("Nfixer", "nonNfixer"))
+
+qplot(ndep_2016, slope, data=ndep, alpha=log(expt_length), color=trait) + geom_smooth(method="lm") + scale_color_manual(values=c("forestgreen", "black")) + guides(alpha=FALSE) + xlab("N deposition in 2016") + ylab("Change in relative abundance\n over time in control plots")
+ggsave(paste(my.wd, "ambient change paper/figs dec 2022/N deposition N fixers.pdf", sep=""), width=5, height=3)
+
+try=lmer(slope~trait*ndep_2016 + (1|site_code/site_project_comm), data=ndep)
+Anova(try) #interaction p=0.002
+tryN=lmer(slope~ndep_2016 + (1|site_code), data=ndep[ndep$trait=="Nfixer",]) #ndep p=0.096
+trynonN=lmer(slope~ndep_2016 + (1|site_code), data=ndep[ndep$trait=="nonNfixer",]) #ndep p=0.02
+
+
+
+
+
+
+
+
+
+
+####### OLD JUNK CODE ##################3
   
 
 
