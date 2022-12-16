@@ -1,5 +1,5 @@
 ################################################################################
-##  sCoRRE_phylogeneticDiversity_mixedModels.R: Examining differences in phylogenetic and functional diversity within the CoRRE database.
+##  sCoRRE_communityResponses_mixedModels.R: Examining differences in phylogenetic and functional diversity within the CoRRE database.
 ##
 ##  Author: Kimberly Komatsu
 ##  Date created: December 13, 2021
