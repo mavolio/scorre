@@ -50,9 +50,9 @@ hill <- hill_taxa(sppMatrix, q = 1, MARGIN = 1, base = exp(1))
 
 
 #combine taxonomic diversity
-rDiv <- richness %>% left_join(hill)
+rDiv <- richness # %>% left_join(hill)
 
-# print(rDiv, 'CoRRE_taxonomicDiversity_2022-12-15.csv')
+# write.csv(rDiv, 'CoRRE_taxonomicDiversity_2022-12-15.csv', row.names=F)
 
 
 
