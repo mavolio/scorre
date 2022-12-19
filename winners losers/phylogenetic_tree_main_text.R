@@ -198,6 +198,7 @@ p <-
 #run pie2_function first
 
 trt<-c("CO2", "Drt.","Irg.", "Temp.", "N", "P", " Mult.","Inter.")
+trt2<-c(expression("CO"[2]), "Drt.","Irg.", "Temp.", "N", "P", " Mult.","Inter.")
 value<-c(1,1,1,1,1,1,1,1)
 pie<-data.frame(trt, value)
 
@@ -205,7 +206,7 @@ pie<-data.frame(trt, value)
 collst = RColorBrewer::brewer.pal(n = 8, name = "Dark2")
 
 #make Legend
-lg<-as.grob(~pie2(pie$value, labels=pie$trt, col=collst, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+lg<-as.grob(~pie2(pie$value, labels=trt2, col=collst, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for orchidaceae
 labellistorc<-c("", "","","", "","","-","")
