@@ -10,24 +10,25 @@ library(vegan)
 library(FD)
 library(visreg)
 library(ggthemes)
+library(codyn)
 
 #Read in data
-traits_cat <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv") #categorical trait data
+traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv") #categorical trait data
 
-traits1 <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
-corre2trykey <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
+traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
 
-cover <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv") %>% #community comp relative cover data
+cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv") %>% #community comp relative cover data
     mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0) #remove some Cedar Creek treatments since that site is somewhat overrepresented
 
 
-corre2trykey <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", all.x = TRUE)
 
-experimentinfo <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
+experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
 
 
 
@@ -269,7 +270,7 @@ sites <- test%>%
 
 ######
 ###Try the same stuff with traits but they include categorical traits
-CoRRE_CWMtraits <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
+CoRRE_CWMtraits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
 CoRRE_CWMtraits_cat <- CoRRE_CWMtraits[, c(   "site_code", "project_name","community_type", "plot_id", "treatment_year", "CWM.growth_form", "CWM.photosynthetic_pathway", "CWM.lifespan", "CWM.clonal", "CWM.mycorrhizal_type", "CWM.n_fixation")]
 
 CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = TRUE)
@@ -516,9 +517,9 @@ summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "temp"))
 
 ############
 ##BRING IN COVARIATES AND SEE IF THEY EXPLAIN BETA DIVERSITY
-CoRRE_siteLocationClimate_Dec2021 <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/environmental data/CoRRE_siteLocationClimate_Dec2021.csv")
+CoRRE_siteLocationClimate_Dec2021 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/environmental data/CoRRE_siteLocationClimate_Dec2021.csv")
 
-CoRRE_project_summary <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/CoRRE_project_summary.csv")
+CoRRE_project_summary <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/CoRRE_project_summary.csv")
 CoRRE_project_summary$project <- CoRRE_project_summary$project_name
 CoRRE_project_summary$community <- CoRRE_project_summary$community_type
 CoRRE_project_summary <- CoRRE_project_summary %>% dplyr::select(-c(project_name, community_type))
@@ -656,7 +657,7 @@ visreg(mod)
 
 
 ##with treatment information
-treatment_info <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/basic dataset info/ExperimentInfo.csv")
+treatment_info <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/basic dataset info/ExperimentInfo.csv")
 treatment_info$trt_type <- revalue(treatment_info$trt_type, c("N*P" = "mult_nutrient"))
 treatment_info$project <- treatment_info$project_name
 treatment_info$community <- treatment_info$community_type
@@ -713,4 +714,98 @@ ggplot(N, aes(n, lrr, color = dist.con))+
 visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
   geom_hline(yintercept = 0)+
   theme_base()
+
+
+###########################################
+####WHAT CONTRIBUTES TO BETA DIVERSITY CHANGE??
+
+
+####RANK DIFF AMONG REPLICATES (COMMUNITY)
+
+
+kevin <- unite(test, expgroup, c("site_code", "project_name", "community_type"), remove = FALSE, sep = "::" ) #named Kevin because Kevin Wilcox helped make this loop
+kevin <- subset(kevin, species_matched != "NA")%>%
+  ddply(.(expgroup, site_code, project_name, community_type, treatment_year, plot_id, species_matched, trt_type, plot_mani, treatment),
+        function(x)data.frame(
+          relcov = sum(x$relcov)
+        )) #with species names matched to trait data, separate observations in the cover data can become multiple observations of the same species, therefore, must sum cover values
+
+expgroup_vector <- unique(kevin$expgroup)
+
+rank_diff_master <- {}
+
+for(i in 1:length(expgroup_vector)) {
+  temp.df <- subset(kevin, expgroup == expgroup_vector[i])
+  temp.expinfo <- temp.df[,c("expgroup", "site_code", "project_name", "community_type", "plot_id", "trt_type", "plot_mani", "treatment")]%>%
+                  unique()
+  
+rank_diff_temp <-  RAC_difference(
+    df = temp.df,
+    time.var = "treatment_year",
+    species.var = "species_matched",
+    abundance.var = "relcov",
+    replicate.var = "plot_id",
+    treatment.var = "treatment",
+    pool = FALSE,
+    block.var = NULL,
+    reference.treatment = NULL
+  )%>%
+   subset( treatment == treatment2)%>%
+   left_join(temp.expinfo, by = c("plot_id", "treatment"))
+ 
+
+  rank_diff_master <- rbind(rank_diff_master, rank_diff_temp )
+  rm(temp.df, temp.expinfo, rank_diff_temp)
+}
+
+
+mean.diff.df <- ddply(rank_diff_master,.(expgroup, trt_type, treatment, plot_mani), function(x)data.frame( mean_diff = mean(x$rank_diff)))
+
+trt.df <- subset(mean.diff.df, plot_mani >= 1)%>%
+  dplyr::rename(diff.trt = mean_diff)
+con.df <- subset(mean.diff.df, plot_mani == 0)%>%
+  dplyr::rename(diff.con = mean_diff)%>%
+  dplyr::select(expgroup, diff.con)
+
+lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
+  mutate(lrr = log(diff.trt/diff.con))%>%
+  mutate(con_minus_trt = diff.trt/diff.con)
+
+lrr.df.conf <- lrr.df%>%
+  ddply(.(trt_type), function(x)data.frame(
+    lrr.mean = mean(x$lrr, na.rm = TRUE),
+    lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
+    num_experiments = length(x$expgroup)
+  ))
+
+lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient"#, "mult_GCD", "CO2"
+))
+          
+ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+ #this figure doesn't match up with the model results below
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
+  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
+  xlab("")+
+  ylab("LRR rank difference between replicated")+
+  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
+  theme_base()                                            
+                                                                
+#models to test results
+rank_diff_master.1 <- tidyr::separate(rank_diff_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought"))
+summary(mod)
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr"))
+summary(mod)
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "N"))
+summary(mod)
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "P"))
+summary(mod)
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
+summary(mod)
+                                                                
+
+####SINGLE TRAIT VARIANCE AMONG REPLICATES (TRAIT)
+
+
+
+
 
