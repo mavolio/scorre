@@ -42,6 +42,14 @@ dat$species_matched<-NULL #and delete column with species names
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
 
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
+
 ###
 # Run function to calculate if each node has significantly higher or lower mean DCi than
 # expected if phylogenetic relationships were at random (laod function in the "DCi_nodes_scorre.R" script)
@@ -239,6 +247,14 @@ dat$species_matched<-NULL #and delete column with species names
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
 
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
+
 ###
 # Run function to calculate if each node has significantly higher or lower mean DCi than
 # expected if phylogenetic relationships were at random (laod function in the "DCi_nodes_scorre.R" script)
@@ -433,6 +449,14 @@ dat$Group.1<-NULL #and delete column with species names
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
 
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
+
 
 ###
 # Run function to calculate if each node has significantly higher or lower mean DCi than
@@ -524,6 +548,7 @@ p <-
   
   geom_point(aes(color=as.factor(significant)), size=2, alpha=1, show.legend = F) + # highlight nodes
   scale_colour_manual(values=c("#8A6000", "#006FA4"), labels=c("Loss", "Gain"), na.translate=FALSE)+ # set aesthetics for highlighted nodes
+  #geom_text(aes(label=node), size=1)+
   
   geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], offset=12, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], offset=12, fontsize=2.8, barsize = 0.2, angle = "auto") +
@@ -612,6 +637,13 @@ grid.text("(High DCi)", x = unit(0.725, "npc"), y = unit(0.06, "npc"), gp=gpar(f
 grid.text("(Low DCi)", x = unit(0.35, "npc"), y = unit(0.06, "npc"), gp=gpar(fontsize=10))
 dev.off()
 
+#Get list of species for groups within families:
+
+#Section Asteraceae (decrease) <-- node 1272 (unlock line in ggtree to see the name of the node)
+sec<-caper::clade.members(1396, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "gnap.csv")
+
 
 ###
 # Filter by treatment = P
@@ -626,6 +658,13 @@ dat$Group.1<-NULL #and delete column with species names
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
 
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
 
 ###
 # Run function to calculate if each node has significantly higher or lower mean DCi than
@@ -808,7 +847,9 @@ dev.off()
 #Get list of species for groups within families:
 
 #Section Poaceae (increase) <-- node 1272 (unlock line in ggtree to see the name of the node)
-caper::clade.members(1272, tree2, tip.labels = T, include.nodes=FALSE)
+sec<-caper::clade.members(1272, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "poeae.csv")
 
 
 ###
@@ -823,6 +864,14 @@ dat$Group.1<-NULL #and delete column with species names
 
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
+
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
 
 
 ###
@@ -1017,6 +1066,14 @@ dat$Group.1<-NULL #and delete column with species names
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
 
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
+
 
 ###
 # Run function to calculate if each node has significantly higher or lower mean DCi than
@@ -1199,11 +1256,14 @@ grid.text("(Low DCi)", x = unit(0.35, "npc"), y = unit(0.06, "npc"), gp=gpar(fon
 dev.off()
 
 #Section Fabaceae (decrease) <-- node 775 (unlock line in ggtree to see the name of the node)
-caper::clade.members(775, tree2, tip.labels = T, include.nodes=FALSE)
+sec<-caper::clade.members(775, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "fab_trb.csv")
 
 #Section Poaceae (decrease) <-- node 971 (unlock line in ggtree to see the name of the node)
-caper::clade.members(971, tree2, tip.labels = T, include.nodes=FALSE)
-
+sec<-caper::clade.members(971, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "pooidae.csv")
 
 
 
@@ -1219,6 +1279,14 @@ dat$Group.1<-NULL #and delete column with species names
 
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
+
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
 
 
 ###
@@ -1405,11 +1473,14 @@ dev.off()
 #Get list of species for groups within families:
 
 #Section Fabaceae (increase) <-- node 978 (unlock line in ggtree to see the name of the node)
-caper::clade.members(978, tree2, tip.labels = T, include.nodes=FALSE)
+sec<-caper::clade.members(978, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "fab_trb2.csv")
 
 #Section Asteraceae (increase) <-- node 797 (unlock line in ggtree to see the name of the node)
-caper::clade.members(797, tree2, tip.labels = T, include.nodes=FALSE)
-
+sec<-caper::clade.members(797, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "cardu.csv")
 
 
 
@@ -1425,6 +1496,14 @@ dat$Group.1<-NULL #and delete column with species names
 
 #prune tree:
 tree2<-keep.tip(tree, rownames(dat))
+
+#Return number of species for tribes and subfamilies (careful! it's circular):
+grp<-c("poeae", "pooidae", "cardu", "gnap", "fab_trb", "fab_trb2")
+for (i in 1:length(grp)) {
+  #print(i)
+  a <- read.table(paste0(grp[i],".csv", sep=""), sep=",", header=T)$x #vector with all species belonging to the given group
+  print(length(intersect(a, tree2$tip.label)))
+}
 
 
 ###

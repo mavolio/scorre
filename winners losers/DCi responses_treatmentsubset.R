@@ -362,6 +362,16 @@ allmult_sp<-CT_diff %>%
 
 
 
+famInvest<-CT_diff %>% 
+  left_join(fam) %>% 
+  select(species_matched, family, diff, CO2, drought, irg, temp, n, p, multnuts, multtrts) %>% 
+  pivot_longer(CO2:multtrts, names_to = "trt", values_to = "present") %>% 
+  filter(present==1) %>% 
+  select(species_matched, family, trt) %>% 
+  unique() %>% 
+  group_by(family, trt) %>% 
+  summarise(n=length(species_matched))
+
 
 
 ##multiple nutrients
