@@ -704,7 +704,7 @@ visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr trait beta diversity", xl
 N <- subset(lrr_treat_traits, trt_type == "N")
 mod <- lmer(lrr~n  + (1|expgroup) ,data = N)
 summary(mod)
-ggplot(N, aes(n, lrr, color = dist.con))+
+ggplot(N, aes(n, lrr, color = MAP))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_point(size = 2)+
   ylab("LRR trait beta diversity")+
@@ -791,17 +791,47 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+ #this figure doe
                                                                 
 #models to test results
 rank_diff_master.1 <- tidyr::separate(rank_diff_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought"))
+##rank_diff
+tempdf <- subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought")
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr"))
+visreg(mod)
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr")
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "N"))
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "temp")
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "P"))
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "N")
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "P")
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-                                                                
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient")
+mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+                                  
+#species_diff
+tempdf <- subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought")
+mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+visreg(mod)
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr")
+mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "temp")
+mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "N")
+mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "P")
+mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient")
+mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)                              
 
 ####SINGLE TRAIT VARIANCE AMONG REPLICATES (TRAIT)
 
@@ -836,7 +866,7 @@ var.summary <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)
 
 trait_variance <- tidyr::separate(trait_variance, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
-mod <- lmer(seed_dry_mass.var~trt_type + (1|expgroup), data = trait_variance)
+mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code/expgroup), data = trait_variance)
 summary(mod)
 
 mod <- lmer(LDMC.var~trt_type + (1|expgroup), data = trait_variance)
