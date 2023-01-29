@@ -244,8 +244,8 @@ mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_mast
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "irr"))
 summary(mod)
-#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "CO2"))
-#summary(mod)
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "temp"))
+summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "N"))
 summary(mod)
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "P"))
@@ -265,7 +265,8 @@ sites <- test%>%
   unique()%>%
   subset(trt_type != "control")
 
-
+n <- sites%>%
+      ddply(.(trt_type), function(x)data.frame(n = length(x$site_code)))
 
 
 ######
