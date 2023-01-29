@@ -785,7 +785,7 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+ #this figure doe
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
   xlab("")+
-  ylab("LRR rank difference between replicated")+
+  ylab("LRR rank difference between replicates")+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
   theme_base()                                            
                                                                 
