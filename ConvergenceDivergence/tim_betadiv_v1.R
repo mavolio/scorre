@@ -18,7 +18,7 @@ traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/tra
 traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
 
-cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv") %>% #community comp relative cover data
+cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
     mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0) #remove some Cedar Creek treatments since that site is somewhat overrepresented
 
@@ -689,7 +689,7 @@ visreg(mod)
 water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
 mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 summary(mod)
-ggplot(water_mani, aes(precip, lrr, color = MAP))+
+ggplot(water_mani, aes(precip, lrr))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_point(size = 2)+
@@ -705,7 +705,7 @@ visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr trait beta diversity", xl
 N <- subset(lrr_treat_traits, trt_type == "N")
 mod <- lmer(lrr~n  + (1|expgroup) ,data = N)
 summary(mod)
-ggplot(N, aes(n, lrr, color = MAP))+
+ggplot(N, aes(n, lrr))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_point(size = 2)+
   ylab("LRR trait beta diversity")+
@@ -782,57 +782,110 @@ lrr.df.conf <- lrr.df%>%
 lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient"#, "mult_GCD", "CO2"
 ))
           
-ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+ #this figure doesn't match up with the model results below
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
-  xlab("")+
-  ylab("LRR rank difference between replicates")+
-  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
-  theme_base()                                            
-                                                                
+
 #models to test results
 rank_diff_master.1 <- tidyr::separate(rank_diff_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 ##rank_diff
 tempdf <- subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought")
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(rank_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
-visreg(mod)
+rank_drought <- data.frame(trt_type = "drought", metric = "rank_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr")
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(rank_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+rank_irr <- data.frame(trt_type = "irr", metric = "rank_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "temp")
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(rank_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+rank_temp <- data.frame(trt_type = "temp", metric = "rank_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "N")
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(rank_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+rank_N <- data.frame(trt_type = "N", metric = "rank_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "P")
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(rank_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+rank_P <- data.frame(trt_type = "P", metric = "rank_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(rank_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(rank_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
-                                  
+rank_mult_nutrient <- data.frame(trt_type = "mult_nutrient", metric = "rank_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 #species_diff
 tempdf <- subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought")
-mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(species_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
-visreg(mod)
+species_drought <- data.frame(trt_type = "drought", metric = "species_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr")
-mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(species_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+species_irr <- data.frame(trt_type = "irr", metric = "species_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "temp")
-mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(species_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+species_temp <- data.frame(trt_type = "temp", metric = "species_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "N")
-mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(species_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+species_N <- data.frame(trt_type = "N", metric = "species_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "P")
-mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(species_diff~trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+species_P <- data.frame(trt_type = "P", metric = "species_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
 tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(species_diff~trt_type + (1|site_code/expgroup), data = tempdf)
-summary(mod)                              
+mod <- lmer(species_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)                           
+species_mult_nutrient <- data.frame(trt_type = "mult_nutrient", metric = "species_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+#richness_diff
+tempdf <- subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought")
+mod <- lmer(richness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+richness_drought <- data.frame(trt_type = "drought", metric = "richness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr")
+mod <- lmer(richness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+richness_irr <- data.frame(trt_type = "irr", metric = "richness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "temp")
+mod <- lmer(richness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+richness_temp <- data.frame(trt_type = "temp", metric = "richness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "N")
+mod <- lmer(richness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+richness_N <- data.frame(trt_type = "N", metric = "richness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "P")
+mod <- lmer(richness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+richness_P <- data.frame(trt_type = "P", metric = "richness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient")
+mod <- lmer(richness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)                           
+richness_mult_nutrient <- data.frame(trt_type = "mult_nutrient", metric = "richness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+
+diff.df <- dplyr::bind_rows(rank_drought, rank_irr, rank_temp, rank_N, rank_P, rank_mult_nutrient,
+                 species_drought, species_irr, species_temp, species_N, species_P, species_mult_nutrient,
+                 richness_drought, richness_irr, richness_temp, richness_N, richness_P, richness_mult_nutrient)
+
+###Make bar graph to summarize the above information
+
+
 
 ####SINGLE TRAIT VARIANCE AMONG REPLICATES (TRAIT)
 
