@@ -228,14 +228,7 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
   theme_base()
 
-ggplot(lrr.df, aes(trt_type, lrr, color = trt_type))+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  
-      geom_beeswarm(cex = 2)+
-  xlab("")+
-  ylab("Species composition LRR distance between plots within treatment")+
-  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"))+
-  theme_base()
+
 
 
 #models to test results
@@ -458,13 +451,6 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"))+
   theme_base()
 
-ggplot(lrr.df, aes(trt_type, lrr, color = trt_type))+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  geom_beeswarm(cex = 2)+
-  xlab("")+
-  ylab("Trait composition LRR distance between plots within treatment")+
-  scale_color_manual(values = c("#df0000","#0099f6", "orange","#00b844","#f2c300","#6305dc"))+
-  theme_base()
 
 lrr.df_traits <- lrr.df
 
@@ -785,6 +771,8 @@ lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr"
 
 #models to test results
 rank_diff_master.1 <- tidyr::separate(rank_diff_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+
+
 ##rank_diff
 tempdf <- subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought")
 mod <- lmer(rank_diff~trt_type + (1|expgroup), data = tempdf)
@@ -879,13 +867,75 @@ summary(mod)
 richness_mult_nutrient <- data.frame(trt_type = "mult_nutrient", metric = "richness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
 
 
+
+#evenness_diff
+tempdf <- subset(rank_diff_master.1, trt_type == "control" | trt_type == "drought")
+mod <- lmer(evenness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+evenness_drought <- data.frame(trt_type = "drought", metric = "evenness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "irr")
+mod <- lmer(evenness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+evenness_irr <- data.frame(trt_type = "irr", metric = "evenness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "temp")
+mod <- lmer(evenness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+evenness_temp <- data.frame(trt_type = "temp", metric = "evenness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "N")
+mod <- lmer(evenness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+evenness_N <- data.frame(trt_type = "N", metric = "evenness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "P")
+mod <- lmer(evenness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+evenness_P <- data.frame(trt_type = "P", metric = "evenness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+tempdf <-subset(rank_diff_master.1, trt_type == "control" | trt_type == "mult_nutrient")
+mod <- lmer(evenness_diff~trt_type + (1|expgroup), data = tempdf)
+summary(mod)                           
+evenness_mult_nutrient <- data.frame(trt_type = "mult_nutrient", metric = "evenness_diff", Estimate = summary(mod)$coefficients[2,1], se =  summary(mod)$coefficients[2,2], pvalue = summary(mod)$coefficients[2,5])
+
+
+
 diff.df <- dplyr::bind_rows(rank_drought, rank_irr, rank_temp, rank_N, rank_P, rank_mult_nutrient,
                  species_drought, species_irr, species_temp, species_N, species_P, species_mult_nutrient,
-                 richness_drought, richness_irr, richness_temp, richness_N, richness_P, richness_mult_nutrient)
+                 richness_drought, richness_irr, richness_temp, richness_N, richness_P, richness_mult_nutrient,
+                 evenness_drought, evenness_irr, evenness_temp, evenness_N, evenness_P, evenness_mult_nutrient)
+
+diff.df$trt_type <- factor(diff.df$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" ))
 
 ###Make bar graph to summarize the above information
+diff.df$Estimate.sig <- ifelse(diff.df$pvalue <0.05, diff.df$metric, 0)
+ggplot(diff.df, aes(x=trt_type, y=Estimate, fill = metric, color = metric))+
+  geom_bar(aes(fill = ifelse(pvalue <0.05, metric, "NA"), color =  metric),stat="identity",
+           position = position_dodge(width = 0.9))+
+  scale_fill_manual(values = c("#ff0000", "white", "#0000ff", "#ffa500", "#4b0082"))+
+  scale_color_manual(values = c("#ff0000","#0000ff", "#ffa500", "#4b0082"))+
+      #geom_errorbar(aes(ymin=ifelse(pvalue <0.05, Estimate-se, NA), ymax=ifelse(pvalue <0.05, Estimate+se, NA)), width=1
+       #           , position=position_dodge(width = 0.9), color = "black"
+        #        )+
+  theme_base()
 
 
+ggplot(diff.df, aes(x=trt_type, y=Estimate, fill = metric, color = metric))+
+  facet_wrap(~metric)+
+  geom_bar(aes(fill = ifelse(pvalue <0.05, metric, "NA"), color =  metric),stat="identity",
+           position = position_dodge(width = 0.9))+
+  scale_fill_manual(values = c("#ff0000", "white", "#0000ff", "#ffa500", "#4b0082"))+
+  scale_color_manual(values = c("#ff0000","#0000ff", "#ffa500", "#4b0082"))+
+  theme_base()
+
+ggplot(diff.df, aes(x=metric, y=Estimate, fill = metric, color = metric))+
+  facet_wrap(~trt_type)+
+  geom_bar(aes(fill = ifelse(pvalue <0.05, metric, "NA"), color =  metric),stat="identity",
+           position = position_dodge(width = 0.9))+
+  scale_fill_manual(values = c("#ff0000", "white", "#0000ff", "#ffa500", "#4b0082"))+
+  scale_color_manual(values = c("#ff0000","#0000ff", "#ffa500", "#4b0082"))+
+  theme_base()
 
 ####SINGLE TRAIT VARIANCE AMONG REPLICATES (TRAIT)
 
