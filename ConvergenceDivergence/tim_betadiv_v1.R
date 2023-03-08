@@ -678,7 +678,8 @@ summary(mod)
 ggplot(water_mani, aes(precip, lrr))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 2)+
+  geom_point(aes(color = trt_type), size = 4)+
+  scale_color_manual(values = c("#df0000", "#0099f6"))+
   ylab("LRR trait beta diversity")+
   xlab("Precip treatment as percentage of MAP")+
   geom_smooth(method = "lm", se = FALSE, color = "black")+
@@ -693,7 +694,7 @@ mod <- lmer(lrr~n  + (1|expgroup) ,data = N)
 summary(mod)
 ggplot(N, aes(n, lrr))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 2)+
+  geom_point(size = 4, color = "#00b844")+
   ylab("LRR trait beta diversity")+
   xlab("N addition treatment (units)")+
   #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
