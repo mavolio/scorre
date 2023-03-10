@@ -255,7 +255,6 @@ for(PROJ in 1:length(site_proj_comm_vector)){
 }
 
 
-# write.csv(FD_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2022-12-13.csv',row.names=F)
-# write.csv(distance_df_master, 'CoRRE_functionalDiversity_2023-03-10.csv',row.names=F)
+# write.csv(distance_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-10.csv',row.names=F)
 
 
