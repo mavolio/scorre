@@ -214,6 +214,7 @@ lrr.df.conf <- lrr.df%>%
   ddply(.(trt_type), function(x)data.frame(
     lrr.mean = mean(x$lrr),
     lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
+    lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
     num_experiments = length(x$expgroup)
   ))
 
@@ -222,7 +223,7 @@ lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr"
 #visualize
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-    geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
+    geom_pointrange(aes(ymin = lrr.mean-lrr.se, ymax = lrr.mean+lrr.se), size = 1.5)+
   xlab("")+
   ylab("Species composition LRR distance between plots within treatment")+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
@@ -259,6 +260,7 @@ sites <- test%>%
   subset(trt_type != "control")
 
 n <- sites%>%
+#  tidyr::unite("expgroup", c("site_code", "project_name", "community_type"))%>%
       ddply(.(trt_type), function(x)data.frame(n = length(x$site_code)))
 
 
@@ -302,106 +304,6 @@ summarize.traits <- unique(summarize.traits)
 
 
 
-#########CALCULATE ALPHA FDIS TO COMPARE
-
-
-
-##### calculate functional dispersion - loop through sites #####
-#distance_df_master <- {}
-#site_proj_comm_vector <- unique(df$expgroup)
-
-
-#for(i in 1:length(site_proj_comm_vector)){
-
-#  temp.df.comm <- subset(kevin, expgroup == site_proj_comm_vector[i])
-
-  
-  #species vector for pulling traits from relative cover
-#  sp_df_temp <- data.frame(species_matched = unique(temp.df.comm$species_matched), dummy=1) 
-#  site.traits.temp <- left_join(sp_df_temp, summarize.traits, by = "species_matched")
-#  rownames(site.traits.temp) <- site.traits.temp$species_matched
-#  site.traits.temp <- site.traits.temp[ , -which(names(site.traits.temp) %in% c("species_matched", "dummy"))]
-  
-#  temp.wide.comm <- temp.df.comm%>%
-#    pivot_wider(names_from = species_matched, values_from = relcov, values_fill = 0)
-  
-#  temp.alpha <- dbFD(x = site.traits.temp, a = temp.wide.comm[10:ncol(temp.wide.comm)], m = 2)
-  
-  
-  
-#  sp_vec_temp <- sp_df_temp %>%
-#    pull(species_matched)
-  
-  #subset trait data to just include the species present subset relative cover data
-#  traits_df_raw_temp <- traitsClean %>%
-#    filter(species_matched %in% sp_vec_temp)
-  
-  #dataframe with species in trait database and in relative cover data base
-#  species_in_trait_data_temp <- data.frame(species_matched = unique(traits_df_raw_temp$species_matched),
-#                                           dummy_traits=2) %>% #there are fewer species in the unique trait dataset than in the species comp data because there are thing like "unknown forb"
-#    arrange(species_matched)
-  
-  #vector of species not in trait database (but in relative abundance data) to remove from species abundance data
-#  sp_to_remove_temp <- sp_df_temp %>%
-#    full_join(species_in_trait_data_temp, by="species_matched") %>%
-#    filter(is.na(dummy_traits)) %>%
-#    pull(genus_species)
-  
-  #abundance dataset with species removed that do not have trait information
-#  relcov_unkn_sp_rm_temp <- relcov_df_temp %>%
-#    filter(!genus_species %in% sp_to_remove_temp) #removing species without trait information
-  
-  #abundance data into wide format
-#  relcov_wide_temp <- 
-    
-  # add rownames 
-#  row.names(relcov_only_temp) <- paste(plot_info_temp$calendar_year, plot_info_temp$plot_id, sep="::")
-  
-  #dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
-#  traits_df_temp <- traits_df_raw_temp %>%
-#    arrange(species_matched) %>%
-#    column_to_rownames("species_matched") %>%
-#    dplyr::select(-family) %>%
-#    mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
-#    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
-  
-  # change to dataframe from tibble 
-#  traits_df_temp <- as.data.frame(traits_df_temp)
-  
-  #changing all categorical traits to factors
-#  traits_df_temp[,c(1:6)] <- lapply(traits_df_temp[,c(1:6)], as.factor)
-  
-  #changing all continuous to numerical
-#  traits_df_temp[,c(7:12)] <- lapply(traits_df_temp[,c(7:12)], as.numeric)
-  
-  ### Calculate MNTD and functional diversity metrics -- had to use Cailliez correlations becuase Euclidean distances could be calculated
-#  FD_temp <- dbFD(x=traits_df_temp, a=relcov_only_temp, cor="cailliez", calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
-  
-#  FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
-#    mutate(year_plotid = row.names(.)) %>%
-#    separate(year_plotid, into=c("calendar_year","plot_id"), sep="::") %>%
-#    mutate(calendar_year = as.numeric(calendar_year)) %>%
-#    full_join(plot_info_temp, by=c("calendar_year","plot_id"))
-  
-#  comp_matrix_temp <- as.matrix(relcov_only_temp)
-#  trait_dist_temp <- as.matrix(gowdis(traits_df_temp))
-  
-#  MNTD_df_temp <- data.frame(
-#    plot_info_temp[,c("calendar_year", "plot_id")],
-#    MNTD_traits = picante::mntd(comp_matrix_temp, trait_dist_temp)
-#  )
-  
-#  distance_df_temp <- FD_df_temp %>%
-#    full_join(MNTD_df_temp, by=c("calendar_year","plot_id"))
-  
-#  distance_df_master <- rbind(distance_df_master, distance_df_temp)
-  
-#  rm(list=ls()[grep("temp", ls())])
-#}
-
-
-
-
 
 ###########CALCULATE BETA DIVERSITY WITH TRAITS
 expgroup_vector <- unique(summarize.cwm$expgroup)
@@ -436,6 +338,7 @@ lrr.df.conf <- lrr.df%>%
   ddply(.(trt_type), function(x)data.frame(
     lrr.mean = mean(x$lrr),
     lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
+    lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
     num_experiments = length(x$expgroup)
   ))
 
@@ -445,7 +348,7 @@ lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr"
                                                                 ))
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
+  geom_pointrange(aes(ymin = lrr.mean-lrr.se, ymax = lrr.mean+lrr.se), size = 1.5)+
   xlab("")+
   ylab("Trait LRR distance between plots within treatment")+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"))+
