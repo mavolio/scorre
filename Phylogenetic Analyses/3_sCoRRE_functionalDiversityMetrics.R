@@ -73,7 +73,6 @@ shapiro.test(contTraitsScaled$leaf_C.N)
 #sqrt W = 0.66313, p-value < 2.2e-16
 #log W = 0.95638, p-value < 2.2e-16
 
-
 hist(contTraitsScaled$LDMC)
 qqPlot(contTraitsScaled$LDMC)
 shapiro.test(contTraitsScaled$LDMC)
@@ -124,7 +123,7 @@ traitsClean <- traitsAll %>%
   filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
 
 # species relative cover data
-relcov_full_raw <- read.csv("CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv") %>%
+relcov_full_raw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
   dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
 
@@ -144,7 +143,8 @@ relcov_full_clean <- relcov_full_raw %>%
   dplyr::left_join(corre_to_try, by="genus_species") %>%
   filter(!species_matched  %in% moss_sp_vec) %>%
   filter(!(site_code == "EGN" & project_name == "Nmow" & community_type == "0" & 
-             plot_id == "19" & calendar_year==2015 & treatment=="Control")) ## Stipa species just has an incorrect treatment I think, needs to be fixed in absolute abundance data frame but I'm just removing it for now
+             plot_id == "19" & calendar_year==2015 & treatment=="Control")) %>% ## Stipa species just has an incorrect treatment I think, needs to be fixed in absolute abundance data frame but I'm just removing it for now
+  mutate(plot_id=ifelse(site_proj_comm=='DL_NSFC_0', paste(plot_id, treatment, sep='__'), plot_id))
 
 rm(moss_key, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
 
@@ -224,8 +224,13 @@ for(PROJ in 1:length(site_proj_comm_vector)){
   #changing all continuous to numerical
   traits_df_temp[,c(7:12)] <- lapply(traits_df_temp[,c(7:12)], as.numeric)
   
-  ### Calculate MNTD and functional diversity metrics -- had to use Cailliez correlations becuase Euclidean distances could be calculated
-  FD_temp <- dbFD(x=traits_df_temp, a=relcov_only_temp, cor="cailliez", calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
+  ### Calculate MNTD and functional diversity metrics
+  FD_temp <- dbFD(x=traits_df_temp, # matrix of traits
+                  a=relcov_only_temp, # matrix of species abundances
+                  w.abun=F, # don't weight by abundance
+                  cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
+                  # calc.CWM=T, CWM.type='all', # calculate CWM across all spp
+                  calc.FRic=T) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
   
   FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
     mutate(year_plotid = row.names(.)) %>%
@@ -250,7 +255,6 @@ for(PROJ in 1:length(site_proj_comm_vector)){
 }
 
 
-# write.csv(FD_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2022-12-13.csv',row.names=F)
-# write.csv(distance_df_master, 'CoRRE_functionalDiversity_2022-12-15.csv',row.names=F)
+# write.csv(distance_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-10.csv',row.names=F)
 
 

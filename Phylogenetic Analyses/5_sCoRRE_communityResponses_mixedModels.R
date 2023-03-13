@@ -201,15 +201,15 @@ allDivRR <- allDivTrt %>%
   filter(trt_type2!='control') %>%
   left_join(control) %>%
   filter(!is.na(RaoQ_ctl_mean)) %>%  #remove lines where there was no control to compare to due to lack of spp cover for traits; lose 550 lines
-  mutate(mpd_diff=((mpd.raw-mpd.raw_ctl_mean)/mpd.raw_ctl_mean), 
-         mntd_diff=((mntd.raw-mntd.raw_ctl_mean)/mntd.raw_ctl_mean), 
+  mutate(mpd_RR=((mpd.raw-mpd.raw_ctl_mean)/mpd.raw_ctl_mean), 
+         mntd_RR=((mntd.raw-mntd.raw_ctl_mean)/mntd.raw_ctl_mean), 
          FDis_RR=((FDis-FDis_ctl_mean)/FDis_ctl_mean), 
          RaoQ_RR=((RaoQ-RaoQ_ctl_mean)/RaoQ_ctl_mean), 
          richness_RR=((richness-richness_ctl_mean)/richness_ctl_mean),
          MNTD_traits_RR=((MNTD_traits-MNTD_traits_ctl_mean)/MNTD_traits_ctl_mean)) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::'))  %>% 
   group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
-  summarise_at(vars(mpd_diff, mntd_diff, FDis_RR, RaoQ_RR, richness_RR, MNTD_traits_RR), list(mean=mean), na.rm=T) %>%
+  summarise_at(vars(mpd_RR, mntd_RR, FDis_RR, RaoQ_RR, richness_RR, MNTD_traits_RR), list(mean=mean), na.rm=T) %>%
   ungroup()
 
 ##### check if richness difference is correlated with other diversity metrics #####
@@ -228,7 +228,7 @@ library(grid)
 options(contrasts=c('contr.sum','contr.poly')) 
 
 summary(richModel <- lme(richness_RR_mean ~ as.factor(trt_type2),
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_RR_mean<3 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(richModel, type='sequential')
 meansRichModel <- emmeans(richModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -248,7 +248,7 @@ richFig <- ggplot(data=meansRichModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 # summary(FDisModel <- lme(FDis_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
-#                          data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & trt_type2!='herb_removal')),
+#                          data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_RR_mean<3 & trt_type2!='herb_removal')),
 #                          random=~1|site_proj_comm))
 # anova.lme(FDisModel, type='sequential')
 # meansFDisModel <- emmeans(FDisModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -266,8 +266,8 @@ richFig <- ggplot(data=meansRichModelOutput, aes(x=trt_type2, y=emmean, color=tr
 #   theme(legend.position='none')
 
 
-summary(mpdModel <- lme(mpd_diff_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
+summary(mpdModel <- lme(mpd_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_RR_mean<3 & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(mpdModel, type='sequential')
 meansMPDModel <- emmeans(mpdModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -287,7 +287,7 @@ mpdFig <- ggplot(data=meansMPDModelOutput, aes(x=trt_type2, y=emmean, color=trt_
 
 
 summary(RaoQModel <- lme(RaoQ_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_RR_mean<3 & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(RaoQModel, type='sequential')
 meansRaoQModel <- emmeans(RaoQModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -306,8 +306,8 @@ RaoQFig <- ggplot(data=meansRaoQModelOutput, aes(x=trt_type2, y=emmean, color=tr
   theme(legend.position='none')
 
 
-summary(MNTDModel <- lme(mntd_diff_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3  & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
+summary(MNTDModel <- lme(mntd_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_RR_mean<3  & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(MNTDModel, type='sequential')
 meansMNTDModel <- emmeans(MNTDModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -327,7 +327,7 @@ MNTDFig <- ggplot(data=meansMNTDModelOutput, aes(x=trt_type2, y=emmean, color=tr
 
 
 summary(MNTDtraitsModel <- lme(MNTD_traits_RR_mean ~ as.factor(trt_type2) + richness_RR_mean,
-                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_diff_mean<3 & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
+                         data=na.omit(subset(allDivRR, FDis_RR_mean<8 & RaoQ_RR_mean<11 & mntd_RR_mean<3 & MNTD_traits_RR_mean<1.5 & trt_type2!='herb_removal')),
                          random=~1|site_proj_comm))
 anova.lme(MNTDtraitsModel, type='sequential')
 meansMNTDtraitsModel <- emmeans(MNTDtraitsModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -403,14 +403,14 @@ nRaoQFig <- ggplot(data=nDivRR, aes(x=n, y=RaoQ_RR_mean)) +
   ylab('Rao Q\nEffect Size') + xlab(bquote('N added '(gm^-2)))
 
 
-summary(nMNTDModel <- lme(mntd_diff_mean ~ n, #tried polynomial, but linear was better
-                         data=subset(nDivRR, !is.na(mntd_diff_mean)),
+summary(nMNTDModel <- lme(mntd_RR_mean ~ n, #tried polynomial, but linear was better
+                         data=subset(nDivRR, !is.na(mntd_RR_mean)),
                          random=~1|site_proj_comm))
 anova.lme(nMNTDModel, type='sequential')
 coef(nMNTDModel)
 summary.tablefunc(nMNTDModel)
 
-nMNTDFig <- ggplot(data=nDivRR, aes(x=n, y=mntd_diff_mean)) +
+nMNTDFig <- ggplot(data=nDivRR, aes(x=n, y=mntd_RR_mean)) +
   geom_point(size=2)+
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   geom_smooth(method='lm', formula=y~x, color='black') +
@@ -455,14 +455,14 @@ precipRaoQFig <- ggplot(data=precipDivRR, aes(x=precip, y=RaoQ_RR_mean)) +
   ylab('Rao Q\nEffect Size') + xlab('Precipitation Manipulation (%)')
 
 
-summary(precipMNTDModel <- lme(mntd_diff_mean ~ precip,
+summary(precipMNTDModel <- lme(mntd_RR_mean ~ precip,
                           data=precipDivRR,
                           random=~1|site_proj_comm))
 anova.lme(precipMNTDModel, type='sequential')
 coef(precipMNTDModel)
 summary.tablefunc(precipMNTDModel)
 
-precipMNTDFig <- ggplot(data=precipDivRR, aes(x=precip, y=mntd_diff_mean)) +
+precipMNTDFig <- ggplot(data=precipDivRR, aes(x=precip, y=mntd_RR_mean)) +
   geom_point(size=2)+
   # geom_abline(linewidth=2, aes(intercept=`(Intercept)`, slope=`poly(n, 2)`, as.data.frame(t(fixef(nMNTDModel))))) +
   # geom_smooth(method='lm', formula=y~poly(x,2), color='black') + #no significant effect
