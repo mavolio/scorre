@@ -11,9 +11,9 @@ library(tidyverse)
 
 ##### set working directory #####
 setwd("~/Dropbox/sDiv_sCoRRE_shared/")
+setwd("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\") # Kim's laptop/desktop
 setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
 setwd("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\") # Kevin's laptop wd
-setwd("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\") # Kim's laptop/desktop
 
 
 ##### defining functions #####
@@ -26,101 +26,90 @@ se <- function(x, na.rm=na.rm){
 
 ##### data import and cleaning #####
 
-# continuous trait data
-contTraits <- read.csv('CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv') %>%
-  select(species_matched, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass) %>%
-  group_by(species_matched) %>%
-  summarise_all(funs(mean)) %>%
-  ungroup() %>%
-  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75, leaf_C.N<100) 
-
-#testing normality
-hist(contTraits$leaf_C.N)
-qqPlot(contTraits$leaf_C.N)
-shapiro.test(contTraits$leaf_C.N)
-
-hist(contTraits$LDMC)
-qqPlot(contTraits$LDMC)
-shapiro.test(contTraits$LDMC)
-
-hist(contTraits$SLA)
-qqPlot(contTraits$SLA)
-shapiro.test(contTraits$SLA)
-
-hist(contTraits$plant_height_vegetative)
-qqPlot(contTraits$plant_height_vegetative)
-shapiro.test(contTraits$plant_height_vegetative)
-
-hist(contTraits$rooting_depth)
-qqPlot(contTraits$rooting_depth)
-shapiro.test(contTraits$rooting_depth)
-
-hist(contTraits$seed_dry_mass)
-qqPlot(contTraits$seed_dry_mass)
-shapiro.test(contTraits$seed_dry_mass)
-
-
-##### log transform and scale continuous traits #####
-contTraitsScaled <- contTraits %>%
-  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), log) %>% 
-  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
-colnames(contTraits) <- c('species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass')
-
-#testing normality
-hist(contTraitsScaled$leaf_C.N)
-qqPlot(contTraitsScaled$leaf_C.N)
-shapiro.test(contTraitsScaled$leaf_C.N)
-#sqrt W = 0.66313, p-value < 2.2e-16
-#log W = 0.95638, p-value < 2.2e-16
-
-hist(contTraitsScaled$LDMC)
-qqPlot(contTraitsScaled$LDMC)
-shapiro.test(contTraitsScaled$LDMC)
-#sqrt W = 0.99413, p-value = 2.207e-06
-#log W = 0.9974, p-value = 0.005625
-
-hist(contTraitsScaled$SLA)
-qqPlot(contTraitsScaled$SLA)
-shapiro.test(contTraitsScaled$SLA)
-#sqrt W = 0.97877, p-value = 2.138e-15
-#log W = 0.98822, p-value = 1.033e-10
-
-hist(contTraitsScaled$plant_height_vegetative)
-qqPlot(contTraitsScaled$plant_height_vegetative)
-shapiro.test(contTraitsScaled$plant_height_vegetative)
-#sqrt W = 0.91475, p-value < 2.2e-16
-#log W = 0.99106, p-value = 7.733e-09
-
-hist(contTraitsScaled$rooting_depth)
-qqPlot(contTraitsScaled$rooting_depth)
-shapiro.test(contTraitsScaled$rooting_depth)
-#sqrt W = 0.96263, p-value < 2.2e-16
-#log W = 0.98769, p-value = 5.035e-11
-
-hist(contTraitsScaled$seed_dry_mass)
-qqPlot(contTraitsScaled$seed_dry_mass)
-shapiro.test(contTraitsScaled$seed_dry_mass)
-#sqrt W = 0.84399, p-value < 2.2e-16
-#log W = 0.98691, p-value = 1.769e-11
-
-
-##### combining continuous and categorical trait datasets #####
-traitsAll <- read.csv('CoRRE data\\trait data\\sCoRRE categorical trait data_12142022.csv') %>% #categorical trait data
-  select(family, species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, leaf_type) %>% 
-  filter(growth_form!="moss",species_matched!="", growth_form!="lycophyte") %>% 
+# trait data
+traits <- read.csv('CoRRE data\\trait data\\AllTraits\\CoRRE_allTraitData_March2023.csv') %>% 
+  select(family, species_matched, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
+  filter(growth_form!="moss", species_matched!="") %>% #keeping lycophytes
   mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
   select(-mycorrhizal_type) %>% 
   rename(mycorrhizal_type=mycorrhizal) %>% 
   mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
   select(-photosynthetic_pathway) %>%
   rename(photosynthetic_pathway=photo_path) %>%
-  full_join(contTraitsScaled) %>% #merge continuous and categorical traits
-  drop_na()
+  drop_na() #only keep trait data that is complete for all traits (drops 600 species with only categorical trait data)
 
-# remove non-target species (ferns, lycophytes, mosses) that somehow snuck into the trait data
-traitsClean <- traitsAll %>%
-  filter(!leaf_type %in% c("microphyll","frond")) %>%
-  filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
+
+##### testing normality #####
+hist(traits$leaf_C.N)
+qqPlot(traits$leaf_C.N)
+shapiro.test(traits$leaf_C.N)
+
+hist(traits$LDMC)
+qqPlot(traits$LDMC)
+shapiro.test(traits$LDMC)
+
+hist(traits$SLA)
+qqPlot(traits$SLA)
+shapiro.test(traits$SLA)
+
+hist(traits$plant_height_vegetative)
+qqPlot(traits$plant_height_vegetative)
+shapiro.test(traits$plant_height_vegetative)
+
+hist(traits$rooting_depth)
+qqPlot(traits$rooting_depth)
+shapiro.test(traits$rooting_depth)
+
+hist(traits$seed_dry_mass)
+qqPlot(traits$seed_dry_mass)
+shapiro.test(traits$seed_dry_mass)
+
+
+##### log transform and scale continuous traits #####
+traitsScaled <- traits %>%
+  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), log) %>% 
+  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
+colnames(contScaled) <- c('family', 'species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass')
+
+#testing normality
+hist(traitsScaled$leaf_C.N)
+qqPlot(traitsScaled$leaf_C.N)
+shapiro.test(traitsScaled$leaf_C.N)
+#log W = 0.97422, p-value < 2.2e-16
+#sqrt W = 0.89825, p-value < 2.2e-16
+
+hist(traitsScaled$LDMC)
+qqPlot(traitsScaled$LDMC)
+shapiro.test(traitsScaled$LDMC)
+#log W = 0.94689, p-value < 2.2e-16
+#sqrt W = 0.97428, p-value < 2.2e-16
+
+hist(traitsScaled$SLA)
+qqPlot(traitsScaled$SLA)
+shapiro.test(traitsScaled$SLA)
+#log W = 0.96329, p-value < 2.2e-16
+#sqrt W = 0.92173, p-value < 2.2e-16
+
+hist(traitsScaled$plant_height_vegetative)
+qqPlot(traitsScaled$plant_height_vegetative)
+shapiro.test(traitsScaled$plant_height_vegetative)
+#log W = 0.99396, p-value = 1.029e-06
+#sqrt W = 0.82253, p-value < 2.2e-16
+
+hist(traitsScaled$rooting_depth)
+qqPlot(traitsScaled$rooting_depth)
+shapiro.test(traitsScaled$rooting_depth)
+#log W = 0.98391, p-value = 2.411e-13
+#sqrt W = 0.8344, p-value < 2.2e-16
+
+hist(traitsScaled$seed_dry_mass)
+qqPlot(traitsScaled$seed_dry_mass)
+shapiro.test(traitsScaled$seed_dry_mass)
+#log W = 0.9931, p-value = 1.846e-07
+#sqrt W = 0.7173, p-value < 2.2e-16
+
+
+##### relative cover datasets #####
 
 # species relative cover data
 relcov_full_raw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv") %>%
@@ -142,16 +131,15 @@ moss_sp_vec <- read.csv("CoRRE data\\trait data\\sCoRRE categorical trait data_1
 relcov_full_clean <- relcov_full_raw %>%
   dplyr::left_join(corre_to_try, by="genus_species") %>%
   filter(!species_matched  %in% moss_sp_vec) %>%
-  filter(!(site_code == "EGN" & project_name == "Nmow" & community_type == "0" & 
-             plot_id == "19" & calendar_year==2015 & treatment=="Control")) %>% ## Stipa species just has an incorrect treatment I think, needs to be fixed in absolute abundance data frame but I'm just removing it for now
   mutate(plot_id=ifelse(site_proj_comm=='DL_NSFC_0', paste(plot_id, treatment, sep='__'), plot_id))
 
-rm(moss_key, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
+rm(moss_sp_vec, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
 
 
 ##### calculate functional dispersion - loop through sites #####
 distance_df_master <- {}
 site_proj_comm_vector <- unique(relcov_full_raw$site_proj_comm)
+site_proj_comm_vector[-103] #PIE TIDE is causing errors with FRich for some reason
 
 # for(PROJ in 1:4){
 for(PROJ in 1:length(site_proj_comm_vector)){
@@ -167,7 +155,7 @@ for(PROJ in 1:length(site_proj_comm_vector)){
     pull(species_matched)
   
   #subset trait data to just include the species present subset relative cover data
-  traits_df_raw_temp <- traitsClean %>%
+  traits_df_raw_temp <- traitsScaled %>%
     filter(species_matched %in% sp_vec_temp)
   
   #dataframe with species in trait database and in relative cover data base
