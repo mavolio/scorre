@@ -139,7 +139,7 @@ rm(moss_sp_vec)
 ##### calculate functional dispersion - loop through sites #####
 distance_df_master <- {}
 site_proj_comm_vector <- unique(relcov_full_raw$site_proj_comm)
-site_proj_comm_vector[-103] #PIE TIDE is causing errors with FRich for some reason
+# site_proj_comm_vector[-103] #PIE TIDE is causing errors with FRich for some reason
 
 # for(PROJ in 1:4){
 for(PROJ in 1:length(site_proj_comm_vector)){
@@ -220,7 +220,7 @@ for(PROJ in 1:length(site_proj_comm_vector)){
                   w.abun=F, # don't weight by abundance
                   cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
                   # calc.CWM=T, CWM.type='all', # calculate CWM across all spp
-                  calc.FRic=T) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
+                  calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
   
   FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
     mutate(year_plotid = row.names(.)) %>%
