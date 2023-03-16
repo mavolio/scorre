@@ -69,7 +69,7 @@ shapiro.test(traits$seed_dry_mass)
 traitsScaled <- traits %>%
   mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), log) %>% 
   mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
-colnames(contScaled) <- c('family', 'species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass')
+colnames(traitsScaled) <- c('family', 'species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass', 'growth_form', 'lifespan', 'clonal', 'n_fixation', 'mycorrhizal_type', 'photosynthetic_pathway')
 
 #testing normality
 hist(traitsScaled$leaf_C.N)
@@ -133,7 +133,7 @@ relcov_full_clean <- relcov_full_raw %>%
   filter(!species_matched  %in% moss_sp_vec) %>%
   mutate(plot_id=ifelse(site_proj_comm=='DL_NSFC_0', paste(plot_id, treatment, sep='__'), plot_id))
 
-rm(moss_sp_vec, traits_catag_clean, traits_cont_clean, sp_without_catag_data)
+rm(moss_sp_vec)
 
 
 ##### calculate functional dispersion - loop through sites #####
@@ -152,7 +152,9 @@ for(PROJ in 1:length(site_proj_comm_vector)){
     unique(.) 
   
   sp_vec_temp <- sp_df_temp %>%
-    pull(species_matched)
+    na.omit() %>% 
+    pull(species_matched) %>% 
+    unique()
   
   #subset trait data to just include the species present subset relative cover data
   traits_df_raw_temp <- traitsScaled %>%
@@ -243,6 +245,6 @@ for(PROJ in 1:length(site_proj_comm_vector)){
 }
 
 
-# write.csv(distance_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-10.csv',row.names=F)
+# write.csv(distance_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-16.csv',row.names=F)
 
 
