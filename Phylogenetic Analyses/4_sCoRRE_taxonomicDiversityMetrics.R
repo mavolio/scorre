@@ -78,7 +78,7 @@ hillNumbers2 <- hillNumbers %>%
 rDiv <- richness %>% 
   left_join(hillNumbers2)
 
-# write.csv(rDiv, 'CoRRE_taxonomicDiversity_2023-03-21.csv', row.names=F)
+# write.csv(rDiv, 'paper 2_PD and FD responses\\data\\CoRRE_taxonomicDiversity_2023-03-21.csv', row.names=F)
 
 
 
