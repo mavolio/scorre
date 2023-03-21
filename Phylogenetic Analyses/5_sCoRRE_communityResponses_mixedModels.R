@@ -85,7 +85,7 @@ pDiv <- read.csv('CoRRE_pd_metrics_non_weighted.csv') %>%
   mutate(treatment_year=as.integer(treatment_year))
 
 #functional diversity data
-fDiv <- read.csv('CoRRE_functionalDiversity_2023-03-16.csv')
+fDiv <- read.csv('CoRRE_functionalDiversity_2023-03-21.csv')
 
 #taxonomic diversity data
 rDiv <- read.csv('CoRRE_taxonomicDiversity_2022-12-15.csv')
