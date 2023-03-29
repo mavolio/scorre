@@ -263,11 +263,13 @@ for(s in 1:length(site_vector)){
     summarise(across(c('MNTD_traits_permuted', 'MPD_traits_permuted'), list(mean=mean, sd=sd))) %>% 
     ungroup()
   
-  distance <- rbind(distance, mpdMNTDSubset) %>% 
+  mpdMNTDSubsetSES2 <- mpdMNTDSubset %>% 
     full_join(ses2) %>% 
     mutate(MNTD_traits_ses=(MNTD_traits_raw-MNTD_traits_permuted_mean)/MNTD_traits_permuted_sd,
            MPD_traits_ses=(MPD_traits_raw-MPD_traits_permuted_mean)/MPD_traits_permuted_sd) %>% 
     select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, MNTD_traits_raw, MNTD_traits_ses, MPD_traits_raw, MPD_traits_ses)
+  
+  distance <- rbind(distance, mpdMNTDSubsetSES2)
   
   rm(list=ls()[grep("Subset", ls())])
 }
