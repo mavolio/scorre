@@ -1,7 +1,7 @@
 ################################################################################
 ##  sCoRRE_functionalDiversityMetrics.R: Calculating functional diversity metrics.
 ##
-##  Authors: Magda Garbowski, Kevin Wilcox, Kimberly Komatsu
+##  Authors: Kimberly Komatsu, Magda Garbowski, Kevin Wilcox, Josep Padulles Cubino
 ##  Date created: April 7, 2021
 ################################################################################
 
@@ -69,7 +69,11 @@ shapiro.test(traits$seed_dry_mass)
 traitsScaled <- traits %>%
   mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), log) %>% 
   mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
+
 colnames(traitsScaled) <- c('family', 'species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass', 'growth_form', 'lifespan', 'clonal', 'n_fixation', 'mycorrhizal_type', 'photosynthetic_pathway')
+
+#making categorical traits factors 
+traitsScaled[,c(9:14)] <- lapply(traitsScaled[,c(9:14)], as.factor)
 
 #testing normality
 hist(traitsScaled$leaf_C.N)
@@ -112,24 +116,24 @@ shapiro.test(traitsScaled$seed_dry_mass)
 ##### relative cover datasets #####
 
 # species relative cover data
-relcov_full_raw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv") %>%
+relCoverRaw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
-  dplyr::select(site_code:community_type, site_proj_comm, calendar_year:relcov)
+  select(site_code:community_type, site_proj_comm, calendar_year:relcov)
 
 # corre to try species names key
 corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
-  dplyr::select(genus_species, species_matched) %>%
-  unique(.)
+  select(genus_species, species_matched) %>%
+  unique()
 
 # merge species names and remove all mosses -- moss key to remove mosses from species comp data
 moss_sp_vec <- read.csv("CoRRE data\\trait data\\sCoRRE categorical trait data_12142022.csv") %>%
-  dplyr::select(species_matched, leaf_type) %>%
+  select(species_matched, leaf_type) %>%
   mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
   filter(moss=="moss") %>%
   pull(species_matched)
 
-relcov_full_clean <- relcov_full_raw %>%
-  dplyr::left_join(corre_to_try, by="genus_species") %>%
+relCovClean <- relCoverRaw %>%
+  left_join(corre_to_try, by="genus_species") %>%
   filter(!species_matched  %in% moss_sp_vec) %>%
   mutate(plot_id=ifelse(site_proj_comm=='DL_NSFC_0', paste(plot_id, treatment, sep='__'), plot_id))
 
@@ -137,114 +141,138 @@ rm(moss_sp_vec)
 
 
 ##### calculate functional dispersion - loop through sites #####
-distance_df_master <- {}
-site_proj_comm_vector <- unique(relcov_full_raw$site_proj_comm)
-# site_proj_comm_vector[-103] #PIE TIDE is causing errors with FRich for some reason
+distance <- {}
+site_vector <- unique(relCovClean$site_code) # do this for site_code only to reshuffle accurately
 
-# for(PROJ in 1:4){
-for(PROJ in 1:length(site_proj_comm_vector)){
-  relcov_df_temp <-relcov_full_clean %>%
-    filter(site_proj_comm==site_proj_comm_vector[PROJ])
+for(s in 1:length(site_vector)){
+  relCoverSubset <- relCovClean %>%
+    filter(site_code==site_vector[s]) %>% 
+    mutate(relcov2=ifelse(relcov>0, 1, 0)) %>% 
+    select(-relcov) %>% 
+    rename(relcov=relcov2)
   
   #species vector for pulling traits from relative cover
-  sp_df_temp <- data.frame(genus_species = unique(relcov_df_temp$genus_species), dummy=1) %>%
+  sppSubset <- data.frame(genus_species = unique(relCoverSubset$genus_species), dummy=1) %>%
     left_join(corre_to_try, by="genus_species") %>%
-    unique(.) 
+    unique() 
   
-  sp_vec_temp <- sp_df_temp %>%
+  sppSubsetVector <- sppSubset %>%
     na.omit() %>% 
     pull(species_matched) %>% 
     unique()
   
-  #subset trait data to just include the species present subset relative cover data
-  traits_df_raw_temp <- traitsScaled %>%
-    filter(species_matched %in% sp_vec_temp)
+  #subset trait data to just include species in the relative cover data
+  traitsSubset <- traitsScaled %>%
+    filter(species_matched %in% sppSubsetVector)
   
-  #dataframe with species in trait database and in relative cover data base
-  species_in_trait_data_temp <- data.frame(species_matched = unique(traits_df_raw_temp$species_matched),
-                                      dummy_traits=2) %>% #there are fewer species in the unique trait dataset than in the species comp data because there are thing like "unknown forb"
+  #dataframe with species present in both the trait database and the relative cover data base
+  speciesSubsetKeep <- data.frame(species_matched = unique(traitsSubset$species_matched),
+                                  dummy_traits=2) %>%
     arrange(species_matched)
   
   #vector of species not in trait database (but in relative abundance data) to remove from species abundance data
-  sp_to_remove_temp <- sp_df_temp %>%
-    full_join(species_in_trait_data_temp, by="species_matched") %>%
+  speciesSubsetRemove <- sppSubset %>%
+    full_join(speciesSubsetKeep, by="species_matched") %>%
     filter(is.na(dummy_traits)) %>%
     pull(genus_species)
   
   #abundance dataset with species removed that do not have trait information
-  relcov_unkn_sp_rm_temp <- relcov_df_temp %>%
-    filter(!genus_species %in% sp_to_remove_temp) #removing species without trait information
- 
+  relCoverSubsetKeep <- relCoverSubset %>%
+    filter(!genus_species %in% speciesSubsetRemove) #removing species without trait information
+  
   #abundance data into wide format
-  relcov_wide_temp <- relcov_unkn_sp_rm_temp %>%
-    dplyr::select(-genus_species) %>%
-    group_by(site_code, project_name, community_type, site_proj_comm, calendar_year, treatment_year, treatment,
-             block, plot_id, data_type, version, species_matched) %>%
-    summarize(relcov=sum(relcov, na.rm=T)) %>%
-    ungroup() %>%
+  relCoverWideSubset <- relCoverSubsetKeep %>%
+    select(-genus_species) %>%
+    # group_by(site_code, project_name, community_type, site_proj_comm, calendar_year, treatment_year, treatment,
+    #          block, plot_id, data_type, version, species_matched) %>%
+    # summarize(relcov=sum(relcov, na.rm=T)) %>%
+    # ungroup() %>%
     spread(key=species_matched, value=relcov) %>%
     replace(is.na(.), 0)
   
-  plot_info_temp <- relcov_wide_temp %>%
-    dplyr::select(site_code:version)
+  plotInfoSubset <- relCoverWideSubset %>%
+    select(site_code:version)
   
-  relcov_only_temp <- relcov_wide_temp %>%
-    dplyr::select(-site_code:-version) 
+  relCoverWideSubset2 <- relCoverWideSubset %>%
+    select(-site_code:-version) 
   
-  # change to dataframe from tibble 
-  relcov_only_temp <- as.data.frame(relcov_only_temp)
+  #add rownames 
+  row.names(relCoverWideSubset2) <- paste(plotInfoSubset$site_proj_comm, plotInfoSubset$calendar_year, plotInfoSubset$plot_id, sep="::")
   
-  # add rownames 
-  row.names(relcov_only_temp) <- paste(plot_info_temp$calendar_year, plot_info_temp$plot_id, sep="::")
-
   #dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
-  traits_df_temp <- traits_df_raw_temp %>%
+  traitsSubsetArranged <- traitsSubset %>%
     arrange(species_matched) %>%
     column_to_rownames("species_matched") %>%
-    dplyr::select(-family) %>%
+    select(-family) %>%
     mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
-    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
-
-  # change to dataframe from tibble 
-  traits_df_temp <- as.data.frame(traits_df_temp)
+    mutate_at(.vars=c("growth_form", "photosynthetic_pathway","lifespan", "clonal", "mycorrhizal_type", "n_fixation"), funs(as.numeric(as.factor(.)))) %>%
+    mutate_at(.vars=c("leaf_C.N", "LDMC", "SLA", "plant_height_vegetative", "rooting_depth", "seed_dry_mass"), funs(as.numeric(.))) %>% 
+    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, 
+           leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
   
-  #changing all categorical traits to factors
-  traits_df_temp[,c(1:6)] <- lapply(traits_df_temp[,c(1:6)], as.factor)
+  ### Calculate functional diversity metrics ###
+  relCoverMatrixSubset <- as.matrix(relCoverWideSubset2)
+  traitMatrixSubset <- as.matrix(gowdis(traitsSubsetArranged))
   
-  #changing all continuous to numerical
-  traits_df_temp[,c(7:12)] <- lapply(traits_df_temp[,c(7:12)], as.numeric)
+  # #FDis and RaoQ
+  # FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
+  #                 a=relCoverWideSubset, # matrix of species abundances
+  #                 w.abun=F, # don't weight by abundance
+  #                 cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
+  #                 calc.FRic=F, calc.FDiv=F, calc.CWM=F)
+  # 
+  # FD <- do.call(cbind.data.frame, FDsubset) %>%
+  #   mutate(identifier = row.names(.)) %>%
+  #   separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+  #   mutate(calendar_year = as.numeric(calendar_year)) %>%
+  #   full_join(plotInfoSubset)
   
-  ### Calculate MNTD and functional diversity metrics
-  FD_temp <- dbFD(x=traits_df_temp, # matrix of traits
-                  a=relcov_only_temp, # matrix of species abundances
-                  w.abun=F, # don't weight by abundance
-                  cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
-                  # calc.CWM=T, CWM.type='all', # calculate CWM across all spp
-                  calc.FRic=F) # FRich is causing problems with most datasets (I think because of missing data?) so I'm removing it for now
+  mpdMNTDSubset <- data.frame(
+    plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
+    MNTD_traits_raw = picante::mntd(relCoverMatrixSubset, traitMatrixSubset),
+    MPD_traits_raw = picante::mpd(relCoverMatrixSubset, traitMatrixSubset)) %>% 
+    full_join(plotInfoSubset)
   
-  FD_df_temp <- do.call(cbind.data.frame, FD_temp) %>%
-    mutate(year_plotid = row.names(.)) %>%
-    separate(year_plotid, into=c("calendar_year","plot_id"), sep="::") %>%
-    mutate(calendar_year = as.numeric(calendar_year)) %>%
-    full_join(plot_info_temp, by=c("calendar_year","plot_id"))
+  # distanceSubset <- FD %>%
+  #   full_join(mpdMNTD)
   
-  comp_matrix_temp <- as.matrix(relcov_only_temp)
-  trait_dist_temp <- as.matrix(gowdis(traits_df_temp))
-
-  MNTD_df_temp <- data.frame(
-    plot_info_temp[,c("calendar_year", "plot_id")],
-    MNTD_traits = picante::mntd(comp_matrix_temp, trait_dist_temp)
-    )
+  ses <- {}
+  sesVector <- c(1:1000)
+  for(n in 1:length(sesVector)){
+    traitsSubsetSES <- traitsSubsetArranged %>%
+      rownames_to_column(var = "identifier") %>% 
+      mutate(spp_shuffling = sample(identifier, size = n(), replace = FALSE)) %>% 
+      select(-identifier) %>% 
+      column_to_rownames(var="spp_shuffling")
+    
+    traitMatrixSubsetSES <- as.matrix(gowdis(traitsSubsetSES))
+    
+    mpdMNTDSubsetSES <- data.frame(
+      plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
+      MNTD_traits_permuted = picante::mntd(relCoverMatrixSubset, traitMatrixSubsetSES),
+      MPD_traits_permuted = picante::mpd(relCoverMatrixSubset, traitMatrixSubsetSES)) %>% 
+      mutate(permutation=sesVector[n])
+    
+    ses <- rbind(ses, mpdMNTDSubsetSES) 
+    
+    rm(list=ls()[grep("SES", ls())])
+  }
   
- distance_df_temp <- FD_df_temp %>%
-   full_join(MNTD_df_temp, by=c("calendar_year","plot_id"))
- 
- distance_df_master <- rbind(distance_df_master, distance_df_temp)
- 
-  rm(list=ls()[grep("temp", ls())])
+  ses2 <- ses %>% 
+    group_by(site_proj_comm, calendar_year, plot_id) %>% 
+    summarise(across(c('MNTD_traits_permuted', 'MPD_traits_permuted'), list(mean=mean, sd=sd))) %>% 
+    ungroup()
+  
+  distance <- rbind(distance, mpdMNTDSubset) %>% 
+    full_join(ses2) %>% 
+    mutate(MNTD_traits_ses=(MNTD_traits_raw-MNTD_traits_permuted_mean)/MNTD_traits_permuted_sd,
+           MPD_traits_ses=(MPD_traits_raw-MPD_traits_permuted_mean)/MPD_traits_permuted_sd) %>% 
+    select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, MNTD_traits_raw, MNTD_traits_ses, MPD_traits_raw, MPD_traits_ses)
+  
+  rm(list=ls()[grep("Subset", ls())])
 }
 
 
-# write.csv(distance_df_master, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-21.csv',row.names=F)
+# write.csv(distance, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-29.csv',row.names=F)
 
 
