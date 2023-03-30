@@ -194,10 +194,9 @@ for(s in 1:length(site_vector)){
     select(site_code:version)
   
   relCoverWideSubset2 <- relCoverWideSubset %>%
-    select(-site_code:-version) 
-  
-  #add rownames 
-  row.names(relCoverWideSubset2) <- paste(plotInfoSubset$site_proj_comm, plotInfoSubset$calendar_year, plotInfoSubset$plot_id, sep="::")
+    select(-site_code:-version) %>% 
+    mutate(identifier=paste(plotInfoSubset$site_proj_comm, plotInfoSubset$calendar_year, plotInfoSubset$plot_id, sep="::")) %>% 
+    column_to_rownames("identifier") 
   
   #dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
   traitsSubsetArranged <- traitsSubset %>%
@@ -213,20 +212,19 @@ for(s in 1:length(site_vector)){
   ### Calculate functional diversity metrics ###
   relCoverMatrixSubset <- as.matrix(relCoverWideSubset2)
   traitMatrixSubset <- as.matrix(gowdis(traitsSubsetArranged))
-  
-  # #FDis and RaoQ
-  # FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
-  #                 a=relCoverWideSubset, # matrix of species abundances
-  #                 w.abun=F, # don't weight by abundance
-  #                 cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
-  #                 calc.FRic=F, calc.FDiv=F, calc.CWM=F)
-  # 
-  # FD <- do.call(cbind.data.frame, FDsubset) %>%
-  #   mutate(identifier = row.names(.)) %>%
-  #   separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
-  #   mutate(calendar_year = as.numeric(calendar_year)) %>%
-  #   full_join(plotInfoSubset)
-  
+
+  #FDis and RaoQ
+  FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
+                  a=relCoverWideSubset2, # matrix of species
+                  w.abun=F, # don't weight by abundance
+                  cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
+                  calc.FRic=F, calc.FDiv=F, calc.CWM=F)
+
+  FDsubset2 <- do.call(cbind.data.frame, FDsubset) %>%
+    rownames_to_column(var = "identifier") %>% 
+    separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+    mutate(calendar_year = as.numeric(calendar_year))
+
   mpdMNTDSubset <- data.frame(
     plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
     MNTD_traits_raw = picante::mntd(relCoverMatrixSubset, traitMatrixSubset),
@@ -267,7 +265,8 @@ for(s in 1:length(site_vector)){
     full_join(ses2) %>% 
     mutate(MNTD_traits_ses=(MNTD_traits_raw-MNTD_traits_permuted_mean)/MNTD_traits_permuted_sd,
            MPD_traits_ses=(MPD_traits_raw-MPD_traits_permuted_mean)/MPD_traits_permuted_sd) %>% 
-    select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, MNTD_traits_raw, MNTD_traits_ses, MPD_traits_raw, MPD_traits_ses)
+    select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, MNTD_traits_raw, MNTD_traits_ses, MPD_traits_raw, MPD_traits_ses) %>% 
+    full_join(FDsubset2)
   
   distance <- rbind(distance, mpdMNTDSubsetSES2)
   
@@ -275,6 +274,6 @@ for(s in 1:length(site_vector)){
 }
 
 
-# write.csv(distance, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-29.csv',row.names=F)
+# write.csv(distance, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-30.csv',row.names=F)
 
 
