@@ -33,6 +33,7 @@ trt <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundan
 
 #species relative cover data
 relCover <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv') %>%
+  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>%
   mutate(replicate=paste(site_code, project_name, community_type, treatment, plot_id, sep='::')) #creating identifying column of each plot
 
 
@@ -78,7 +79,7 @@ hillNumbers2 <- hillNumbers %>%
 rDiv <- richness %>% 
   left_join(hillNumbers2)
 
-# write.csv(rDiv, 'paper 2_PD and FD responses\\data\\CoRRE_taxonomicDiversity_2023-03-21.csv', row.names=F)
+# write.csv(rDiv, 'paper 2_PD and FD responses\\data\\CoRRE_taxonomicDiversity_2023-03-30.csv', row.names=F)
 
 
 
