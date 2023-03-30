@@ -492,7 +492,7 @@ FDisFig <- ggplot(data=meansFDisModelOutput, aes(x=trt_type2, y=emmean, color=tr
 pushViewport(viewport(layout=grid.layout(1,2)))
 print(RaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(FDisFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-#export at 500x1000
+#export at 1000x500
 
 
 
