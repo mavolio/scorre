@@ -183,10 +183,10 @@ for(s in 1:length(site_vector)){
   #abundance data into wide format
   relCoverWideSubset <- relCoverSubsetKeep %>%
     select(-genus_species) %>%
-    # group_by(site_code, project_name, community_type, site_proj_comm, calendar_year, treatment_year, treatment,
-    #          block, plot_id, data_type, version, species_matched) %>%
-    # summarize(relcov=sum(relcov, na.rm=T)) %>%
-    # ungroup() %>%
+    group_by(site_code, project_name, community_type, site_proj_comm, calendar_year, treatment_year, treatment,
+             block, plot_id, data_type, version, species_matched) %>%
+    summarize(relcov=sum(relcov, na.rm=T)) %>%
+    ungroup() %>%
     spread(key=species_matched, value=relcov) %>%
     replace(is.na(.), 0)
   
