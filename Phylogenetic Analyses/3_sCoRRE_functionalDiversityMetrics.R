@@ -79,37 +79,37 @@ traitsScaled[,c(9:14)] <- lapply(traitsScaled[,c(9:14)], as.factor)
 hist(traitsScaled$leaf_C.N)
 qqPlot(traitsScaled$leaf_C.N)
 shapiro.test(traitsScaled$leaf_C.N)
-#log W = 0.97422, p-value < 2.2e-16
+#log W = 0.96953, p-value < 2.2e-16
 #sqrt W = 0.89825, p-value < 2.2e-16
 
 hist(traitsScaled$LDMC)
 qqPlot(traitsScaled$LDMC)
 shapiro.test(traitsScaled$LDMC)
-#log W = 0.94689, p-value < 2.2e-16
+#log W = 0.94491, p-value < 2.2e-16
 #sqrt W = 0.97428, p-value < 2.2e-16
 
 hist(traitsScaled$SLA)
 qqPlot(traitsScaled$SLA)
 shapiro.test(traitsScaled$SLA)
-#log W = 0.96329, p-value < 2.2e-16
+#log W = 0.98562, p-value = 1.732e-12
 #sqrt W = 0.92173, p-value < 2.2e-16
 
 hist(traitsScaled$plant_height_vegetative)
 qqPlot(traitsScaled$plant_height_vegetative)
 shapiro.test(traitsScaled$plant_height_vegetative)
-#log W = 0.99396, p-value = 1.029e-06
+#log W = 0.98562, p-value = 1.732e-12
 #sqrt W = 0.82253, p-value < 2.2e-16
 
 hist(traitsScaled$rooting_depth)
 qqPlot(traitsScaled$rooting_depth)
 shapiro.test(traitsScaled$rooting_depth)
-#log W = 0.98391, p-value = 2.411e-13
+#log W = 0.98672, p-value = 7.119e-12
 #sqrt W = 0.8344, p-value < 2.2e-16
 
 hist(traitsScaled$seed_dry_mass)
 qqPlot(traitsScaled$seed_dry_mass)
 shapiro.test(traitsScaled$seed_dry_mass)
-#log W = 0.9931, p-value = 1.846e-07
+#log W = 0.99474, p-value = 5.24e-06
 #sqrt W = 0.7173, p-value < 2.2e-16
 
 
@@ -139,12 +139,25 @@ relCovClean <- relCoverRaw %>%
 
 rm(moss_sp_vec)
 
+##### treatment data #####
+trt <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundance_Jan2023.csv') %>%
+  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
+  unique() %>%
+  left_join(read.csv('CoRRE data\\CoRRE data\\basic dataset info\\ExperimentInfo.csv')) %>%
+  group_by(site_code, project_name, community_type) %>%
+  mutate(experiment_length=max(treatment_year)) %>%
+  ungroup() %>%
+  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp) %>% 
+  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='_'))
+
 
 ##### calculate functional dispersion - loop through sites #####
 distance <- {}
 site_vector <- unique(relCovClean$site_code) # do this for site_code only to reshuffle accurately
 
 for(s in 1:length(site_vector)){
+  
+  #relative cover data from each site
   relCoverSubset <- relCovClean %>%
     filter(site_code==site_vector[s]) %>% 
     mutate(relcov2=ifelse(relcov>0, 1, 0)) %>% 
@@ -190,9 +203,11 @@ for(s in 1:length(site_vector)){
     spread(key=species_matched, value=relcov) %>%
     replace(is.na(.), 0)
   
+  #plot information
   plotInfoSubset <- relCoverWideSubset %>%
     select(site_code:version)
   
+  #cover data
   relCoverWideSubset2 <- relCoverWideSubset %>%
     select(-site_code:-version) %>% 
     mutate(identifier=paste(plotInfoSubset$site_proj_comm, plotInfoSubset$calendar_year, plotInfoSubset$plot_id, sep="::")) %>% 
@@ -225,17 +240,19 @@ for(s in 1:length(site_vector)){
     separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
     mutate(calendar_year = as.numeric(calendar_year))
 
+  #MPD and MNTD
   mpdMNTDSubset <- data.frame(
     plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
-    MNTD_traits_raw = picante::mntd(relCoverMatrixSubset, traitMatrixSubset),
-    MPD_traits_raw = picante::mpd(relCoverMatrixSubset, traitMatrixSubset)) %>% 
+    MNTD_traits = picante::mntd(relCoverMatrixSubset, traitMatrixSubset),
+    MPD_traits = picante::mpd(relCoverMatrixSubset, traitMatrixSubset)) %>% 
     full_join(plotInfoSubset)
   
   # distanceSubset <- FD %>%
   #   full_join(mpdMNTD)
   
+  #null distributions for MPD and MNTD
   ses <- {}
-  sesVector <- c(1:1000)
+  sesVector <- c(1:2)
   for(n in 1:length(sesVector)){
     traitsSubsetSES <- traitsSubsetArranged %>%
       rownames_to_column(var = "identifier") %>% 
@@ -247,8 +264,8 @@ for(s in 1:length(site_vector)){
     
     mpdMNTDSubsetSES <- data.frame(
       plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
-      MNTD_traits_permuted = picante::mntd(relCoverMatrixSubset, traitMatrixSubsetSES),
-      MPD_traits_permuted = picante::mpd(relCoverMatrixSubset, traitMatrixSubsetSES)) %>% 
+      MNTD_traits = picante::mntd(relCoverMatrixSubset, traitMatrixSubsetSES),
+      MPD_traits = picante::mpd(relCoverMatrixSubset, traitMatrixSubsetSES)) %>% 
       mutate(permutation=sesVector[n])
     
     ses <- rbind(ses, mpdMNTDSubsetSES) 
@@ -256,22 +273,27 @@ for(s in 1:length(site_vector)){
     rm(list=ls()[grep("SES", ls())])
   }
   
+  #mean MPD and MNTD for null distribution to create SES MPD and MNTD
   ses2 <- ses %>% 
-    group_by(site_proj_comm, calendar_year, plot_id) %>% 
-    summarise(across(c('MNTD_traits_permuted', 'MPD_traits_permuted'), list(mean=mean, sd=sd))) %>% 
-    ungroup()
+    full_join(plotInfoSubset)
   
-  mpdMNTDSubsetSES2 <- mpdMNTDSubset %>% 
-    full_join(ses2) %>% 
+  mpdMNTDSubsetSES <- mpdMNTDSubset %>% 
+    mutate(permutation='0') %>% 
+    rbind(ses2) 
+  
+#####START HERE: split into a dataframe that does the raw and SES of the values for each plot and then another that calculates lnRR and SES lnRR  
+  
+  %>% 
     mutate(MNTD_traits_ses=(MNTD_traits_raw-MNTD_traits_permuted_mean)/MNTD_traits_permuted_sd,
            MPD_traits_ses=(MPD_traits_raw-MPD_traits_permuted_mean)/MPD_traits_permuted_sd) %>% 
     select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, MNTD_traits_raw, MNTD_traits_ses, MPD_traits_raw, MPD_traits_ses) %>% 
     full_join(FDsubset2)
   
-  distance <- rbind(distance, mpdMNTDSubsetSES2)
+  #bind values into original dataframes
+  distance <- rbind(distance, mpdMNTDSubsetSES)
   
   rm(list=ls()[grep("Subset", ls())])
 }
 
 
-# write.csv(distance, 'C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-30.csv',row.names=F)
+# write.csv(distance, 'paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-30.csv',row.names=F)
