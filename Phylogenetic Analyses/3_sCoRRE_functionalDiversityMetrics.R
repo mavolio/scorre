@@ -283,7 +283,26 @@ for(s in 1:length(site_vector)){
   
 #####START HERE: split into a dataframe that does the raw and SES of the values for each plot and then another that calculates lnRR and SES lnRR  
   
-  %>% 
+  #average MPD and MNTD in control plots by permutation
+  sesCtl <- ses %>% 
+    left_join(trt) %>% 
+    filter(plot_mani==0) %>% 
+    group_by(site_proj_comm, calendar_year, permutation) %>% 
+    summarize_at(vars(MNTD_traits_permuted, 
+                      MPD_traits_permuted), 
+                 list(mean=mean), na.rm=T) %>% #average across plots and years
+    ungroup() 
+  
+  sesRR <- ses %>% 
+    left_join(trt) %>% 
+    filter(plot_mani!=0) %>% 
+    left_join(sesCtl) %>% 
+    mutate(MNTD_traits_RR_ses=log(MNTD_traits_permuted/MNTD_traits_permuted_mean),
+           MPD_traits_RR_ses=log(MPD_traits_permuted/MPD_traits_permuted_mean))
+  
+  #calculate SES values for MPD and MNTD
+  mpdMNTDSubsetSES2 <- mpdMNTDSubset %>% 
+    full_join(ses2) %>% 
     mutate(MNTD_traits_ses=(MNTD_traits_raw-MNTD_traits_permuted_mean)/MNTD_traits_permuted_sd,
            MPD_traits_ses=(MPD_traits_raw-MPD_traits_permuted_mean)/MPD_traits_permuted_sd) %>% 
     select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, MNTD_traits_raw, MNTD_traits_ses, MPD_traits_raw, MPD_traits_ses) %>% 
