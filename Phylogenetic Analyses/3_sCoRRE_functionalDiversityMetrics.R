@@ -296,14 +296,14 @@ for(s in 1:length(site_vector)){
   
   #calculate lnRR for ses values of MPD and MNTD
   mpdMNTDSubsetRRses <- mpdMNTDSubsetSES %>% 
+    left_join(trt) %>% 
     full_join(mpdMNTDSubsetSESctl) %>% 
-    mutate(RR_MNTD_traits=log(MNTD_traits/MNTD_traits_mean),
-           RR_MPD_traits=log(MPD_traits/MPD_traits_mean),
-           RR_MNTD_traits_ses=((MNTD_traits_ses-MNTD_traits_ses_mean)/MNTD_traits_ses_mean), #percent difference for ses due to neg values
-           RR_MNTD_traits_ses=((MNTD_traits_ses-MNTD_traits_ses_mean)/MNTD_traits_ses_mean)) %>% #percent difference for ses due to neg values
-    select(site_proj_comm, site_code, project_name, community_type, calendar_year, plot_id, MNTD_traits,
-           MNTD_traits_ses, MPD_traits, MPD_traits_ses, RR_MNTD_traits, RR_MPD_traits, RR_MNTD_traits_ses,
-           RR_MNTD_traits_ses)
+    mutate(RR_MNTD_traits=ifelse(plot_mani>0, log(MNTD_traits/MNTD_traits_mean), NA),
+           RR_MPD_traits=ifelse(plot_mani>0, log(MPD_traits/MPD_traits_mean), NA),
+           RR_MNTD_traits_ses=ifelse(plot_mani>0, ((MNTD_traits_ses-MNTD_traits_ses_mean)/MNTD_traits_ses_mean), NA), #percent difference for ses due to neg values
+           RR_MPD_traits_ses=ifelse(plot_mani>0, ((MPD_traits_ses-MPD_traits_ses_mean)/MPD_traits_ses_mean), NA)) %>% #percent difference for ses due to neg values
+    select(site_proj_comm, calendar_year, plot_id, MNTD_traits, MNTD_traits_ses, MPD_traits, 
+           MPD_traits_ses, RR_MNTD_traits, RR_MPD_traits, RR_MNTD_traits_ses, RR_MPD_traits_ses)
   
   #lnRR MPD and MNTD for null distribution to create SES lnRR MPD and SES lnRR MNTD
   ses2 <- ses %>% 
@@ -351,7 +351,8 @@ for(s in 1:length(site_vector)){
   
   allSubset <- FDsubset2 %>% 
     full_join(mpdMNTDSubsetRRses) %>% 
-    full_join(mpdMNTDSubsetSESrr)
+    full_join(mpdMNTDSubsetSESrr) %>% 
+    left_join(trt)
   
   #bind values into RR dataframe
   functionalDiversityMetrics <- rbind(functionalDiversityMetrics, allSubset)
