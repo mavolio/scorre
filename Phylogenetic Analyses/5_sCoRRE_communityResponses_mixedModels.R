@@ -251,6 +251,8 @@ controlEnv <- control %>%
   left_join(read.csv('CoRRE data\\CoRRE data\\environmental data\\CoRRE_siteLocationClimate_July2022.csv')) %>%
   gather(key='env_variable', value='env_value', rrich, anpp, MAP, MAT, aridityValues)
 
+#can remove these calculations for functional diversity (calculated in script 3)
+
 allDivRR <- allDivTrt %>%
   filter(trt_type2!='control') %>%
   left_join(control) %>%

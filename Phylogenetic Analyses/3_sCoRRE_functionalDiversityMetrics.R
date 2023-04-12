@@ -152,7 +152,7 @@ trt <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundan
 
 
 ##### calculate functional dispersion - loop through sites #####
-distance <- {}
+functionalDiversityMetrics <- {}
 site_vector <- unique(relCovClean$site_code) # do this for site_code only to reshuffle accurately
 
 for(s in 1:length(site_vector)){
@@ -252,7 +252,7 @@ for(s in 1:length(site_vector)){
   
   #null distributions for MPD and MNTD
   ses <- {}
-  sesVector <- c(1:2)
+  sesVector <- c(1:999)
   for(n in 1:length(sesVector)){
     traitsSubsetSES <- traitsSubsetArranged %>%
       rownames_to_column(var = "identifier") %>% 
@@ -274,45 +274,92 @@ for(s in 1:length(site_vector)){
   }
   
   #mean MPD and MNTD for null distribution to create SES MPD and MNTD
+  sesSubsetMean <- ses %>% 
+    group_by(site_proj_comm, calendar_year, plot_id) %>% 
+    summarise(across(c('MNTD_traits', 'MPD_traits'), list(mean=mean, sd=sd))) %>% 
+    ungroup()
+  
+  #calculate SES values for MPD and MNTD
+  mpdMNTDSubsetSES <- mpdMNTDSubset %>% 
+    full_join(sesSubsetMean) %>% 
+    mutate(MNTD_traits_ses=(MNTD_traits-MNTD_traits_mean)/MNTD_traits_sd,
+           MPD_traits_ses=(MPD_traits-MPD_traits_mean)/MPD_traits_sd) %>% 
+    select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, MNTD_traits, MNTD_traits_ses, MPD_traits, MPD_traits_ses)
+  
+  #subset control plots
+  mpdMNTDSubsetSESctl <- mpdMNTDSubsetSES %>% 
+    left_join(trt) %>% 
+    filter(plot_mani==0) %>% 
+    group_by(site_proj_comm, calendar_year) %>% 
+    summarise(across(c('MNTD_traits', 'MPD_traits', 'MNTD_traits_ses', 'MPD_traits_ses'), list(mean=mean))) %>% 
+    ungroup()
+  
+  #calculate lnRR for ses values of MPD and MNTD
+  mpdMNTDSubsetRRses <- mpdMNTDSubsetSES %>% 
+    full_join(mpdMNTDSubsetSESctl) %>% 
+    mutate(RR_MNTD_traits=log(MNTD_traits/MNTD_traits_mean),
+           RR_MPD_traits=log(MPD_traits/MPD_traits_mean),
+           RR_MNTD_traits_ses=((MNTD_traits_ses-MNTD_traits_ses_mean)/MNTD_traits_ses_mean), #percent difference for ses due to neg values
+           RR_MNTD_traits_ses=((MNTD_traits_ses-MNTD_traits_ses_mean)/MNTD_traits_ses_mean)) %>% #percent difference for ses due to neg values
+    select(site_proj_comm, site_code, project_name, community_type, calendar_year, plot_id, MNTD_traits,
+           MNTD_traits_ses, MPD_traits, MPD_traits_ses, RR_MNTD_traits, RR_MPD_traits, RR_MNTD_traits_ses,
+           RR_MNTD_traits_ses)
+  
+  #lnRR MPD and MNTD for null distribution to create SES lnRR MPD and SES lnRR MNTD
   ses2 <- ses %>% 
     full_join(plotInfoSubset)
   
-  mpdMNTDSubsetSES <- mpdMNTDSubset %>% 
+  #bind onto raw data
+  mpdMNTDSubsetPerm <- mpdMNTDSubset %>% 
     mutate(permutation='0') %>% 
     rbind(ses2) 
   
-#####START HERE: split into a dataframe that does the raw and SES of the values for each plot and then another that calculates lnRR and SES lnRR  
-  
   #average MPD and MNTD in control plots by permutation
-  sesCtl <- ses %>% 
+  mpdMNTDSubsetPermCtl <- mpdMNTDSubsetPerm %>% 
     left_join(trt) %>% 
     filter(plot_mani==0) %>% 
     group_by(site_proj_comm, calendar_year, permutation) %>% 
-    summarize_at(vars(MNTD_traits_permuted, 
-                      MPD_traits_permuted), 
-                 list(mean=mean), na.rm=T) %>% #average across plots and years
-    ungroup() 
+    summarize_at(vars(MNTD_traits, 
+                      MPD_traits), 
+                 list(mean=mean), na.rm=T) %>% #average across plots
+    ungroup() %>% 
+    rename(MNTD_traits_ctl=MNTD_traits_mean,
+           MPD_traits_ctl=MPD_traits_mean)
   
-  sesRR <- ses %>% 
+  RRmpdMNTDSubset <- mpdMNTDSubsetPerm %>% 
     left_join(trt) %>% 
     filter(plot_mani!=0) %>% 
-    left_join(sesCtl) %>% 
-    mutate(MNTD_traits_RR_ses=log(MNTD_traits_permuted/MNTD_traits_permuted_mean),
-           MPD_traits_RR_ses=log(MPD_traits_permuted/MPD_traits_permuted_mean))
+    left_join(mpdMNTDSubsetPermCtl) %>% 
+    mutate(RR_MNTD_traits=log(MNTD_traits/MNTD_traits_ctl),
+           RR_MPD_traits=log(MPD_traits/MPD_traits_ctl))
   
-  #calculate SES values for MPD and MNTD
-  mpdMNTDSubsetSES2 <- mpdMNTDSubset %>% 
-    full_join(ses2) %>% 
-    mutate(MNTD_traits_ses=(MNTD_traits_raw-MNTD_traits_permuted_mean)/MNTD_traits_permuted_sd,
-           MPD_traits_ses=(MPD_traits_raw-MPD_traits_permuted_mean)/MPD_traits_permuted_sd) %>% 
-    select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, MNTD_traits_raw, MNTD_traits_ses, MPD_traits_raw, MPD_traits_ses) %>% 
-    full_join(FDsubset2)
+  RRmpdMNTDSubsetRaw <- RRmpdMNTDSubset %>% 
+    filter(permutation==0) %>% 
+    select(site_proj_comm, calendar_year, plot_id, RR_MNTD_traits, RR_MPD_traits)
   
-  #bind values into original dataframes
-  distance <- rbind(distance, mpdMNTDSubsetSES)
+  mpdMNTDSubsetSESrr <- RRmpdMNTDSubset %>% 
+    filter(permutation>0) %>% 
+    group_by(site_proj_comm, calendar_year, plot_id) %>% 
+    summarize_at(vars(RR_MNTD_traits, 
+                      RR_MPD_traits), 
+                 list(mean=mean, sd=sd), na.rm=T) %>% #average across permutation
+    ungroup() %>% 
+    left_join(RRmpdMNTDSubsetRaw) %>% 
+    mutate(SES_RR_MNTD_traits=(RR_MNTD_traits-RR_MNTD_traits_mean)/RR_MNTD_traits_sd,
+           SES_RR_MPD_traits=(RR_MPD_traits-RR_MPD_traits_mean)/RR_MPD_traits_sd) %>% 
+    select(site_proj_comm, calendar_year, plot_id, SES_RR_MNTD_traits, SES_RR_MPD_traits)
+  
+  allSubset <- FDsubset2 %>% 
+    full_join(mpdMNTDSubsetRRses) %>% 
+    full_join(mpdMNTDSubsetSESrr)
+  
+  #bind values into RR dataframe
+  functionalDiversityMetrics <- rbind(functionalDiversityMetrics, allSubset)
   
   rm(list=ls()[grep("Subset", ls())])
+  rm(list=ls()[grep("subset", ls())])
+  rm(list=ls()[grep("ses", ls())])
 }
 
 
-# write.csv(distance, 'paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-30.csv',row.names=F)
+# write.csv(functionalDiversityMetrics, 'paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-04-12.csv',row.names=F)
