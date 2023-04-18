@@ -5,6 +5,136 @@
 ##  Date created: December 13, 2022
 ################################################################################
 
+
+### TO DO: incoporate calculation of CWM traits into this file instead of func div metrics file
+
+##### calculate functional dispersion - loop through sites #####
+distance <- {}
+site_vector <- unique(relCovClean$site_code) # do this for site_code only to reshuffle accurately
+
+for(s in 1:length(site_vector)){
+  relCoverSubset <- relCovClean %>%
+    filter(site_code==site_vector[s])
+  
+  #species vector for pulling traits from relative cover
+  sppSubset <- data.frame(genus_species = unique(relCoverSubset$genus_species), dummy=1) %>%
+    left_join(corre_to_try, by="genus_species") %>%
+    unique() 
+  
+  sppSubsetVector <- sppSubset %>%
+    na.omit() %>% 
+    pull(species_matched) %>% 
+    unique()
+  
+  #subset trait data to just include species in the relative cover data
+  traitsSubset <- traitsScaled %>%
+    filter(species_matched %in% sppSubsetVector)
+  
+  #dataframe with species present in both the trait database and the relative cover data base
+  speciesSubsetKeep <- data.frame(species_matched = unique(traitsSubset$species_matched),
+                                  dummy_traits=2) %>%
+    arrange(species_matched)
+  
+  #vector of species not in trait database (but in relative abundance data) to remove from species abundance data
+  speciesSubsetRemove <- sppSubset %>%
+    full_join(speciesSubsetKeep, by="species_matched") %>%
+    filter(is.na(dummy_traits)) %>%
+    pull(genus_species)
+  
+  #abundance dataset with species removed that do not have trait information
+  relCoverSubsetKeep <- relCoverSubset %>%
+    filter(!genus_species %in% speciesSubsetRemove) #removing species without trait information
+  
+  #abundance data into wide format
+  relCoverWide <- relCoverSubsetKeep %>%
+    select(-genus_species) %>%
+    # group_by(site_code, project_name, community_type, site_proj_comm, calendar_year, treatment_year, treatment,
+    #          block, plot_id, data_type, version, species_matched) %>%
+    # summarize(relcov=sum(relcov, na.rm=T)) %>%
+    # ungroup() %>%
+    spread(key=species_matched, value=relcov) %>%
+    replace(is.na(.), 0)
+  
+  plotInfoSubset <- relCoverWide %>%
+    select(site_code:version)
+  
+  relCoverWideSubset <- relCoverWide %>%
+    select(-site_code:-version) 
+  
+  #add rownames 
+  row.names(relCoverWideSubset) <- paste(plotInfoSubset$site_proj_comm, plotInfoSubset$calendar_year, plotInfoSubset$plot_id, sep="::")
+  
+  #dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
+  traitsSubsetArranged <- traitsSubset %>%
+    arrange(species_matched) %>%
+    column_to_rownames("species_matched") %>%
+    select(-family) %>%
+    mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
+    mutate_at(.vars=c("growth_form", "photosynthetic_pathway","lifespan", "clonal", "mycorrhizal_type", "n_fixation"), funs(as.numeric(as.factor(.)))) %>%
+    mutate_at(.vars=c("leaf_C.N", "LDMC", "SLA", "plant_height_vegetative", "rooting_depth", "seed_dry_mass"), funs(as.numeric(.))) %>% 
+    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, 
+           leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
+  
+  ### Calculate functional diversity metrics ###
+  
+  relCoverMatrix <- as.matrix(relCoverWideSubset)
+  traitMatrix <- as.matrix(gowdis(traitsSubsetArranged))
+  
+  #FDis and RaoQ
+  FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
+                   a=relCoverWideSubset, # matrix of species abundances
+                   w.abun=F, # don't weight by abundance
+                   cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
+                   calc.FRic=F, calc.FDiv=F, calc.CWM=F)
+  
+  FD <- do.call(cbind.data.frame, FDsubset) %>%
+    mutate(identifier = row.names(.)) %>%
+    separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+    mutate(calendar_year = as.numeric(calendar_year)) %>%
+    full_join(plotInfoSubset)
+  
+  #CWM dominant and avg
+  traitMatrixCWM <- traitsSubset %>%
+    arrange(species_matched) %>%
+    column_to_rownames("species_matched") %>%
+    select(-family) %>%
+    mutate_at(.vars=c("leaf_C.N", "LDMC", "SLA", "plant_height_vegetative", "rooting_depth", "seed_dry_mass"), funs(as.numeric(.))) %>% 
+    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, 
+           leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass) %>% 
+    as.matrix()
+  
+  CWMdom <- functcomp(x=traitMatrixCWM, # matrix of traits
+                      a=relCoverMatrix, # matrix of species abundances
+                      CWM.type='dom') %>%
+    mutate(identifier = row.names(.)) %>%
+    separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+    mutate(calendar_year = as.numeric(calendar_year)) 
+  
+  CWMavg <- functcomp(x=traitMatrix, # matrix of traits
+                      a=relCoverMatrix, # matrix of species abundances
+                      CWM.type='all') %>% 
+    mutate(identifier = row.names(.)) %>%
+    separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+    mutate(calendar_year = as.numeric(calendar_year)) 
+  
+  #START HERE! CWM for all spp, then need to bind with all the other trait data, then need to do the ses versions by permutating spp names
+  
+  
+  mpdMNTD <- data.frame(
+    plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
+    MNTD_traits = picante::mntd(relCoverMatrix, traitMatrix),
+    MPD_traits = picante::mpd(relCoverMatrix, traitMatrix))
+  
+  distanceSubset <- FD %>%
+    full_join(mpdMNTD, by=c("calendar_year","plot_id"))
+  
+  distance <- rbind(distance, distanceSubset)
+  
+  rm(list=ls()[grep("temp", ls())])
+}
+
+
+
 library(data.table)
 library(codyn)
 library(fixest)
