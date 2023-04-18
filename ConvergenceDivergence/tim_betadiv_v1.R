@@ -384,6 +384,8 @@ lrr_sp.tr <- merge(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type",
 lrr_sp.tr$trt_type <- factor(lrr_sp.tr$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" 
                                                                 #,"mult_GCD", "CO2"
 ))
+
+library(ggpmisc)
 ggplot(lrr_sp.tr, aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
   geom_point()+
@@ -392,6 +394,10 @@ ggplot(lrr_sp.tr, aes(lrr.species, lrr.traits))+
   geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   ylim(-1.1, 2.4)+
   xlim(-1.1, 2.4)+
+  stat_fit_glance(method = 'lm',
+                  #method.args = list(formula = formula),
+                  geom = 'text',
+                  aes(label = paste("P-value = ", signif(..p.value.., digits = 3), sep = "")))+
   theme_base()
 
 #models to test results
