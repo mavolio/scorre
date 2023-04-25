@@ -27,8 +27,8 @@ se <- function(x, na.rm=na.rm){
 ##### data import and cleaning #####
 
 # trait data
-traits <- read.csv('CoRRE data\\trait data\\AllTraits\\CoRRE_allTraitData_March2023.csv') %>% 
-  select(family, species_matched, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
+traits <- read.csv('CoRRE data\\trait data\\AllTraits\\CoRRE_allTraitData_April2023.csv') %>% 
+  select(species_matched, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
   filter(growth_form!="moss", species_matched!="") %>% #keeping lycophytes
   mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
   select(-mycorrhizal_type) %>% 
@@ -70,46 +70,46 @@ traitsScaled <- traits %>%
   mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), log) %>% 
   mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
 
-colnames(traitsScaled) <- c('family', 'species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass', 'growth_form', 'lifespan', 'clonal', 'n_fixation', 'mycorrhizal_type', 'photosynthetic_pathway')
+colnames(traitsScaled) <- c('species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass', 'growth_form', 'lifespan', 'clonal', 'n_fixation', 'mycorrhizal_type', 'photosynthetic_pathway')
 
 #making categorical traits factors 
-traitsScaled[,c(9:14)] <- lapply(traitsScaled[,c(9:14)], as.factor)
+traitsScaled[,c(8:13)] <- lapply(traitsScaled[,c(8:13)], as.factor)
 
 #testing normality
 hist(traitsScaled$leaf_C.N)
 qqPlot(traitsScaled$leaf_C.N)
 shapiro.test(traitsScaled$leaf_C.N)
-#log W = 0.96953, p-value < 2.2e-16
+#log W = 0.9714, p-value < 2.2e-16
 #sqrt W = 0.89825, p-value < 2.2e-16
 
 hist(traitsScaled$LDMC)
 qqPlot(traitsScaled$LDMC)
 shapiro.test(traitsScaled$LDMC)
-#log W = 0.94491, p-value < 2.2e-16
+#log W = 0.92104, p-value < 2.2e-16
 #sqrt W = 0.97428, p-value < 2.2e-16
 
 hist(traitsScaled$SLA)
 qqPlot(traitsScaled$SLA)
 shapiro.test(traitsScaled$SLA)
-#log W = 0.98562, p-value = 1.732e-12
+#log W = 0.96681, p-value < 2.2e-16
 #sqrt W = 0.92173, p-value < 2.2e-16
 
 hist(traitsScaled$plant_height_vegetative)
 qqPlot(traitsScaled$plant_height_vegetative)
 shapiro.test(traitsScaled$plant_height_vegetative)
-#log W = 0.98562, p-value = 1.732e-12
+#log W = 0.99327, p-value = 3.754e-07
 #sqrt W = 0.82253, p-value < 2.2e-16
 
 hist(traitsScaled$rooting_depth)
 qqPlot(traitsScaled$rooting_depth)
 shapiro.test(traitsScaled$rooting_depth)
-#log W = 0.98672, p-value = 7.119e-12
+#log W = 0.99503, p-value = 1.445e-05
 #sqrt W = 0.8344, p-value < 2.2e-16
 
 hist(traitsScaled$seed_dry_mass)
 qqPlot(traitsScaled$seed_dry_mass)
 shapiro.test(traitsScaled$seed_dry_mass)
-#log W = 0.99474, p-value = 5.24e-06
+#log W = 0.99679, p-value = 0.001055
 #sqrt W = 0.7173, p-value < 2.2e-16
 
 
@@ -217,7 +217,6 @@ for(s in 1:length(site_vector)){
   traitsSubsetArranged <- traitsSubset %>%
     arrange(species_matched) %>%
     column_to_rownames("species_matched") %>%
-    select(-family) %>%
     mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
     mutate_at(.vars=c("growth_form", "photosynthetic_pathway","lifespan", "clonal", "mycorrhizal_type", "n_fixation"), funs(as.numeric(as.factor(.)))) %>%
     mutate_at(.vars=c("leaf_C.N", "LDMC", "SLA", "plant_height_vegetative", "rooting_depth", "seed_dry_mass"), funs(as.numeric(.))) %>% 
@@ -363,4 +362,4 @@ for(s in 1:length(site_vector)){
 }
 
 
-# write.csv(functionalDiversityMetrics, 'paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-04-12.csv',row.names=F)
+# write.csv(functionalDiversityMetrics, 'paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-04-25.csv',row.names=F)
