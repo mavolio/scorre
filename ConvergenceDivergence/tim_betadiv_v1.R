@@ -13,22 +13,22 @@ library(ggthemes)
 library(codyn)
 
 #Read in data
-traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv") #categorical trait data
+traits_cat <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv") #categorical trait data
 
-traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
+traits1 <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
+corre2trykey <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
 
-cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
+cover <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
     mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0) #remove some Cedar Creek treatments since that site is somewhat overrepresented
 
 
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
+corre2trykey <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", all.x = TRUE)
 
-experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
+experimentinfo <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
 
 
 
@@ -233,17 +233,55 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
 
 #models to test results
 distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "drought"))
+
+expgroup_drought <- c(distances_master.1%>%
+                        dplyr::select(expgroup, trt_type)%>%
+                        subset(trt_type == "drought")%>%
+                        unique())$expgroup
+tempdf <- subset(distances_master.1, expgroup %in% expgroup_drought)%>%
+  subset(trt_type == "control" | trt_type == "drought")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "irr"))
+
+
+expgroup_irr <- c(distances_master.1%>%
+  dplyr::select(expgroup, trt_type)%>%
+  subset(trt_type == "irr"))$expgroup
+tempdf <- subset(distances_master.1, expgroup %in% expgroup_irr)%>%
+          subset(trt_type == "control" | trt_type == "irr")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "temp"))
+
+expgroup_temp <- c(distances_master.1%>%
+                    dplyr::select(expgroup, trt_type)%>%
+                    subset(trt_type == "temp"))$expgroup
+tempdf <- subset(distances_master.1, expgroup %in% expgroup_temp)%>%
+  subset(trt_type == "control" | trt_type == "temp")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "N"))
+
+expgroup_N <- c(distances_master.1%>%
+                     dplyr::select(expgroup, trt_type)%>%
+                     subset(trt_type == "N"))$expgroup
+tempdf <- subset(distances_master.1, expgroup %in% expgroup_N)%>%
+  subset(trt_type == "control" | trt_type == "N")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "P"))
+
+expgroup_P <- c(distances_master.1%>%
+                     dplyr::select(expgroup, trt_type)%>%
+                     subset(trt_type == "P"))$expgroup
+tempdf <- subset(distances_master.1, expgroup %in% expgroup_P)%>%
+  subset(trt_type == "control" | trt_type == "P")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
+
+expgroup_mult_nutrient <- c(distances_master.1%>%
+                     dplyr::select(expgroup, trt_type)%>%
+                     subset(trt_type == "mult_nutrient"))$expgroup
+tempdf <- subset(distances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
+  subset(trt_type == "control" | trt_type == "mult_nutrient")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
@@ -264,7 +302,7 @@ n <- sites%>%
 
 ######
 ###Try the same stuff with traits but they include categorical traits
-CoRRE_CWMtraits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
+CoRRE_CWMtraits <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
 CoRRE_CWMtraits_cat <- CoRRE_CWMtraits[, c(   "site_code", "project_name","community_type", "plot_id", "treatment_year", "CWM.growth_form", "CWM.photosynthetic_pathway", "CWM.lifespan", "CWM.clonal", "CWM.mycorrhizal_type", "CWM.n_fixation")]
 
 CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = TRUE)
@@ -457,17 +495,53 @@ lrr.df_traits <- lrr.df
 #models to test results
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "drought"))
+
+expgroup_drought <- c(tdistances_master.1%>%
+                              dplyr::select(expgroup, trt_type)%>%
+                              subset(trt_type == "drought"))$expgroup
+tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_drought)%>%
+  subset(trt_type == "control" | trt_type == "drought")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "irr"))
+
+expgroup_irr <- c(tdistances_master.1%>%
+                        dplyr::select(expgroup, trt_type)%>%
+                        subset(trt_type == "irr"))$expgroup
+tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_irr)%>%
+  subset(trt_type == "control" | trt_type == "irr")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "CO2"))
-#summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "N"))
+
+expgroup_temp <- c(tdistances_master.1%>%
+                        dplyr::select(expgroup, trt_type)%>%
+                        subset(trt_type == "temp"))$expgroup
+tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_temp)%>%
+  subset(trt_type == "control" | trt_type == "temp")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "P"))
+
+expgroup_N <- c(tdistances_master.1%>%
+                        dplyr::select(expgroup, trt_type)%>%
+                        subset(trt_type == "N"))$expgroup
+tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_N)%>%
+  subset(trt_type == "control" | trt_type == "N")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_nutrient"))
+
+expgroup_P <- c(tdistances_master.1%>%
+                        dplyr::select(expgroup, trt_type)%>%
+                        subset(trt_type == "P"))$expgroup
+tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_P)%>%
+  subset(trt_type == "control" | trt_type == "P")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+
+expgroup_mult_nutrient <- c(tdistances_master.1%>%
+                        dplyr::select(expgroup, trt_type)%>%
+                        subset(trt_type == "mult_nutrient"))$expgroup
+tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
+  subset(trt_type == "control" | trt_type == "mult_nutrient")
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
