@@ -6,188 +6,199 @@
 ################################################################################
 
 #load packages:
-library(tidyverse)
-library(reshape2)
-library(PhyloMeasures) #reference paper: https://onlinelibrary.wiley.com/doi/10.1111/ecog.01814
-library(V.PhyloMaker) #reference paper: https://doi.org/10.1111/ecog.04434
 library(rlist)
 library(matrixStats)
-library(plyr)
-library(magrittr)
+library(picante)
+library(tidyverse)
 
-#set directory:
-my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
+#### set directory ####
+my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #padu
+setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\')  #kim's computer
 
-#read data:
-comm<-read.table(paste(my.wd, "CoRRE_RelativeCover_Dec2021.csv", sep=""), header=T, sep=",", fill = TRUE)
-spp<-read.table(paste(my.wd, "FullList_Nov2021.csv", sep=""), header=T, sep=",", fill = TRUE)
 
-#reduce spp to original and new name:
-spp<-subset(spp, type != "moss/lichen") #filter out mosses and lichens
+#### read data ####
 
-#manually correct one mistake:
-spp$species_matched <- revalue(spp$species_matched, c("Aronia x"="Aronia x prunifolia"))
+#spp names
+names <- read.csv('trait data\\corre2trykey_2021.csv') %>% 
+  select(genus_species, species_matched) %>% 
+  unique()
 
-#Some species that could not be matched to the phylogeny still need to be removed.
-#They are all briophytes. I will send the list to Kim. Meanwhile, I remove them manually.
-non.vascular <-  c("Andreaea obovata",            "Anthelia juratzkana" ,       "Aulacomnium turgidum",       
-                   "Barbilophozia hatcheri",      "Barbilophozia kunzeana" ,     "Blepharostoma trichophyllum",
-                   "Brachythecium albicans",      "Bryum arcticum"   ,           "Bryum pseudotriquetrum",     
-                   "Campylium stellatum",         "Cyrtomnium hymenophyllum" ,   "Dicranoweisia crispula",     
-                   "Dicranum brevifolium",        "Dicranum elongatum"  ,        "Dicranum fuscescens",        
-                   "Dicranum groenlandicum",      "Dicranum scoparium" ,         "Distichium capillaceum",     
-                   "Ditrichum flexicaule",        "Gymnomitrion concinnatum" ,   "Hamatocaulis vernicosus",    
-                   "Homalothecium pinnatifidum",  "Hylocomium splendens",        "Hypnum cupressiforme",       
-                   "Hypnum hamulosum",            "Isopterygiopsis pulchella",   "Kiaeria starkei",            
-                   "Leiocolea heterocolpos",      "Marchantia polymorpha",       "Marsupella brevissima",      
-                   "Meesia uliginosa",            "Myurella tenerrima",          "Oncophorus virens",         
-                   "Oncophorus wahlenbergii",     "Pleurozium schreberi",        "Pogonatum urnigerum" ,       
-                   "Pohlia cruda" ,               "Pohlia nutans",               "Polytrichastrum alpinum",    
-                   "Polytrichum juniperinum",     "Polytrichum piliferum",       "Polytrichum strictum",       
-                   "Preissia quadrata",           "Ptilidium ciliare",           "Racomitrium lanuginosum",    
-                   "Rhytidium rugosum",           "Saelania glaucescens",        "Sanionia uncinata",          
-                   "Schistidium apocarpum",       "Syntrichia ruralis",          "Tomentypnum nitens",         
-                   "Tortella tortuosa",           "Tritomaria quinquedentata", "Nephroma arcticum" ,"Unknown NA",
-                   "Campylopus flexuosus",       "Hypnum jutlandicum",         "Plagiothecium undulatum",    
-                   "Polytrichum commune",  "Pseudoscleropodium purum",   "Rhytidiadelphus loreus",
-                   "Rhytidiadelphus triquetrus", "Thuidium tamariscinum")
-spp<-subset(spp, !grepl("(sp.)$", species_matched)) #remove species identified at the genus level
-spp <- spp[!spp$species_matched %in% non.vascular, ] #remove
-spp<-unique(spp[c(2,5)]) #get unique list of species
+#community data
+comm <- read.table("CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv", header=T, sep=",", fill = TRUE) %>% 
+  left_join(names) %>% 
+  left_join(read.csv('trait data\\sCoRRE categorical trait data_12142022.csv')) %>% 
+  filter(growth_form!='moss') %>% 
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, genus_species, species_matched, relcov) %>% 
+  filter(!grepl("(sp.)$", species_matched)) %>%  #remove species identified only at the genus level
+  mutate(plot_id2 = paste(site_code, project_name, community_type, treatment_year, plot_id, sep = "::")) %>%  #create new plot identifier
+  group_by(plot_id2) %>% 
+  mutate(richness=length(genus_species)) %>% 
+  ungroup() %>% 
+  filter(richness>1) #remove plots with only one species
 
-#do some preliminary cleaning to remove empty spaces on names:
-comm$genus_species <- trimws(comm$genus_species, which="right")
-spp$species_matched <- trimws(spp$species_matched, which="right")
 
-#merge with original dataset:
-comm<-merge(comm, spp, by="genus_species", all.x=T)
-comm<-comm[complete.cases(comm), ] #by now, we remove cases with NA to get rid of false species (i.e, unknowns,
-#taxa recorded at family, level, etc.). However, we'll have to check this is 
-#OK and we're not deleting accepted taxa.
+#species list
+spp <- comm %>% 
+  select(genus_species, species_matched) %>% 
+  unique()
 
-#create new column with unique plot identifier:
-comm <- comm %>% mutate(plot_id2 = paste(site_code, project_name, community_type,
-                                         treatment_year, plot_id, sep = "::"))
-
-#remove sites with only 1 species:
-comm <- comm[comm$plot_id2 %in% comm$plot_id2[duplicated(comm$plot_id2) | duplicated(comm$plot_id2, fromLast=TRUE)], ]
 
 #create list of sites:
 sites <- unique(comm$site_code)
 
 
+#### calculate phylogenetic diversity metrics using one single tree (scenario 3) (non-weighted by abundances) ####
 
+#load tree
+scorre.tree <- read.tree("Phylogenies\\scorre.tree.S3.tre")
 
-####
-#Example to calculate phylogenetic diversity metrics using one single tree (scenario 3) (non-weighted by abundances):
+pd.all <- NULL
 
-#load trees:
-scorre.tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep=""))
-
-pd.all<-NULL
 for (i in 1:length(sites)) #loop to calculate metrics for each site independently
 {
   print(i*100/length(sites))
-  comm2<-subset(comm, site_code == sites[i]) #subset plot within each site
-  comm2<-comm2[c(14,13,12)] #reorder table
-  comm2<-comm2[!duplicated(comm2[c(1,2)]),] #remove duplicated rows
-  comm2<-subset(comm2, relcov>0) #remove species with zero cover
-  comm2 <- dcast(comm2, plot_id2 ~ species_matched, value.var="relcov") # apply dcast to turn into community matrix
-  rownames(comm2)<-comm2$plot_id2 #assign rownames
-  comm2$plot_id2 <-NULL #and detele original columns
-  comm2[is.na(comm2)]<-0 #turn NAs into 0s
-  colnames(comm2)<-gsub(" ", "_", colnames(comm2))
-  comm2[comm2>0]<-1 #replace all positive values with 1
+  
+  comm2 <- comm %>% 
+    filter(site_code == sites[i]) %>%  #subset plots within each site
+    select(plot_id2, species_matched, relcov) %>% 
+    mutate(relcov=ifelse(relcov>0, 1, 0)) %>% 
+    pivot_wider(names_from=species_matched, values_from=relcov, values_fill=0) #make species matrix
+    
+  colnames(comm2) <- gsub(" ", "_", colnames(comm2)) #add underscore in column names
   
   #Prune tree with only species in our site:
-  tree<-keep.tip(scorre.tree, colnames(comm2))
+  tree <- keep.tip(scorre.tree, colnames(comm2[,-1]))
   
-  #calculate Faith's diversity (PD):
-  pd.raw<-as.data.frame(pd.query(tree, comm2,  standardize = F))
-  pd.ses<-as.data.frame(pd.query(tree, comm2,  null.model="uniform", reps=1000, standardize = T))
-  pdp<-as.data.frame(1-(pd.pvalues(tree, comm2,  null.model="uniform", reps=1000)))
-  pd<-cbind(pd.raw, pd.ses, pdp)
+  #distance matrix
+  distance <- as.data.frame(cophenetic(tree))
   
-  #calculate Mean Pairwise Distances (MPD):
-  mpd.raw<-as.data.frame(mpd.query(tree, comm2,  standardize = F))
-  mpd.ses<-as.data.frame(mpd.query(tree, comm2,  null.model="uniform", reps=1000, standardize = T))
-  mpdp<-as.data.frame(1-(mpd.pvalues(tree, comm2,  null.model="uniform", reps=1000)))
-  mpd<-cbind(mpd.raw, mpd.ses, mpdp)
+  #species matrix
+  spp <- comm2 %>% 
+    column_to_rownames('plot_id2')
   
-  #calculate Mean Nearest Taxon Distances (MNTD):
-  mntd.raw<-as.data.frame(mntd.query(tree, comm2,  standardize = F))
-  mntd.ses<-as.data.frame(mntd.query(tree, comm2,  null.model="uniform", reps=1000, standardize = T))
-  mntdp<-as.data.frame(1-(mntd.pvalues(tree, comm2,  null.model="uniform", reps=1000)))
-  mntd<-cbind(mntd.raw, mntd.ses, mntdp)
+  #calculate phylogenetic diversity metrics:
+  mpd.raw <- as.data.frame(mpd(samp=spp, dis=distance,  abundance.weighted = F))
+  mntd.raw <- as.data.frame(mntd(samp=spp, dis=distance,  abundance.weighted = F))
   
-  #merge:
-  pd<-cbind(pd, mpd, mntd)
-  rownames(pd)<-rownames(comm2)
-  colnames(pd) <- c("pd.raw", "pd.ses", "pd.pval", "mpd.raw", "mpd.ses", "mpd.pval", "mntd.raw", "mntd.ses", "mntd.pval")
-  pd.all<-rbind(pd.all, pd)
+  pd.raw <- cbind(comm2[,1], mpd.raw, mntd.raw) %>% 
+    rename(mpd="mpd(samp = spp, dis = distance, abundance.weighted = F)",
+           mntd="mntd(samp = spp, dis = distance, abundance.weighted = F)") %>% 
+    mutate(permutation=0)
+  
+  pd.ses <- {}
+  sesVector <- c(1:2)
+  for(n in 1:length(sesVector)){
+    distanceShuffle <- distance %>% 
+      rownames_to_column(var = "identifier") %>% 
+      mutate(spp_shuffling = sample(identifier, size = n(), replace = FALSE)) %>% 
+      select(-identifier) %>% 
+      column_to_rownames(var="spp_shuffling")
+    
+    mpd.ses <- as.data.frame(mpd(samp=spp, dis=distanceShuffle,  abundance.weighted = F))
+    mntd.ses <- as.data.frame(mntd(samp=spp, dis=distanceShuffle,  abundance.weighted = F))
+    
+    ses <- cbind(comm2[,1], mpd.ses, mntd.ses) %>% 
+      rename(mpd="mpd(samp = spp, dis = distanceShuffle, abundance.weighted = F)",
+             mntd="mntd(samp = spp, dis = distanceShuffle, abundance.weighted = F)") %>% 
+      mutate(permutation=sesVector[n])
+    
+    pd.ses <- rbind(pd.ses, ses)
+    
+    rm(list=ls()[grep("SES", ls())])
+  }
+  
+  pd.all <- rbind(pd.raw, pd.ses)
+  
+  #mean MPD and MNTD for null distribution to create SES MPD and MNTD
+  sesSubsetMean <- pd.all %>% 
+    separate(plot_id2, into=c('site_code', 'project_name', 'community_type', 'treatment_year', 'plot_id'), sep='::') %>% 
+    mutate(site_proj_comm=paste(site_code, project_name, community_type), sep='::') %>% 
+    group_by(site_proj_comm, treatment_year, plot_id) %>% 
+    summarise(across(c('mpd', 'mntd'), list(mean=mean, sd=sd))) %>% 
+    ungroup()
+  
+  
+  #### START HERE!
+  #calculate SES values for MPD and MNTD
+  mpdMNTDSubsetSES <- mpdMNTDSubset %>% 
+    full_join(sesSubsetMean) %>% 
+    mutate(MNTD_traits_ses=(MNTD_traits-MNTD_traits_mean)/MNTD_traits_sd,
+           MPD_traits_ses=(MPD_traits-MPD_traits_mean)/MPD_traits_sd) %>% 
+    select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, MNTD_traits, MNTD_traits_ses, MPD_traits, MPD_traits_ses)
+  
+  #subset control plots
+  mpdMNTDSubsetSESctl <- mpdMNTDSubsetSES %>% 
+    left_join(trt) %>% 
+    filter(plot_mani==0) %>% 
+    group_by(site_proj_comm, calendar_year) %>% 
+    summarise(across(c('MNTD_traits', 'MPD_traits', 'MNTD_traits_ses', 'MPD_traits_ses'), list(mean=mean))) %>% 
+    ungroup()
+  
+  #calculate lnRR for ses values of MPD and MNTD
+  mpdMNTDSubsetRRses <- mpdMNTDSubsetSES %>% 
+    left_join(trt) %>% 
+    full_join(mpdMNTDSubsetSESctl) %>% 
+    mutate(RR_MNTD_traits=ifelse(plot_mani>0, log(MNTD_traits/MNTD_traits_mean), NA),
+           RR_MPD_traits=ifelse(plot_mani>0, log(MPD_traits/MPD_traits_mean), NA),
+           RR_MNTD_traits_ses=ifelse(plot_mani>0, ((MNTD_traits_ses-MNTD_traits_ses_mean)/MNTD_traits_ses_mean), NA), #percent difference for ses due to neg values
+           RR_MPD_traits_ses=ifelse(plot_mani>0, ((MPD_traits_ses-MPD_traits_ses_mean)/MPD_traits_ses_mean), NA)) %>% #percent difference for ses due to neg values
+    select(site_proj_comm, calendar_year, plot_id, MNTD_traits, MNTD_traits_ses, MPD_traits, 
+           MPD_traits_ses, RR_MNTD_traits, RR_MPD_traits, RR_MNTD_traits_ses, RR_MPD_traits_ses)
+  
+  #lnRR MPD and MNTD for null distribution to create SES lnRR MPD and SES lnRR MNTD
+  ses2 <- ses %>% 
+    full_join(plotInfoSubset)
+  
+  #bind onto raw data
+  mpdMNTDSubsetPerm <- mpdMNTDSubset %>% 
+    mutate(permutation='0') %>% 
+    rbind(ses2) 
+  
+  #average MPD and MNTD in control plots by permutation
+  mpdMNTDSubsetPermCtl <- mpdMNTDSubsetPerm %>% 
+    left_join(trt) %>% 
+    filter(plot_mani==0) %>% 
+    group_by(site_proj_comm, calendar_year, permutation) %>% 
+    summarize_at(vars(MNTD_traits, 
+                      MPD_traits), 
+                 list(mean=mean), na.rm=T) %>% #average across plots
+    ungroup() %>% 
+    rename(MNTD_traits_ctl=MNTD_traits_mean,
+           MPD_traits_ctl=MPD_traits_mean)
+  
+  RRmpdMNTDSubset <- mpdMNTDSubsetPerm %>% 
+    left_join(trt) %>% 
+    filter(plot_mani!=0) %>% 
+    left_join(mpdMNTDSubsetPermCtl) %>% 
+    mutate(RR_MNTD_traits=log(MNTD_traits/MNTD_traits_ctl),
+           RR_MPD_traits=log(MPD_traits/MPD_traits_ctl))
+  
+  RRmpdMNTDSubsetRaw <- RRmpdMNTDSubset %>% 
+    filter(permutation==0) %>% 
+    select(site_proj_comm, calendar_year, plot_id, RR_MNTD_traits, RR_MPD_traits)
+  
+  mpdMNTDSubsetSESrr <- RRmpdMNTDSubset %>% 
+    filter(permutation>0) %>% 
+    group_by(site_proj_comm, calendar_year, plot_id) %>% 
+    summarize_at(vars(RR_MNTD_traits, 
+                      RR_MPD_traits), 
+                 list(mean=mean, sd=sd), na.rm=T) %>% #average across permutation
+    ungroup() %>% 
+    left_join(RRmpdMNTDSubsetRaw) %>% 
+    mutate(SES_RR_MNTD_traits=(RR_MNTD_traits-RR_MNTD_traits_mean)/RR_MNTD_traits_sd,
+           SES_RR_MPD_traits=(RR_MPD_traits-RR_MPD_traits_mean)/RR_MPD_traits_sd) %>% 
+    select(site_proj_comm, calendar_year, plot_id, SES_RR_MNTD_traits, SES_RR_MPD_traits)
+  
+  allSubset <- FDsubset2 %>% 
+    full_join(mpdMNTDSubsetRRses) %>% 
+    full_join(mpdMNTDSubsetSESrr) %>% 
+    left_join(trt)
+  
+  #bind values into RR dataframe
+  functionalDiversityMetrics <- rbind(functionalDiversityMetrics, allSubset)
+  
+  
 }
 
 #save output:
 write.table(pd.all, paste(my.wd, "CoRRE_pd_metrics_non_weighted.csv", sep=","))
-
-
-
-
-
-####
-#Example to calculate phylogenetic diversity metrics using one single tree (scenario 3) (weighted by abundances):
-
-#load trees:
-scorre.tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep=""))
-
-pd.all<-NULL
-for (i in 1:length(sites)) #loop to calculate metrics for each site independently
-{
-  print(i*100/length(sites))
-  comm2<-subset(comm, site_code == sites[i]) #subset plot within each site
-  comm2<-comm2[c(14,13,12)] #reorder table
-  comm2<-comm2[!duplicated(comm2[c(1,2)]),] #remove duplicated rows
-  comm2<-subset(comm2, relcov>0) #remove species with zero cover
-  comm2 <- dcast(comm2, plot_id2 ~ species_matched, value.var="relcov") # apply dcast to turn into community matrix
-  rownames(comm2)<-comm2$plot_id2 #assign rownames
-  comm2$plot_id2 <-NULL #and detele original columns
-  comm2[is.na(comm2)]<-0 #turn NAs into 0s
-  colnames(comm2)<-gsub(" ", "_", colnames(comm2))
-  
-  #create vector for abundances:
-  weights <- colSums(comm2)
-  comm2[comm2>0]<-1 #replace all positive values with 1
-
-  #Prune tree with only species in our site:
-  tree<-keep.tip(scorre.tree, colnames(comm2))
-  
-  #calculate Faith's diversity (PD):
-  pd.raw<-as.data.frame(pd.query(tree, comm2,  abundance.weights=weights, standardize = F))
-  pd.ses<-as.data.frame(pd.query(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000, standardize = T))
-  pdp<-as.data.frame(1-(pd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
-  pd<-cbind(pd.raw, pd.ses, pdp)
-
-  #calculate Mean Pairwise Distances (MPD):
-  mpd.raw<-as.data.frame(mpd.query(tree, comm2,  abundance.weights=weights, standardize = F))
-  mpd.ses<-as.data.frame(mpd.query(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000, standardize = T))
-  mpdp<-as.data.frame(1-(mpd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
-  mpd<-cbind(mpd.raw, mpd.ses, mpdp)
-  
-  #calculate Mean Nearest Taxon Distances (MNTD):
-  mntd.raw<-as.data.frame(mntd.query(tree, comm2,  abundance.weights=weights, standardize = F))
-  mntd.ses<-as.data.frame(mntd.query(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000, standardize = T))
-  mntdp<-as.data.frame(1-(mntd.pvalues(tree, comm2,  null.model="sequential", abundance.weights=weights, reps=1000)))
-  mntd<-cbind(mntd.raw, mntd.ses, mntdp)
-  
-  #merge:
-  pd<-cbind(pd, mpd, mntd)
-  rownames(pd)<-rownames(comm2)
-  colnames(pd) <- c("pd.raw", "pd.ses", "pd.pval", "mpd.raw", "mpd.ses", "mpd.pval", "mntd.raw", "mntd.ses", "mntd.pval")
-  pd.all<-rbind(pd.all, pd)
-}
-
-#save output:
-write.table(pd.all, paste(my.wd, "CoRRE_pd_metrics_weighted.csv", sep=","))
-
-#clean-up:
-#rm(list = ls())
