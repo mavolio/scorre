@@ -12,8 +12,8 @@ library(picante)
 library(tidyverse)
 
 #### set directory ####
-my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #padu
 setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\')  #kim's computer
+my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #padu
 
 
 #### read data ####
@@ -62,7 +62,7 @@ trt <- read.csv('CoRRE data\\community composition\\CoRRE_RawAbundance_Jan2023.c
 #### calculate phylogenetic diversity metrics using one single tree (scenario 3) (non-weighted by abundances) ####
 
 #load tree
-scorre.tree <- read.tree("Phylogenies\\scorre.tree.S3.tre")
+scorre.tree <- read.tree("Phylogenies\\scorre.phylo.tree.S3_20230427.tre")
 
 phylogeneticDiversityMetrics <- NULL
 
@@ -74,6 +74,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
     filter(site_code == sites[i]) %>%  #subset plots within each site
     select(plot_id2, species_matched, relcov) %>% 
     mutate(relcov=ifelse(relcov>0, 1, 0)) %>% 
+    unique() %>% 
     pivot_wider(names_from=species_matched, values_from=relcov, values_fill=0) #make species matrix
     
   colnames(comm2) <- gsub(" ", "_", colnames(comm2)) #add underscore in column names
@@ -98,7 +99,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
     mutate(permutation=0)
   
   pd.ses <- {}
-  sesVector <- c(1:2)
+  sesVector <- c(1:999)
   for(n in 1:length(sesVector)){
     distanceShuffle <- distance %>% 
       rownames_to_column(var = "identifier") %>% 
