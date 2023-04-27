@@ -118,6 +118,7 @@ shapiro.test(traitsScaled$seed_dry_mass)
 # species relative cover data
 relCoverRaw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
+  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
   select(site_code:community_type, site_proj_comm, calendar_year:relcov)
 
 # corre to try species names key
@@ -147,6 +148,7 @@ trt <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundan
   group_by(site_code, project_name, community_type) %>%
   mutate(experiment_length=max(treatment_year)) %>%
   ungroup() %>%
+  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='_'))
 
