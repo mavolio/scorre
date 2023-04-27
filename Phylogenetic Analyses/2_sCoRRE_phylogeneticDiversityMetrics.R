@@ -28,9 +28,10 @@ comm <- read.table("CoRRE data\\community composition\\CoRRE_RelativeCover_Jan20
   left_join(names) %>% 
   left_join(read.csv('trait data\\sCoRRE categorical trait data_12142022.csv')) %>% 
   filter(growth_form!='moss' & leaf_type!='microphyll') %>% 
+  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
   select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, genus_species, species_matched, relcov) %>% 
   filter(!grepl("(sp.)$", species_matched)) %>%  #remove species identified only at the genus level
-  mutate(plot_id2 = paste(site_code, project_name, community_type, treatment_year, plot_id, sep = "::")) %>%  #create new plot identifier
+  mutate(plot_id2 = paste(site_code, project_name, community_type, calendar_year, plot_id, sep = "::")) %>%  #create new plot identifier
   group_by(plot_id2) %>% 
   mutate(richness=length(genus_species)) %>% 
   ungroup() %>% 
@@ -48,15 +49,17 @@ sites <- unique(comm$site_code)
 
 #treatment data
 trt <- read.csv('CoRRE data\\community composition\\CoRRE_RawAbundance_Jan2023.csv') %>%
-  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
+  select(site_code, project_name, community_type, calendar_year, calendar_year, treatment, plot_id) %>%
   unique() %>%
   left_join(read.csv('CoRRE data\\basic dataset info\\ExperimentInfo.csv')) %>%
   group_by(site_code, project_name, community_type) %>%
-  mutate(experiment_length=max(treatment_year)) %>%
+  mutate(experiment_length=max(calendar_year)) %>%
   ungroup() %>%
-  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp) %>% 
+  select(site_code, project_name, community_type, calendar_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp) %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-  mutate(plot_id2=paste(site_proj_comm, treatment_year, plot_id, sep='::'))
+  mutate(plot_id2=paste(site_proj_comm, calendar_year, plot_id, sep='::')) %>% 
+  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
+  unique()
 
 
 #### calculate phylogenetic diversity metrics using one single tree (scenario 3) (non-weighted by abundances) ####
@@ -66,12 +69,13 @@ scorre.tree <- read.tree("Phylogenies\\scorre.phylo.tree.S3_20230427.tre")
 
 phylogeneticDiversityMetrics <- NULL
 
-for (i in 1:length(sites)) #loop to calculate metrics for each site independently
-{
+for (i in 1:length(sites)){ #loop to calculate metrics for each site independently
+
   print(i*100/length(sites))
   
   comm2 <- comm %>% 
     filter(site_code == sites[i]) %>%  #subset plots within each site
+    filter(treatment_year>0) %>% #only keep treatment data
     select(plot_id2, species_matched, relcov) %>% 
     mutate(relcov=ifelse(relcov>0, 1, 0)) %>% 
     unique() %>% 
@@ -124,11 +128,11 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   
   #mean MPD and MNTD for null distribution to create SES MPD and MNTD
   sesSubsetMean <- pd.all %>% 
-    separate(plot_id2, into=c('site_code', 'project_name', 'community_type', 'treatment_year', 'plot_id'), sep='::') %>% 
+    separate(plot_id2, into=c('site_code', 'project_name', 'community_type', 'calendar_year', 'plot_id'), sep='::') %>% 
     mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-    mutate(plot_id2=paste(site_proj_comm, treatment_year, plot_id, sep='::')) %>% 
-    mutate(treatment_year=as.integer(treatment_year)) %>% 
-    group_by(plot_id2, site_proj_comm, treatment_year, plot_id) %>% 
+    mutate(plot_id2=paste(site_proj_comm, calendar_year, plot_id, sep='::')) %>% 
+    mutate(calendar_year=as.integer(calendar_year)) %>% 
+    group_by(plot_id2, site_proj_comm, calendar_year, plot_id) %>% 
     summarise(across(c('mpd', 'mntd'), list(mean=mean, sd=sd))) %>% 
     ungroup()
   
@@ -137,7 +141,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
     full_join(sesSubsetMean) %>% 
     mutate(MNTD_phylo_ses=(mntd-mntd_mean)/mntd_sd,
            MPD_phylo_ses=(mpd-mpd_mean)/mpd_sd) %>%
-    select(plot_id2, site_proj_comm, treatment_year, plot_id, mpd, mntd, MPD_phylo_ses, MNTD_phylo_ses) %>% 
+    select(plot_id2, site_proj_comm, calendar_year, plot_id, mpd, mntd, MPD_phylo_ses, MNTD_phylo_ses) %>% 
     rename(MPD_phylo=mpd,
            MNTD_phylo=mntd)
   
@@ -145,7 +149,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   mpdMNTDSubsetSESctl <- mpdMNTDSubsetSES %>% 
     left_join(trt) %>% 
     filter(plot_mani==0) %>% 
-    group_by(site_proj_comm, treatment_year) %>% 
+    group_by(site_proj_comm, calendar_year) %>% 
     summarise(across(c('MNTD_phylo', 'MPD_phylo', 'MNTD_phylo_ses', 'MPD_phylo_ses'), list(mean=mean))) %>% 
     ungroup()
   
@@ -157,7 +161,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
            RR_MPD_phylo=ifelse(plot_mani>0, log(MPD_phylo/MPD_phylo_mean), NA),
            RR_MNTD_phylo_ses=ifelse(plot_mani>0, ((MNTD_phylo_ses-MNTD_phylo_ses_mean)/MNTD_phylo_ses_mean), NA), #percent difference for ses due to neg values
            RR_MPD_phylo_ses=ifelse(plot_mani>0, ((MPD_phylo_ses-MPD_phylo_ses_mean)/MPD_phylo_ses_mean), NA)) %>% #percent difference for ses due to neg values
-    select(plot_id2, site_proj_comm, treatment_year, plot_id, MNTD_phylo, MNTD_phylo_ses, MPD_phylo, 
+    select(plot_id2, site_proj_comm, calendar_year, plot_id, MNTD_phylo, MNTD_phylo_ses, MPD_phylo, 
            MPD_phylo_ses, RR_MNTD_phylo, RR_MPD_phylo, RR_MNTD_phylo_ses, RR_MPD_phylo_ses)
   
   #lnRR MPD and MNTD for null distribution to create SES lnRR MPD and SES lnRR MNTD
@@ -181,11 +185,11 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   
   RRmpdMNTDSubsetRaw <- RRmpdMNTDSubset %>% 
     filter(permutation==0) %>% 
-    select(site_proj_comm, treatment_year, plot_id, RR_MNTD_phylo, RR_MPD_phylo)
+    select(site_proj_comm, calendar_year, plot_id, RR_MNTD_phylo, RR_MPD_phylo)
   
   mpdMNTDSubsetSESrr <- RRmpdMNTDSubset %>% 
     filter(permutation>0) %>% 
-    group_by(site_proj_comm, treatment_year, plot_id) %>% 
+    group_by(site_proj_comm, calendar_year, plot_id) %>% 
     summarize_at(vars(RR_MNTD_phylo, 
                       RR_MPD_phylo), 
                  list(mean=mean, sd=sd), na.rm=T) %>% #average across permutation
@@ -193,7 +197,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
     left_join(RRmpdMNTDSubsetRaw) %>% 
     mutate(SES_RR_MNTD_phylo=(RR_MNTD_phylo-RR_MNTD_phylo_mean)/RR_MNTD_phylo_sd,
            SES_RR_MPD_phylo=(RR_MPD_phylo-RR_MPD_phylo_mean)/RR_MPD_phylo_sd) %>% 
-    select(site_proj_comm, treatment_year, plot_id, SES_RR_MNTD_phylo, SES_RR_MPD_phylo)
+    select(site_proj_comm, calendar_year, plot_id, SES_RR_MNTD_phylo, SES_RR_MPD_phylo)
   
   allSubset <- mpdMNTDSubsetRRses %>% 
     full_join(mpdMNTDSubsetSESrr) %>% 
@@ -201,8 +205,7 @@ for (i in 1:length(sites)) #loop to calculate metrics for each site independentl
   
   #bind values into RR dataframe
   phylogeneticDiversityMetrics <- rbind(phylogeneticDiversityMetrics, allSubset)
-  
-  
+
 }
 
 #save output:
