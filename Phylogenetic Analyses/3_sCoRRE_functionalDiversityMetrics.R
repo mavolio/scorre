@@ -7,6 +7,7 @@
 
 library(FD)
 library(car)
+library(gawdis)
 library(tidyverse)
 
 ##### set working directory #####
@@ -227,7 +228,8 @@ for(s in 1:length(site_vector)){
   
   ### Calculate functional diversity metrics ###
   relCoverMatrixSubset <- as.matrix(relCoverWideSubset2)
-  traitMatrixSubset <- as.matrix(gowdis(traitsSubsetArranged))
+  traitMatrixSubset <- as.matrix(gawdis(traitsSubsetArranged, w.type = "optimized", opti.maxiter = 200, groups.weight=T, groups = c(1,2,3,4,5,6,7,7,7,8,9,10)))
+  ###check if there are NAs, if yes then have to use optimized but if no then can use w.type='analytic' and remove opti.maxiter statement
 
   #FDis and RaoQ
   FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
@@ -261,7 +263,7 @@ for(s in 1:length(site_vector)){
       select(-identifier) %>% 
       column_to_rownames(var="spp_shuffling")
     
-    traitMatrixSubsetSES <- as.matrix(gowdis(traitsSubsetSES))
+    traitMatrixSubsetSES <- as.matrix(gawdis(traitsSubsetSES, w.type = "optimized", opti.maxiter = 200, groups.weight=T, groups = c(1,2,3,4,5,6,7,7,7,8,9,10)))
     
     mpdMNTDSubsetSES <- data.frame(
       plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
