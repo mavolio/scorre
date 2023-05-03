@@ -77,7 +77,7 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
     filter(site_code == sites[i]) %>%  #subset plots within each site
     filter(treatment_year>0) %>% #only keep treatment data
     select(plot_id2, species_matched, relcov) %>% 
-    mutate(relcov=ifelse(relcov>0, 1, 0)) %>% 
+    mutate(relcov=ifelse(relcov>0, 1, 0)) %>%
     unique() %>% 
     pivot_wider(names_from=species_matched, values_from=relcov, values_fill=0) #make species matrix
     
@@ -87,11 +87,12 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
   tree <- keep.tip(scorre.tree, colnames(comm2[,-1]))
   
   #distance matrix
-  distance <- as.data.frame(cophenetic(tree))
+  distance <- as.matrix(cophenetic(tree))
   
   #species matrix
   spp <- comm2 %>% 
-    column_to_rownames('plot_id2')
+    column_to_rownames('plot_id2') %>% 
+    as.matrix(.)
   
   #calculate phylogenetic diversity metrics:
   mpd.raw <- as.data.frame(mpd(samp=spp, dis=distance,  abundance.weighted = F))
@@ -103,13 +104,14 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
     mutate(permutation=0)
   
   pd.ses <- {}
-  sesVector <- c(1:999)
+  sesVector <- c(1:2)
   for(n in 1:length(sesVector)){
-    distanceShuffle <- distance %>% 
+    distanceShuffle <- as.data.frame(distance) %>% 
       rownames_to_column(var = "identifier") %>% 
       mutate(spp_shuffling = sample(identifier, size = n(), replace = FALSE)) %>% 
       select(-identifier) %>% 
-      column_to_rownames(var="spp_shuffling")
+      column_to_rownames(var="spp_shuffling") %>% 
+      as.matrix(.)
     
     mpd.ses <- as.data.frame(mpd(samp=spp, dis=distanceShuffle,  abundance.weighted = F))
     mntd.ses <- as.data.frame(mntd(samp=spp, dis=distanceShuffle,  abundance.weighted = F))
@@ -139,6 +141,7 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
   #calculate SES values for MPD and MNTD
   mpdMNTDSubsetSES <- pd.all %>% 
     full_join(sesSubsetMean) %>% 
+    filter(permutation==0) %>% 
     mutate(MNTD_phylo_ses=(mntd-mntd_mean)/mntd_sd,
            MPD_phylo_ses=(mpd-mpd_mean)/mpd_sd) %>%
     select(plot_id2, site_proj_comm, calendar_year, plot_id, mpd, mntd, MPD_phylo_ses, MNTD_phylo_ses) %>% 
@@ -188,7 +191,6 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
     select(site_proj_comm, calendar_year, plot_id, RR_MNTD_phylo, RR_MPD_phylo)
   
   mpdMNTDSubsetSESrr <- RRmpdMNTDSubset %>% 
-    filter(permutation>0) %>% 
     group_by(site_proj_comm, calendar_year, plot_id) %>% 
     summarize_at(vars(RR_MNTD_phylo, 
                       RR_MPD_phylo), 
@@ -209,4 +211,4 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
 }
 
 #save output:
-write.csv(phylogeneticDiversityMetrics, "CoRRE_PD_metrics_non_weighted_April2023.csv", row.names=F)
+write.csv(phylogeneticDiversityMetrics, "CoRRE_PD_metrics_weighted_April2023.csv", row.names=F)
