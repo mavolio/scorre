@@ -104,7 +104,7 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
     mutate(permutation=0)
   
   pd.ses <- {}
-  sesVector <- c(1:2)
+  sesVector <- c(1:999)
   for(n in 1:length(sesVector)){
     distanceShuffle <- as.data.frame(distance) %>% 
       rownames_to_column(var = "identifier") %>% 
