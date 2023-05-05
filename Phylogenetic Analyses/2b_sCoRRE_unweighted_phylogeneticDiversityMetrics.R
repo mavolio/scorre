@@ -211,4 +211,4 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
 }
 
 #save output:
-write.csv(phylogeneticDiversityMetrics, "CoRRE_PD_metrics_weighted_April2023.csv", row.names=F)
+write.csv(phylogeneticDiversityMetrics, "CoRRE_PD_metrics_unweighted_April2023.csv", row.names=F)
