@@ -958,7 +958,7 @@ ggplot(diff.df, aes(x=metric, y=Estimate, fill = metric, color = metric))+
   theme_base()
 
 
-
+################BLEOW SECTION IS A TEST THAT YOU CAN PROBABLY DELETE
 ##Explain variation using partial r squareds
 
 rank_diff_expgroup <- ddply(rank_diff_master.1, .(expgroup, trt_type, treatment, plot_mani),function(x)data.frame(
@@ -992,7 +992,7 @@ mod <- lmer(dist~richness_diff+evenness_diff + rank_diff + species_diff + (1|sit
 summary(mod)
 partR2(mod, data = tempdf, partvars = c("richness_diff", "evenness_diff", "rank_diff", "species_diff"), R2_type = "marginal", nboot = 10)
 
-
+#######################################above
 
 
 ####SINGLE TRAIT VARIANCE AMONG REPLICATES (TRAIT)
