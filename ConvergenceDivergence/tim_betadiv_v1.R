@@ -13,22 +13,22 @@ library(ggthemes)
 library(codyn)
 
 #Read in data
-traits_cat <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_11302021.csv") #categorical trait data
+traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
 
-traits1 <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
-corre2trykey <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
+traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
 
-cover <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
+cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
     mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0) #remove some Cedar Creek treatments since that site is somewhat overrepresented
 
 
-corre2trykey <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", all.x = TRUE)
 
-experimentinfo <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
+experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
 
 
 
@@ -208,7 +208,7 @@ con.df <- subset(mean.dist.df, plot_mani == 0)%>%
 
 lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
-  mutate(con_minus_trt = dist.trt/dist.con)
+  mutate(con_minus_trt = dist.con-dist.trt)
 
 lrr.df.conf <- lrr.df%>%
   ddply(.(trt_type), function(x)data.frame(
@@ -304,7 +304,7 @@ n <- sites%>%
 
 ######
 ###Try the same stuff with traits but they include categorical traits
-CoRRE_CWMtraits <- read.csv("C:/Users/Timothy/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
+CoRRE_CWMtraits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
 CoRRE_CWMtraits_cat <- CoRRE_CWMtraits[, c(   "site_code", "project_name","community_type", "plot_id", "treatment_year", "CWM.growth_form", "CWM.photosynthetic_pathway", "CWM.lifespan", "CWM.clonal", "CWM.mycorrhizal_type", "CWM.n_fixation")]
 
 CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = TRUE)
@@ -730,28 +730,64 @@ rank_diff_temp <-  RAC_difference(
 }
 
 
-mean.diff.df <- ddply(rank_diff_master,.(expgroup, trt_type, treatment, plot_mani), function(x)data.frame( mean_diff = mean(x$rank_diff)))
-
-trt.df <- subset(mean.diff.df, plot_mani >= 1)%>%
-  dplyr::rename(diff.trt = mean_diff)
-con.df <- subset(mean.diff.df, plot_mani == 0)%>%
-  dplyr::rename(diff.con = mean_diff)%>%
-  dplyr::select(expgroup, diff.con)
-
-lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
-  mutate(lrr = log(diff.trt/diff.con))%>%
-  mutate(con_minus_trt = diff.trt/diff.con)
-
-lrr.df.conf <- lrr.df%>%
-  ddply(.(trt_type), function(x)data.frame(
-    lrr.mean = mean(x$lrr, na.rm = TRUE),
-    lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
-    num_experiments = length(x$expgroup)
+mean.diff.df <- ddply(rank_diff_master,.(expgroup, trt_type, treatment, plot_mani), function(x)data.frame( 
+  richness_diff = mean(x$richness_diff),
+  evenness_diff = mean(x$evenness_diff),
+  rank_diff = mean(x$rank_diff),
+  species_diff = mean(x$species_diff)
   ))
 
-lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient"#, "mult_GCD", "CO2"
-))
-          
+RAC_trt.df <- subset(mean.diff.df, plot_mani >= 1)
+
+RAC_con.df <- subset(mean.diff.df, plot_mani == 0)%>%
+  dplyr::rename(rich.con = richness_diff, eve.con = evenness_diff, rank.con = rank_diff, sp.con = species_diff)%>%
+  dplyr::select(expgroup, rich.con, eve.con, rank.con, sp.con)
+
+RAC_lrr.df <- merge(RAC_trt.df, RAC_con.df, by = "expgroup", all.x = TRUE)%>%
+  mutate(lrr.rich = log(richness_diff/rich.con), lrr.eve = log(evenness_diff/eve.con), lrr.rank = log(rank_diff/rank.con), lrr.sp = log(species_diff/sp.con))%>%
+  mutate(sub.rich = richness_diff-rich.con, sub.eve = evenness_diff-eve.con, sub.rank = rank_diff-rank.con, sub.sp = species_diff-sp.con)
+
+
+full_lrr.df <- left_join(lrr.df, RAC_lrr.df, by = c("expgroup", "trt_type", "treatment", "plot_mani"))%>%
+  tidyr::separate( expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+
+
+
+library(remotes)
+remotes::install_github("mastoffel/partR2") 
+library(partR2)
+
+tempdf <- subset(full_lrr.df, trt_type == "drought")
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+summary(mod)
+partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+
+
+tempdf <- subset(full_lrr.df, trt_type == "N")
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+summary(mod)
+partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+
+
+
+tempdf <- subset(full_lrr.df, trt_type == "mult_nutrient")%>%
+          dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
+          filter(complete.cases(.))
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+summary(mod)
+partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+
+
+
+tempdf <- subset(full_lrr.df, trt_type == "mult_nutrient")%>%
+  dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
+  filter(complete.cases(.))
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+summary(mod)
+partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+
+
+
 
 #models to test results
 rank_diff_master.1 <- tidyr::separate(rank_diff_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
@@ -920,6 +956,44 @@ ggplot(diff.df, aes(x=metric, y=Estimate, fill = metric, color = metric))+
   scale_fill_manual(values = c("#ff0000", "white", "#0000ff", "#ffa500", "#4b0082"))+
   scale_color_manual(values = c("#ff0000","#0000ff", "#ffa500", "#4b0082"))+
   theme_base()
+
+
+
+##Explain variation using partial r squareds
+
+rank_diff_expgroup <- ddply(rank_diff_master.1, .(expgroup, trt_type, treatment, plot_mani),function(x)data.frame(
+                        richness_diff = mean(x$richness_diff),
+                          evenness_diff = mean(x$evenness_diff),
+                          rank_diff = mean(x$rank_diff),
+                          species_diff = mean(x$species_diff)
+))
+
+
+distances_expgroup <- ddply(distances_master.1, .(expgroup, site_code, project, community, trt_type, treatment), function(x)data.frame(
+                            dist = mean(x$dist)
+))
+
+
+full_df <- left_join(distances_expgroup, rank_diff_expgroup, by = c("expgroup", "trt_type", "treatment"))
+
+library(remotes)
+remotes::install_github("mastoffel/partR2") 
+library(partR2)
+
+tempdf <- subset(full_df, trt_type == "control" | trt_type == "drought")%>% filter(complete.cases(.))
+mod <- lmer(dist~richness_diff+evenness_diff + rank_diff + species_diff + (1|site_code), data = tempdf)
+summary(mod)
+partR2(mod, data = tempdf, partvars = c("richness_diff", "evenness_diff", "rank_diff", "species_diff"), R2_type = "marginal", nboot = 10)
+
+
+
+tempdf <- subset(full_df, trt_type == "control" | trt_type == "N")%>% filter(complete.cases(.))
+mod <- lmer(dist~richness_diff+evenness_diff + rank_diff + species_diff + (1|site_code), data = tempdf)
+summary(mod)
+partR2(mod, data = tempdf, partvars = c("richness_diff", "evenness_diff", "rank_diff", "species_diff"), R2_type = "marginal", nboot = 10)
+
+
+
 
 ####SINGLE TRAIT VARIANCE AMONG REPLICATES (TRAIT)
 
