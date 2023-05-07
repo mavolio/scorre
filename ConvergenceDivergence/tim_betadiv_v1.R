@@ -760,22 +760,37 @@ library(partR2)
 tempdf <- subset(full_lrr.df, trt_type == "drought")
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 summary(mod)
-partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2
+
+r2$R2%>%
+  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  ggplot( aes(term, estimate))+
+  #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
+  geom_bar(stat = "identity")+
+  ylim(0,.25)+
+  ggtitle("DROUGHT")+
+  theme_classic()
 
 
-tempdf <- subset(full_lrr.df, trt_type == "N")
+
+tempdf <- tempdf <- subset(full_lrr.df, trt_type == "N")%>%
+  dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
+  filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 summary(mod)
-partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2
 
+r2$R2%>%
+  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  ggplot( aes(term, estimate))+
+  #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
+  geom_bar(stat = "identity")+
+  ylim(0,.25)+
+  ggtitle("NITROGEN")+
+    theme_classic()
 
-
-tempdf <- subset(full_lrr.df, trt_type == "mult_nutrient")%>%
-          dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
-          filter(complete.cases(.))
-mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
-summary(mod)
-partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
 
 
 
@@ -784,7 +799,28 @@ tempdf <- subset(full_lrr.df, trt_type == "mult_nutrient")%>%
   filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 summary(mod)
-partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2
+
+#library(patchwork)
+#forestplot(r2, type = "R2", text_size = 10)
+
+#r2$R2   # R2s
+#r2$SC   # Structure coefficients
+#r2$IR2  # inclusive R2s
+#r2$BW # Standardised model estimates
+#r2$Ests # Model estimates
+
+r2$R2%>%
+    subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+ggplot( aes(term, estimate))+
+  #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
+  geom_bar(stat = "identity")+
+  ylim(0,.25)+
+ ggtitle("MULTIPLE NUTRIENT")+
+   theme_classic()
+
+
 
 
 
