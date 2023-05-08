@@ -29,14 +29,10 @@ se <- function(x, na.rm=na.rm){
 
 # trait data
 traits <- read.csv('CoRRE data\\trait data\\AllTraits\\CoRRE_allTraitData_April2023.csv') %>% 
-  select(species_matched, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
-  filter(growth_form!="moss", species_matched!="") %>% #keeping lycophytes
-  mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
-  select(-mycorrhizal_type) %>% 
-  rename(mycorrhizal_type=mycorrhizal) %>% 
-  mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
-  select(-photosynthetic_pathway) %>%
-  rename(photosynthetic_pathway=photo_path) %>%
+  filter(growth_form!="moss", species_matched!="") %>% 
+  select(species_matched, leaf_C.N, LDMC, SLA, plant_height_vegetative, seed_dry_mass, 
+         leaf_longevity, leaf_thickness, root.shoot, root_N, root_dry_mass, seed_number, 
+         SRL, stomatal_conductance, photosynthesis_rate) %>% 
   drop_na() #only keep trait data that is complete for all traits (drops 600 species with only categorical trait data)
 
 
@@ -68,13 +64,16 @@ shapiro.test(traits$seed_dry_mass)
 
 ##### log transform and scale continuous traits #####
 traitsScaled <- traits %>%
-  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), log) %>% 
-  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
+  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, seed_dry_mass, 
+                 leaf_longevity, leaf_thickness, root.shoot, root_N, root_dry_mass, seed_number, 
+                 SRL, stomatal_conductance, photosynthesis_rate), log) %>% 
+  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, seed_dry_mass, 
+                 leaf_longevity, leaf_thickness, root.shoot, root_N, root_dry_mass, seed_number, 
+                 SRL, stomatal_conductance, photosynthesis_rate), scale) #scale continuous traits
 
-colnames(traitsScaled) <- c('species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass', 'growth_form', 'lifespan', 'clonal', 'n_fixation', 'mycorrhizal_type', 'photosynthetic_pathway')
-
-#making categorical traits factors 
-traitsScaled[,c(8:13)] <- lapply(traitsScaled[,c(8:13)], as.factor)
+colnames(traitsScaled) <- c('species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'seed_dry_mass', 
+                            'leaf_longevity', 'leaf_thickness', 'root.shoot', 'root_N', 'root_dry_mass', 'seed_number', 
+                            'SRL', 'stomatal_conductance', 'photosynthesis_rate')
 
 #testing normality
 hist(traitsScaled$leaf_C.N)
@@ -219,16 +218,16 @@ for(s in 1:length(site_vector)){
   #dbFD function requires species names in trait data frame be arranged A-Z and identical order to the abundance data 
   traitsSubsetArranged <- traitsSubset %>%
     arrange(species_matched) %>%
-    column_to_rownames("species_matched") %>%
+    column_to_rownames("species_matched") #%>%
     # mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
     # mutate_at(.vars=c("growth_form", "photosynthetic_pathway","lifespan", "clonal", "mycorrhizal_type", "n_fixation"), funs(as.numeric(as.factor(.)))) %>%
-    mutate_at(.vars=c("leaf_C.N", "LDMC", "SLA", "plant_height_vegetative", "rooting_depth", "seed_dry_mass"), funs(as.numeric(.))) %>% 
-    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, 
-           leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
+    # mutate_at(.vars=c("leaf_C.N", "LDMC", "SLA", "plant_height_vegetative", "rooting_depth", "seed_dry_mass"), funs(as.numeric(.))) %>% 
+    # select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, 
+           # leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
   
   ### Calculate functional diversity metrics ###
   relCoverMatrixSubset <- as.matrix(relCoverWideSubset2)
-  traitMatrixSubset <- as.matrix(gawdis(traitsSubsetArranged, w.type = "optimized", opti.maxiter = 200, groups.weight=T, groups = c(1,2,3,4,5,6,7,7,7,8,9,10))) # because of NAs, use optimized
+  traitMatrixSubset <- as.matrix(gawdis(traitsSubsetArranged, w.type = "optimized", opti.maxiter = 200, groups.weight=T, groups = c(1,2,2,3,4,7,2,3,1,5,4,5,6,6))) # because of NAs, use optimized
 
   #FDis and RaoQ
   FDsubset <- dbFD(x=as.matrix(traitsSubsetArranged), # matrix of traits
