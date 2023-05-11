@@ -1,6 +1,6 @@
 #### Emily Grman modified emily DCi trends through time.R
 #### Dec 13, 2022 sCoRRE meeting 4 at iDiv
-
+#### May 10, 2023 sCoRRE meeting 4.1 at UNCG
 
 
 rm(list=ls())
@@ -9,6 +9,7 @@ library(tidyverse)
 library(gridExtra)
 library(lme4)
 library(car)
+library(ggpubr)
 
 #emily's plotting preferences:
 theme_set(theme_bw())
@@ -19,21 +20,26 @@ theme_eg=theme_update(panel.grid.minor=element_blank(), strip.background=element
 my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
 my.wd <- "C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/"
-my.wd <- "/Users/egrman/Dropbox/sDiv_sCoRRE_shared/"
+my.wd <- "/Users/egrman/Library/CloudStorage/Dropbox/sDiv_sCoRRE_shared/"
 
 #raw abundance data
-dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundance_Dec2021.csv",sep=""))
+dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundance_Jan2023.csv",sep=""))
 
 #relative abundance data
-reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Dec2021.csv", sep=""))
+reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv", sep=""))
 
-#info on treatments
+#info on treatments, remove pre-treatment data, remove experiments where we have less than 6 years of species comp data, remove data in years 31+ from experiments longer than 30 years
 trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep="")) %>%
-  group_by(site_code, project_name, community_type, treatment, trt_type, successional) %>%
-  summarize(expt_length=max(treatment_year))
+  filter(treatment_year>0) %>% 
+  filter(treatment_year<31) %>%
+  filter(successional==0) %>%
+  filter(plant_mani==0) %>%
+  group_by(site_code, project_name, community_type, treatment, trt_type) %>%
+  summarize(expt_length=max(treatment_year), n_yrs_data=length(unique(calendar_year))) %>%
+  filter(n_yrs_data>6)
 
 #cleaned species names
-sp <-read.csv(paste(my.wd,"CoRRE data/trait data/CoRRE2trykey_2021.csv", sep=""))%>%
+sp <-read.csv(paste(my.wd,"CoRRE data/trait data/FullList_Nov2021.csv", sep=""))%>%
   select(genus_species, species_matched)%>%
   unique
 
@@ -50,7 +56,7 @@ myreldat<-reldat%>%
   na.omit()%>% 
   mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
   filter(drop==0) %>% 
-  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, successional, expt_length, block, plot_id, trt_type, species_matched) %>% 
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, expt_length, block, plot_id, trt_type, species_matched) %>% 
   summarize(relcov=sum(relcov)) %>% 
   mutate(site_project_comm=as.factor(paste(site_code, project_name, community_type, sep="::")))
 
@@ -60,33 +66,33 @@ myreldat_filled=NULL
 
 for (j in 1:length(spc)) {
   dat.filled=myreldat[myreldat$site_project_comm==as.character(spc[j]),] %>% 
-    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, successional, expt_length, block, plot_id, relcov, trt_type, species_matched, site_project_comm) %>% 
+    select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, expt_length, block, plot_id, relcov, trt_type, species_matched, site_project_comm) %>% 
     pivot_wider(names_from="species_matched", values_from="relcov", values_fill=0)
   dat.keep=dat.filled %>% 
-    pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "trt_type", "site_project_comm", "successional", "expt_length"), names_to="species_matched", values_to="relcov")
+    pivot_longer(!c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id", "trt_type", "site_project_comm", "expt_length"), names_to="species_matched", values_to="relcov")
   myreldat_filled=rbind(myreldat_filled, dat.keep)
 }
 
 #get average relative cover for each species in a treatment, over all plots
 relave<-myreldat_filled%>%
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, successional, expt_length)%>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, expt_length)%>%
   summarize(mean.relabund=mean(relcov)) %>% 
   ungroup()
 
 #getting frequency of each plot type
 myplots<-myreldat_filled%>%
-  select(site_code, project_name, community_type, site_project_comm, treatment, block, trt_type, plot_id, calendar_year, treatment_year, successional, expt_length)%>%
+  select(site_code, project_name, community_type, site_project_comm, treatment, block, trt_type, plot_id, calendar_year, treatment_year, expt_length)%>%
   unique()%>%
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, calendar_year, treatment_year, successional, expt_length)%>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, calendar_year, treatment_year, expt_length)%>%
   summarize(ntotplots=length(plot_id)) %>% 
   ungroup()
 
 #getting number of plots of each type in which a species was present
 freq<-myreldat_filled %>%
-  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, block, plot_id, calendar_year, treatment_year, successional, expt_length, relcov) %>%
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, block, plot_id, calendar_year, treatment_year, expt_length, relcov) %>%
   unique() %>%
   filter(relcov>0) %>% 
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, successional, expt_length) %>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, expt_length) %>%
   summarize(nplots=length(plot_id)) %>%
   left_join(myplots) %>%
   mutate(freq=nplots/ntotplots)
@@ -97,34 +103,40 @@ DCi.species.per.year<-relave %>%
   mutate(freq=replace_na(freq, 0)) %>%
   mutate(nplots=replace_na(nplots, 0)) %>%
   mutate(DCi=(mean.relabund+freq)/2) %>%
-  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, successional, expt_length, mean.relabund, nplots, freq, DCi)
+  select(site_code, project_name, community_type, site_project_comm, treatment, trt_type, species_matched, calendar_year, treatment_year, expt_length, mean.relabund, nplots, freq, DCi)
 
-#summarize across trait groups (lumping annuals and biennials; selecting only the traits we want), arranging/selecting treatments we want, removing pre-treatment data
+#summarize across trait groups (lumping annuals and biennials; selecting only the traits we want), arranging/selecting treatments we want
 DCi.cat.per.year<-DCi.species.per.year %>%
   left_join(my_cat) %>% 
   mutate(lifespan=ifelse(lifespan=="annual", "ann.bien", ifelse(lifespan=="biennial", "ann.bien", lifespan))) %>%
   mutate(clonal=ifelse(clonal=="yes", "clonal", ifelse(clonal=="no", "nonclonal", clonal))) %>%
   mutate(mycorrhizal=ifelse(mycorrhizal=="yes", "mycorrhizal", ifelse(mycorrhizal=="no", "nonmycorrhizal", mycorrhizal))) %>%
   mutate(n_fixation=ifelse(n_fixation=="yes", "Nfixer", ifelse(n_fixation=="no", "nonNfixer", n_fixation))) %>%
-  pivot_longer(growth_form:n_fixation, names_to="trait") %>%
-  filter(value %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "woody", "Nfixer", "nonNfixer", "vine")) %>%
+  pivot_longer(growth_form:n_fixation, names_to="prop", values_to="trait") %>%
+  mutate(trait=as.factor(trait)) %>%
+  filter(trait %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "woody", "Nfixer", "nonNfixer", "vine")) %>%
   mutate(my_trt=ifelse(trt_type %in% c("control", "temp", "CO2", "N", "irr", "drought", "P", "mult_nutrient"), trt_type, ifelse(trt_type %in% c("drought*temp", "irr*temp", "N*P", "N*temp", "mult_nutrient*drought", "N*CO2", "CO2*temp", "drought*CO2*temp", "N*irr", "mult_nutrient*temp", "N*drought", "N*CO2*temp", "irr*CO2*temp", "N*irr*CO2*temp", "irr*CO2", "N*irr*CO2", "N*irr*temp", "N*P*temp", "mult_nutrient*irr"), "GCD", "other"))) %>%
+  mutate(property=as.factor(ifelse(trait %in% c("forb", "woody", "vine", "graminoid"), "Growth form", ifelse(trait %in% c("C3", "C4"), "Photosynthetic pathway", ifelse(trait %in% c("perennial", "ann.bien"), "Life span", ifelse(trait %in% c("clonal", "nonclonal"), "Clonality", ifelse(trait %in% c("Nfixer", "nonNfixer"), "N fixation", ifelse(trait %in% c("mycorrhizal", "nonmycorrhizal"), "Mycorrhizal", my_trt)))))))) %>%
+  mutate(property=factor(property, levels=c("Life span", "Photosynthetic pathway", "Clonality", "N fixation", "Mycorrhizal", "Growth form"))) %>%
+  mutate(trait=factor(trait, levels=c("ann.bien", "perennial", "C3", "C4", "clonal", "nonclonal", "Nfixer", "nonNfixer", "mycorrhizal", "nonmycorrhizal", "graminoid", "forb", "woody", "vine"))) %>%
   filter(!my_trt=="other") %>%
-  filter(treatment_year>0) %>% 
-  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, my_trt, calendar_year, treatment_year, successional, expt_length, value) %>%
+  group_by(site_code, project_name, community_type, site_project_comm, treatment, trt_type, my_trt, calendar_year, treatment_year, expt_length, trait, property) %>%
   summarize(mean.sp.DCi=mean(DCi), sum.sp.relabund=sum(mean.relabund))
 
 #plotting functional group abundances through time:
-qplot(treatment_year, sum.sp.relabund, data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$value %in% c("C3", "C4"),], color=value) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F)
-ggsave(paste(my.wd, "ambient change paper/figs dec 2022/C3 C4 sum relabund through time.pdf", sep=""), width=20, height=12)
+ggplot(aes(treatment_year, sum.sp.relabund), data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$property=="Photosynthetic pathway",]) + geom_point(aes(color=trait)) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F, aes(color=trait))
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/C3 C4 sum relabund through time.pdf", sep=""), width=20, height=12)
 
-qplot(treatment_year, mean.sp.DCi, data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$value %in% c("C3", "C4"),], color=value) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F)
-ggsave(paste(my.wd, "ambient change paper/figs dec 2022/C3 C4 mean DCi through time.pdf", sep=""), width=20, height=12)
+ggplot(aes(treatment_year, mean.sp.DCi), data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$property=="Photosynthetic pathway",]) + geom_point(aes(color=trait)) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F, aes(color=trait))
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/C3 C4 mean DCi through time.pdf", sep=""), width=20, height=12)
 
 #which metric to use? 
-qplot(sum.sp.relabund, mean.sp.DCi, data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$value %in% c("C3", "C4"),], color=value) + facet_wrap(~site_project_comm) + geom_smooth(method="lm", se=F)
-ggsave(paste(my.wd, "ambient change paper/figs dec 2022/C3 C4 comparing metrics through time.pdf", sep=""), width=20, height=16)
+ggplot(aes(sum.sp.relabund, mean.sp.DCi), data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$property=="Photosynthetic pathway",]) + geom_point(aes(color=trait)) + facet_wrap(~site_project_comm) + geom_smooth(method="lm", se=F, aes(color=trait))
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/C3 C4 comparing metrics through time.pdf", sep=""), width=20, height=16)
 #sum.sp.relabund seems more sensitive, so using that one!
+
+#need to go back and try Padu's advice from Dec 2022 about how to sum up cover
+
 
 #get slopes of sum.sp.abund through time separately for each treatment
 spc_list=as.character(unique(DCi.cat.per.year$site_project_comm))
@@ -137,13 +149,13 @@ for(i in 1:length(spc_list)) {
   
   for(j in 1:length(trt_list)) {
     datj=dati[dati$treatment==as.character(trt_list[j]),]
-    trait_list=as.character(unique(datj$value))
+    trait_list=as.character(unique(datj$trait))
     change_over_timej=numeric(0)
     
     for(k in 1:length(trait_list)) {
-      datk=datj[datj$value==as.character(trait_list[k]),]
+      datk=datj[datj$trait==as.character(trait_list[k]),]
       reg=lm(sum.sp.relabund~treatment_year, data=datk)
-      change_over_timek=data.frame(row.names=k, site_code=datk[1,c("site_code")], project_name=datk[1,c("project_name")], community_type=datk[1,c("community_type")], site_project_comm=as.character(spc_list[i]), expt_length=datk[1, "expt_length"], treatment=as.character(trt_list[j]), my_trt=datk[1,c("my_trt")], trait=as.character(trait_list[k]), slope=reg$coefficients[2], R2=summary(reg)$r.squared)
+      change_over_timek=data.frame(row.names=k, site_code=datk[1,c("site_code")], project_name=datk[1,c("project_name")], community_type=datk[1,c("community_type")], site_project_comm=as.character(spc_list[i]), expt_length=datk[1, "expt_length"], treatment=as.character(trt_list[j]), my_trt=datk[1,c("my_trt")], trait=datk[1, "trait"], property=datk[1, "property"], slope=reg$coefficients[2], R2=summary(reg)$r.squared)
       change_over_timej=rbind(change_over_timej, change_over_timek)
     }
     change_over_timei=rbind(change_over_timei, change_over_timej)
@@ -155,13 +167,13 @@ write.csv(change_over_time, paste(my.wd, "ambient change paper/slopes of summed 
 
 
 #compare slope against study length to see if there is an obvious cutoff
-qplot(expt_length, R2, data=change_over_time[change_over_time$my_trt=="control",], alpha=I(0.1)) + facet_wrap(~trait)
-ggsave(paste(my.wd, "ambient change paper/figs dec 2022/slopes of summed species relative abundances vs treatment length, control plots.pdf", sep=""), width=7, height=7)
+ggplot(aes(expt_length, R2), data=change_over_time[change_over_time$my_trt=="control",]) + geom_point(alpha=I(0.1)) + facet_wrap(~trait)
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/slopes of summed species relative abundances vs treatment length, control plots.pdf", sep=""), width=7, height=7)
 
 hist(change_over_time[change_over_time$my_trt=="control",]$expt_length)
 
 
-# PLOT AMBIENT SLOPE VS T-C SLOPE FOR EACH TREATMENT AND EACH TRAIT GROUP
+# PLOT AMBIENT SLOPE VS TREATMENT SLOPE FOR EACH TREATMENT AND EACH TRAIT GROUP
 
 #first, identify the sites with each treatment (so we know which control slopes to average)
 #then calculate treatment-control slope for each spc
@@ -169,44 +181,96 @@ hist(change_over_time[change_over_time$my_trt=="control",]$expt_length)
 control_change_over_time <- change_over_time %>%
   filter(my_trt=="control") %>%
   mutate(control.slope=slope, abs.control.slope=abs(slope)) %>%
-  select(site_code, project_name, community_type, site_project_comm, expt_length, trait, control.slope, abs.control.slope)
+  select(site_code, project_name, community_type, site_project_comm, expt_length, trait, property, control.slope, abs.control.slope) %>%
+  group_by(trait, property)
 
 trt_change_over_time <- change_over_time %>%
   filter(!my_trt=="control") %>%
   mutate(trt.slope=slope, abs.trt.slope=abs(slope)) %>%
-  select(site_code, project_name, community_type, site_project_comm, expt_length, treatment, my_trt, trait, trt.slope, abs.trt.slope) %>%
+  select(site_code, project_name, community_type, site_project_comm, expt_length, treatment, my_trt, trait, property, trt.slope, abs.trt.slope) %>%
   left_join(control_change_over_time) %>%
   mutate(TminusC=trt.slope-control.slope, TminusCabs=abs.trt.slope-abs.control.slope) %>%
   filter(!is.na(control.slope)) %>%
   filter(!is.na(trt.slope)) %>%
-  group_by(my_trt, trait) %>%
+  group_by(my_trt, trait, property) 
+
+
+#do responses to drivers predict treatment effects? (or vice versa)
+
+ggplot(aes(control.slope, TminusC, color=trait), data=trt_change_over_time) + geom_point(aes(shape=my_trt)) + facet_wrap(~property) + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + scale_shape_manual(values=c(8, 2, 16, 17, 10, 1, 5, 15)) + geom_smooth(method="lm", se=F) 
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/change in controls vs TminusC by FG.pdf", sep=""), width=7, height=7)
+#can't do this because of mathematical correlation between the axes (change in control is in both)
+
+#FIG 2:
+
+ggplot(aes(control.slope, trt.slope, color=trait), data=trt_change_over_time) + geom_point(aes(shape=my_trt)) + facet_wrap(~property) + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + scale_shape_manual(values=c(8, 2, 16, 17, 10, 1, 5, 15)) + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/change in controls vs change in trt by FG.pdf", sep=""), width=7, height=7)
+#need to do major axis regression or reduced major axis regression--they differ in some details but test deviation from 1:1 line rather than deviation from slope=0?
+
+mean_trt_change_over_time <- trt_change_over_time %>%
   summarize(avgT=mean(trt.slope), sdT=sd(trt.slope), avgTminusC=mean(TminusC), sdTminusC=sd(TminusC), n=length(TminusC), avgC=mean(control.slope), sdC=sd(control.slope), avgTminusCabs=mean(TminusCabs), sdTminusCabs=sd(TminusCabs)) %>%
-  mutate(TminusCcolor=ifelse(avgC>0 & avgT>0, "consistent increases", ifelse(avgC<0 & avgT<0, "consistent decreases", "disagreement")), trait.to.plot=factor(trait, levels=c("ann.bien", "perennial", "C3", "C4", "clonal", "nonclonal", "Nfixer", "nonNfixer", "mycorrhizal", "nonmycorrhizal", "forb", "graminoid", "woody", "vine")), seTminusCabs=sdTminusCabs/sqrt(n))
+  mutate(TminusCcolor=ifelse(avgC>0 & avgT>0, "consistent increases", ifelse(avgC<0 & avgT<0, "consistent decreases", "disagreement")), seTminusCabs=sdTminusCabs/sqrt(n))
 
-qplot(trait.to.plot, avgTminusCabs, data=trt_change_over_time, color=TminusCcolor) + facet_wrap(~my_trt) + geom_errorbar(aes(ymin=avgTminusCabs-seTminusCabs, ymax=avgTminusCabs+seTminusCabs, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Difference between treatment and control\nin absolute value of change\nin relative abundance over time") + scale_color_manual(values=c("orange", "cornflowerblue", "darkblue"), name="Trait group changes\nin treated and control plots") + geom_hline(yintercept=0, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs dec 2022/trait groups responses, treatment minus control.pdf", sep=""), width=10, height=6)
+# we are trying to get a single metric that will communicate whether the treatment and controls have similar magnitudes and similar directions. but we are not happy with this figure:
+ggplot(aes(trait, avgTminusCabs), data=mean_trt_change_over_time) + geom_point(aes(color=TminusCcolor)) + facet_wrap(~my_trt, scales="free_y") + geom_errorbar(aes(ymin=avgTminusCabs-seTminusCabs, ymax=avgTminusCabs+seTminusCabs, width=0.1, color=TminusCcolor)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Difference between treatment and control\nin absolute value of change\nin relative abundance over time") + scale_color_manual(values=c("darkblue", "cornflowerblue", "orange"), name="Trait group changes\nin treated and control plots") + geom_hline(yintercept=0, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/trait groups responses, treatment minus control.pdf", sep=""), width=10, height=6)
 
-# we are not happy with this figure but we want a single metric that will communicate whether the treatment and controls have similar magnitudes and similar directions. 
+#FIG 1:
 
+mean_control_change_over_time <- control_change_over_time %>%
+  summarize(globalavgC=mean(control.slope), globalsdC=sd(control.slope), n=length(control.slope)) %>%
+  mutate(globalseC=globalsdC/sqrt(n), trt=as.factor("control")) %>%
+  mutate(trt=factor(trt, levels=c("control", "treatment")))
 
-toplot.trt<-trt_change_over_time %>%
-  select(my_trt, trait.to.plot, avgT, sdT, n) %>%
+fig1a=ggplot(aes(trait, globalavgC, color=trait), data=mean_control_change_over_time) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=globalavgC-globalseC, ymax=globalavgC+globalseC, width=0.1)) + theme(axis.text.x = element_blank()) + xlab("") + ylab("Change in relative abundance over time") + ggtitle("a) Control plots") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4"), name=NULL) + scale_shape_manual(values=c(1, 16), name=NULL, drop=F) + geom_hline(yintercept=0, color="black")
+
+toplot.trt<-mean_trt_change_over_time %>%
+  select(my_trt, trait, property, avgT, sdT, n) %>%
   mutate(se=sdT/sqrt(n), avg=avgT, trt="treatment") %>%
-  select(my_trt, trait.to.plot, avg, se, trt)
-toplot.TminusC<-trt_change_over_time %>%
-  select(my_trt, trait.to.plot, avgTminusC, sdTminusC, n) %>%
+  select(my_trt, trait, property, avg, se, trt)
+toplot.TminusC<-mean_trt_change_over_time %>%
+  select(my_trt, trait, property, avgTminusC, sdTminusC, n) %>%
   mutate(se=sdTminusC/sqrt(n), avg=avgTminusC, trt="T-C") %>%
-  select(my_trt, trait.to.plot, avg, se, trt)
-toplot.control<-trt_change_over_time %>%
-  select(my_trt, trait.to.plot, avgC, sdC, n) %>%
+  select(my_trt, trait, property, avg, se, trt)
+toplot.control<-mean_trt_change_over_time %>%
+  select(my_trt, trait, property, avgC, sdC, n) %>%
   mutate(se=sdC/sqrt(n), avg=avgC, trt="control") %>%
-  select(my_trt, trait.to.plot, avg, se, trt)
+  select(my_trt, trait, property, avg, se, trt)
 toplot=rbind(toplot.trt, toplot.TminusC, toplot.control)
 
-qplot(trait.to.plot, avg, data=toplot[toplot$trt %in% c("control", "treatment"),], color=trt) + facet_wrap(~my_trt, scales="free_y") + geom_errorbar(aes(ymin=avg-se, ymax=avg+se, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time") + scale_color_manual(values=c("orange", "cornflowerblue", "darkblue")) + geom_hline(yintercept=0, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs dec 2022/trait groups responses, treatment vs control.pdf", sep=""), width=8, height=6)
+fig1b=ggplot(aes(my_trt, avg, color=trait), data=toplot[toplot$trt %in% c("control", "treatment"),]) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free_y") + geom_errorbar(aes(ymin=avg-se, ymax=avg+se, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black")
 
-#plot just T-C, color code whether both treatment and control are increasing vs decreasing vs disagreement. absolute value at each experiment and then calculate T-C and then average and SE across experiments? 
+#wow: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
+ggarrange(fig1a, fig1b, nrow=2)
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/trait groups responses, global controls and treatment vs control.pdf", sep=""), width=8, height=10)
+
+
+# CAN WE RELATE CHANGE OVER TIME IN CONTROL PLOTS TO GLOBAL CHANGE DRIVERS?
+
+#read in data from Adam's GIS person, subset to last 30 years
+driverdata=read.csv(paste(my.wd, "CoRRE data/CoRRE data/environmental data/ScorreSitesTmaxTminPrecip 1901-2016.csv", sep="")) %>%
+  filter(Year>1986) %>%
+  group_by(site_code)
+
+SummerTmax=driverdata %>%
+  filter(Season=="Summer") %>%
+  summarize(SummerTmax=mean(Tmax))
+
+WinterTmin=driverdata %>%
+  filter(Season=="Winter") %>%
+  summarize(WinterTmin=mean(Tmin))
+
+Annualprecip=driverdata %>%
+  summarize(Annualprecip=sum(Precip), Ndep2016=mean(Ndep_2016))
+
+drivers=Annualprecip %>%
+  left_join(SummerTmax) %>%
+  left_join(WinterTmin) %>%
+  left_join(control_change_over_time, multiple="all")
+
+
+
+
 
 
 # DOES SITE-LEVEL N DEPOSITION PREDICT HOW STRONGLY N FIXERS DECLINE OVER TIME?
@@ -216,7 +280,7 @@ ndep=read.csv(paste(my.wd, "ambient change paper/CoRRE_siteLocationClimateNdep_D
   filter(my_trt=="control" & trait %in% c("Nfixer", "nonNfixer"))
 
 qplot(ndep_2016, slope, data=ndep, alpha=log(expt_length), color=trait) + geom_smooth(method="lm") + scale_color_manual(values=c("forestgreen", "black")) + guides(alpha=FALSE) + xlab("N deposition in 2016") + ylab("Change in relative abundance\n over time in control plots")
-ggsave(paste(my.wd, "ambient change paper/figs dec 2022/N deposition N fixers.pdf", sep=""), width=5, height=3)
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/N deposition N fixers.pdf", sep=""), width=5, height=3)
 
 try=lmer(slope~trait*ndep_2016 + (1|site_code/site_project_comm), data=ndep)
 Anova(try) #interaction p=0.002
