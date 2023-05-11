@@ -31,12 +31,13 @@ reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE
 #info on treatments, remove pre-treatment data, remove experiments where we have less than 6 years of species comp data, remove data in years 31+ from experiments longer than 30 years
 trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep="")) %>%
   filter(treatment_year>0) %>% 
-  filter(treatment_year<31) %>%
+  filter(calendar_year>1986) %>%
   filter(successional==0) %>%
   filter(plant_mani==0) %>%
   group_by(site_code, project_name, community_type, treatment, trt_type) %>%
   summarize(expt_length=max(treatment_year), n_yrs_data=length(unique(calendar_year))) %>%
-  filter(n_yrs_data>6)
+  ungroup() %>%
+  filter(n_yrs_data>6) 
 
 #cleaned species names
 sp <-read.csv(paste(my.wd,"CoRRE data/trait data/FullList_Nov2021.csv", sep=""))%>%
@@ -203,8 +204,8 @@ ggsave(paste(my.wd, "ambient change paper/figs may 2023/change in controls vs Tm
 
 #FIG 2:
 
-ggplot(aes(control.slope, trt.slope, color=trait), data=trt_change_over_time) + geom_point(aes(shape=my_trt)) + facet_wrap(~property) + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + scale_shape_manual(values=c(8, 2, 16, 17, 10, 1, 5, 15)) + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/change in controls vs change in trt by FG.pdf", sep=""), width=7, height=7)
+ggplot(aes(control.slope, trt.slope, color=trait), data=trt_change_over_time) + geom_point(aes(shape=my_trt)) + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + scale_shape_manual(values=c(8, 2, 16, 17, 10, 1, 5, 15)) + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/change in controls vs change in trt by FG.pdf", sep=""), width=10, height=7)
 #need to do major axis regression or reduced major axis regression--they differ in some details but test deviation from 1:1 line rather than deviation from slope=0?
 
 mean_trt_change_over_time <- trt_change_over_time %>%
@@ -250,24 +251,60 @@ ggsave(paste(my.wd, "ambient change paper/figs may 2023/trait groups responses, 
 #read in data from Adam's GIS person, subset to last 30 years
 driverdata=read.csv(paste(my.wd, "CoRRE data/CoRRE data/environmental data/ScorreSitesTmaxTminPrecip 1901-2016.csv", sep="")) %>%
   filter(Year>1986) %>%
-  group_by(site_code)
+  group_by(site_code, Year)
 
+#extract the global change drivers we are interested in: SummerTmax, WinterTmin, AnnualPrecip, Ndep in 2016
 SummerTmax=driverdata %>%
   filter(Season=="Summer") %>%
   summarize(SummerTmax=mean(Tmax))
-
 WinterTmin=driverdata %>%
   filter(Season=="Winter") %>%
   summarize(WinterTmin=mean(Tmin))
-
-Annualprecip=driverdata %>%
-  summarize(Annualprecip=sum(Precip), Ndep2016=mean(Ndep_2016))
-
-drivers=Annualprecip %>%
+AnnualPrecip=driverdata %>%
+  summarize(AnnualPrecip=sum(Precip), Ndep_2016=mean(Ndep_2016))
+drivers=AnnualPrecip %>%
   left_join(SummerTmax) %>%
-  left_join(WinterTmin) %>%
-  left_join(control_change_over_time, multiple="all")
+  left_join(WinterTmin) 
 
+#loop through calculate rates of change (slopes) in SummerTmax, WinterTmin, AnnualPrecip over last 30 years:
+sitelist=unique(drivers$site_code)
+globalchange=numeric(0)
+
+for(i in i:length(sitelist)) {
+  dati=drivers[drivers$site_code==as.character(sitelist[i]),]
+  summerreg=lm(SummerTmax~Year, data=dati)
+  winterreg=lm(WinterTmin~Year, data=dati)
+  annprecip=lm(AnnualPrecip~Year, data=dati)
+  temp=data.frame(row.names=i, site_code=as.character(sitelist[i]), change_in_SummerTmax=summerreg$coefficients[2], change_in_WinterTmin=winterreg$coefficients[2], change_in_AnnualPrecip=annprecip$coefficients[2], Ndep_2016=mean(dati$Ndep_2016))
+  globalchange=rbind(globalchange, temp)
+}
+
+global_change_in_controls=control_change_over_time %>%
+  left_join(globalchange, multiple="all")
+
+#test whether functional groups respond differently to the drivers
+
+propertylist=unique(global_change_in_controls$property)
+fg_responses=numeric(0)
+
+for(i in 1:length(propertylist)) {
+  mod=lmer(control.slope ~ trait + change_in_SummerTmax + change_in_WinterTmin + change_in_AnnualPrecip + Ndep_2016 + trait:change_in_SummerTmax + trait:change_in_WinterTmin + trait:change_in_AnnualPrecip + trait:Ndep_2016 + (1|site_code), data=global_change_in_controls[global_change_in_controls$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  temp=data.frame(row.names=i, property=as.character(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
+  fg_responses=rbind(fg_responses, temp)
+}
+#all of these models are singular. try removing random effect?
+
+ggplot(aes(change_in_SummerTmax, control.slope, color=trait), data=global_change_in_controls) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + geom_text(data=fg_responses, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/trait groups responses to changes in SummerTmax.pdf", sep=""), width=8, height=5)
+
+ggplot(aes(change_in_WinterTmin, control.slope, color=trait), data=global_change_in_controls) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + geom_text(data=fg_responses, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/trait groups responses to changes in WinterTmin.pdf", sep=""), width=8, height=5)
+
+ggplot(aes(Ndep_2016, control.slope, color=trait), data=global_change_in_controls) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + geom_text(data=fg_responses, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/trait groups responses to N deposition.pdf", sep=""), width=8, height=5)
+
+ggplot(aes(change_in_AnnualPrecip, control.slope, color=trait), data=global_change_in_controls) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "thistle", "plum", "orchid4", "darkorchid4")) + geom_text(data=fg_responses, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs may 2023/trait groups responses to changes in AnnualPrecip.pdf", sep=""), width=8, height=5)
 
 
 
