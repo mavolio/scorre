@@ -16,26 +16,28 @@ library(tidyverse)
 
 #### set directory ####
 my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #padu
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\')  #kim's computer
+setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data')  #kim's computer
 
 
 #### read data ####
 
 #spp names
-names <- read.csv('trait data\\corre2trykey_2021.csv') %>% 
-  select(genus_species, species_matched) %>% 
+correSpecies <- read.csv("CompiledData\\Species_lists\\FullList_Nov2021.csv") %>%  #species names are standardized
+  left_join(read.csv("CompiledData\\Species_lists\\species_families_trees_2021.csv")) %>% 
+  select(family, species_matched)
+
+# Import GEx species names
+GExSpecies <- read.csv('OriginalData\\Traits\\GEx_species_tree_complete.csv') %>% 
+  select(family, species_matched) %>% 
   unique()
 
-#community data
-comm <- read.table("CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv", header=T, sep=",", fill = TRUE) %>% 
-  left_join(names) %>% 
-  left_join(read.csv('trait data\\sCoRRE categorical trait data_12142022.csv')) %>% 
-  filter(growth_form!='moss' & leaf_type!='microphyll') %>% 
-  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, family, genus_species, species_matched, relcov) %>% 
-  filter(!grepl("(sp.)$", species_matched)) #remove species identified only at the genus level
 
-#species list set up for phylogenies
-spp <- comm %>% 
+# Combine species lists
+spp <- rbind(correSpecies, GExSpecies) %>% 
+  separate(species_matched, into=c('genus', 'species', 'subspp'), sep=' ') %>% 
+  filter(species!='sp.',
+         !is.na(species)) %>% 
+  unite(col='species_matched', genus:species, sep=' ', remove=T) %>% 
   select(family, species_matched) %>% 
   unique() %>% 
   rename(species=species_matched) %>% 
@@ -76,7 +78,7 @@ gen.list <- read.csv("Phylogenies\\plant_genus_list.csv")
 result <- phylo.maker(spp, megatree, gen.list, nodes.type = 1, scenario = 3)
 
 #save tree:
-write.tree(result$phylo, "Phylogenies\\scorre.phylo.tree.S3_20230427.tre")
+# write.tree(result$phylo, "Phylogenies\\corre_gex.phylo.tree.S3_20230512.tre")
 
 plot.phylo(result$phylo)
 
