@@ -28,16 +28,36 @@ dat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_Ra
 #relative abundance data
 reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv", sep=""))
 
-#info on treatments, remove pre-treatment data, remove experiments where we have less than 6 years of species comp data, remove data in years 31+ from experiments longer than 30 years
+#info on treatments, remove pre-treatment data, remove experiments where we have less than 6 years of species comp data
 trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep="")) %>%
   filter(treatment_year>0) %>% 
-  filter(calendar_year>1986) %>%
   filter(successional==0) %>%
   filter(plant_mani==0) %>%
   group_by(site_code, project_name, community_type, treatment, trt_type) %>%
-  summarize(expt_length=max(treatment_year), n_yrs_data=length(unique(calendar_year))) %>%
+  summarize(expt_length=max(treatment_year), n_yrs_data=length(unique(calendar_year)), start_year=min(calendar_year), end_year=max(calendar_year)) %>%
+  mutate(year_span=end_year-start_year+1) %>% 
   ungroup() %>%
   filter(n_yrs_data>6) 
+
+#read in CO2 data (downloaded from https://scrippsco2.ucsd.edu/data/atmospheric_co2/mlo.html on 11 may 2023)
+co2<-read.csv(paste(my.wd,"CoRRE data/CoRRE data/environmental data/monthly_in_situ_co2_mlo_EmilyforR.csv", sep="")) %>%
+  filter(ppm.CO2>0) %>%
+  group_by(year) %>% 
+  summarize(ppm.CO2=mean(ppm.CO2))
+
+ggplot(aes(year, ppm.CO2), data=co2[co2$year>1980,]) + geom_point() + geom_smooth(method="lm")
+
+#add start and ending co2 concentrations to trts
+trts=trts %>% 
+  left_join(co2, join_by(start_year==year)) %>%
+  mutate(start_co2=ppm.CO2)
+
+
+trts=merge(trts, co2, by.x="start_year", by.y="year", all.x=T)
+names(trts)[names(trts)=="ppm.CO2"]="start_CO2"
+trts=merge(trts, co2, by.x="end_year", by.y="year", all.x=T)
+names(trts)[names(trts)=="ppm.CO2"]="end_CO2"
+
 
 #cleaned species names
 sp <-read.csv(paste(my.wd,"CoRRE data/trait data/FullList_Nov2021.csv", sep=""))%>%
@@ -59,6 +79,7 @@ myreldat<-reldat%>%
   filter(drop==0) %>% 
   group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, expt_length, block, plot_id, trt_type, species_matched) %>% 
   summarize(relcov=sum(relcov)) %>% 
+  ungroup() %>% 
   mutate(site_project_comm=as.factor(paste(site_code, project_name, community_type, sep="::")))
 
 #adding in zeros for species that were absent from a plot
