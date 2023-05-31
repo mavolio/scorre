@@ -15,15 +15,15 @@ library(codyn)
 #Read in data
 traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
 
-traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
+traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/corre2trykey_2021.csv") #contrinuous trait data
 
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
     mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0) #remove some Cedar Creek treatments since that site is somewhat overrepresented
 
 
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", all.x = TRUE)
@@ -233,6 +233,13 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
 
 
 #models to test results
+#mod <- lmer(lrr~0+ (1|expgroup), data = subset(lrr.df, trt_type == "drought" ))
+#summary(mod)
+
+mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df)
+summary(mod)
+
+
 distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
 expgroup_drought <- c(distances_master.1%>%
@@ -396,6 +403,11 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
 lrr.df_traits <- lrr.df
 
 #models to test results
+mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df_traits)
+summary(mod)
+
+
+
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
