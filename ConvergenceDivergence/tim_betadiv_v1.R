@@ -777,10 +777,13 @@ r2
 
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
   ggplot( aes(term, estimate))+
   #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
   geom_bar(stat = "identity")+
   ylim(0,.25)+
+  ylab("Partial r-squared")+
+  coord_flip()+
   ggtitle("DROUGHT")+
   theme_classic()
 
@@ -796,10 +799,13 @@ r2
 
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
-  ggplot( aes(term, estimate))+
+  mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
+ggplot( aes(term, estimate))+
   #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
   geom_bar(stat = "identity")+
   ylim(0,.25)+
+  ylab("Partial r-squared")+
+  coord_flip()+
   ggtitle("NITROGEN")+
     theme_classic()
 
@@ -814,21 +820,15 @@ summary(mod)
 r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
 r2
 
-#library(patchwork)
-#forestplot(r2, type = "R2", text_size = 10)
-
-#r2$R2   # R2s
-#r2$SC   # Structure coefficients
-#r2$IR2  # inclusive R2s
-#r2$BW # Standardised model estimates
-#r2$Ests # Model estimates
-
 r2$R2%>%
     subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
 ggplot( aes(term, estimate))+
   #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
   geom_bar(stat = "identity")+
   ylim(0,.25)+
+  ylab("Partial r-squared")+
+  coord_flip()+
  ggtitle("MULTIPLE NUTRIENT")+
    theme_classic()
 
