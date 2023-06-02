@@ -771,18 +771,19 @@ library(partR2)
 
 tempdf <- subset(full_lrr.df, trt_type == "drought")
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
-summary(mod)
+summary(mod) #sig include marginal sub.rank
 r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
 r2
 
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
-  ggplot( aes(term, estimate))+
-  #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
-  geom_bar(stat = "identity")+
+  add_column(sig = c("0","0", "1", "0"))%>%
+  ggplot( aes(term, estimate, fill = sig))+
+  geom_bar(color = "black",stat = "identity")+
   ylim(0,.25)+
   ylab("Partial r-squared")+
+  scale_fill_manual(values = c( "white", "black"))+
   coord_flip()+
   ggtitle("DROUGHT")+
   theme_classic()
@@ -793,18 +794,19 @@ tempdf <- tempdf <- subset(full_lrr.df, trt_type == "N")%>%
   dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
   filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
-summary(mod)
+summary(mod) #sig include sub.rank, sub.sp
 r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
 r2
 
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
-ggplot( aes(term, estimate))+
-  #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
-  geom_bar(stat = "identity")+
+  add_column(sig = c("0","0", "1", "1"))%>%
+ggplot( aes(term, estimate, fill = sig))+
+  geom_bar(color = "black",stat = "identity")+
   ylim(0,.25)+
   ylab("Partial r-squared")+
+  scale_fill_manual(values = c( "white", "black"))+
   coord_flip()+
   ggtitle("NITROGEN")+
     theme_classic()
@@ -816,18 +818,19 @@ tempdf <- subset(full_lrr.df, trt_type == "mult_nutrient")%>%
   dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
   filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
-summary(mod)
+summary(mod) #sig include sub.rank, sub.eve
 r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
 r2
 
 r2$R2%>%
     subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
-ggplot( aes(term, estimate))+
-  #geom_pointrange(aes(ymax = CI_upper, ymin = CI_lower))+
-  geom_bar(stat = "identity")+
+  add_column(sig = c("0","1", "1", "0"))%>%
+ggplot( aes(term, estimate, fill = sig))+
+  geom_bar(color = "black",stat = "identity")+
   ylim(0,.25)+
   ylab("Partial r-squared")+
+  scale_fill_manual(values = c( "white", "black"))+
   coord_flip()+
  ggtitle("MULTIPLE NUTRIENT")+
    theme_classic()
