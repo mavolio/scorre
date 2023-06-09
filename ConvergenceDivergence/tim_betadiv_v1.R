@@ -223,7 +223,7 @@ lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr"
 #visualize
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-    geom_pointrange(aes(ymin = lrr.mean-lrr.se, ymax = lrr.mean+lrr.se), size = 1.5)+
+    geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
   xlab("")+
   ylab("Species composition LRR distance between plots within treatment")+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
@@ -236,8 +236,10 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
 #mod <- lmer(lrr~0+ (1|expgroup), data = subset(lrr.df, trt_type == "drought" ))
 #summary(mod)
 
-mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df)
+mod <- lmer(lrr~0+ trt_type + (1|expgroup/trt_type), data = lrr.df)
 summary(mod)
+
+
 
 
 distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
@@ -393,7 +395,7 @@ lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr"
                                                                 ))
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  geom_pointrange(aes(ymin = lrr.mean-lrr.se, ymax = lrr.mean+lrr.se), size = 1.5)+
+  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
   xlab("")+
   ylab("Trait LRR distance between plots within treatment")+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"))+
@@ -403,9 +405,11 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
 lrr.df_traits <- lrr.df
 
 #models to test results
-mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df_traits)
+mod <- lmer(lrr~0+ trt_type + (1|expgroup/trt_type), data = lrr.df_traits)
 summary(mod)
 
+mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "drought"))
+mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "mult_nutrient"))
 
 
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
