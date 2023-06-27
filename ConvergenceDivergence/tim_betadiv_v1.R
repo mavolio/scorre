@@ -768,6 +768,34 @@ full_lrr.df <- left_join(lrr.df, RAC_lrr.df, by = c("expgroup", "trt_type", "tre
   tidyr::separate( expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
 
+pairs(~ sub.rich + sub.eve + sub.rank + sub.sp, data = full_lrr.df)
+c("sub.rich","sub.eve" , "sub.rank" , "sub.sp")
+
+tempdf <- subset(full_lrr.df, trt_type == "drought" | trt_type == "N" | trt_type == "mult_nutrient")
+ggplot(tempdf, aes(sub.rich, lrr))+
+  facet_wrap(~trt_type)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+
+ggplot(tempdf, aes(sub.eve, lrr))+
+  facet_wrap(~trt_type)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+
+ggplot(tempdf, aes(sub.rank, lrr))+
+  facet_wrap(~trt_type)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+
+ggplot(tempdf, aes(sub.sp, lrr))+
+  facet_wrap(~trt_type)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+
 
 library(remotes)
 remotes::install_github("mastoffel/partR2") 
