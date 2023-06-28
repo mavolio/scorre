@@ -11,10 +11,10 @@ library(gawdis)
 library(tidyverse)
 
 ##### set working directory #####
-setwd("~/Dropbox/sDiv_sCoRRE_shared/")
-setwd("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\") # Kim's laptop/desktop
-setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
-setwd("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\") # Kevin's laptop wd
+# setwd("~/Dropbox/sDiv_sCoRRE_shared/")
+setwd("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data") # Kim's laptop/desktop
+# setwd("/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/") #Padu's wd
+# setwd("C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\") # Kevin's laptop wd
 
 
 ##### defining functions #####
@@ -28,22 +28,26 @@ se <- function(x, na.rm=na.rm){
 ##### data import and cleaning #####
 
 # trait data
-traits <- read.csv('CoRRE data\\trait data\\AllTraits\\CoRRE_allTraitData_April2023.csv') %>% 
-  select(species_matched, leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
-  filter(growth_form!="moss", species_matched!="") %>% #keeping lycophytes
+traits <- read.csv('CleanedData\\Traits\\CoRRE_allTraitData_wide_June2023.csv') %>% 
+  filter(growth_form!="moss", species_matched!="") %>%
   mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
   select(-mycorrhizal_type) %>% 
   rename(mycorrhizal_type=mycorrhizal) %>% 
-  mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
+  mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", 
+                    ifelse(photosynthetic_pathway=="possible CAM", "CAM",
+                    photosynthetic_pathway))) %>% 
   select(-photosynthetic_pathway) %>%
   rename(photosynthetic_pathway=photo_path) %>%
-  drop_na() #only keep trait data that is complete for all traits (drops 600 species with only categorical trait data)
+  select(species_matched,
+         growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type, #6 categorical traits
+         LDMC, SLA, leaf_N, SRL, plant_height_vegetative, seed_dry_mass) %>% #6 continuous traits
+  drop_na() #only keep trait data that is complete for all traits (drops 696 species with only categorical trait data)
 
 
 ##### testing normality #####
-hist(traits$leaf_C.N)
-qqPlot(traits$leaf_C.N)
-shapiro.test(traits$leaf_C.N)
+hist(traits$leaf_N)
+qqPlot(traits$leaf_N)
+shapiro.test(traits$leaf_N)
 
 hist(traits$LDMC)
 qqPlot(traits$LDMC)
@@ -57,9 +61,9 @@ hist(traits$plant_height_vegetative)
 qqPlot(traits$plant_height_vegetative)
 shapiro.test(traits$plant_height_vegetative)
 
-hist(traits$rooting_depth)
-qqPlot(traits$rooting_depth)
-shapiro.test(traits$rooting_depth)
+hist(traits$SRL)
+qqPlot(traits$SRL)
+shapiro.test(traits$SRL)
 
 hist(traits$seed_dry_mass)
 qqPlot(traits$seed_dry_mass)
@@ -68,67 +72,61 @@ shapiro.test(traits$seed_dry_mass)
 
 ##### log transform and scale continuous traits #####
 traitsScaled <- traits %>%
-  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), log) %>% 
-  mutate_at(vars(leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass), scale) #scale continuous traits
+  mutate_at(vars(LDMC, SLA, leaf_N, SRL, plant_height_vegetative, seed_dry_mass), log) %>% 
+  mutate_at(vars(LDMC, SLA, leaf_N, SRL, plant_height_vegetative, seed_dry_mass), scale) #scale continuous traits
 
-colnames(traitsScaled) <- c('species_matched', 'leaf_C.N', 'LDMC', 'SLA', 'plant_height_vegetative', 'rooting_depth', 'seed_dry_mass', 'growth_form', 'lifespan', 'clonal', 'n_fixation', 'mycorrhizal_type', 'photosynthetic_pathway')
+colnames(traitsScaled) <- c('species_matched', 'growth_form', 'photosynthetic_pathway', 'lifespan', 'clonal', 'mycorrhizal_type', 'n_fixation_type', 'LDMC', 'SLA', 'leaf_N', 'SRL', 'plant_height_vegetative', 'seed_dry_mass')
 
 #making categorical traits factors 
-traitsScaled[,c(8:13)] <- lapply(traitsScaled[,c(8:13)], as.factor)
+traitsScaled[,c(2:7)] <- lapply(traitsScaled[,c(2:7)], as.factor)
 
 #testing normality
-hist(traitsScaled$leaf_C.N)
-qqPlot(traitsScaled$leaf_C.N)
-shapiro.test(traitsScaled$leaf_C.N)
-#log W = 0.9714, p-value < 2.2e-16
-#sqrt W = 0.89825, p-value < 2.2e-16
+hist(traitsScaled$leaf_N)
+qqPlot(traitsScaled$leaf_N)
+shapiro.test(traitsScaled$leaf_N)
+# W = 0.99654, p-value = 0.0006791
 
 hist(traitsScaled$LDMC)
 qqPlot(traitsScaled$LDMC)
 shapiro.test(traitsScaled$LDMC)
-#log W = 0.92104, p-value < 2.2e-16
-#sqrt W = 0.97428, p-value < 2.2e-16
+# W = 0.96683, p-value < 2.2e-16
 
 hist(traitsScaled$SLA)
 qqPlot(traitsScaled$SLA)
 shapiro.test(traitsScaled$SLA)
-#log W = 0.96681, p-value < 2.2e-16
-#sqrt W = 0.92173, p-value < 2.2e-16
+# W = 0.97403, p-value < 2.2e-16
 
 hist(traitsScaled$plant_height_vegetative)
 qqPlot(traitsScaled$plant_height_vegetative)
 shapiro.test(traitsScaled$plant_height_vegetative)
-#log W = 0.99327, p-value = 3.754e-07
-#sqrt W = 0.82253, p-value < 2.2e-16
+# W = 0.99064, p-value = 5.282e-09
 
-hist(traitsScaled$rooting_depth)
-qqPlot(traitsScaled$rooting_depth)
-shapiro.test(traitsScaled$rooting_depth)
-#log W = 0.99503, p-value = 1.445e-05
-#sqrt W = 0.8344, p-value < 2.2e-16
+hist(traitsScaled$SRL)
+qqPlot(traitsScaled$SRL)
+shapiro.test(traitsScaled$SRL)
+# W = 0.90096, p-value < 2.2e-16
 
 hist(traitsScaled$seed_dry_mass)
 qqPlot(traitsScaled$seed_dry_mass)
 shapiro.test(traitsScaled$seed_dry_mass)
-#log W = 0.99679, p-value = 0.001055
-#sqrt W = 0.7173, p-value < 2.2e-16
+# W = 0.99075, p-value = 6.232e-09
 
 
 ##### relative cover datasets #####
 
 # species relative cover data
-relCoverRaw <- read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv") %>%
+relCoverRaw <- read.csv("CompiledData\\RelativeCover.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
   mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
   select(site_code:community_type, site_proj_comm, calendar_year:relcov)
 
 # corre to try species names key
-corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
+corre_to_try <- read.csv("OriginalData\\Traits\\TRY\\corre2trykey_2021.csv") %>%
   select(genus_species, species_matched) %>%
   unique()
 
 # merge species names and remove all mosses -- moss key to remove mosses from species comp data
-moss_sp_vec <- read.csv("CoRRE data\\trait data\\sCoRRE categorical trait data_12142022.csv") %>%
+moss_sp_vec <- read.csv("CleanedData\\Traits\\complete categorical traits\\sCoRRE categorical trait data_12142022.csv") %>%
   select(species_matched, leaf_type) %>%
   mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
   filter(moss=="moss") %>%
@@ -142,10 +140,10 @@ relCovClean <- relCoverRaw %>%
 rm(moss_sp_vec)
 
 ##### treatment data #####
-trt <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundance_Jan2023.csv') %>%
+trt <- read.csv('CompiledData\\RelativeCover.csv') %>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
   unique() %>%
-  left_join(read.csv('CoRRE data\\CoRRE data\\basic dataset info\\ExperimentInfo.csv')) %>%
+  left_join(read.csv('CompiledData\\ExperimentInfo.csv')) %>%
   group_by(site_code, project_name, community_type) %>%
   mutate(experiment_length=max(treatment_year)) %>%
   ungroup() %>%
@@ -221,10 +219,10 @@ for(s in 1:length(site_vector)){
     arrange(species_matched) %>%
     column_to_rownames("species_matched") %>%
     mutate_all(~ifelse(is.nan(.), NA, .)) %>% 
-    mutate_at(.vars=c("growth_form", "photosynthetic_pathway","lifespan", "clonal", "mycorrhizal_type", "n_fixation"), funs(as.numeric(as.factor(.)))) %>%
-    mutate_at(.vars=c("leaf_C.N", "LDMC", "SLA", "plant_height_vegetative", "rooting_depth", "seed_dry_mass"), funs(as.numeric(.))) %>% 
-    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation, 
-           leaf_C.N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass)
+    mutate_at(.vars=c("growth_form", "photosynthetic_pathway","lifespan", "clonal", "mycorrhizal_type", "n_fixation_type"), funs(as.numeric(as.factor(.)))) %>%
+    mutate_at(.vars=c("leaf_N", "LDMC", "SLA", "plant_height_vegetative", "SRL", "seed_dry_mass"), funs(as.numeric(.))) %>% 
+    select(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type, 
+           leaf_N, LDMC, SLA, plant_height_vegetative, SRL, seed_dry_mass)
   
   ### Calculate functional diversity metrics ###
   relCoverMatrixSubset <- as.matrix(relCoverWideSubset2)
@@ -366,4 +364,4 @@ for(s in 1:length(site_vector)){
 }
 
 
-# write.csv(functionalDiversityMetrics, 'paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-04-25.csv',row.names=F)
+# write.csv(functionalDiversityMetrics, 'paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-0628.csv',row.names=F)
