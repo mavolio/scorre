@@ -15,7 +15,13 @@ library(codyn)
 #Read in data
 traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
 
-traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
+#traits1 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv")
+traits <- read.csv("C:/Users/ohler/Downloads/CoRRE_allTraitData_wide_June2023.csv")%>%
+  dplyr::select(species_matched, trait, trait_value)%>%
+  pivot_wider(names_from = trait, values_from = trait_value)
+
+
+
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/corre2trykey_2021.csv") #contrinuous trait data
 
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
@@ -34,30 +40,23 @@ experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data
 
 
 #create average trait values per species and clean outliers
-traits<-traits1%>%
-  select(-X.1, -X, -family, -genus, -observation)%>%
-  select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, leaf_C.N) %>%
-  group_by(species_matched)%>%
-  summarise_all(funs(mean))%>%
-  ungroup()  %>%
-  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75)
+#traits<-traits1%>%
+  #select(-X.1, -X, -family, -genus, -observation)%>%
+#  select(species_matched, SLA, LDMC, leaf_N, plant_height_vegetative, seed_dry_mass, SRL) %>% #SLA, LDMC, leaf N, plant height, seed mass, and SRL
+#  group_by(species_matched)%>%
+#  summarise_all(funs(mean))%>%
+#  ungroup() # %>%
+  #filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75)
 
 
 #standardize the scale of continuous traits
-cols <- c( "seed_dry_mass", 
-           # "stem_spec_density",
-           #"leaf_N",
-           #"leaf_P",
-           "LDMC",
-           #"leaf_C",
-           #"leaf_dry_mass",
-           "plant_height_vegetative",
-           "leaf_C.N",
-           "SLA",
-           #"water_content",
-           "rooting_depth"#,
-           #"SRL",
-           #"seed_number"
+cols <- c( 
+           "SLA", 
+           "LDMC", 
+           "leaf_N", 
+           "plant_height_vegetative", 
+           "seed_dry_mass", 
+           "SRL"
 )
 
 traits[cols] <- scale(traits[cols])
@@ -142,13 +141,7 @@ df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id")
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
 #a few lines to remove NAs from the continuous trait data
-df$ok <- complete.cases(df[,c(#"stem_spec_density", #"leaf_N",#"leaf_P",
-  "LDMC",
-  "plant_height_vegetative",
-  "SLA",
-  "rooting_depth",
-  "seed_dry_mass",
-  "leaf_C.N"
+df$ok <- complete.cases(df[,c("SLA", "LDMC", "leaf_N", "plant_height_vegetative", "seed_dry_mass", "SRL"
 )])
 df <- subset(df, ok == TRUE)
 df <- subset(df, species_matched != "NA")
@@ -331,16 +324,17 @@ summarize.cwm <-   # New dataframe where we can inspect the result
   df %>%   # First step in the next string of statements
   dplyr::group_by(rep, expgroup, treatment_year, plot_id, trt_type, treatment, plot_mani) %>%   # Groups the summary file by Plot number
   dplyr::summarize(           # Coding for how we want our CWMs summarized
-    seed_dry_mass.cwm = weighted.mean(seed_dry_mass, relcov),   # Actual calculation of CWMs
-    LDMC.cwm = weighted.mean(LDMC, relcov),
-    plant_height_vegetative.cwm = weighted.mean(plant_height_vegetative, relcov),
     SLA.cwm = weighted.mean(SLA, relcov),
-    rooting_depth.cwm = weighted.mean(rooting_depth, relcov),
-    leaf_C.N.cwm = weighted.mean(rooting_depth, relcov)
+    LDMC.cwm = weighted.mean(LDMC, relcov),
+    leaf_N.cwm = weighted.mean(leaf_N, relcov),
+    plant_height_vegetative.cwm = weighted.mean(plant_height_vegetative, relcov),
+    seed_dry_mass.cwm = weighted.mean(seed_dry_mass, relcov),   # Actual calculation of CWMs
+    SRL.cwm = weighted.mean(SRL, relcov)
     )%>%
   left_join(CoRRE_CWMtraits_cat, by = c("rep", "treatment_year"))
 
-summarize.traits.continuous <- traits[,c("species_matched", "seed_dry_mass", "LDMC", "plant_height_vegetative", "SLA", "rooting_depth", "leaf_C.N")]
+
+summarize.traits.continuous <- traits[,c("species_matched", "SLA", "LDMC", "leaf_N","plant_height_vegetative", "seed_dry_mass", "SRL")]
 summarize.traits.continuous <- unique(summarize.traits.continuous)
 summarize.traits.categorical <- traits[,c("species_matched", "growth_form", "photosynthetic_pathway", "lifespan", "clonal", "mycorrhizal_type", "n_fixation")]
 summarize.traits.categorical <- subset(summarize.traits.categorical, photosynthetic_pathway == "C3" | photosynthetic_pathway == "C4" | photosynthetic_pathway == "CAM")
