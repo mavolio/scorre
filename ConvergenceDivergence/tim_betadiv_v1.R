@@ -220,10 +220,22 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   xlab("")+
   ylab("Species composition LRR distance between plots within treatment")+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
-  theme_base()
+  theme_base()+
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 
-
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/fig1_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 7,
+  height = 6,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 #models to test results
 #mod <- lmer(lrr~0+ (1|expgroup), data = subset(lrr.df, trt_type == "drought" ))
@@ -393,7 +405,24 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   xlab("")+
   ylab("Trait LRR distance between plots within treatment")+
   scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"))+
-  theme_base()
+  theme_base()+
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/fig1_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 7,
+  height = 6,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
 
 
 lrr.df_traits <- lrr.df
@@ -473,16 +502,36 @@ library(ggpmisc)
 ggplot(lrr_sp.tr, aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
   geom_point()+
-  geom_smooth(method = "lm", se = FALSE)+
+  geom_smooth(aes(color = trt_type),method = "lm", se = FALSE)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   ylim(-1.1, 2.4)+
   xlim(-1.1, 2.4)+
-  stat_fit_glance(method = 'lm',
+  #stat_fit_glance(method = 'lm',
                   #method.args = list(formula = formula),
-                  geom = 'text',
-                  aes(label = paste("P-value = ", signif(..p.value.., digits = 3), sep = "")))+
-  theme_base()
+  #                geom = 'text',
+  #                aes(label = paste("P-value = ", signif(..p.value.., digits = 3), sep = "")))+
+  xlab("LRR species composition beta diversity")+
+  ylab("LRR trait composition beta diversity")+
+  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"))+
+  theme_base()+
+  theme(legend.position = "none")
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/comp-trait_correlation.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 6,
+  height = 4.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
 
 #models to test results
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "drought")))
@@ -648,13 +697,17 @@ lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site
 
 
 ##ANY WATER MANIPULATION
-water_mani <- subset(lrr_treat_species, trt_type == "drought"| trt_type == "irr")
+water_mani <- subset(lrr_treat_species, trt_type == "drought")#| trt_type == "irr")
 mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 summary(mod)
-visreg(mod)
-ggplot(water_mani, aes(precip, lrr, color = MAP))+
-  geom_point(size = 2)+
-  geom_smooth(method = "lm", se = FALSE)+
+ggplot(water_mani, aes(precip, lrr))+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_point(aes(color = trt_type), size = 4)+
+  scale_color_manual(values = c("#df0000", "#0099f6"))+
+  ylab("LRR community composition beta diversity")+
+  xlab("Precip treatment as percentage of MAP")+
+  geom_smooth(method = "lm", se = FALSE, color = "black")+
   theme_base()
 
 ##Nitrogen gradient
@@ -668,15 +721,7 @@ visreg(mod)
 water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
 mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 summary(mod)
-ggplot(water_mani, aes(precip, lrr))+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(aes(color = trt_type), size = 4)+
-  scale_color_manual(values = c("#df0000", "#0099f6"))+
-  ylab("LRR trait beta diversity")+
-  xlab("Precip treatment as percentage of MAP")+
-  geom_smooth(method = "lm", se = FALSE, color = "black")+
-  theme_base()
+
 
 visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr trait beta diversity", xlab = "Precipitation treatment", gg = TRUE)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
