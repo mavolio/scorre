@@ -713,9 +713,18 @@ ggplot(water_mani, aes(precip, lrr))+
 ##Nitrogen gradient
 temp <- subset(lrr_treat_species, trt_type == "N")
 mod <- lmer(lrr~n + (1|expgroup) ,data = temp)
-mod <- lmer(lrr~n*MAP + (1|expgroup), data = temp)
 summary(mod)
-visreg(mod)
+ggplot(temp, aes(n, lrr))+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_point(size = 4, color = "#00b844")+
+  ylab("LRR species composition beta diversity")+
+  xlab("N addition treatment (grams/m2)")+
+  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
+  theme_base()
+
+visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
+  geom_hline(yintercept = 0)+
+  theme_base()
 
 ##traits
 water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
