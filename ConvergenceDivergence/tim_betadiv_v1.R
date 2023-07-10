@@ -258,6 +258,10 @@ tempdf <- subset(distances_master.1, expgroup %in% expgroup_drought)%>%
 mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
 
+tempdf <- subset(lrr.df, trt_type == "drought")
+mod <- lmer(lrr~0 + (1|expgroup/trt_type), data = tempdf)
+summary(mod)
+
 
 expgroup_irr <- c(distances_master.1%>%
   dplyr::select(expgroup, trt_type)%>%
@@ -697,7 +701,8 @@ lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site
 
 
 ##ANY WATER MANIPULATION
-water_mani <- subset(lrr_treat_species, trt_type == "drought")#| trt_type == "irr")
+water_mani <- subset(lrr_treat_species, trt_type == "drought"|
+                     trt_type == "irr")
 mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 summary(mod)
 ggplot(water_mani, aes(precip, lrr))+
@@ -707,8 +712,24 @@ ggplot(water_mani, aes(precip, lrr))+
   scale_color_manual(values = c("#df0000", "#0099f6"))+
   ylab("LRR community composition beta diversity")+
   xlab("Precip treatment as percentage of MAP")+
+  ylim(-1, 1)+
   geom_smooth(method = "lm", se = FALSE, color = "black")+
-  theme_base()
+  theme_base()+
+  theme(legend.position = "none")
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/wate_mani.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 ##Nitrogen gradient
 temp <- subset(lrr_treat_species, trt_type == "N")
@@ -720,11 +741,26 @@ ggplot(temp, aes(n, lrr))+
   ylab("LRR species composition beta diversity")+
   xlab("N addition treatment (grams/m2)")+
   #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
-  theme_base()
+  theme_base()+
+  theme(legend.position = "none")
 
 visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
   geom_hline(yintercept = 0)+
   theme_base()
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/N_gradient.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 ##traits
 water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
@@ -848,6 +884,7 @@ ggplot(tempdf, aes(sub.sp, lrr))+
 library(remotes)
 remotes::install_github("mastoffel/partR2") 
 library(partR2)
+library(tibble)
 
 tempdf <- subset(full_lrr.df, trt_type == "drought")
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
@@ -858,16 +895,30 @@ r2
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
-  add_column(sig = c("0","0", "1", "0"))%>%
+  tibble::add_column(sig = c("0","0", "0", "0"))%>%
   ggplot( aes(term, estimate, fill = sig))+
   geom_bar(color = "black",stat = "identity")+
-  ylim(0,.25)+
+  ylim(0,.2)+
   ylab("Partial r-squared")+
   scale_fill_manual(values = c( "white", "black"))+
   coord_flip()+
   ggtitle("DROUGHT")+
-  theme_classic()
+  xlab("")+
+  theme_classic()+
+  theme(legend.position = "none")
 
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/partialR2_drought.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3,
+  height = 10,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 
 tempdf <- tempdf <- subset(full_lrr.df, trt_type == "N")%>%
@@ -881,16 +932,30 @@ r2
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
-  add_column(sig = c("0","0", "1", "1"))%>%
-ggplot( aes(term, estimate, fill = sig))+
+  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  ggplot( aes(term, estimate, fill = sig))+
   geom_bar(color = "black",stat = "identity")+
-  ylim(0,.25)+
+  ylim(0,.2)+
   ylab("Partial r-squared")+
   scale_fill_manual(values = c( "white", "black"))+
   coord_flip()+
   ggtitle("NITROGEN")+
-    theme_classic()
+  xlab("")+
+  theme_classic()+
+  theme(legend.position = "none")
 
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/partialR2_N.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3,
+  height = 10,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 
 
@@ -903,19 +968,32 @@ r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" 
 r2
 
 r2$R2%>%
-    subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
-  mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
-  add_column(sig = c("0","1", "1", "0"))%>%
-ggplot( aes(term, estimate, fill = sig))+
+  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  ggplot( aes(term, estimate, fill = sig))+
   geom_bar(color = "black",stat = "identity")+
-  ylim(0,.25)+
+  ylim(0,.2)+
   ylab("Partial r-squared")+
   scale_fill_manual(values = c( "white", "black"))+
   coord_flip()+
- ggtitle("MULTIPLE NUTRIENT")+
-   theme_classic()
+  ggtitle("MULTIPLE NUTRIENT")+
+  xlab("")+
+  theme_classic()+
+  theme(legend.position = "none")
 
-
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/partialR2_mult_nutrient.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3,
+  height = 10,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 
 
