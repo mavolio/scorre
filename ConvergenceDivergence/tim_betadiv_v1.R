@@ -439,6 +439,7 @@ mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "drou
 mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "mult_nutrient"))
 
 
+
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
@@ -744,9 +745,6 @@ ggplot(temp, aes(n, lrr))+
   theme_base()+
   theme(legend.position = "none")
 
-visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
-  geom_hline(yintercept = 0)+
-  theme_base()
 
 ggsave(
   "C:/Users/ohler/Documents/converge-diverge/N_gradient.pdf",
@@ -855,29 +853,51 @@ full_lrr.df <- left_join(lrr.df, RAC_lrr.df, by = c("expgroup", "trt_type", "tre
 pairs(~ sub.rich + sub.eve + sub.rank + sub.sp, data = full_lrr.df)
 c("sub.rich","sub.eve" , "sub.rank" , "sub.sp")
 
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/RAC_var_supp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 10,
+  height = 10,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
 tempdf <- subset(full_lrr.df, trt_type == "drought" | trt_type == "N" | trt_type == "mult_nutrient")
 ggplot(tempdf, aes(sub.rich, lrr))+
   facet_wrap(~trt_type)+
   geom_point()+
   geom_smooth(method = "lm")+
+  ylab("LRR distance among plots between treatments")+
+  xlab("Richness difference among plots (treatment-control")+
   theme_base()
 
 ggplot(tempdf, aes(sub.eve, lrr))+
   facet_wrap(~trt_type)+
   geom_point()+
   geom_smooth(method = "lm")+
+  ylab("LRR distance among plots between treatments")+
+  xlab("Evenness difference among plots (treatment-control")+
   theme_base()
 
 ggplot(tempdf, aes(sub.rank, lrr))+
   facet_wrap(~trt_type)+
   geom_point()+
   geom_smooth(method = "lm")+
+  ylab("LRR distance among plots between treatments")+
+  xlab("Rank difference among plots (treatment-control")+
   theme_base()
 
 ggplot(tempdf, aes(sub.sp, lrr))+
   facet_wrap(~trt_type)+
   geom_point()+
   geom_smooth(method = "lm")+
+  ylab("LRR distance among plots between treatments")+
+  xlab("Species difference among plots (treatment-control")+
   theme_base()
 
 
