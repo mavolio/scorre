@@ -163,7 +163,7 @@ sites <- unite(sites, temp, c("project_name", "community_type"), sep = "::", rem
 #'test' dataframe has all the cover data but only with focal sites and treatments and such
 
 #For each treatment at each site, pull the treatment and control data, spread, calculate distance matrix, then betadisper 
-
+                
 kevin <- unite(test, expgroup, c("site_code", "project_name", "community_type"), remove = FALSE, sep = "::" ) #named Kevin because Kevin Wilcox helped make this loop
 kevin <- subset(kevin, species_matched != "NA")%>%
   ddply(.(expgroup, site_code, project_name, community_type, treatment_year, plot_id, species_matched, trt_type, plot_mani, treatment),
