@@ -213,6 +213,10 @@ lrr.df.conf <- lrr.df%>%
 
 lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient"#, "mult_GCD", "CO2"
                                                                 ))
+lrr.df.conf$min <- lrr.df.conf$lrr.mean-lrr.df.conf$lrr.error
+lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error
+
+
 #visualize
 ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
@@ -398,6 +402,12 @@ lrr.df.conf <- lrr.df%>%
     lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
     num_experiments = length(x$expgroup)
   ))
+
+
+lrr.df.conf$min <- lrr.df.conf$lrr.mean-lrr.df.conf$lrr.error
+lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error
+
+
 
 #visualize
 lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" 
