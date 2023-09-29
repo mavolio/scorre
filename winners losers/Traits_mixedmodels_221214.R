@@ -7,6 +7,7 @@
 ######
 rm(list=ls())
 setwd("~/Dropbox/tmp/desktop_dropbox/tmp/sCORRE_analysis/")
+setwd('C://Users//mavolio2//Dropbox//CoRRE_database//Data//CleanedData//Traits//')
 
 library(tidyverse)
 library(lme4)
@@ -44,27 +45,24 @@ scale_fun = function(x) {
 # }  
 
 #read in data
-#contTraits1 <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')
-contTraits1 <- read.csv('~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/Imputed Continuous_Traits/data to play with/imputed_continuous_20220620.csv')
-contTraits<-contTraits1%>%
-  select(-X.1, -X, -family, -genus, -observation)%>%
-  select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass, leaf_C.N) %>% 
-  group_by(species_matched)%>%
-  summarise_all(funs(mean))%>%
-  ungroup()  %>% 
-  filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75, leaf_C.N<150)
 
-# # ##code to drop outliers
-# contLong<-contTraits %>%
-#   pivot_longer(LDMC:leaf_C.N, names_to = "trait", values_to = "value")
-# ggplot(data=contLong, aes(x=value))+
-#   geom_histogram()+
-#   facet_wrap(~trait, scales = "free")
 
-#catTraits <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\sCoRRE categorical trait data_final_20211209.csv')
-catTraits <- read.csv('~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/CoRRE data/trait data/Final TRY Traits/sCoRRE categorical trait data_final_20211209.csv')
-catTraits <- catTraits %>% 
-  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation) %>% 
+#error family < 3 drops ~20000 observations
+Data_error<-read.csv('CoRRE_allTraitData_June2023.csv') %>% 
+  filter(error_risk_overall<3|is.na(error_risk_overall)) %>%
+  mutate(trait_value2=as.numeric(trait_value))
+
+contTraits<-Data_error%>%
+  filter(trait %in% c('LDMC', 'SLA', 'plant_height_vegetative', 'SRL', 'leaf_N', 'seed_dry_mass')) %>% 
+  select(-error_risk_overall, -error_risk_family, -error_risk_genus) %>%
+  group_by(species_matched, trait)%>%
+  summarise(value=mean(trait_value2, na.rm=T))
+
+hist(subset(contTraits, trait=='SRL')$value)
+
+
+catTraits <- Data %>% 
+  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
   filter(growth_form!="moss",species_matched!="", growth_form!="lycophyte") %>% 
   mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
   select(-mycorrhizal_type) %>% 
@@ -86,8 +84,8 @@ pairs(contTraits[,2:6])
 
 
 # Read in dci diff
-#dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
-dcidiff_models<-read.csv("~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
+dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
+#dcidiff_models<-read.csv("~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
 
 test<-dcidiff_models %>% 
   filter(trt_type2=="all mult") %>% 
@@ -95,12 +93,11 @@ test<-dcidiff_models %>%
   unique()
 
 alldat_cont<-dcidiff_models%>%
-  right_join(contTraits)%>%
-  gather(LDMC:leaf_C.N, key="trait", value="value")%>%
-  na.omit()
+  right_join(contTraits, by="species_matched")
+
 
 #Making a graph of all the models I am goign to run now, just to see if there are patterns.
-#ggplot(data=alldat_cont, aes(x=value, y=diff))+
+# ggplot(data=alldat_cont, aes(x=value, y=diff))+
 #  geom_point()+
 #  geom_smooth(method="lm")+
 #  facet_grid(trt_type2~trait, scales="free")
@@ -119,7 +116,7 @@ tmp = alldat_cont
 tmp = tmp[!is.na(tmp$diff),]
 cont_n_data = table(unique(tmp[,c("species_matched", "trt_type2", "trait")]))
 cont_n_data = apply(cont_n_data, 2:3, sum)
-write.csv(cont_n_data, "cont_n_data.csv")
+#write.csv(cont_n_data, "cont_n_data.csv")
 
 ##SLA
 mSLA<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SLA"))
@@ -137,21 +134,22 @@ toplot.SLA<-plot.sla%>%
   select(-interaction, -drop)%>%
   mutate(trait="SLA")
 
-#not using SRL b/c data is no good on TRY.
-# ###SRL
-# 
-# mSRL<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SRL"))
-# summary(mSRL)
-# 
-# plot.srl<-as.data.frame(summary(mSRL)$coefficients)%>%
-#   mutate(fixedef=row.names(plot.srl))
-# 
-# toplot.SRL<-plot.srl%>%
-#   separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
-#   filter(!is.na(interaction))%>%
-#   separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
-#   select(-interaction, -drop)%>%
-#   mutate(trait="SRL")
+###SRL
+
+mSRL<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SRL"))
+summary(mSRL)
+
+plot.srl<-as.data.frame(summary(mSRL)$coefficients)
+
+plot.srl<-plot.srl%>%
+  mutate(fixedef=row.names(plot.srl))
+
+toplot.SRL<-plot.srl%>%
+  separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
+  filter(!is.na(interaction))%>%
+  separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
+  select(-interaction, -drop)%>%
+  mutate(trait="SRL")
 
 ###seed mass
 #this model failed to converge what does that mean?
@@ -168,39 +166,6 @@ toplot.SM<-plot.sm%>%
   separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
   select(-interaction, -drop)%>%
   mutate(trait="Seed Mass")
-
-
-# ###seed number - not doing this the data was weird.
-# 
-# mSN<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="seed_number"))
-# summary(mSN)
-# 
-# plot.sn<-as.data.frame(summary(mSN)$coefficients)%>%
-#   mutate(fixedef=row.names(plot.sn))
-# 
-# toplot.SN<-plot.sn%>%
-#   separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
-#   filter(!is.na(interaction))%>%
-#   separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
-#   select(-interaction, -drop)%>%
-#   mutate(trait="Seed Number")
-
-###rooting depth
-
-mRD<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="rooting_depth"))
-summary(mRD)
-
-plot.rd<-as.data.frame(summary(mRD)$coefficients)
-
-plot.rd<-plot.rd%>%
-  mutate(fixedef=row.names(plot.rd))
-
-toplot.RD<-plot.rd%>%
-  separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
-  filter(!is.na(interaction))%>%
-  separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
-  select(-interaction, -drop)%>%
-  mutate(trait="Rooting Depth")
 
 ###LDMC
 
@@ -237,30 +202,28 @@ toplot.hgt<-plot.hght%>%
   mutate(trait="PlantHeight")
 
 
-##CtN
-mCtN<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="leaf_C.N"))
-summary(mCtN)
+##LeafN
+mN<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="leaf_N"))
+summary(mN)
 
-plot.ctn<-as.data.frame(summary(mCtN)$coefficients)
+plot.leafN<-as.data.frame(summary(mN)$coefficients)
 
-plot.ctn<-plot.ctn%>%
-  mutate(fixedef=row.names(plot.ctn))
+plot.leafN<-plot.leafN%>%
+  mutate(fixedef=row.names(plot.leafN))
 
-toplot.ctn<-plot.ctn%>%
+toplot.leafN<-plot.leafN%>%
   separate(fixedef, into=c("trt_type2", "interaction"), sep=":")%>%
   filter(!is.na(interaction))%>%
   separate(trt_type2, into=c("drop", "trt_type"), sep=9)%>%
   select(-interaction, -drop)%>%
-  mutate(trait="leaf_C.N")
+  mutate(trait="LeafN")
 
 
 toplot<-toplot.SLA%>%
-  bind_rows(toplot.SM, toplot.RD, toplot.LDMC, toplot.hgt, toplot.ctn) %>% 
+  bind_rows(toplot.SM, toplot.SRL, toplot.LDMC, toplot.hgt, toplot.leafN) %>% 
   rename(SE="Std. Error") %>% 
   mutate(trt_type2=factor(trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
-  mutate(min=Estimate-SE, max=Estimate+SE) %>% 
-  mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", "")))
-
+  mutate(min=Estimate-SE, max=Estimate+SE)
 #ggplot(data=toplot, aes(y=Estimate, x=1, label=sig))+
 #  geom_point()+
 #  geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
@@ -479,8 +442,8 @@ make_boxplot = function(toplot_data = toplot, # data to plot
 }
 
 trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
-trait.labels=c(LDMC="LDMC", leaf_C.N="C:N",
-               PlantHeight="Plant Height", "Rooting Depth"="Rooting Depth",
+trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
+               PlantHeight="Plant Height", SRL="SRL",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
