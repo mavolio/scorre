@@ -144,7 +144,7 @@ df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep 
 df$ok <- complete.cases(df[,c("SLA", "LDMC", "leaf_N", "plant_height_vegetative", "seed_dry_mass", "SRL"
 )])
 df <- subset(df, ok == TRUE)
-df <- subset(df, species_matched != "NA")
+#df <- subset(df, species_matched != "NA")
 
 
 ########################
