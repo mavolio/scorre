@@ -469,11 +469,6 @@ cattraits1 <-read.csv(infile1,header=F
 
 unlink(infile1)
 
-
-alldat_cat<-dcidiff_models%>%
-  left_join(catTraits) %>% 
-  select(-trait_value, -source, -error_risk_overall)
-
 cattrait_values<-cattraits1 %>% 
   group_by(trait, trait_value) %>% 
   summarize(n=length(species))
@@ -482,44 +477,47 @@ cattrait_values<-cattraits1 %>%
 catTraits <- cattraits1 %>% 
   filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
   mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM', 
-                             ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
-                                    ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
-                                           ifelse(trait=='lifespan' & trait_value %in% c('annual'), 'Annual/Bienn.', trait_value))))) %>% 
+                      ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
+                      ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
+                      ifelse(trait=='lifespan' & trait_value %in% c('perennial', 'biennial'), 'Perenn./Bienn.', trait_value))))) %>% 
   mutate(drop=ifelse(trait=='photosynthetic_pathway' & trait_value2 %in% c('C3', 'C4/CAM'), 0, 
-                     ifelse(trait=='n_fixation_type' & trait_value2 %in% c('N-fixer', 'none'), 0,
-                            ifelse(trait=='mycorrhizal_type' & trait_value2 %in% c('yes', 'none'), 0, 
-                                   ifelse(trait=='clonal' & trait_value2 %in% c('yes', 'no'), 0,
-                                          ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody', 'vine'), 0,
-                                                 ifelse(trait=='lifespan' & trait_value2 %in% c('Annual/Bienn.', 'perennial'), 0, 1))))))) %>% 
+              ifelse(trait=='n_fixation_type' & trait_value2 %in% c('N-fixer', 'none'), 0,
+              ifelse(trait=='mycorrhizal_type' & trait_value2 %in% c('yes', 'none'), 0, 
+              ifelse(trait=='clonal' & trait_value2 %in% c('yes', 'no'), 0,
+              ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody', 'vine'), 0,
+              ifelse(trait=='lifespan' & trait_value2 %in% c('Perenn./Bienn.', 'annual'), 0, 1))))))) %>% 
   filter(drop==0)
 
 
 
+alldat_cat<-dcidiff_models%>%
+  left_join(catTraits) %>% 
+  select(-trait_value, -source, -error_risk_overall) %>% 
+  drop_na() #this drops one species that is a hybird and had no trait data
 
 
 ###I am not sure what this is doing and why 
-
 tmp = alldat_cat
 tmp = tmp[!is.na(tmp$diff),]
-tmp$trait_value = paste(tmp$trait, tmp$value, sep = "_")
+tmp$trait_value = paste(tmp$trait, tmp$trait_value2, sep = "_")
 cat_n_data = table(unique(tmp[,c("species", "trt_type2", "trait_value")]))
 cat_n_data = apply(cat_n_data, 2:3, sum)
 
 value2 = colnames(cat_n_data)
 tmp=ifelse(value2=='clonal_no', "Non-Clonal",
   ifelse(value2=='clonal_yes', 'Clonal',
-  ifelse(value2=='lifespan_ann.bien', 'Annual/Bienn.',
-  ifelse(value2=='lifespan_perennial', 'Perennial',
-  ifelse(value2=='mycorrhizal_yes', 'Mycorr.',
-  ifelse(value2=='mycorrhizal_no', 'Non-Mycorr.',
-  ifelse(value2=='n_fixation_yes', 'N-Fixer',
-  ifelse(value2=='n_fixation_no', 'Non-N-Fixer',
-  ifelse(value2=='photo_path_C3', "C3",
-  ifelse(value2=='photo_path_C4', 'C4', value2))))))))))
+  ifelse(value2=='lifespan_annual', 'Annual',
+  ifelse(value2=='lifespan_Perenn./Bienn.', 'Perenn./Bienn.',
+  ifelse(value2=='mycorrhizal_type_yes', 'Mycorr.',
+  ifelse(value2=='mycorrhizal_type_none', 'Non-Mycorr.',
+  ifelse(value2=='n_fixation_type_N-fixer', 'N-Fixer',
+  ifelse(value2=='n_fixation_type_none', 'Non-N-Fixer',
+  ifelse(value2=='photosynthetic_pathway_C3', "C3",
+  ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', value2))))))))))
 tmp = gsub("growth_form_", "", tmp, fixed = TRUE)
 #tmp = paste(toupper(substr(tmp,1,1)), substr(tmp,2,99), sep = "")
 colnames(cat_n_data) = tmp
-write.csv(cat_n_data, "cat_n_data.csv")
+#write.csv(cat_n_data, "cat_n_data.csv")
 
 
 
@@ -528,7 +526,7 @@ mpp<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site
 summary(mpp)
 
 plot.mpp<-as.data.frame(emmeans(mpp, ~ trait_value2*trt_type2)) %>% 
-  mutate(trait="photo_path")
+  mutate(trait="photosynthetic_pathway")
 
 #lifespan
 ml<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="lifespan"))
@@ -547,14 +545,14 @@ plot.mc<-as.data.frame(emmeans(mc, ~ trait_value2*trt_type2))%>%
 mnf<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="n_fixation_type"))
 
 plot.nf<-as.data.frame(emmeans(mnf, ~ trait_value2*trt_type2))%>%
-  mutate(trait="Nfix")
+  mutate(trait="n_fixation_type")
 
 
 ##mycorhizal
 mmyc<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="mycorrhizal_type"))
 
 plot.myc<-as.data.frame(emmeans(mmyc, ~ trait_value2*trt_type2))%>%
-  mutate(trait="Myc")
+  mutate(trait="mycorrhizal_type")
 
 ##growthform
 mgf<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"))
@@ -573,14 +571,14 @@ toplotesacat<-toplot.cat %>%
   mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", ""))) %>% 
   mutate(Trait_name=ifelse(value2=='Clonal_no', "Non-Clonal",
                     ifelse(value2=='Clonal_yes', 'Clonal',
-                    ifelse(value2=='lifespan_Annual/Bienn.', 'Annual/Bienn.',
-                    ifelse(value2=='lifespan_perennial', 'Perennial',
-                    ifelse(value2=='Myc_yes', 'Mycorr.',
-                    ifelse(value2=='Myc_none', 'Non-Mycorr.',
-                    ifelse(value2=='Nfix_N-fixer', 'N-Fixer',
-                    ifelse(value2=='Nfix_none', 'Non-N-Fixer',
-                    ifelse(value2=='photo_path_C3', "C3",
-                    ifelse(value2=='photo_path_C4/CAM', 'C4/CAM', "GF")))))))))))# %>% 
+                    ifelse(value2=='lifespan_annual', 'Annual',
+                    ifelse(value2=='lifespan_Perenn./Bienn.', 'Perenn./Bienn.',
+                    ifelse(value2=='mycorrhizal_type_yes', 'Mycorr.',
+                    ifelse(value2=='mycorrhizal_type_none', 'Non-Mycorr.',
+                    ifelse(value2=='n_fixation_type_N-fixer', 'N-Fixer',
+                    ifelse(value2=='n_fixation_type_none', 'Non-N-Fixer',
+                    ifelse(value2=='photosynthetic_pathway_C3', "C3",
+                    ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', "GF")))))))))))# %>% 
   #mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA'))) #%>% 
   #na.omit()
 head(toplotesacat)
@@ -643,7 +641,7 @@ tord = rev(c(2,3,
              13,14))
 
 if(FALSE) {
-pdf("traits_by_treat_cat2.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_cat4.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -671,7 +669,7 @@ gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
                          rep("orange",2),
                          rep("red", 2))), alpha.f = 0.08)
 
-pdf("traits_by_treat_cat_2col2.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2col4.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -707,6 +705,7 @@ make_boxplot(toplot_data = toplotesacat,
              xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data)
 mtext("Effect Size, Mean DCi diff. by. Trait", side = 1, outer = TRUE, line = 1.2, cex = 1.7)
 dev.off()
+
 
 
 
