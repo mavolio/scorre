@@ -21,46 +21,16 @@ scale_fun = function(x) {
 }
 
 setwd('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript')
-### Trait data
 
-# #barGraphStats(data=, variable="", byFactorNames=c(""))
-# barGraphStats <- function(data, variable, byFactorNames) {
-#   count <- length(byFactorNames)
-#   N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
-#   names(N)[1:count] <- byFactorNames
-#   names(N) <- sub("^x$", "N", names(N))
-#   mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
-#   names(mean)[1:count] <- byFactorNames
-#   names(mean) <- sub("^x$", "mean", names(mean))
-#   sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
-#   names(sd)[1:count] <- byFactorNames
-#   names(sd) <- sub("^x$", "sd", names(sd))
-#   preSummaryStats <- merge(N, mean, by=byFactorNames)
-#   finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
-#   finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
-#   return(finalSummaryStats)
-# }  
+# Read in dci diff
+dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv") %>% 
+  rename(species=species_matched)
+
+
+# Continuous trait data ---------------------------------------------------
+
 
 #read in data from EDI
-inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/5ebbc389897a6a65dd0865094a8d0ffd" 
-infile1 <- tempfile()
-try(download.file(inUrl1,infile1,method="curl"))
-if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
-
-cattraits1 <-read.csv(infile1,header=F 
-                      ,skip=1
-                      ,sep=","  
-                      ,quot='"' 
-                      , col.names=c(
-                        "family",     
-                        "species",     
-                        "trait",     
-                        "trait_value",     
-                        "source",     
-                        "error_risk_overall"    ), check.names=TRUE)
-
-unlink(infile1)
-
 inUrl2  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/169fc12d10ac20b0e504f8d5ca0b8ee8" 
 infile2 <- tempfile()
 try(download.file(inUrl2,infile2,method="curl"))
@@ -100,32 +70,9 @@ ggplot(data=contTraits, aes(x=value))+
   geom_histogram()+
   facet_wrap(~trait, scales = "free")
 
-cattrait_values<-cattraits1 %>% 
-  group_by(trait, trait_value) %>% 
-  summarize(n=length(species))
-
-#simplify groupings and select categories
-catTraits <- cattraits1 %>% 
-  filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
-  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM', 
-                      ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
-                      ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
-                      ifelse(trait=='lifespan' & trait_value %in% c('annual'), 'Annual/Bienn.', trait_value))))) %>% 
-  mutate(drop=ifelse(trait=='photosynthetic_pathway' & trait_value2 %in% c('C3', 'C4/CAM'), 0, 
-              ifelse(trait=='n_fixation_type' & trait_value2 %in% c('N-fixer', 'none'), 0,
-              ifelse(trait=='mycorrhizal_type' & trait_value2 %in% c('yes', 'none'), 0, 
-              ifelse(trait=='clonal' & trait_value2 %in% c('yes', 'no'), 0,
-              ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody', 'vine'), 0,
-              ifelse(trait=='lifespan' & trait_value2 %in% c('Annual/Bienn.', 'perennial'), 0, 1))))))) %>% 
-  filter(drop==0)
-
-# Read in dci diff
-dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv") %>% 
-  rename(species=species_matched)
-
+##merge trait data with species responses
 alldat_cont<-dcidiff_models%>%
   left_join(contTraits, by="species")
-
 
 #Making a graph of all the models I am goign to run now, just to see if there are patterns.
 ggplot(data=alldat_cont, aes(x=value, y=diff))+
@@ -148,6 +95,9 @@ tmp = tmp[!is.na(tmp$diff),]
 cont_n_data = table(unique(tmp[,c("species", "trt_type2", "trait")]))
 cont_n_data = apply(cont_n_data, 2:3, sum)
 #write.csv(cont_n_data, "cont_n_data.csv")
+
+
+# Continuous models -------------------------------------------------------
 
 ##SLA
 mSLA<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="SLA"))
@@ -255,16 +205,8 @@ toplot<-toplot.SLA%>%
   mutate(trt_type2=factor(trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
   mutate(min=Estimate-SE, max=Estimate+SE)
 
-#ggplot(data=toplot, aes(y=Estimate, x=1, label=sig))+
-#  geom_point()+
-#  geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
-#  coord_flip()+
-#  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank())+
-#  xlab("")+
-#  scale_x_continuous(limits=c(0, 2))+
-#  geom_hline(yintercept=0, linetype="dashed")+
-#  geom_text(nudge_x = 0.2, nudge_y = 0.01, size=10, color="red")+
-#  facet_grid(trt_type2~trait, labeller = labeller(trt_type2=trt.labels))
+# Plot code ---------------------------------------------------------------
+
 
 ##############
 # new plot
@@ -472,6 +414,10 @@ make_boxplot = function(toplot_data = toplot, # data to plot
   }
 }
 
+
+
+# Continuous plot ---------------------------------------------------------
+
 trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
 trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                PlantHeight="Plant Height", SRL="SRL",
@@ -500,11 +446,56 @@ make_boxplot(toplot_data = toplot,
 dev.off()
 
 
-####Categorical data
+
+# Categorical data --------------------------------------------------------
+
+#read in data from EDI
+inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/5ebbc389897a6a65dd0865094a8d0ffd" 
+infile1 <- tempfile()
+try(download.file(inUrl1,infile1,method="curl"))
+if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
+
+cattraits1 <-read.csv(infile1,header=F 
+                      ,skip=1
+                      ,sep=","  
+                      ,quot='"' 
+                      , col.names=c(
+                        "family",     
+                        "species",     
+                        "trait",     
+                        "trait_value",     
+                        "source",     
+                        "error_risk_overall"    ), check.names=TRUE)
+
+unlink(infile1)
+
 
 alldat_cat<-dcidiff_models%>%
   left_join(catTraits) %>% 
   select(-trait_value, -source, -error_risk_overall)
+
+cattrait_values<-cattraits1 %>% 
+  group_by(trait, trait_value) %>% 
+  summarize(n=length(species))
+
+#simplify groupings and select categories
+catTraits <- cattraits1 %>% 
+  filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
+  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM', 
+                             ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
+                                    ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
+                                           ifelse(trait=='lifespan' & trait_value %in% c('annual'), 'Annual/Bienn.', trait_value))))) %>% 
+  mutate(drop=ifelse(trait=='photosynthetic_pathway' & trait_value2 %in% c('C3', 'C4/CAM'), 0, 
+                     ifelse(trait=='n_fixation_type' & trait_value2 %in% c('N-fixer', 'none'), 0,
+                            ifelse(trait=='mycorrhizal_type' & trait_value2 %in% c('yes', 'none'), 0, 
+                                   ifelse(trait=='clonal' & trait_value2 %in% c('yes', 'no'), 0,
+                                          ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody', 'vine'), 0,
+                                                 ifelse(trait=='lifespan' & trait_value2 %in% c('Annual/Bienn.', 'perennial'), 0, 1))))))) %>% 
+  filter(drop==0)
+
+
+
+
 
 ###I am not sure what this is doing and why 
 
