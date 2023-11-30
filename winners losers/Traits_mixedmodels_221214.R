@@ -6,16 +6,12 @@
 #### updated 14.12.2022 by A. Clark
 ######
 rm(list=ls())
-setwd("~/Dropbox/tmp/desktop_dropbox/tmp/sCORRE_analysis/")
-setwd('C://Users//mavolio2//Dropbox//CoRRE_database//Data//CleanedData//Traits//')
 
 library(tidyverse)
 library(lme4)
 library(emmeans)
 require(RColorBrewer)
 #library(relaimpo)
-
-#theme_set(theme_bw(12))
 
 scale_fun = function(x) {
   x.new = log(x)
@@ -24,6 +20,7 @@ scale_fun = function(x) {
   x.new
 }
 
+setwd('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript')
 ### Trait data
 
 # #barGraphStats(data=, variable="", byFactorNames=c(""))
@@ -44,63 +41,97 @@ scale_fun = function(x) {
 #   return(finalSummaryStats)
 # }  
 
-#read in data
+#read in data from EDI
+inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/5ebbc389897a6a65dd0865094a8d0ffd" 
+infile1 <- tempfile()
+try(download.file(inUrl1,infile1,method="curl"))
+if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
+
+cattraits1 <-read.csv(infile1,header=F 
+                      ,skip=1
+                      ,sep=","  
+                      ,quot='"' 
+                      , col.names=c(
+                        "family",     
+                        "species",     
+                        "trait",     
+                        "trait_value",     
+                        "source",     
+                        "error_risk_overall"    ), check.names=TRUE)
+
+unlink(infile1)
+
+inUrl2  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/169fc12d10ac20b0e504f8d5ca0b8ee8" 
+infile2 <- tempfile()
+try(download.file(inUrl2,infile2,method="curl"))
+if (is.na(file.size(infile2))) download.file(inUrl2,infile2,method="auto")
 
 
-#error family < 3 drops ~20000 observations
-Data_error<-read.csv('CoRRE_allTraitData_June2023.csv') %>% 
-  filter(error_risk_overall<3|is.na(error_risk_overall)) %>%
-  mutate(trait_value2=as.numeric(trait_value))
+conttraits1<-read.csv(infile2,header=F 
+                      ,skip=1
+                      ,sep=","  
+                      ,quot='"' 
+                      , col.names=c(
+                        "family",     
+                        "species",     
+                        "trait",     
+                        "trait_value",     
+                        "error_risk_overall",     
+                        "error_risk_family",     
+                        "error_risk_genus",     
+                        "source"    ), check.names=TRUE)
 
-contTraits<-Data_error%>%
+unlink(infile2)
+
+#error risk < 3 drops ~28 observations
+#error risk < 2.5 drops ~99 observations
+#error risk < 2 drop 328 obs
+remove_risk<-conttraits1 %>% 
+  filter(error_risk_overall<2|is.na(error_risk_overall))
+
+contTraits<-remove_risk%>%
   filter(trait %in% c('LDMC', 'SLA', 'plant_height_vegetative', 'SRL', 'leaf_N', 'seed_dry_mass')) %>% 
   select(-error_risk_overall, -error_risk_family, -error_risk_genus) %>%
-  group_by(species_matched, trait)%>%
-  summarise(value=mean(trait_value2, na.rm=T))
+  group_by(species, trait)%>%
+  summarise(value=mean(trait_value, na.rm=T))
 
-hist(subset(contTraits, trait=='SRL')$value)
+###looing for outliers
+ggplot(data=contTraits, aes(x=value))+
+  geom_histogram()+
+  facet_wrap(~trait, scales = "free")
 
+cattrait_values<-cattraits1 %>% 
+  group_by(trait, trait_value) %>% 
+  summarize(n=length(species))
 
-catTraits <- Data %>% 
-  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
-  filter(growth_form!="moss",species_matched!="", growth_form!="lycophyte") %>% 
-  mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
-  select(-mycorrhizal_type) %>% 
-  mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
-  select(-photosynthetic_pathway)
-
-## simplify groupings
-catTraits$photo_path_simple = catTraits$photo_path
-#catTraits$photo_path_simple[catTraits$photo_path_simple%in%c("C4", "CAM")] = "C4.CAM"
-catTraits$photo_path_simple[catTraits$photo_path_simple%in%c("parasitic", "possible hybrid")] = NA
-catTraits$photo_path = catTraits$photo_path_simple
-
-catTraits$lifespan_simple = catTraits$lifespan
-catTraits$lifespan_simple[catTraits$lifespan_simple%in%c("annual", "biennial")] = "ann.bien"
-catTraits$lifespan_simple[catTraits$lifespan_simple%in%c("uncertain")] = NA
-catTraits$lifespan = catTraits$lifespan_simple
-
-pairs(contTraits[,2:6])
-
+#simplify groupings and select categories
+catTraits <- cattraits1 %>% 
+  filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
+  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM', 
+                      ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
+                      ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
+                      ifelse(trait=='lifespan' & trait_value %in% c('annual'), 'Annual/Bienn.', trait_value))))) %>% 
+  mutate(drop=ifelse(trait=='photosynthetic_pathway' & trait_value2 %in% c('C3', 'C4/CAM'), 0, 
+              ifelse(trait=='n_fixation_type' & trait_value2 %in% c('N-fixer', 'none'), 0,
+              ifelse(trait=='mycorrhizal_type' & trait_value2 %in% c('yes', 'none'), 0, 
+              ifelse(trait=='clonal' & trait_value2 %in% c('yes', 'no'), 0,
+              ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody', 'vine'), 0,
+              ifelse(trait=='lifespan' & trait_value2 %in% c('Annual/Bienn.', 'perennial'), 0, 1))))))) %>% 
+  filter(drop==0)
 
 # Read in dci diff
-dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
-#dcidiff_models<-read.csv("~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
-
-test<-dcidiff_models %>% 
-  filter(trt_type2=="all mult") %>% 
-  select(species_matched) %>% 
-  unique()
+dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv") %>% 
+  rename(species=species_matched)
 
 alldat_cont<-dcidiff_models%>%
-  right_join(contTraits, by="species_matched")
+  left_join(contTraits, by="species")
 
 
 #Making a graph of all the models I am goign to run now, just to see if there are patterns.
-# ggplot(data=alldat_cont, aes(x=value, y=diff))+
-#  geom_point()+
-#  geom_smooth(method="lm")+
-#  facet_grid(trt_type2~trait, scales="free")
+ggplot(data=alldat_cont, aes(x=value, y=diff))+
+ geom_point()+
+ geom_smooth(method="lm")+
+ facet_grid(trt_type2~trait, scales="free")
 ###
 #making mixed models - run through all traits.
 
@@ -114,12 +145,12 @@ alldat_cont<-dcidiff_models%>%
 #getting number of species per trait
 tmp = alldat_cont
 tmp = tmp[!is.na(tmp$diff),]
-cont_n_data = table(unique(tmp[,c("species_matched", "trt_type2", "trait")]))
+cont_n_data = table(unique(tmp[,c("species", "trt_type2", "trait")]))
 cont_n_data = apply(cont_n_data, 2:3, sum)
 #write.csv(cont_n_data, "cont_n_data.csv")
 
 ##SLA
-mSLA<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SLA"))
+mSLA<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="SLA"))
 summary(mSLA)
 
 plot.sla<-as.data.frame(summary(mSLA)$coefficients)
@@ -136,7 +167,7 @@ toplot.SLA<-plot.sla%>%
 
 ###SRL
 
-mSRL<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SRL"))
+mSRL<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="SRL"))
 summary(mSRL)
 
 plot.srl<-as.data.frame(summary(mSRL)$coefficients)
@@ -152,8 +183,7 @@ toplot.SRL<-plot.srl%>%
   mutate(trait="SRL")
 
 ###seed mass
-#this model failed to converge what does that mean?
-mSM<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="seed_dry_mass"))
+mSM<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="seed_dry_mass"))
 summary(mSM)
 
 plot.sm<-as.data.frame(summary(mSM)$coefficients)
@@ -169,7 +199,7 @@ toplot.SM<-plot.sm%>%
 
 ###LDMC
 
-mLDMC<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="LDMC"))
+mLDMC<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="LDMC"))
 summary(mLDMC)
 
 plot.ldmc<-as.data.frame(summary(mLDMC)$coefficients)
@@ -186,7 +216,7 @@ toplot.LDMC<-plot.ldmc%>%
 
 ###plot height vegetative
 
-mhght<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="plant_height_vegetative"))
+mhght<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="plant_height_vegetative"))
 summary(mhght)
 
 plot.hght<-as.data.frame(summary(mhght)$coefficients)
@@ -203,7 +233,7 @@ toplot.hgt<-plot.hght%>%
 
 
 ##LeafN
-mN<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="leaf_N"))
+mN<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="leaf_N"))
 summary(mN)
 
 plot.leafN<-as.data.frame(summary(mN)$coefficients)
@@ -224,6 +254,7 @@ toplot<-toplot.SLA%>%
   rename(SE="Std. Error") %>% 
   mutate(trt_type2=factor(trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
   mutate(min=Estimate-SE, max=Estimate+SE)
+
 #ggplot(data=toplot, aes(y=Estimate, x=1, label=sig))+
 #  geom_point()+
 #  geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
@@ -447,7 +478,7 @@ trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
-pdf("traits_by_treat_cont.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_contDec2023.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplot,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -471,23 +502,16 @@ dev.off()
 
 ####Categorical data
 
-table(catTraits$photo_path)#drop possible hybird, parasitic
-table(catTraits$growth_form)#drop cactus
-table(catTraits$clonal)#drop uncertain
-table(catTraits$n_fixation)
-table(catTraits$mycorrhizal)#drop unk
-table(catTraits$lifespan)#drop uncertain
-
 alldat_cat<-dcidiff_models%>%
-  right_join(catTraits)%>%
-  gather(growth_form:photo_path, key="trait", value="value")%>%
-  na.omit()
+  left_join(catTraits) %>% 
+  select(-trait_value, -source, -error_risk_overall)
 
+###I am not sure what this is doing and why 
 
 tmp = alldat_cat
 tmp = tmp[!is.na(tmp$diff),]
 tmp$trait_value = paste(tmp$trait, tmp$value, sep = "_")
-cat_n_data = table(unique(tmp[,c("species_matched", "trt_type2", "trait_value")]))
+cat_n_data = table(unique(tmp[,c("species", "trt_type2", "trait_value")]))
 cat_n_data = apply(cat_n_data, 2:3, sum)
 
 value2 = colnames(cat_n_data)
@@ -509,48 +533,41 @@ write.csv(cat_n_data, "cat_n_data.csv")
 
 
 #photo path
-mpp<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="photo_path"&value!="parasitic"&value!="possible hybrid"&value!="CAM"))
+mpp<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="photosynthetic_pathway"))
 summary(mpp)
 
-plot.mpp<-as.data.frame(emmeans(mpp, ~ value*trt_type2)) %>% 
+plot.mpp<-as.data.frame(emmeans(mpp, ~ trait_value2*trt_type2)) %>% 
   mutate(trait="photo_path")
 
 #lifespan
-ml<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="lifespan"&value!='uncertain'))
+ml<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="lifespan"))
 summary(ml)
 
-plot.ml<-as.data.frame(emmeans(ml, ~ value*trt_type2)) %>% 
+plot.ml<-as.data.frame(emmeans(ml, ~ trait_value2*trt_type2)) %>% 
   mutate(trait="lifespan")
 
-# #growth form
-# mgf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"&value!="cactus"))
-# summary(mgf)
-# 
-# plot.mgf<-as.data.frame(emmeans(mgf, ~ value*trt_type2)) %>% 
-#   mutate(trait="growth_form")
-# 
 ###clonaltiy
-mc<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="clonal"&value!='uncertain'))
+mc<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="clonal"))
 
-plot.mc<-as.data.frame(emmeans(mc, ~ value*trt_type2))%>%
+plot.mc<-as.data.frame(emmeans(mc, ~ trait_value2*trt_type2))%>%
   mutate(trait="Clonal")
 
 ##nfixer
-mnf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="n_fixation"))
+mnf<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="n_fixation_type"))
 
-plot.nf<-as.data.frame(emmeans(mnf, ~ value*trt_type2))%>%
+plot.nf<-as.data.frame(emmeans(mnf, ~ trait_value2*trt_type2))%>%
   mutate(trait="Nfix")
 
 
 ##mycorhizal
-mmyc<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="mycorrhizal"&value!="unk"))
+mmyc<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="mycorrhizal_type"))
 
-plot.myc<-as.data.frame(emmeans(mmyc, ~ value*trt_type2))%>%
+plot.myc<-as.data.frame(emmeans(mmyc, ~ trait_value2*trt_type2))%>%
   mutate(trait="Myc")
 
 ##growthform
-mgf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"&value!='cactus'&value!='fern'))
-plot.mgf<-as.data.frame(emmeans(mgf, ~ value*trt_type2))%>%
+mgf<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"))
+plot.mgf<-as.data.frame(emmeans(mgf, ~ trait_value2*trt_type2))%>%
   mutate(trait="GF")
 
 
@@ -560,23 +577,23 @@ toplot.cat<-plot.mpp%>%
 
 toplotesacat<-toplot.cat %>% 
   mutate(trt_type3=factor(trt_type2, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
-  mutate(value2=paste(trait, value, sep="_" )) %>% 
+  mutate(value2=paste(trait, trait_value2, sep="_" )) %>% 
   mutate(min=emmean-SE, max=emmean+SE) %>% 
   mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", ""))) %>% 
   mutate(Trait_name=ifelse(value2=='Clonal_no', "Non-Clonal",
                     ifelse(value2=='Clonal_yes', 'Clonal',
-                    ifelse(value2=='lifespan_ann.bien', 'Annual/Bienn.',
+                    ifelse(value2=='lifespan_Annual/Bienn.', 'Annual/Bienn.',
                     ifelse(value2=='lifespan_perennial', 'Perennial',
                     ifelse(value2=='Myc_yes', 'Mycorr.',
-                    ifelse(value2=='Myc_no', 'Non-Mycorr.',
-                    ifelse(value2=='Nfix_yes', 'N-Fixer',
-                    ifelse(value2=='Nfix_no', 'Non-N-Fixer',
+                    ifelse(value2=='Myc_none', 'Non-Mycorr.',
+                    ifelse(value2=='Nfix_N-fixer', 'N-Fixer',
+                    ifelse(value2=='Nfix_none', 'Non-N-Fixer',
                     ifelse(value2=='photo_path_C3', "C3",
-                    ifelse(value2=='photo_path_C4', 'C4', "GF")))))))))))# %>% 
+                    ifelse(value2=='photo_path_C4/CAM', 'C4/CAM', "GF")))))))))))# %>% 
   #mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA'))) #%>% 
   #na.omit()
 head(toplotesacat)
-toplotesacat$value = as.character(toplotesacat$value)
+toplotesacat$value = as.character(toplotesacat$trait_value2)
 toplotesacat$Trait_name = as.character(toplotesacat$Trait_name)
 toplotesacat$value[toplotesacat$Trait_name!="GF"] = toplotesacat$Trait_name[toplotesacat$Trait_name!="GF"]
 toplotesacat$value = factor(toplotesacat$value)
@@ -635,7 +652,7 @@ tord = rev(c(2,3,
              13,14))
 
 if(FALSE) {
-pdf("traits_by_treat_cat.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_cat2.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -663,7 +680,7 @@ gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
                          rep("orange",2),
                          rep("red", 2))), alpha.f = 0.08)
 
-pdf("traits_by_treat_cat_2col.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2col2.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
