@@ -6,18 +6,15 @@ library(gridExtra)
 
 ###read in data
 
-my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/"
-my.wd <- "E:/Dropbox/sDiv_sCoRRE_shared/"
-my.wd <- "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\"
-my.wd <- "C:\\Users\\wilco\\OneDrive - University of Wyoming\\Cross_workstation_workspace\\Working groups\\sDiv\\"
-  
+setwd("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\")
+
 #read in the data
 
 #raw abundance data and drop pretreatment years
-dat<-read.csv(paste(my.wd, "CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv",sep="")) %>% 
+dat<-read.csv("CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv") %>% 
   filter(treatment_year!=0)
 
-sp <-read.csv(paste(my.wd,"CoRRE data/trait data/corre2trykey_2021.csv", sep=""))%>%
+sp <-read.csv("CoRRE data/trait data/corre2trykey_2021.csv")%>%
   ungroup() %>% 
   select(genus_species, species_matched)%>%
   unique()
@@ -401,7 +398,7 @@ allnut_mean<-CT_diff%>%
 Fulldataset<-allmult_mean%>%
   bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 
-write.csv(Fulldataset, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_Nov2022.csv", sep=""), row.names=F)
+write.csv(Fulldataset, "WinnersLosers paper/data/Species_DCiDiff_Nov2022.csv", row.names=F)
 
 ###checking normality of DCI values
 ggplot(data=Fulldataset, aes(x=ave_diff))+
