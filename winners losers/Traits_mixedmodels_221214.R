@@ -26,6 +26,8 @@ setwd('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscri
 dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv") %>% 
   rename(species=species_matched)
 
+length(unique(dcidiff_models$species))
+
 
 # Continuous trait data ---------------------------------------------------
 
@@ -60,8 +62,7 @@ remove_risk<-conttraits1 %>%
   filter(error_risk_overall<2|is.na(error_risk_overall))
 
 contTraits<-remove_risk%>%
-  filter(trait %in% c('LDMC', 'SLA', 'plant_height_vegetative', 'SRL', 'leaf_N', 'seed_dry_mass')) %>% 
-  select(-error_risk_overall, -error_risk_family, -error_risk_genus) %>%
+  filter(trait %in% c('LDMC', 'SLA', 'plant_height_vegetative', 'SRL', 'leaf_N', 'seed_dry_mass')) %>%   select(-error_risk_overall, -error_risk_family, -error_risk_genus) %>%
   group_by(species, trait)%>%
   summarise(value=mean(trait_value, na.rm=T))
 
@@ -73,6 +74,15 @@ ggplot(data=contTraits, aes(x=value))+
 ##merge trait data with species responses
 alldat_cont<-dcidiff_models%>%
   left_join(contTraits, by="species")
+
+
+#summarizing the data
+summaryCont<-alldat_cont %>% 
+  select(species, trait, value) %>% 
+  unique() %>% 
+  drop_na() %>% 
+  group_by(trait) %>% 
+  summarize(min=min(value), max=max(value), n=length(value))
 
 #Making a graph of all the models I am goign to run now, just to see if there are patterns.
 ggplot(data=alldat_cont, aes(x=value, y=diff))+
@@ -469,9 +479,6 @@ cattraits1 <-read.csv(infile1,header=F
 
 unlink(infile1)
 
-cattrait_values<-cattraits1 %>% 
-  group_by(trait, trait_value) %>% 
-  summarize(n=length(species))
 
 #simplify groupings and select categories
 catTraits <- cattraits1 %>% 
@@ -495,6 +502,11 @@ alldat_cat<-dcidiff_models%>%
   select(-trait_value, -source, -error_risk_overall) %>% 
   drop_na() #this drops one species that is a hybird and had no trait data
 
+cattrait_values<-alldat_cat %>% 
+  select(species, trait, trait_value2) %>% 
+  unique() %>% 
+  group_by(trait, trait_value2) %>% 
+  summarize(n=length(species))
 
 ###I am not sure what this is doing and why 
 tmp = alldat_cat
@@ -641,7 +653,7 @@ tord = rev(c(2,3,
              13,14))
 
 if(FALSE) {
-pdf("traits_by_treat_cat4.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_catDec2023.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -669,7 +681,7 @@ gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
                          rep("orange",2),
                          rep("red", 2))), alpha.f = 0.08)
 
-pdf("traits_by_treat_cat_2col4.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colDec2023.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -704,6 +716,7 @@ make_boxplot(toplot_data = toplotesacat,
              group_colors = gcol_split,
              xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data)
 mtext("Effect Size, Mean DCi diff. by. Trait", side = 1, outer = TRUE, line = 1.2, cex = 1.7)
+dev.off()
 dev.off()
 
 
