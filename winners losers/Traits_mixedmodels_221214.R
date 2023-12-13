@@ -23,7 +23,7 @@ scale_fun = function(x) {
 setwd('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript')
 
 # Read in dci diff
-dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv") %>% 
+dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsDec2023.csv") %>% 
   rename(species=species_matched)
 
 length(unique(dcidiff_models$species))
@@ -66,15 +66,18 @@ contTraits<-remove_risk%>%
   group_by(species, trait)%>%
   summarise(value=mean(trait_value, na.rm=T))
 
-###looing for outliers
+###looking for outliers
 ggplot(data=contTraits, aes(x=value))+
   geom_histogram()+
   facet_wrap(~trait, scales = "free")
 
 ##merge trait data with species responses
 alldat_cont<-dcidiff_models%>%
-  left_join(contTraits, by="species")
+  left_join(contTraits, by="species") %>% 
+  drop_na()
 
+###how many species included in the continuous analyses?
+length(unique(alldat_cont$species))
 
 #summarizing the data
 summaryCont<-alldat_cont %>% 
@@ -85,7 +88,7 @@ summaryCont<-alldat_cont %>%
   summarize(min=min(value), max=max(value), n=length(value))
 
 #Making a graph of all the models I am goign to run now, just to see if there are patterns.
-ggplot(data=alldat_cont, aes(x=value, y=diff))+
+ggplot(data=alldat_cont, aes(x=scale_fun(value), y=diff))+
  geom_point()+
  geom_smooth(method="lm")+
  facet_grid(trt_type2~trait, scales="free")
@@ -500,7 +503,9 @@ catTraits <- cattraits1 %>%
 alldat_cat<-dcidiff_models%>%
   left_join(catTraits) %>% 
   select(-trait_value, -source, -error_risk_overall) %>% 
-  drop_na() #this drops one species that is a hybird and had no trait data
+  drop_na() #this drops one species that is a hybrid and had no trait data
+
+length(unique(alldat_cat$species))
 
 cattrait_values<-alldat_cat %>% 
   select(species, trait, trait_value2) %>% 
@@ -641,7 +646,7 @@ toplotesacat$trait = toplotesacat$value
 # new plot
 ##############
 gcol = adjustcolor(rev(c(rep("darkgreen",2),
-                         rep("blue",4),
+                         rep("purple",4),
                          rep("orange",4),
                          rep("red", 4))), alpha.f = 0.08)
 tord = rev(c(2,3,
@@ -677,11 +682,11 @@ dev.off()
 tord1 = rev(c(2,11,7,12,4,5,14))
 tord2 = rev(c(3,8,10,1,9,6,13))
 gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
-                         rep("blue",2),
+                         rep("purple",2),
                          rep("orange",2),
                          rep("red", 2))), alpha.f = 0.08)
 
-pdf("traits_by_treat_cat_2colDec2023.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colDec2023_2.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -720,5 +725,69 @@ dev.off()
 dev.off()
 
 
+###thinking about trait categories
+catTraits_full <- cattraits1 %>% 
+  filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
+  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM', 
+                             ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
+                                    ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
+                                           ifelse(trait=='lifespan' & trait_value %in% c('perennial', 'biennial'), 'Perenn./Bienn.', trait_value))))) 
 
 
+
+alldat_cat_full<-dcidiff_models%>%
+  left_join(catTraits_full) %>% 
+  select(-trait_value, -source, -error_risk_overall) %>% 
+  drop_na()
+
+
+traitcats_full<-alldat_cat_full %>%
+  pivot_wider(names_from=trait, values_from = trait_value2, values_fill = NA) %>% 
+  drop_na() %>% 
+  select(species, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
+  unique() %>% 
+  group_by(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
+  summarize(n=length(species))
+
+sum(traitcats_full$n)
+
+TraitSyndrome<-alldat_cat_full %>%
+  pivot_wider(names_from=trait, values_from = trait_value2, values_fill = NA) %>% 
+  select(species, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
+  unique() %>% 
+ mutate(syndrome=
+          ifelse(photosynthetic_pathway=="C4/CAM", 'C4/CAM', 
+          ifelse(growth_form=='forb'&lifespan=='annual', 'ForbAnn',
+          ifelse(growth_form=='graminoid'&lifespan=='annual', 'GramAnn', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='none'&n_fixation_type=='none', 'ForbPernNoMut', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&n_fixation_type=='N-fixer', 'ForbPernNfix', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='yes','ForbPernMyc', 
+          #ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&clonal=='no'&mycorrhizal_type=='yes', 'ForbPernNoClonMyc',
+          ifelse(growth_form=='woody', 'Woody', 
+          ifelse(growth_form=='graminoid'&lifespan=='Perenn./Bienn.'&photosynthetic_pathway=='C3', 'GramPernC3', 'todo')))))))))
+
+SyndromeN<-TraitSyndrome %>% 
+  group_by(syndrome) %>% 
+  summarise(n=length(species))
+
+SpSyndrome<-TraitSyndrome %>% 
+  select(species, syndrome) %>% 
+  filter(syndrome!='todo')
+
+syndrome_diff_all <-dcidiff_models %>% 
+  left_join(SpSyndrome)
+
+#syndromes
+msynd<-lmer(diff ~ -1 + trt_type2 + syndrome:trt_type2 + (1|species) + (1|site_code), data=syndrome_diff_all)
+
+plot.msynd<-as.data.frame(emmeans(msynd, ~ syndrome*trt_type2))%>%
+  mutate(trait="Synd") %>% 
+  mutate(sig=ifelse(asymp.LCL<0&asymp.UCL<0|asymp.LCL>0&asymp.UCL>0, 1, 0))
+
+ggplot(data=plot.msynd, aes(x=emmean, y=trt_type2, color=as.factor(sig)))+
+  geom_point()+
+  geom_errorbar(aes(xmin=emmean-1.96*SE, xmax=emmean+1.96*SE), width=0.05)+
+  geom_vline(xintercept=0)+
+  facet_wrap(~syndrome)
+
+                 
