@@ -4,6 +4,8 @@
 library(tidyverse)
 library(gridExtra)
 
+theme_set(theme_bw(12))
+
 ###read in data
 
 setwd("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\")
@@ -31,7 +33,7 @@ dat_cleansp<-dat%>%
 
 
 #info on treatments
-trts<-read.csv(paste(my.wd, "CoRRE data\\CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep=""))%>%
+trts<-read.csv("CoRRE data\\CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")%>%
   select(site_code, project_name, community_type, treatment, trt_type, pulse, plot_mani,resource_mani)%>%
   unique()
 
@@ -55,6 +57,13 @@ trt_analysis<-trts%>%
 alldat<-dat_cleansp%>%
   left_join(trts)%>%
   mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))
+
+test<-dat %>% 
+  filter(site_code=='TAS') %>% 
+  ungroup() %>% 
+  select(project_name, community_type, treatment, block, plot_id) %>% 
+  unique
+  
 
 ## Need to add in zeros
 
@@ -399,6 +408,28 @@ Fulldataset<-allmult_mean%>%
   bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 
 write.csv(Fulldataset, "WinnersLosers paper/data/Species_DCiDiff_Nov2022.csv", row.names=F)
+
+toplot<-Fulldataset %>% 
+  mutate(trt_type3=factor(trt_type2, levels=c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'all nuts', 'all mult')))
+
+labels<-c(
+  'all mult'='Interact.',
+  'CO2'='CO2',
+  'drt'='Drt',
+  'irg'='Irg.', 
+  'all nuts'='Mult. Nut.',
+  'n'='N',
+  'p'='P',
+  'temp'='Temp.')
+
+#histograms of number of obs per species
+hist<-ggplot(data=toplot, aes(x=nobs))+
+  geom_histogram()+
+  facet_wrap(~trt_type3, scales='free', ncol=4, labeller = labeller(trt_type3=labels))+
+  labs(x='Number of experiments', y='Species Count')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='snow'), strip.text.x = element_text(face='bold'))
+
+ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\histSpCount.jpg', hist, units = 'in', width=7, height=4)
 
 ###checking normality of DCI values
 ggplot(data=Fulldataset, aes(x=ave_diff))+
@@ -835,8 +866,8 @@ CT_Sp_allint<-CT_diff%>%
 
 Fulldataset_mixedmodels<-CT_Sp_allint%>%
   bind_rows(CT_Sp_co2, CT_Sp_drt, CT_Sp_irg, CT_Sp_N, CT_Sp_P, CT_Sp_temp, CT_Sp_multnuts)%>%
-  select(site_code, project_name, community_type, species_matched, trt_type2, diff)
+  select(site_code, project_name, community_type, species_matched, treatment, trt_type2, diff)
 
-write.csv(Fulldataset_mixedmodels, paste(my.wd, "WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv", sep=""), row.names=F)
+write.csv(Fulldataset_mixedmodels, "WinnersLosers paper/data/Species_DCiDiff_formixedmodelsDec2023.csv", row.names=F)
 
 
