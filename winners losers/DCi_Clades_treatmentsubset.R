@@ -1,7 +1,7 @@
 
 #load libraries:
 library(devtools)
-#devtools::install_github("GuangchuangYu/ggtree")
+devtools::install_github("GuangchuangYu/ggtree")
 
 library(ggtree)
 library(ggplot2)
