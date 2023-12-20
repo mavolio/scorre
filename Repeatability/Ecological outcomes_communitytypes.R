@@ -1,5 +1,6 @@
 library(tidyverse)
 library(codyn)
+library(vegan)
 
 setwd('C:\\Users\\mavolio2\\Dropbox\\CoRRE_database\\Data\\CompiledData')
 
@@ -23,7 +24,7 @@ N_commtypes<-alldat%>%
   unique()
 
 SubsetDat1<-alldat %>% 
-  filter(site_code=='KNZ'&project_name=='change'|site_code=='KNZ'&project_name=='pplots'|site_code=='KNZ'&project_name=='BGP'|site_code=='KNZ'&project_name=='RPHs'|site_code=='ARC'|site_code=='DL'&project_name=='NSFC'|site_code=='DL'&project_name=='GCME'|site_code=='DL'&project_name=='GCME2'|site_code=='NWT'&project_name=='snow')
+  filter(site_code=='KNZ'&project_name=='change'|site_code=='KNZ'&project_name=='pplots'|site_code=='KNZ'&project_name=='BGP'|site_code=='KNZ'&project_name=='RPHs'|site_code=='ARC'|site_code=='DL'&project_name=='NSFC'|site_code=='DL'&project_name=='GCME'|site_code=='DL'&project_name=='GCME2')
 
 SubsetDat2<-alldat %>% 
   right_join(N_commtypes)
@@ -43,8 +44,8 @@ SubsetDat<-SubsetDat1 %>%
            ifelse(site_code=='KNZ'&project_name=='change'&treatment %in% c('0','5', '10'), 1,
            ifelse(site_code %in% c('ARC', 'CAR'),  1, 
            ifelse(site_code=='CDR'&project_name=='e001', 1, 
-           ifelse(site_code=='DL'&project_name=='GCME'&treatment %in% c('C', 'N', 'NP'), 1,
-           ifelse(site_code=='DL'&project_name=='GCME2'&treatment %in% c('C', 'N', 'NP'), 1,
+           ifelse(site_code=='DL'&project_name=='GCME'&treatment %in% c('C', 'N'), 1,
+           ifelse(site_code=='DL'&project_name=='GCME2'&treatment %in% c('C', 'N'), 1,
            ifelse(site_code=='DL'&project_name=='NSFC'&treatment %in% c('C', 'N'), 1, 
            ifelse(site_code=='LATNJA'&treatment %in% c('CONTROL', 'N'), 1,
            ifelse(site_code=='NWT'&project_name=='snow'&treatment %in% c('XXX', 'XNX'), 1,
@@ -204,3 +205,141 @@ ggplot(data=proddiff, aes(x=treatment_year, y=prod_diff, color=spc))+
   geom_line()+
   geom_hline(yintercept = 0)+
   facet_wrap(~facet, scales='free')
+
+####looking at communities
+
+ARC<-newdat %>% 
+  filter(site_code=='ARC') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(project_name) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(ARC[20:137])
+info<-ARC %>% 
+  select(project_name, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=project_name, shape=treat2))+
+  geom_point()
+
+
+CAR<-newdat %>% 
+  filter(site_code=='CAR') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(project_name) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(CAR[20:31])
+info<-CAR %>% 
+  select(community_type, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=community_type, shape=treat2))+
+  geom_point(size=3)
+
+CAU<-newdat %>% 
+  filter(site_code=='CAU') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(project_name) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(CAU[20:96])
+info<-CAU %>% 
+  select(community_type, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=community_type, shape=treat2))+
+  geom_point(size=3)
+
+
+CDR<-newdat %>% 
+  filter(site_code=='CDR') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(community_type) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(CDR[20:263])
+info<-CDR %>% 
+  select(community_type, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=community_type, shape=treat2))+
+  geom_point(size=3)
+
+
+DL<-newdat %>% 
+  filter(site_code=='DL') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(project_name) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(DL[20:104])
+info<-DL %>% 
+  select(project_name, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=project_name, shape=treat2))+
+  geom_point(size=3)
+
+
+KNZ<-newdat %>% 
+  filter(site_code=='KNZ') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(project_name) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(KNZ[20:217])
+info<-KNZ %>% 
+  select(project_name, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=project_name, shape=treat2))+
+  geom_point(size=3)
+
+
+LAT<-newdat %>% 
+  filter(site_code=='LATNJA') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(community_type) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(LAT[20:98])
+info<-LAT %>% 
+  select(community_type, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=community_type, shape=treat2))+
+  geom_point(size=3)
+
+#this one isn't working at all. I am not sure what is going on here
+NWT<-newdat %>% 
+  filter(site_code=='NWT') %>% 
+  pivot_wider(names_from = genus_species, values_from = abundance, values_fill = 0) %>% 
+  group_by(community_type) %>% 
+  mutate(max=max(treatment_year)) %>% 
+  filter(max==treatment_year)
+
+mds<-metaMDS(NWT[20:109])
+info<-NWT %>% 
+  select(community_type, treat2)
+scores<-as.data.frame(mds$points) %>% 
+  bind_cols(info)
+
+ggplot(data=scores, aes(x=MDS1, y=MDS2, color=community_type, shape=treat2))+
+  geom_point(size=3)
+
+
