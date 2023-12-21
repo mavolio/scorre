@@ -285,7 +285,7 @@ catTraits <- cattraits1 %>%
               ifelse(trait=='n_fixation_type' & trait_value2 %in% c('N-fixer', 'none'), 0,
               ifelse(trait=='mycorrhizal_type' & trait_value2 %in% c('yes', 'none'), 0, 
               ifelse(trait=='clonal' & trait_value2 %in% c('yes', 'no'), 0,
-              ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody', 'vine'), 0,
+              ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody'), 0,
               ifelse(trait=='lifespan' & trait_value2 %in% c('Perenn./Bienn.', 'annual'), 0, 1))))))) %>% 
   filter(drop==0)
 
@@ -330,6 +330,12 @@ colnames(cat_n_data) = tmp
 
 # Categorical trait models ------------------------------------------------
 
+##overall response of species
+overall<-lmer(diff ~ -1 + trt_type2 + (1|species) + (1|site_code), data=dcidiff_models)
+summary(overall)
+
+plot.overall<-as.data.frame(emmeans(overall, ~ trt_type2)) %>% 
+  mutate(trait='overall')
 
 
 #photo path
@@ -375,7 +381,7 @@ plot.mgf<-as.data.frame(emmeans(mgf, ~ trait_value2*trt_type2))%>%
 
 
 toplot.cat<-plot.mpp%>%
-  bind_rows(plot.ml, plot.mc, plot.nf, plot.myc, plot.mgf)
+  bind_rows(plot.ml, plot.mc, plot.nf, plot.myc, plot.mgf, plot.overall)
 
 
 toplotesacat<-toplot.cat %>% 
@@ -392,7 +398,8 @@ toplotesacat<-toplot.cat %>%
                     ifelse(value2=='n_fixation_type_N-fixer', 'N-Fixer',
                     ifelse(value2=='n_fixation_type_none', 'Non-N-Fixer',
                     ifelse(value2=='photosynthetic_pathway_C3', "C3",
-                    ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', "GF")))))))))))# %>% 
+                    ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', 
+                    ifelse(value2=='overall_NA', 'Overall', "GF"))))))))))))# %>%
   #mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA'))) #%>% 
   #na.omit()
 head(toplotesacat)
@@ -414,12 +421,12 @@ trait.categories = c("Lifespan", "Photo. Pathway", "Photo. Pathway",
                      "Clonality", "Growth Form",
                      "Growth Form", "Mycorr. Assoc.",
                      "N. Fixation", "Clonality", "Mycorr. Assoc.",
-                     "N. Fixation", "Lifespan", "Growth Form", "Growth Form")
+                     "N. Fixation", "Overall", "Lifespan", "Growth Form")
 trait.super.categories = c("Reproduction", "Leaf Traits", "Leaf Traits",
                      "Reproduction", "Growth Form",
                      "Growth Form", "Symbiosis",
                      "Symbiosis", "Reproduction", "Symbiosis",
-                     "Symbiosis", "Reproduction", "Growth Form", "Growth Form")
+                     "Symbiosis", "Overall", "Reproduction", "Growth Form")
 cbind(trait.labels, trait.categories, trait.super.categories)
 toplotesacat$Estimate = toplotesacat$emmean
 toplotesacat$trait = toplotesacat$value
@@ -442,17 +449,26 @@ toplotesacat$trait = toplotesacat$value
 ##############
 # new plot
 ##############
-gcol = adjustcolor(rev(c(rep("darkgreen",2),
+gcol = adjustcolor(rev(c(rep("gray",1),
+                         rep("red", 3),
+                         rep("darkgreen",2),
                          rep("purple",4),
-                         rep("orange",4),
-                         rep("red", 4))), alpha.f = 0.08)
-tord = rev(c(2,3,
+                         rep("orange",4))), alpha.f = 0.08)
+# tord = rev(c(2,3,
+#              7,10,
+#              8,11,
+#              1,12,
+#              4,9,
+#              5,6,
+#              13,14))
+
+tord = rev(c(12, 6,
+             5, 14,
+             2,3,
              7,10,
              8,11,
-             1,12,
              4,9,
-             5,6,
-             13,14))
+             13,1))
 
 if(FALSE) {
 pdf("traits_by_treat_catDec2023.pdf", width = 5.2, height=10)
@@ -475,15 +491,23 @@ make_boxplot(toplot_data = toplotesacat,
 dev.off()
 }
 
-
-tord1 = rev(c(2,11,7,12,4,5,14))
-tord2 = rev(c(3,8,10,1,9,6,13))
-gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
+# tord1 = rev(c(2,11,7,12,4,5,14))
+# tord2 = rev(c(3,8,10,1,9,6,13))
+tord1 = rev(c(12,5,2,11,7,4,13))
+tord2 = rev(c(6,14,3,8,10,9,1))
+gcol_split1 = adjustcolor(rev(c(rep("gray", 1),
+                               rep("red", 1),
+                               rep("darkgreen",1),
                          rep("purple",2),
-                         rep("orange",2),
-                         rep("red", 2))), alpha.f = 0.08)
+                         rep("orange",2))), alpha.f = 0.08)
 
-pdf("traits_by_treat_cat_2colDec2023_2.pdf", width = 10.4, height=10)
+gcol_split2 = adjustcolor(rev(c(rep("red", 2),
+                                rep("darkgreen",1),
+                                rep("purple",2),
+                                rep("orange",2))), alpha.f = 0.08)
+
+
+pdf("traits_by_treat_cat_2colDec2023_new.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -498,7 +522,7 @@ make_boxplot(toplot_data = toplotesacat,
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord1,
-             group_colors = gcol_split, 
+             group_colors = gcol_split1, 
              xtit = "", autopar = FALSE, n_table = cat_n_data)
 
 par(mar=c(2,0.2,3.5,6.8))
@@ -515,7 +539,7 @@ make_boxplot(toplot_data = toplotesacat,
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord2,
-             group_colors = gcol_split,
+             group_colors = gcol_split2,
              xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data)
 mtext("Effect Size, Mean DCi diff. by. Trait", side = 1, outer = TRUE, line = 1.2, cex = 1.7)
 dev.off()
@@ -530,10 +554,7 @@ dev.off()
 ###thinking about trait categories
 catTraits_full <- cattraits1 %>% 
   filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
-  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM', 
-                             ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
-                                    ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
-                                           ifelse(trait=='lifespan' & trait_value %in% c('perennial', 'biennial'), 'Perenn./Bienn.', trait_value))))) 
+  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM',    ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',ifelse(trait=='lifespan' & trait_value %in% c('perennial', 'biennial'), 'Perenn./Bienn.', trait_value))))) 
 
 
 
@@ -566,7 +587,7 @@ TraitSyndrome<-alldat_cat_full %>%
           ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='yes','ForbPernMyc', 
           #ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&clonal=='no'&mycorrhizal_type=='yes', 'ForbPernNoClonMyc',
           ifelse(growth_form=='woody', 'Woody', 
-          ifelse(growth_form=='graminoid'&lifespan=='Perenn./Bienn.'&photosynthetic_pathway=='C3', 'GramPernC3', 'todo')))))))))
+          ifelse(growth_form=='graminoid'&lifespan=='Perenn./Bienn.', 'GramPern', 'todo')))))))))
 
 SyndromeN<-TraitSyndrome %>% 
   group_by(syndrome) %>% 
@@ -578,6 +599,15 @@ SpSyndrome<-TraitSyndrome %>%
 
 syndrome_diff_all <-dcidiff_models %>% 
   left_join(SpSyndrome)
+
+
+###This give the number of obs for the figure
+tmp = syndrome_diff_all
+tmp = tmp[!is.na(tmp$diff),]
+synd_n_data = table(unique(tmp[,c("species", "trt_type2", "syndrome")]))
+synd_n_data = apply(synd_n_data, 2:3, sum)
+
+value2 = colnames(synd_n_data)
 
 #syndromes
 msynd<-lmer(diff ~ -1 + trt_type2 + syndrome:trt_type2 + (1|species) + (1|site_code), data=syndrome_diff_all)
@@ -593,54 +623,47 @@ ggplot(data=plot.msynd, aes(x=emmean, y=trt_type2, color=as.factor(sig)))+
   facet_wrap(~syndrome)
 
 ###modifying text for trait syndromes
-toplot.cat<-plot.mpp%>%
-  bind_rows(plot.ml, plot.mc, plot.nf, plot.myc, plot.mgf)
+toplot.synd<-plot.msynd
 
-
-toplotesacat<-toplot.cat %>% 
+toplotsynd<-toplot.synd %>% 
   mutate(trt_type3=factor(trt_type2, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
-  mutate(value2=paste(trait, trait_value2, sep="_" )) %>% 
-  mutate(min=emmean-SE, max=emmean+SE) %>% 
-  mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", ""))) %>% 
-  mutate(Trait_name=ifelse(value2=='Clonal_no', "Non-Clonal",
-                    ifelse(value2=='Clonal_yes', 'Clonal',
-                    ifelse(value2=='lifespan_annual', 'Annual',
-                    ifelse(value2=='lifespan_Perenn./Bienn.', 'Perenn./Bienn.',
-                    ifelse(value2=='mycorrhizal_type_yes', 'Mycorr.',
-                    ifelse(value2=='mycorrhizal_type_none', 'Non-Mycorr.',
-                    ifelse(value2=='n_fixation_type_N-fixer', 'N-Fixer',
-                    ifelse(value2=='n_fixation_type_none', 'Non-N-Fixer',
-                    ifelse(value2=='photosynthetic_pathway_C3', "C3",
-                    ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', "GF")))))))))))# %>% 
+  mutate(Trait_name=syndrome)# %>% 
 #mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA'))) #%>% 
 #na.omit()
-head(toplotesacat)
-toplotesacat$value = as.character(toplotesacat$trait_value2)
-toplotesacat$Trait_name = as.character(toplotesacat$Trait_name)
-toplotesacat$value[toplotesacat$Trait_name!="GF"] = toplotesacat$Trait_name[toplotesacat$Trait_name!="GF"]
-toplotesacat$value = factor(toplotesacat$value)
+head(toplotsynd)
+toplotsynd$value = as.character(toplotsynd$syndrome)
+toplotsynd$Trait_name = as.character(toplotsynd$Trait_name)
+toplotsynd$value = factor(toplotsynd$value)
 
-unique(data.frame(toplotesacat$value, toplotesacat$Trait_name))
+unique(data.frame(toplotsynd$value, toplotsynd$Trait_name))
 
 
 trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
-trait.labels = sort(unique(as.character(toplotesacat$value)))
+trait.labels = sort(unique(as.character(toplotsynd$value)))
 tmp = trait.labels
 trait.labels = paste(toupper(substr(trait.labels,1,1)),
                      substr(trait.labels,2,99), sep = "")
 names(trait.labels) = tmp
-trait.categories = c("Lifespan", "Photo. Pathway", "Photo. Pathway",
-                     "Clonality", "Growth Form",
-                     "Growth Form", "Mycorr. Assoc.",
-                     "N. Fixation", "Clonality", "Mycorr. Assoc.",
-                     "N. Fixation", "Lifespan", "Growth Form", "Growth Form")
-trait.super.categories = c("Reproduction", "Leaf Traits", "Leaf Traits",
-                           "Reproduction", "Growth Form",
-                           "Growth Form", "Symbiosis",
-                           "Symbiosis", "Reproduction", "Symbiosis",
-                           "Symbiosis", "Reproduction", "Growth Form", "Growth Form")
-cbind(trait.labels, trait.categories, trait.super.categories)
-toplotesacat$Estimate = toplotesacat$emmean
-toplotesacat$trait = toplotesacat$value
+
+toplotsynd$Estimate = toplotsynd$emmean
+toplotsynd$trait = toplotsynd$value
+
+
+pdf("syndromes_by_treat_contDec2023.pdf", width = 5.2, height=10)
+make_boxplot(toplot_data = toplotsynd,
+             trt.labels_data = trt.labels,
+             trait.labels_data=trait.labels,
+             groupbytrait = FALSE,
+             legend_line_length = 1.4,
+             legend_textwidth = 0.012,
+             legend_yadj = 0.175,
+             legend_xadj = -0.002,
+             p_alpha = 0.05,
+             lower_margin = 6.8,
+             sigadj = -0.03,
+             traitorder = rev(c(1,2,3,4,5, 6, 7, 8)),#number refers to position in trt label vector, do in reverse
+             group_colors = adjustcolor(rev(c('yellow', 'pink', 'pink', 'pink','pink', 'green', 'green', 'brown')), alpha.f = 0.08),
+             n_table = synd_n_data)
+dev.off()
 
                  
