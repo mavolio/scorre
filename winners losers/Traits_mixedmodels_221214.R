@@ -556,13 +556,10 @@ catTraits_full <- cattraits1 %>%
   filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
   mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM',    ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',ifelse(trait=='lifespan' & trait_value %in% c('perennial', 'biennial'), 'Perenn./Bienn.', trait_value))))) 
 
-
-
 alldat_cat_full<-dcidiff_models%>%
   left_join(catTraits_full) %>% 
   select(-trait_value, -source, -error_risk_overall) %>% 
   drop_na()
-
 
 traitcats_full<-alldat_cat_full %>%
   pivot_wider(names_from=trait, values_from = trait_value2, values_fill = NA) %>% 
