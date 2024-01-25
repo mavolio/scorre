@@ -22,14 +22,14 @@ traits <- read.csv("C:/Users/ohler/Downloads/CoRRE_allTraitData_wide_June2023.cs
 
 
 
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/corre2trykey_2021.csv") #contrinuous trait data
+#corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #contrinuous trait data
 
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
     mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0) #remove some Cedar Creek treatments since that site is somewhat overrepresented
 
 
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/old files/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", all.x = TRUE)
@@ -516,6 +516,7 @@ lrr_sp.tr$trt_type <- factor(lrr_sp.tr$trt_type, levels = c("drought", "irr", "t
 library(ggpmisc)
 ggplot(lrr_sp.tr, aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
+  geom_abline(slope = 1, linetype = "dotted")+
   geom_point()+
   geom_smooth(aes(color = trt_type),method = "lm", se = FALSE)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
@@ -1286,3 +1287,11 @@ mod <- lmer(leaf_C.N.var~trt_type + (1|expgroup), data = trait_variance)
 summary(mod)
 
 
+
+######TIME ANALYSIS
+lrr_sp.tr <- nyear %>%
+            tidyr::unite(expgroup,c("site_code", "project_name", "community_type"), sep = "::")%>%
+          left_join(lrr_sp.tr, by = "expgroup")
+            
+mod <- lmer(lrr.species~trt_type * n.trt.yrs + (1|expgroup), data = lrr_sp.tr)
+summary(mod) #This quick analysis shows that time isn't important for any of the treatments
