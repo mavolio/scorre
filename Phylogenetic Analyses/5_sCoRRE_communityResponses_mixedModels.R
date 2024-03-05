@@ -77,10 +77,10 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
 
 ##### data #####
 #treatment data
-trt <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundance_Jan2023.csv') %>%
+trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundanceMarch2024.csv') %>%
 select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
   unique() %>%
-  left_join(read.csv('CoRRE data\\CoRRE data\\basic dataset info\\ExperimentInfo.csv')) %>%
+  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\ExperimentInfo_March2024.csv')) %>%
   group_by(site_code, project_name, community_type) %>%
   mutate(experiment_length=max(treatment_year)) %>%
   ungroup() %>%
@@ -124,7 +124,7 @@ allDiv <- pDiv %>% #phylogenetic metrics
   
 ##### determine which sites don't have adequate cover to species for these analyses #####
 #species relative cover data
-relCover <- read.csv('CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv') %>%
+relCover <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RelativeCoverMarch2024.csv') %>%
   mutate(replicate=paste(site_code, project_name, community_type, plot_id, sep='::')) #creating identifying column of each plot
 
 corre_to_try <- read.csv("CoRRE data\\trait data\\corre2trykey_2021.csv") %>%
