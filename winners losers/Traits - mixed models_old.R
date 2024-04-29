@@ -12,6 +12,49 @@ library(emmeans)
 
 theme_set(theme_bw(12))
 
+
+inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/5ebbc389897a6a65dd0865094a8d0ffd" 
+infile1 <- tempfile()
+try(download.file(inUrl1,infile1,method="curl"))
+if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
+
+cattraits1 <-read.csv(infile1,header=F 
+               ,skip=1
+               ,sep=","  
+               ,quot='"' 
+               , col.names=c(
+                 "family",     
+                 "species",     
+                 "trait",     
+                 "trait_value",     
+                 "source",     
+                 "error_risk_overall"    ), check.names=TRUE)
+
+unlink(infile1)
+
+inUrl2  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/169fc12d10ac20b0e504f8d5ca0b8ee8" 
+infile2 <- tempfile()
+try(download.file(inUrl2,infile2,method="curl"))
+if (is.na(file.size(infile2))) download.file(inUrl2,infile2,method="auto")
+
+
+conttraits1<-read.csv(infile2,header=F 
+               ,skip=1
+               ,sep=","  
+               ,quot='"' 
+               , col.names=c(
+                 "family",     
+                 "species",     
+                 "trait",     
+                 "trait_value",     
+                 "error_risk_overall",     
+                 "error_risk_family",     
+                 "error_risk_genus",     
+                 "source"    ), check.names=TRUE)
+
+unlink(infile2)
+
+
 ### Trait data
 
 # #barGraphStats(data=, variable="", byFactorNames=c(""))
@@ -32,11 +75,8 @@ theme_set(theme_bw(12))
 #   return(finalSummaryStats)
 # }  
 
-#read in data
-contTraits1 <- read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')
-
-contTraits<-contTraits1%>%
-  select(-X.1, -X, -family, -genus, -observation)%>%
+contTraits<-conttraits1%>%
+  select(-family)%>%
   select(species_matched, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_dry_mass) %>% 
   group_by(species_matched)%>%
   summarise_all(funs(mean))%>%

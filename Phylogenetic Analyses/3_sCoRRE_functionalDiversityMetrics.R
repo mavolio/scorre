@@ -28,7 +28,7 @@ se <- function(x, na.rm=na.rm){
 ##### data import and cleaning #####
 
 # trait data
-traits <- read.csv('CleanedData\\Traits\\CoRRE_allTraitData_wide_June2023.csv') %>% 
+traits <- read.csv('CleanedData\\Traits\\CoRRE_allTraitData_wide_Nov2023.csv') %>% 
   filter(growth_form!="moss", species_matched!="") %>%
   mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
   select(-mycorrhizal_type) %>% 
@@ -115,7 +115,7 @@ shapiro.test(traitsScaled$seed_dry_mass)
 ##### relative cover datasets #####
 
 # species relative cover data
-relCoverRaw <- read.csv("CompiledData\\RelativeCover.csv") %>%
+relCoverRaw <- read.csv("CompiledData\\RelativeCoverMarch2024.csv") %>%
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
   mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
   select(site_code:community_type, site_proj_comm, calendar_year:relcov)
@@ -125,25 +125,25 @@ corre_to_try <- read.csv("OriginalData\\Traits\\TRY\\corre2trykey_2021.csv") %>%
   select(genus_species, species_matched) %>%
   unique()
 
-# merge species names and remove all mosses -- moss key to remove mosses from species comp data
-moss_sp_vec <- read.csv("CleanedData\\Traits\\complete categorical traits\\sCoRRE categorical trait data_12142022.csv") %>%
-  select(species_matched, leaf_type) %>%
-  mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
-  filter(moss=="moss") %>%
-  pull(species_matched)
+# # merge species names and remove all mosses -- moss key to remove mosses from species comp data
+# moss_sp_vec <- read.csv("CleanedData\\Traits\\CoRRE_categoricalTraitData_Dec2023.csv") %>%
+#   select(species_matched, leaf_type) %>%
+#   mutate(moss = ifelse(leaf_type=="moss", "moss","non-moss")) %>%
+#   filter(moss=="moss") %>%
+#   pull(species_matched)
 
 relCovClean <- relCoverRaw %>%
   left_join(corre_to_try, by="genus_species") %>%
-  filter(!species_matched  %in% moss_sp_vec) %>%
+  # filter(!species_matched  %in% moss_sp_vec) %>%
   mutate(plot_id=ifelse(site_proj_comm=='DL_NSFC_0', paste(plot_id, treatment, sep='__'), plot_id))
 
-rm(moss_sp_vec)
+# rm(moss_sp_vec)
 
 ##### treatment data #####
-trt <- read.csv('CompiledData\\RelativeCover.csv') %>%
+trt <- read.csv('CompiledData\\RelativeCoverMarch2024.csv') %>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
   unique() %>%
-  left_join(read.csv('CompiledData\\ExperimentInfo.csv')) %>%
+  left_join(read.csv('CompiledData\\ExperimentInfo_March2024.csv')) %>%
   group_by(site_code, project_name, community_type) %>%
   mutate(experiment_length=max(treatment_year)) %>%
   ungroup() %>%

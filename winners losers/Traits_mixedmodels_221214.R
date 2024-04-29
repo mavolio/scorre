@@ -6,16 +6,12 @@
 #### updated 14.12.2022 by A. Clark
 ######
 rm(list=ls())
-setwd("~/Dropbox/tmp/desktop_dropbox/tmp/sCORRE_analysis/")
-setwd('C://Users//mavolio2//Dropbox//CoRRE_database//Data//CleanedData//Traits//')
 
 library(tidyverse)
 library(lme4)
 library(emmeans)
 require(RColorBrewer)
 #library(relaimpo)
-
-#theme_set(theme_bw(12))
 
 scale_fun = function(x) {
   x.new = log(x)
@@ -24,83 +20,80 @@ scale_fun = function(x) {
   x.new
 }
 
-### Trait data
+#open TraitBoxPlots code and run the funciton make_boxplots
 
-# #barGraphStats(data=, variable="", byFactorNames=c(""))
-# barGraphStats <- function(data, variable, byFactorNames) {
-#   count <- length(byFactorNames)
-#   N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
-#   names(N)[1:count] <- byFactorNames
-#   names(N) <- sub("^x$", "N", names(N))
-#   mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
-#   names(mean)[1:count] <- byFactorNames
-#   names(mean) <- sub("^x$", "mean", names(mean))
-#   sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
-#   names(sd)[1:count] <- byFactorNames
-#   names(sd) <- sub("^x$", "sd", names(sd))
-#   preSummaryStats <- merge(N, mean, by=byFactorNames)
-#   finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
-#   finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
-#   return(finalSummaryStats)
-# }  
-
-#read in data
-
-
-#error family < 3 drops ~20000 observations
-Data_error<-read.csv('CoRRE_allTraitData_June2023.csv') %>% 
-  filter(error_risk_overall<3|is.na(error_risk_overall)) %>%
-  mutate(trait_value2=as.numeric(trait_value))
-
-contTraits<-Data_error%>%
-  filter(trait %in% c('LDMC', 'SLA', 'plant_height_vegetative', 'SRL', 'leaf_N', 'seed_dry_mass')) %>% 
-  select(-error_risk_overall, -error_risk_family, -error_risk_genus) %>%
-  group_by(species_matched, trait)%>%
-  summarise(value=mean(trait_value2, na.rm=T))
-
-hist(subset(contTraits, trait=='SRL')$value)
-
-
-catTraits <- Data %>% 
-  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
-  filter(growth_form!="moss",species_matched!="", growth_form!="lycophyte") %>% 
-  mutate(mycorrhizal=ifelse(mycorrhizal_type=="none", 'no', ifelse(mycorrhizal_type=="uncertain", "unk", "yes"))) %>% 
-  select(-mycorrhizal_type) %>% 
-  mutate(photo_path=ifelse(photosynthetic_pathway=="possible C4"|photosynthetic_pathway=="possible C4/CAM", "C4", ifelse(photosynthetic_pathway=="possible CAM", "CAM",photosynthetic_pathway))) %>% 
-  select(-photosynthetic_pathway)
-
-## simplify groupings
-catTraits$photo_path_simple = catTraits$photo_path
-#catTraits$photo_path_simple[catTraits$photo_path_simple%in%c("C4", "CAM")] = "C4.CAM"
-catTraits$photo_path_simple[catTraits$photo_path_simple%in%c("parasitic", "possible hybrid")] = NA
-catTraits$photo_path = catTraits$photo_path_simple
-
-catTraits$lifespan_simple = catTraits$lifespan
-catTraits$lifespan_simple[catTraits$lifespan_simple%in%c("annual", "biennial")] = "ann.bien"
-catTraits$lifespan_simple[catTraits$lifespan_simple%in%c("uncertain")] = NA
-catTraits$lifespan = catTraits$lifespan_simple
-
-pairs(contTraits[,2:6])
-
+setwd('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript')
 
 # Read in dci diff
-dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
-#dcidiff_models<-read.csv("~/Dropbox/SharedFolders/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsNov22.csv")
+dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsDec2023.csv") %>% 
+  rename(species=species_matched)
 
-test<-dcidiff_models %>% 
-  filter(trt_type2=="all mult") %>% 
-  select(species_matched) %>% 
-  unique()
+length(unique(dcidiff_models$species))
 
+
+# Continuous trait data ---------------------------------------------------
+
+
+#read in data from EDI
+inUrl2  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/169fc12d10ac20b0e504f8d5ca0b8ee8" 
+infile2 <- tempfile()
+try(download.file(inUrl2,infile2,method="curl"))
+if (is.na(file.size(infile2))) download.file(inUrl2,infile2,method="auto")
+
+
+conttraits1<-read.csv(infile2,header=F 
+                      ,skip=1
+                      ,sep=","  
+                      ,quot='"' 
+                      , col.names=c(
+                        "family",     
+                        "species",     
+                        "trait",     
+                        "trait_value",     
+                        "error_risk_overall",     
+                        "error_risk_family",     
+                        "error_risk_genus",     
+                        "source"    ), check.names=TRUE)
+
+unlink(infile2)
+
+#error risk < 3 drops ~28 observations
+#error risk < 2.5 drops ~99 observations
+#error risk < 2 drop 328 obs
+remove_risk<-conttraits1 %>% 
+  filter(error_risk_overall<2|is.na(error_risk_overall))
+
+contTraits<-remove_risk%>%
+  filter(trait %in% c('LDMC', 'SLA', 'plant_height_vegetative', 'SRL', 'leaf_N', 'seed_dry_mass')) %>%   select(-error_risk_overall, -error_risk_family, -error_risk_genus) %>%
+  group_by(species, trait)%>%
+  summarise(value=mean(trait_value, na.rm=T))
+
+###looking for outliers
+ggplot(data=contTraits, aes(x=value))+
+  geom_histogram()+
+  facet_wrap(~trait, scales = "free")
+
+##merge trait data with species responses
 alldat_cont<-dcidiff_models%>%
-  right_join(contTraits, by="species_matched")
+  left_join(contTraits, by="species") %>% 
+  drop_na()
 
+###how many species included in the continuous analyses?
+length(unique(alldat_cont$species))
+
+#summarizing the data
+summaryCont<-alldat_cont %>% 
+  select(species, trait, value) %>% 
+  unique() %>% 
+  drop_na() %>% 
+  group_by(trait) %>% 
+  summarize(min=min(value), max=max(value), n=length(value))
 
 #Making a graph of all the models I am goign to run now, just to see if there are patterns.
-# ggplot(data=alldat_cont, aes(x=value, y=diff))+
-#  geom_point()+
-#  geom_smooth(method="lm")+
-#  facet_grid(trt_type2~trait, scales="free")
+ggplot(data=alldat_cont, aes(x=scale_fun(value), y=diff))+
+ geom_point()+
+ geom_smooth(method="lm")+
+ facet_grid(trt_type2~trait, scales="free")
 ###
 #making mixed models - run through all traits.
 
@@ -114,12 +107,15 @@ alldat_cont<-dcidiff_models%>%
 #getting number of species per trait
 tmp = alldat_cont
 tmp = tmp[!is.na(tmp$diff),]
-cont_n_data = table(unique(tmp[,c("species_matched", "trt_type2", "trait")]))
+cont_n_data = table(unique(tmp[,c("species", "trt_type2", "trait")]))
 cont_n_data = apply(cont_n_data, 2:3, sum)
 #write.csv(cont_n_data, "cont_n_data.csv")
 
+
+# Continuous models -------------------------------------------------------
+
 ##SLA
-mSLA<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SLA"))
+mSLA<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="SLA"))
 summary(mSLA)
 
 plot.sla<-as.data.frame(summary(mSLA)$coefficients)
@@ -136,7 +132,7 @@ toplot.SLA<-plot.sla%>%
 
 ###SRL
 
-mSRL<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="SRL"))
+mSRL<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="SRL"))
 summary(mSRL)
 
 plot.srl<-as.data.frame(summary(mSRL)$coefficients)
@@ -152,8 +148,7 @@ toplot.SRL<-plot.srl%>%
   mutate(trait="SRL")
 
 ###seed mass
-#this model failed to converge what does that mean?
-mSM<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="seed_dry_mass"))
+mSM<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="seed_dry_mass"))
 summary(mSM)
 
 plot.sm<-as.data.frame(summary(mSM)$coefficients)
@@ -169,7 +164,7 @@ toplot.SM<-plot.sm%>%
 
 ###LDMC
 
-mLDMC<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="LDMC"))
+mLDMC<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="LDMC"))
 summary(mLDMC)
 
 plot.ldmc<-as.data.frame(summary(mLDMC)$coefficients)
@@ -186,7 +181,7 @@ toplot.LDMC<-plot.ldmc%>%
 
 ###plot height vegetative
 
-mhght<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="plant_height_vegetative"))
+mhght<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="plant_height_vegetative"))
 summary(mhght)
 
 plot.hght<-as.data.frame(summary(mhght)$coefficients)
@@ -203,7 +198,7 @@ toplot.hgt<-plot.hght%>%
 
 
 ##LeafN
-mN<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cont, trait=="leaf_N"))
+mN<-lmer(diff ~ -1 + trt_type2 + scale_fun(value):trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cont, trait=="leaf_N"))
 summary(mN)
 
 plot.leafN<-as.data.frame(summary(mN)$coefficients)
@@ -224,222 +219,8 @@ toplot<-toplot.SLA%>%
   rename(SE="Std. Error") %>% 
   mutate(trt_type2=factor(trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
   mutate(min=Estimate-SE, max=Estimate+SE)
-#ggplot(data=toplot, aes(y=Estimate, x=1, label=sig))+
-#  geom_point()+
-#  geom_errorbar(aes(ymin=Estimate-SE, ymax=Estimate+SE), width=0.05)+
-#  coord_flip()+
-#  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank())+
-#  xlab("")+
-#  scale_x_continuous(limits=c(0, 2))+
-#  geom_hline(yintercept=0, linetype="dashed")+
-#  geom_text(nudge_x = 0.2, nudge_y = 0.01, size=10, color="red")+
-#  facet_grid(trt_type2~trait, labeller = labeller(trt_type2=trt.labels))
 
-##############
-# new plot
-##############
-make_boxplot = function(toplot_data = toplot, # data to plot
-                                   trt.labels_data = trt.labels, # treatment labels
-                                   trait.labels_data=trait.labels, # trait labels
-                                   p_alpha = 0.025, # alpha value for significance tests
-                                   groupbytrait = FALSE, # should individual panels include multiple traits?
-                                   legend_line_length = 1.55, # length of lines in legend
-                                   legend_cex = 0.9, # text size in legend
-                                   lower_margin = 5.5, # margin for plotting category names
-                                   sigadj = 0, # shift the asterisk up or down,
-                                   legend_textwidth = 0.2, # text spacing for legend
-                                   legend_yadj = 0.35, # margin spacing for legend
-                                   legend_xadj = 0, # horizontal adjustment for the legend 
-                                   flipaxes = TRUE, # plot with quantitative values on the x-axis
-                                   traitorder = NULL, # optional order in which to plot traits
-                                   group_colors = NULL,  # optional vector of colors for backgrounds of individual panels
-                                   xtit = "Effect Size, DCi diff. vs. Standardized ln(Trait)", # axis title
-                                   xlm = NULL,  # optional x-axis limits
-                                   collst = NULL, # optional vector of colors for the bars
-                                   autopar = TRUE, # should par settings be handled automatically?
-                                   axisside = 1+flipaxes, # which side should the axis labels be plotted on?
-                                   n_table = NULL, ncex = 0.6, yadj_text = 0) { # optional table of n values to be plotted; size for plotted text; vertical adjustment for text
-  lwd_lines = 2.5
-  lwd_diff_fact = 0.5
-  
-  # get significance based on estimate, se, and desired alpha
-  tmp = pnorm(0, abs(toplot_data$Estimate), toplot_data$SE) <= p_alpha
-  sig = tmp; sig[tmp] = "*"; sig[!tmp] = ""
-  
-  trt_type2_levels = as.character(sort(unique(toplot_data$trt_type2[!is.na(toplot_data$trt_type2)])))
-  trt_type2_levels = trt_type2_levels[match(names(trt.labels_data), trt_type2_levels)]
-  
-  trait_levels = sort(unique(toplot_data$trait))
-  trait_levels = trait_levels[match(names(trait.labels_data), trait_levels)]
-  if(!is.null(traitorder) & !groupbytrait) {
-    trait_levels = trait_levels[traitorder]
-    trait.labels_data = trait.labels_data[traitorder]
-  }
-  
-  if(groupbytrait) {
-    v1 = trt_type2_levels
-    v2 = trait_levels
-  } else {
-    v1 = trait_levels
-    v2 = trt_type2_levels
-  }
-  if(is.null(collst)) {
-    collst = RColorBrewer::brewer.pal(n = length(v2), name = "Dark2")
-  }
-  
-  xps = seq(1, length(v1))
-  dx = seq(0.35, -0.35, length=length(v2))
-  whisker_length = min(diff(dx))/5
-  
-  yrng = c(min(toplot_data$Estimate-2*toplot_data$SE),
-           max(toplot_data$Estimate+2*toplot_data$SE))
-  
-  if(autopar) {
-    if(flipaxes) {
-      par(mar=c(4,lower_margin,3.5,1))
-    } else {
-      par(mar=c(lower_margin,4,3,1))
-    }
-  }
-  
-  if(flipaxes) {
-    if(!is.null(xlm)) {
-      plot(yrng, c(min(xps)-0.5, max(xps)+0.5), xlab = "", ylab = "", type = "n", axes = FALSE, yaxs = "i", xlim = xlm)
-    } else {
-      plot(yrng, c(min(xps)-0.5, max(xps)+0.5), xlab = "", ylab = "", type = "n", axes = FALSE, yaxs = "i")
-    }
-    axis(1)
-    if(groupbytrait) {
-      axis(axisside, at = xps, labels = trt.labels_data, las = 2)
-    } else {
-      axis(axisside, at = xps, labels = trait.labels_data, las = 2)
-    }
-  } else {
-    if(!is.null(xlm)) {
-      plot(c(min(xps)-0.5, max(xps)+0.5), yrng, xlab = "", ylab = "", type = "n", axes = FALSE, xaxs = "i", xlim = xlm)
-    } else {
-      plot(c(min(xps)-0.5, max(xps)+0.5), yrng, xlab = "", ylab = "", type = "n", axes = FALSE, xaxs = "i")
-    }
-    axis(2)
-    if(groupbytrait) {
-      axis(axisside, at = xps, labels = trt.labels_data, las = 2)
-    } else {
-      axis(axisside, at = xps, labels = trait.labels_data, las = 2)
-    }
-  }
-  box()
-  
-  if(!is.null(group_colors)) {
-    for(i in 1:length(v1)) {
-      if(flipaxes) {
-        polygon(rep(c(yrng[1]-diff(range(yrng)), yrng[2]+diff(range(yrng))), each=2),
-                xps[i]+c(-0.5, 0.5, 0.5, -0.5),
-                col = group_colors[i], border = NA)
-      }
-    }
-  }
-  
-  if(flipaxes) {
-    abline(v=0, lty=2)
-  } else {
-    abline(h=0, lty=2)
-  }
-  
-  for(i in 1:length(v1)) {
-    for(j in 1:length(v2)) {
-      if(groupbytrait) {
-        ps = which(toplot_data$trait == trait_levels[j] & 
-                   toplot_data$trt_type2 == trt_type2_levels[i])
-      } else {
-        ps = which(toplot_data$trait == trait_levels[i] & 
-                     toplot_data$trt_type2 == trt_type2_levels[j])
-      }
-      
-      xv = xps[i] + dx[j]
-      yv = c(toplot_data$Estimate[ps]-toplot_data$SE[ps],
-             toplot_data$Estimate[ps],
-             toplot_data$Estimate[ps]+toplot_data$SE[ps],
-             qnorm(p_alpha, toplot_data$Estimate[ps], toplot_data$SE[ps]),
-             qnorm(1-p_alpha, toplot_data$Estimate[ps], toplot_data$SE[ps]))
-      
-      if(flipaxes) {
-        segments(yv[1], xv, yv[3], xv,
-                 col = collst[j], lwd = lwd_lines, lend = 2)
-        segments(yv[4], xv, yv[5], xv,
-                 col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
-        segments(yv[c(4,5)], xv+whisker_length, yv[c(4,5)], xv-whisker_length,
-                 col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
-        points(yv[2], xv, col = collst[j], pch = 16, cex = 0.7)
-      } else {
-        segments(xv, yv[1], xv, yv[3],
-                 col = collst[j], lwd = lwd_lines, lend = 2)
-        segments(xv, yv[4], xv, yv[5],
-                 col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
-        segments(xv-whisker_length, yv[c(4,5)], xv+whisker_length, yv[c(4,5)],
-                 col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
-        points(xv, yv[2], col = collst[j], pch = 16, cex = 0.7)
-      }
-      ## add significance marker
-      if(sum(ps)>0) {
-        if(flipaxes) {
-          if(all(yv[1:3]<0)) {
-            text(yv[4], xv+sigadj, sig[ps], pos = 2,
-                 cex = 0.8, offset = 0.1)
-          } else {
-            text(yv[5], xv+sigadj, sig[ps], pos = 4,
-                 cex = 0.8, offset = 0.1)
-          }
-        } else {
-          text(xv+sigadj, yv[3], sig[ps], pos = 3,
-              cex = 0.8, offset = 0)
-        }
-      }
-      
-      #add n
-      if(flipaxes) {
-        if(!is.null(n_table)) {
-          row_ps = which(row.names(n_table)==v2[j])
-          col_ps = which(colnames(n_table)==v1[i])
-          tmp_xrng = range(c(yrng, xlm))
-          xps_text = tmp_xrng[2]-diff(tmp_xrng)*0.03
-          yps_text = xv+yadj_text
-            
-          text(xps_text, yps_text, paste("(", n_table[row_ps, col_ps], ")", sep =""), cex=ncex)
-        }
-      }
-      
-    }
-  }
-  if(flipaxes) {
-    abline(h = seq(1.5, length(v1)-0.5, by = 1), col = "darkgrey")
-  } else {
-    abline(v = seq(1.5, length(v1)-0.5, by = 1), col = "darkgrey")
-  }
-  
-  if(flipaxes) {
-    if(groupbytrait) {
-      legend(mean(yrng)+legend_xadj, max(xps)+diff(range(xps))*legend_yadj, legend = trait.labels_data, lty = 1, lwd = lwd_lines*1.5,
-             col = collst, ncol = ceiling(length(trait.labels_data)/2), xpd = NA, xjust = 0.5,
-             seg.len = legend_line_length, cex = legend_cex, x.intersp = 0.5, text.width = legend_textwidth, bty = "n")
-    } else {
-      legend(mean(yrng)+legend_xadj, max(xps)+diff(range(xps))*legend_yadj, legend = trt.labels_data, lty = 1, lwd = lwd_lines*1.5,
-             col = collst, ncol = ceiling(length(trt.labels_data)/2), xpd = NA, xjust = 0.5,
-             seg.len = legend_line_length, cex = legend_cex, x.intersp = 0.5, text.width = legend_textwidth, bty = "n")
-    }
-    mtext(xtit, 1, line = 2.4)
-  } else {
-    if(groupbytrait) {
-      legend(mean(xps)+legend_xadj, yrng[2]+diff(range(yrng))*legend_yadj, legend = trait.labels_data, lty = 1, lwd = lwd_lines*1.5,
-             col = collst, ncol = ceiling(length(v2)/2), xpd = NA, xjust = 0.5,
-             seg.len = legend_line_length, cex = legend_cex, x.intersp = 0.5, text.width = legend_textwidth, bty = "n")
-    } else {
-      legend(mean(xps)+legend_xadj, yrng[2]+diff(range(yrng))*legend_yadj, legend = trt.labels_data, lty = 1, lwd = lwd_lines*1.5,
-             col = collst, ncol = ceiling(length(v2)/2), xpd = NA, xjust = 0.5,
-             seg.len = legend_line_length, cex = legend_cex, x.intersp = 0.5, text.width = legend_textwidth, bty = "n")
-    }
-    mtext(xtit, 2, line = 2.4)
-  }
-}
+# Continuous plot ---------------------------------------------------------
 
 trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
 trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
@@ -447,7 +228,7 @@ trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
-pdf("traits_by_treat_cont.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_contDec2023.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplot,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -469,114 +250,160 @@ make_boxplot(toplot_data = toplot,
 dev.off()
 
 
-####Categorical data
 
-table(catTraits$photo_path)#drop possible hybird, parasitic
-table(catTraits$growth_form)#drop cactus
-table(catTraits$clonal)#drop uncertain
-table(catTraits$n_fixation)
-table(catTraits$mycorrhizal)#drop unk
-table(catTraits$lifespan)#drop uncertain
+# Categorical data --------------------------------------------------------
+
+#read in data from EDI
+inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/1533/1/5ebbc389897a6a65dd0865094a8d0ffd" 
+infile1 <- tempfile()
+try(download.file(inUrl1,infile1,method="curl"))
+if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
+
+cattraits1 <-read.csv(infile1,header=F 
+                      ,skip=1
+                      ,sep=","  
+                      ,quot='"' 
+                      , col.names=c(
+                        "family",     
+                        "species",     
+                        "trait",     
+                        "trait_value",     
+                        "source",     
+                        "error_risk_overall"    ), check.names=TRUE)
+
+unlink(infile1)
+
+
+#simplify groupings and select categories
+catTraits <- cattraits1 %>% 
+  filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
+  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM', 
+                      ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',
+                      ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',
+                      ifelse(trait=='lifespan' & trait_value %in% c('perennial', 'biennial'), 'Perenn./Bienn.', trait_value))))) %>% 
+  mutate(drop=ifelse(trait=='photosynthetic_pathway' & trait_value2 %in% c('C3', 'C4/CAM'), 0, 
+              ifelse(trait=='n_fixation_type' & trait_value2 %in% c('N-fixer', 'none'), 0,
+              ifelse(trait=='mycorrhizal_type' & trait_value2 %in% c('yes', 'none'), 0, 
+              ifelse(trait=='clonal' & trait_value2 %in% c('yes', 'no'), 0,
+              ifelse(trait=='growth_form' & trait_value2 %in% c('forb', 'graminoid', 'woody'), 0,
+              ifelse(trait=='lifespan' & trait_value2 %in% c('Perenn./Bienn.', 'annual'), 0, 1))))))) %>% 
+  filter(drop==0)
+
+
 
 alldat_cat<-dcidiff_models%>%
-  right_join(catTraits)%>%
-  gather(growth_form:photo_path, key="trait", value="value")%>%
-  na.omit()
+  left_join(catTraits) %>% 
+  select(-trait_value, -source, -error_risk_overall) %>% 
+  drop_na() #this drops one species that is a hybrid and had no trait data
 
+length(unique(alldat_cat$species))
 
+cattrait_values<-alldat_cat %>% 
+  select(species, trait, trait_value2) %>% 
+  unique() %>% 
+  group_by(trait, trait_value2) %>% 
+  summarize(n=length(species))
+
+###This give the number of obs for the figure
 tmp = alldat_cat
 tmp = tmp[!is.na(tmp$diff),]
-tmp$trait_value = paste(tmp$trait, tmp$value, sep = "_")
-cat_n_data = table(unique(tmp[,c("species_matched", "trt_type2", "trait_value")]))
+tmp$trait_value = paste(tmp$trait, tmp$trait_value2, sep = "_")
+cat_n_data = table(unique(tmp[,c("species", "trt_type2", "trait_value")]))
 cat_n_data = apply(cat_n_data, 2:3, sum)
 
 value2 = colnames(cat_n_data)
 tmp=ifelse(value2=='clonal_no', "Non-Clonal",
   ifelse(value2=='clonal_yes', 'Clonal',
-  ifelse(value2=='lifespan_ann.bien', 'Annual/Bienn.',
-  ifelse(value2=='lifespan_perennial', 'Perennial',
-  ifelse(value2=='mycorrhizal_yes', 'Mycorr.',
-  ifelse(value2=='mycorrhizal_no', 'Non-Mycorr.',
-  ifelse(value2=='n_fixation_yes', 'N-Fixer',
-  ifelse(value2=='n_fixation_no', 'Non-N-Fixer',
-  ifelse(value2=='photo_path_C3', "C3",
-  ifelse(value2=='photo_path_C4', 'C4', value2))))))))))
+  ifelse(value2=='lifespan_annual', 'Annual',
+  ifelse(value2=='lifespan_Perenn./Bienn.', 'Perenn./Bienn.',
+  ifelse(value2=='mycorrhizal_type_yes', 'Mycorr.',
+  ifelse(value2=='mycorrhizal_type_none', 'Non-Mycorr.',
+  ifelse(value2=='n_fixation_type_N-fixer', 'N-Fixer',
+  ifelse(value2=='n_fixation_type_none', 'Non-N-Fixer',
+  ifelse(value2=='photosynthetic_pathway_C3', "C3",
+  ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', value2))))))))))
 tmp = gsub("growth_form_", "", tmp, fixed = TRUE)
 #tmp = paste(toupper(substr(tmp,1,1)), substr(tmp,2,99), sep = "")
 colnames(cat_n_data) = tmp
-write.csv(cat_n_data, "cat_n_data.csv")
+#write.csv(cat_n_data, "cat_n_data.csv")
 
+
+# Categorical trait models ------------------------------------------------
+
+##overall response of species
+overall<-lmer(diff ~ -1 + trt_type2 + (1|species) + (1|site_code), data=dcidiff_models)
+summary(overall)
+
+plot.overall<-as.data.frame(emmeans(overall, ~ trt_type2)) %>% 
+  mutate(trait='overall')
 
 
 #photo path
-mpp<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="photo_path"&value!="parasitic"&value!="possible hybrid"&value!="CAM"))
+mpp<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="photosynthetic_pathway"))
 summary(mpp)
 
-plot.mpp<-as.data.frame(emmeans(mpp, ~ value*trt_type2)) %>% 
-  mutate(trait="photo_path")
+plot.mpp<-as.data.frame(emmeans(mpp, ~ trait_value2*trt_type2)) %>% 
+  mutate(trait="photosynthetic_pathway")
 
 #lifespan
-ml<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="lifespan"&value!='uncertain'))
+ml<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="lifespan"))
 summary(ml)
 
-plot.ml<-as.data.frame(emmeans(ml, ~ value*trt_type2)) %>% 
+plot.ml<-as.data.frame(emmeans(ml, ~ trait_value2*trt_type2)) %>% 
   mutate(trait="lifespan")
 
-# #growth form
-# mgf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"&value!="cactus"))
-# summary(mgf)
-# 
-# plot.mgf<-as.data.frame(emmeans(mgf, ~ value*trt_type2)) %>% 
-#   mutate(trait="growth_form")
-# 
 ###clonaltiy
-mc<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="clonal"&value!='uncertain'))
+mc<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="clonal"))
 
-plot.mc<-as.data.frame(emmeans(mc, ~ value*trt_type2))%>%
+plot.mc<-as.data.frame(emmeans(mc, ~ trait_value2*trt_type2))%>%
   mutate(trait="Clonal")
 
 ##nfixer
-mnf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="n_fixation"))
+mnf<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="n_fixation_type"))
 
-plot.nf<-as.data.frame(emmeans(mnf, ~ value*trt_type2))%>%
-  mutate(trait="Nfix")
+plot.nf<-as.data.frame(emmeans(mnf, ~ trait_value2*trt_type2))%>%
+  mutate(trait="n_fixation_type")
 
 
 ##mycorhizal
-mmyc<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="mycorrhizal"&value!="unk"))
+mmyc<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="mycorrhizal_type"))
 
-plot.myc<-as.data.frame(emmeans(mmyc, ~ value*trt_type2))%>%
-  mutate(trait="Myc")
+plot.myc<-as.data.frame(emmeans(mmyc, ~ trait_value2*trt_type2))%>%
+  mutate(trait="mycorrhizal_type")
 
 ##growthform
-mgf<-lmer(diff ~ -1 + trt_type2 + value:trt_type2 + (1|species_matched) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"&value!='cactus'&value!='fern'))
-plot.mgf<-as.data.frame(emmeans(mgf, ~ value*trt_type2))%>%
+mgf<-lmer(diff ~ -1 + trt_type2 + trait_value2:trt_type2 + (1|species) + (1|site_code), data=subset(alldat_cat, trait=="growth_form"))
+plot.mgf<-as.data.frame(emmeans(mgf, ~ trait_value2*trt_type2))%>%
   mutate(trait="GF")
+
+# Graphing categorical traits ---------------------------------------------
+
 
 
 toplot.cat<-plot.mpp%>%
-  bind_rows(plot.ml, plot.mc, plot.nf, plot.myc, plot.mgf)
+  bind_rows(plot.ml, plot.mc, plot.nf, plot.myc, plot.mgf, plot.overall)
 
 
 toplotesacat<-toplot.cat %>% 
   mutate(trt_type3=factor(trt_type2, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
-  mutate(value2=paste(trait, value, sep="_" )) %>% 
+  mutate(value2=paste(trait, trait_value2, sep="_" )) %>% 
   mutate(min=emmean-SE, max=emmean+SE) %>% 
   mutate(sig=ifelse(min>0&max>0, "*", ifelse(min<0&max<0, "*", ""))) %>% 
   mutate(Trait_name=ifelse(value2=='Clonal_no', "Non-Clonal",
                     ifelse(value2=='Clonal_yes', 'Clonal',
-                    ifelse(value2=='lifespan_ann.bien', 'Annual/Bienn.',
-                    ifelse(value2=='lifespan_perennial', 'Perennial',
-                    ifelse(value2=='Myc_yes', 'Mycorr.',
-                    ifelse(value2=='Myc_no', 'Non-Mycorr.',
-                    ifelse(value2=='Nfix_yes', 'N-Fixer',
-                    ifelse(value2=='Nfix_no', 'Non-N-Fixer',
-                    ifelse(value2=='photo_path_C3', "C3",
-                    ifelse(value2=='photo_path_C4', 'C4', "GF")))))))))))# %>% 
+                    ifelse(value2=='lifespan_annual', 'Annual',
+                    ifelse(value2=='lifespan_Perenn./Bienn.', 'Perenn./Bienn.',
+                    ifelse(value2=='mycorrhizal_type_yes', 'Mycorr.',
+                    ifelse(value2=='mycorrhizal_type_none', 'Non-Mycorr.',
+                    ifelse(value2=='n_fixation_type_N-fixer', 'N-Fixer',
+                    ifelse(value2=='n_fixation_type_none', 'Non-N-Fixer',
+                    ifelse(value2=='photosynthetic_pathway_C3', "C3",
+                    ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', 
+                    ifelse(value2=='overall_NA', 'Overall', "GF"))))))))))))# %>%
   #mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA'))) #%>% 
   #na.omit()
 head(toplotesacat)
-toplotesacat$value = as.character(toplotesacat$value)
+toplotesacat$value = as.character(toplotesacat$trait_value2)
 toplotesacat$Trait_name = as.character(toplotesacat$Trait_name)
 toplotesacat$value[toplotesacat$Trait_name!="GF"] = toplotesacat$Trait_name[toplotesacat$Trait_name!="GF"]
 toplotesacat$value = factor(toplotesacat$value)
@@ -594,12 +421,12 @@ trait.categories = c("Lifespan", "Photo. Pathway", "Photo. Pathway",
                      "Clonality", "Growth Form",
                      "Growth Form", "Mycorr. Assoc.",
                      "N. Fixation", "Clonality", "Mycorr. Assoc.",
-                     "N. Fixation", "Lifespan", "Growth Form", "Growth Form")
+                     "N. Fixation", "Overall", "Lifespan", "Growth Form")
 trait.super.categories = c("Reproduction", "Leaf Traits", "Leaf Traits",
                      "Reproduction", "Growth Form",
                      "Growth Form", "Symbiosis",
                      "Symbiosis", "Reproduction", "Symbiosis",
-                     "Symbiosis", "Reproduction", "Growth Form", "Growth Form")
+                     "Symbiosis", "Overall", "Reproduction", "Growth Form")
 cbind(trait.labels, trait.categories, trait.super.categories)
 toplotesacat$Estimate = toplotesacat$emmean
 toplotesacat$trait = toplotesacat$value
@@ -622,20 +449,29 @@ toplotesacat$trait = toplotesacat$value
 ##############
 # new plot
 ##############
-gcol = adjustcolor(rev(c(rep("darkgreen",2),
-                         rep("blue",4),
-                         rep("orange",4),
-                         rep("red", 4))), alpha.f = 0.08)
-tord = rev(c(2,3,
+gcol = adjustcolor(rev(c(rep("gray",1),
+                         rep("red", 3),
+                         rep("darkgreen",2),
+                         rep("purple",4),
+                         rep("orange",4))), alpha.f = 0.08)
+# tord = rev(c(2,3,
+#              7,10,
+#              8,11,
+#              1,12,
+#              4,9,
+#              5,6,
+#              13,14))
+
+tord = rev(c(12, 6,
+             5, 14,
+             2,3,
              7,10,
              8,11,
-             1,12,
              4,9,
-             5,6,
-             13,14))
+             13,1))
 
 if(FALSE) {
-pdf("traits_by_treat_cat.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_catDec2023.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -655,15 +491,23 @@ make_boxplot(toplot_data = toplotesacat,
 dev.off()
 }
 
+# tord1 = rev(c(2,11,7,12,4,5,14))
+# tord2 = rev(c(3,8,10,1,9,6,13))
+tord1 = rev(c(12,5,2,11,7,4,13))
+tord2 = rev(c(6,14,3,8,10,9,1))
+gcol_split1 = adjustcolor(rev(c(rep("gray", 1),
+                               rep("red", 1),
+                               rep("darkgreen",1),
+                         rep("purple",2),
+                         rep("orange",2))), alpha.f = 0.08)
 
-tord1 = rev(c(2,11,7,12,4,5,14))
-tord2 = rev(c(3,8,10,1,9,6,13))
-gcol_split = adjustcolor(rev(c(rep("darkgreen",1),
-                         rep("blue",2),
-                         rep("orange",2),
-                         rep("red", 2))), alpha.f = 0.08)
+gcol_split2 = adjustcolor(rev(c(rep("red", 2),
+                                rep("darkgreen",1),
+                                rep("purple",2),
+                                rep("orange",2))), alpha.f = 0.08)
 
-pdf("traits_by_treat_cat_2col.pdf", width = 10.4, height=10)
+
+pdf("traits_by_treat_cat_2colDec2023_new.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -678,7 +522,7 @@ make_boxplot(toplot_data = toplotesacat,
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord1,
-             group_colors = gcol_split, 
+             group_colors = gcol_split1, 
              xtit = "", autopar = FALSE, n_table = cat_n_data)
 
 par(mar=c(2,0.2,3.5,6.8))
@@ -695,10 +539,128 @@ make_boxplot(toplot_data = toplotesacat,
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord2,
-             group_colors = gcol_split,
+             group_colors = gcol_split2,
              xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data)
 mtext("Effect Size, Mean DCi diff. by. Trait", side = 1, outer = TRUE, line = 1.2, cex = 1.7)
+dev.off()
 dev.off()
 
 
 
+# TraitSyndromes ----------------------------------------------------------
+
+
+
+###thinking about trait categories
+catTraits_full <- cattraits1 %>% 
+  filter(trait %in% c('clonal', 'growth_form', 'lifespan', 'mycorrhizal_type', 'n_fixation_type', 'photosynthetic_pathway')) %>% 
+  mutate(trait_value2=ifelse(trait=='photosynthetic_pathway' & trait_value %in% c('C4', 'CAM'), 'C4/CAM',    ifelse(trait=='n_fixation_type' & trait_value %in% c('actinorhizal', 'rhizobial'), 'N-fixer',ifelse(trait=='mycorrhizal_type' & trait_value %in% c('AM', 'EcM', 'ErM', 'OM', 'multiple'), 'yes',ifelse(trait=='lifespan' & trait_value %in% c('perennial', 'biennial'), 'Perenn./Bienn.', trait_value))))) 
+
+alldat_cat_full<-dcidiff_models%>%
+  left_join(catTraits_full) %>% 
+  select(-trait_value, -source, -error_risk_overall) %>% 
+  drop_na()
+
+traitcats_full<-alldat_cat_full %>%
+  pivot_wider(names_from=trait, values_from = trait_value2, values_fill = NA) %>% 
+  drop_na() %>% 
+  select(species, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
+  unique() %>% 
+  group_by(growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
+  summarize(n=length(species))
+
+sum(traitcats_full$n)
+
+TraitSyndrome<-alldat_cat_full %>%
+  pivot_wider(names_from=trait, values_from = trait_value2, values_fill = NA) %>% 
+  select(species, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
+  unique() %>% 
+ mutate(syndrome=
+          ifelse(photosynthetic_pathway=="C4/CAM", 'C4/CAM', 
+          ifelse(growth_form=='forb'&lifespan=='annual', 'ForbAnn',
+          ifelse(growth_form=='graminoid'&lifespan=='annual', 'GramAnn', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='none'&n_fixation_type=='none', 'ForbPernNoMut', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&n_fixation_type=='N-fixer', 'ForbPernNfix', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='yes','ForbPernMyc', 
+          #ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&clonal=='no'&mycorrhizal_type=='yes', 'ForbPernNoClonMyc',
+          ifelse(growth_form=='woody', 'Woody', 
+          ifelse(growth_form=='graminoid'&lifespan=='Perenn./Bienn.', 'GramPern', 'todo')))))))))
+
+SyndromeN<-TraitSyndrome %>% 
+  group_by(syndrome) %>% 
+  summarise(n=length(species))
+
+SpSyndrome<-TraitSyndrome %>% 
+  select(species, syndrome) %>% 
+  filter(syndrome!='todo')
+
+syndrome_diff_all <-dcidiff_models %>% 
+  left_join(SpSyndrome)
+
+
+###This give the number of obs for the figure
+tmp = syndrome_diff_all
+tmp = tmp[!is.na(tmp$diff),]
+synd_n_data = table(unique(tmp[,c("species", "trt_type2", "syndrome")]))
+synd_n_data = apply(synd_n_data, 2:3, sum)
+
+value2 = colnames(synd_n_data)
+
+#syndromes
+msynd<-lmer(diff ~ -1 + trt_type2 + syndrome:trt_type2 + (1|species) + (1|site_code), data=syndrome_diff_all)
+
+plot.msynd<-as.data.frame(emmeans(msynd, ~ syndrome*trt_type2))%>%
+  mutate(trait="Synd") %>% 
+  mutate(sig=ifelse(asymp.LCL<0&asymp.UCL<0|asymp.LCL>0&asymp.UCL>0, 1, 0))
+
+ggplot(data=plot.msynd, aes(x=emmean, y=trt_type2, color=as.factor(sig)))+
+  geom_point()+
+  geom_errorbar(aes(xmin=emmean-1.96*SE, xmax=emmean+1.96*SE), width=0.05)+
+  geom_vline(xintercept=0)+
+  facet_wrap(~syndrome)
+
+###modifying text for trait syndromes
+toplot.synd<-plot.msynd
+
+toplotsynd<-toplot.synd %>% 
+  mutate(trt_type3=factor(trt_type2, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
+  mutate(Trait_name=syndrome)# %>% 
+#mutate(Traits2=factor(Trait_name,levels=c("Annual", 'Perennial', 'Clonal', 'Non-Clonal', 'C3', 'C4', 'Mycorr.', 'Non-Mycorr.', 'N-Fixer', 'LDMC', 'Plant Height', 'Rooting Depth', 'Seed Mass', 'SLA'))) #%>% 
+#na.omit()
+head(toplotsynd)
+toplotsynd$value = as.character(toplotsynd$syndrome)
+toplotsynd$Trait_name = as.character(toplotsynd$Trait_name)
+toplotsynd$value = factor(toplotsynd$value)
+
+unique(data.frame(toplotsynd$value, toplotsynd$Trait_name))
+
+
+trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg", temp="Temp", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
+trait.labels = sort(unique(as.character(toplotsynd$value)))
+tmp = trait.labels
+trait.labels = paste(toupper(substr(trait.labels,1,1)),
+                     substr(trait.labels,2,99), sep = "")
+names(trait.labels) = tmp
+
+toplotsynd$Estimate = toplotsynd$emmean
+toplotsynd$trait = toplotsynd$value
+
+
+pdf("syndromes_by_treat_contDec2023.pdf", width = 5.2, height=10)
+make_boxplot(toplot_data = toplotsynd,
+             trt.labels_data = trt.labels,
+             trait.labels_data=trait.labels,
+             groupbytrait = FALSE,
+             legend_line_length = 1.4,
+             legend_textwidth = 0.012,
+             legend_yadj = 0.175,
+             legend_xadj = -0.002,
+             p_alpha = 0.05,
+             lower_margin = 6.8,
+             sigadj = -0.03,
+             traitorder = rev(c(1,2,3,4,5, 6, 7, 8)),#number refers to position in trt label vector, do in reverse
+             group_colors = adjustcolor(rev(c('yellow', 'pink', 'pink', 'pink','pink', 'green', 'green', 'brown')), alpha.f = 0.08),
+             n_table = synd_n_data)
+dev.off()
+
+                 
