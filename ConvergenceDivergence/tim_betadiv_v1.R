@@ -32,11 +32,11 @@ cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE da
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
-cover <- left_join(cover, corre2trykey, by = "genus_species", all.x = TRUE)
+cover <- left_join(cover, corre2trykey, by = "genus_species", keep = FALSE)
 
 experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
 
-
+siteLocationClimate <- read.csv("C:/Users/ohler/Dropbox/CoRRE_database/Data/CompiledData/siteLocationClimate.csv")
 
 
 #create average trait values per species and clean outliers
@@ -134,7 +134,7 @@ plot.treatment <- test[c("site_code", "project_name", "community_type", "plot_id
   unique()
 plot.treatment <- tidyr::unite(plot.treatment, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
 
-df <- left_join(test, traits, by = "species_matched", all.x = TRUE)
+df <- left_join(test, traits, by = "species_matched", keep = FALSE)
 
 df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
 
@@ -251,7 +251,8 @@ summary(mod)
 
 
 
-distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
+                      left_join(siteLocationClimate, by = "site_code", keep = FALSE)
 
 expgroup_drought <- c(distances_master.1%>%
                         dplyr::select(expgroup, trt_type)%>%
@@ -259,12 +260,9 @@ expgroup_drought <- c(distances_master.1%>%
                         unique())$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_drought)%>%
   subset(trt_type == "control" | trt_type == "drought")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
-tempdf <- subset(lrr.df, trt_type == "drought")
-mod <- lmer(lrr~0 + (1|expgroup/trt_type), data = tempdf)
-summary(mod)
 
 
 expgroup_irr <- c(distances_master.1%>%
@@ -272,7 +270,7 @@ expgroup_irr <- c(distances_master.1%>%
   subset(trt_type == "irr"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_irr)%>%
           subset(trt_type == "control" | trt_type == "irr")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
 expgroup_temp <- c(distances_master.1%>%
@@ -280,7 +278,7 @@ expgroup_temp <- c(distances_master.1%>%
                     subset(trt_type == "temp"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_temp)%>%
   subset(trt_type == "control" | trt_type == "temp")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
 expgroup_N <- c(distances_master.1%>%
@@ -288,7 +286,7 @@ expgroup_N <- c(distances_master.1%>%
                      subset(trt_type == "N"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_N)%>%
   subset(trt_type == "control" | trt_type == "N")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
 expgroup_P <- c(distances_master.1%>%
@@ -296,7 +294,7 @@ expgroup_P <- c(distances_master.1%>%
                      subset(trt_type == "P"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_P)%>%
   subset(trt_type == "control" | trt_type == "P")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf) #not enough samples for continent as random effect
 summary(mod)
 
 expgroup_mult_nutrient <- c(distances_master.1%>%
@@ -304,7 +302,7 @@ expgroup_mult_nutrient <- c(distances_master.1%>%
                      subset(trt_type == "mult_nutrient"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
   subset(trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
@@ -451,14 +449,15 @@ mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "mult
 
 
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
+                        left_join(siteLocationClimate, by = "site_code", keep = FALSE)
 
 expgroup_drought <- c(tdistances_master.1%>%
                               dplyr::select(expgroup, trt_type)%>%
                               subset(trt_type == "drought"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_drought)%>%
   subset(trt_type == "control" | trt_type == "drought")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
 expgroup_irr <- c(tdistances_master.1%>%
@@ -466,7 +465,7 @@ expgroup_irr <- c(tdistances_master.1%>%
                         subset(trt_type == "irr"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_irr)%>%
   subset(trt_type == "control" | trt_type == "irr")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
 expgroup_temp <- c(tdistances_master.1%>%
@@ -474,7 +473,7 @@ expgroup_temp <- c(tdistances_master.1%>%
                         subset(trt_type == "temp"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_temp)%>%
   subset(trt_type == "control" | trt_type == "temp")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
 expgroup_N <- c(tdistances_master.1%>%
@@ -482,7 +481,7 @@ expgroup_N <- c(tdistances_master.1%>%
                         subset(trt_type == "N"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_N)%>%
   subset(trt_type == "control" | trt_type == "N")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 
 expgroup_P <- c(tdistances_master.1%>%
@@ -490,7 +489,7 @@ expgroup_P <- c(tdistances_master.1%>%
                         subset(trt_type == "P"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_P)%>%
   subset(trt_type == "control" | trt_type == "P")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf) #not enough samples to use continent as random effect
 summary(mod)
 
 expgroup_mult_nutrient <- c(tdistances_master.1%>%
@@ -498,7 +497,7 @@ expgroup_mult_nutrient <- c(tdistances_master.1%>%
                         subset(trt_type == "mult_nutrient"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
   subset(trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
@@ -913,7 +912,7 @@ ggplot(tempdf, aes(sub.sp, lrr))+
 
 
 library(remotes)
-remotes::install_github("mastoffel/partR2") 
+#remotes::install_github("mastoffel/partR2") 
 library(partR2)
 library(tibble)
 
