@@ -1242,8 +1242,8 @@ trait_variance <- summarize.cwm%>%
     LDMC.var =  sd(x$LDMC.cwm)/mean(x$LDMC.cwm),
     plant_height_vegetative.var =  sd(x$plant_height_vegetative.cwm)/mean(x$plant_height_vegetative.cwm),
     SLA.var =  sd(x$SLA.cwm)/mean(x$plant_height_vegetative.cwm),
-    rooting_depth.var = sd(x$rooting_depth.cwm)/mean(x$rooting_depth.cwm),
-    leaf_C.N.var =  sd(x$leaf_C.N.cwm)/mean(x$leaf_C.N.cwm)
+    SRL.var = sd(x$SRL.cwm)/mean(x$SRL.cwm),
+    leaf_N.var =  sd(x$leaf_N.cwm)/mean(x$leaf_N.cwm)
     ))
 
 
@@ -1252,38 +1252,149 @@ trt.df <- subset(trait_variance, plot_mani >= 1)%>%
                   LDMC.var.trt = LDMC.var, 
                   plant_height_vegetative.var.trt = plant_height_vegetative.var, 
                   SLA.var.trt = SLA.var, 
-                  rooting_depth.var.trt = rooting_depth.var,
-                  leaf_C.N.var.trt = leaf_C.N.var))
+                  SRL.var.trt = SRL.var,
+                  leaf_N.var.trt = leaf_N.var))
 con.df <- subset(trait_variance, plot_mani == 0)%>%
   dplyr::rename(c(seed_dry_mass.var.con = seed_dry_mass.var, 
                   LDMC.var.con = LDMC.var, 
                   plant_height_vegetative.var.con = plant_height_vegetative.var, 
                   SLA.var.con = SLA.var, 
-                  rooting_depth.var.con = rooting_depth.var,
-                  leaf_C.N.var.con = leaf_C.N.var))%>%
+                  SRL.var.con = SRL.var,
+                  leaf_N.var.con = leaf_N.var))%>%
   dplyr::select(!c(trt_type, treatment, plot_mani))
 
 var.summary <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)
 
 trait_variance <- tidyr::separate(trait_variance, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
-mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code/expgroup), data = trait_variance)
+
+#Tim, start working on this chunk
+#drought
+tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "drought")%>%
+          subset(expgroup %in% expgroup_drought)
+
+mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(LDMC.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(SLA.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(SRL.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(leaf_N.var~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
 
-mod <- lmer(LDMC.var~trt_type + (1|expgroup), data = trait_variance)
+
+#irrigation
+tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "irr")%>%
+  subset(expgroup %in% expgroup_irr)
+
+mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
 summary(mod)
 
-mod <- lmer(plant_height_vegetative.var~trt_type + (1|expgroup), data = trait_variance)
+
+#temperature
+tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "temp")%>%
+  subset(expgroup %in% expgroup_temp)
+
+mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
 summary(mod)
 
-mod <- lmer(SLA.var~trt_type + (1|expgroup), data = trait_variance)
+
+#P
+tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "P")%>%
+  subset(expgroup %in% expgroup_P)
+
+mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
 summary(mod)
 
-mod <- lmer(rooting_depth.var~trt_type + (1|expgroup), data = trait_variance)
+#N
+tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "N")%>%
+  subset(expgroup %in% expgroup_N)
+
+mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(LDMC.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(SLA.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(SRL.var~trt_type + (1|site_code/expgroup), data = tempdf)
+summary(mod)
+mod <- lmer(leaf_N.var~trt_type + (1|site_code/expgroup), data = tempdf)
 summary(mod)
 
-mod <- lmer(leaf_C.N.var~trt_type + (1|expgroup), data = trait_variance)
+#mult_nutrient
+tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "mult_nutrient")%>%
+  subset(expgroup %in% expgroup_mult_nutrient)
+
+mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
 summary(mod)
+mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
+summary(mod)
+
+
+##
+
+#mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code/expgroup), data = trait_variance)
+#summary(mod)
+
+
+#mod <- lmer(LDMC.var~trt_type + (1|site_code/expgroup), data = trait_variance)
+#summary(mod)
+
+#mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code/expgroup), data = trait_variance)
+#summary(mod)
+
+#mod <- lmer(SLA.var~trt_type + (1|expgroup), data = trait_variance)
+#summary(mod)
+
+#mod <- lmer(rooting_depth.var~trt_type + (1|expgroup), data = trait_variance)
+#summary(mod)
+
+#mod <- lmer(leaf_C.N.var~trt_type + (1|expgroup), data = trait_variance)
+#summary(mod)
 
 
 
