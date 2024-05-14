@@ -245,7 +245,7 @@ ggsave(
 #mod <- lmer(lrr~0+ (1|expgroup), data = subset(lrr.df, trt_type == "drought" ))
 #summary(mod)
 
-mod <- lmer(lrr~0+ trt_type + (1|expgroup/trt_type), data = lrr.df)
+mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df)
 summary(mod)
 
 
@@ -302,7 +302,7 @@ expgroup_mult_nutrient <- c(distances_master.1%>%
                      subset(trt_type == "mult_nutrient"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
   subset(trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
@@ -440,7 +440,7 @@ ggsave(
 lrr.df_traits <- lrr.df
 
 #models to test results
-mod <- lmer(lrr~0+ trt_type + (1|expgroup/trt_type), data = lrr.df_traits)
+mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df_traits)
 summary(mod)
 
 mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "drought"))
@@ -457,7 +457,7 @@ expgroup_drought <- c(tdistances_master.1%>%
                               subset(trt_type == "drought"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_drought)%>%
   subset(trt_type == "control" | trt_type == "drought")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 summary(mod)
 
 expgroup_irr <- c(tdistances_master.1%>%
@@ -465,7 +465,7 @@ expgroup_irr <- c(tdistances_master.1%>%
                         subset(trt_type == "irr"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_irr)%>%
   subset(trt_type == "control" | trt_type == "irr")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 summary(mod)
 
 expgroup_temp <- c(tdistances_master.1%>%
@@ -473,7 +473,7 @@ expgroup_temp <- c(tdistances_master.1%>%
                         subset(trt_type == "temp"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_temp)%>%
   subset(trt_type == "control" | trt_type == "temp")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 summary(mod)
 
 expgroup_N <- c(tdistances_master.1%>%
@@ -489,7 +489,7 @@ expgroup_P <- c(tdistances_master.1%>%
                         subset(trt_type == "P"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_P)%>%
   subset(trt_type == "control" | trt_type == "P")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf) #not enough samples to use continent as random effect
+mod <- lmer(dist~trt_type + (1|site_code), data = tempdf) #not enough samples to use continent as random effect
 summary(mod)
 
 expgroup_mult_nutrient <- c(tdistances_master.1%>%
@@ -497,7 +497,7 @@ expgroup_mult_nutrient <- c(tdistances_master.1%>%
                         subset(trt_type == "mult_nutrient"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
   subset(trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
@@ -1027,6 +1027,136 @@ ggsave(
 
 
 
+tempdf <- subset(full_lrr.df, trt_type == "P")%>%
+  dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
+  filter(complete.cases(.))
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
+summary(mod) #sig include sub.rank, sub.eve
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2
+
+r2$R2%>%
+  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  ggplot( aes(term, estimate, fill = sig))+
+  geom_bar(color = "black",stat = "identity")+
+  ylim(0,.2)+
+  ylab("Partial r-squared")+
+  scale_fill_manual(values = c( "white", "black"))+
+  coord_flip()+
+  ggtitle("P")+
+  xlab("")+
+  theme_classic()+
+  theme(legend.position = "none")
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/partialR2_p.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3,
+  height = 10,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
+tempdf <- subset(full_lrr.df, trt_type == "irr")%>%
+  dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
+  filter(complete.cases(.))
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
+summary(mod) #sig include sub.rank, sub.eve
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2
+
+r2$R2%>%
+  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  ggplot( aes(term, estimate, fill = sig))+
+  geom_bar(color = "black",stat = "identity")+
+  ylim(0,.2)+
+  ylab("Partial r-squared")+
+  scale_fill_manual(values = c( "white", "black"))+
+  coord_flip()+
+  ggtitle("irr")+
+  xlab("")+
+  theme_classic()+
+  theme(legend.position = "none")
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/partialR2_irr.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3,
+  height = 10,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
+
+
+
+
+
+
+
+
+
+tempdf <- subset(full_lrr.df, trt_type == "temp")%>%
+  dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
+  filter(complete.cases(.))
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
+summary(mod) #sig include sub.rank, sub.eve
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2
+
+r2$R2%>%
+  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  ggplot( aes(term, estimate, fill = sig))+
+  geom_bar(color = "black",stat = "identity")+
+  ylim(0,.2)+
+  ylab("Partial r-squared")+
+  scale_fill_manual(values = c( "white", "black"))+
+  coord_flip()+
+  ggtitle("TEMPERATURE")+
+  xlab("")+
+  theme_classic()+
+  theme(legend.position = "none")
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/partialR2_temperature.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3,
+  height = 10,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
+
+
+
+
 
 #models to test results
 rank_diff_master.1 <- tidyr::separate(rank_diff_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
@@ -1197,43 +1327,7 @@ ggplot(diff.df, aes(x=metric, y=Estimate, fill = metric, color = metric))+
   theme_base()
 
 
-################BLEOW SECTION IS A TEST THAT YOU CAN PROBABLY DELETE
-##Explain variation using partial r squareds
-
-rank_diff_expgroup <- ddply(rank_diff_master.1, .(expgroup, trt_type, treatment, plot_mani),function(x)data.frame(
-                        richness_diff = mean(x$richness_diff),
-                          evenness_diff = mean(x$evenness_diff),
-                          rank_diff = mean(x$rank_diff),
-                          species_diff = mean(x$species_diff)
-))
-
-
-distances_expgroup <- ddply(distances_master.1, .(expgroup, site_code, project, community, trt_type, treatment), function(x)data.frame(
-                            dist = mean(x$dist)
-))
-
-
-full_df <- left_join(distances_expgroup, rank_diff_expgroup, by = c("expgroup", "trt_type", "treatment"))
-
-library(remotes)
-remotes::install_github("mastoffel/partR2") 
-library(partR2)
-
-tempdf <- subset(full_df, trt_type == "control" | trt_type == "drought")%>% filter(complete.cases(.))
-mod <- lmer(dist~richness_diff+evenness_diff + rank_diff + species_diff + (1|site_code), data = tempdf)
-summary(mod)
-partR2(mod, data = tempdf, partvars = c("richness_diff", "evenness_diff", "rank_diff", "species_diff"), R2_type = "marginal", nboot = 10)
-
-
-
-tempdf <- subset(full_df, trt_type == "control" | trt_type == "N")%>% filter(complete.cases(.))
-mod <- lmer(dist~richness_diff+evenness_diff + rank_diff + species_diff + (1|site_code), data = tempdf)
-summary(mod)
-partR2(mod, data = tempdf, partvars = c("richness_diff", "evenness_diff", "rank_diff", "species_diff"), R2_type = "marginal", nboot = 10)
-
-#######################################above
-
-
+################
 ####SINGLE TRAIT VARIANCE AMONG REPLICATES (TRAIT)
 
 trait_variance <- summarize.cwm%>%
