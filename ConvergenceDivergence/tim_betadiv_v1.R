@@ -244,15 +244,47 @@ ggsave(
 #models to test results
 #mod <- lmer(lrr~0+ (1|expgroup), data = subset(lrr.df, trt_type == "drought" ))
 #summary(mod)
-
-mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df)
+tempdf <- tidyr::separate(lrr.df, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
 summary(mod)
+library(emmeans)
+modoutput <- data.frame(emmeans(mod, ~trt_type))
+
+ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
+    geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
+  xlab("")+
+  ylab("Species composition LRR distance between plots within treatment")+
+  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
+  coord_flip()+
+  theme_base()+
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+
+
+
+ggsave(
+  "C:/Users/ohler/Documents/converge-diverge/fig1_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 7,
+  height = 6,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 
 
 
 distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
                       left_join(siteLocationClimate, by = "site_code", keep = FALSE)
+
+
+
 
 expgroup_drought <- c(distances_master.1%>%
                         dplyr::select(expgroup, trt_type)%>%
@@ -421,6 +453,33 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
   theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 
+
+
+
+
+
+lrr.df_traits <- lrr.df
+
+#models to test results
+tempdf <- tidyr::separate(lrr.df_traits, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
+summary(mod)
+library(emmeans)
+modoutput <- data.frame(emmeans(mod, ~trt_type))
+
+ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
+  geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
+  xlab("")+
+  ylab("Trait composition LRR distance between plots within treatment")+
+  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
+  coord_flip()+
+  theme_base()+
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+
+
+
 ggsave(
   "C:/Users/ohler/Documents/converge-diverge/fig1_trait.pdf",
   plot = last_plot(),
@@ -433,19 +492,6 @@ ggsave(
   dpi = 600,
   limitsize = TRUE
 )
-
-
-
-
-lrr.df_traits <- lrr.df
-
-#models to test results
-mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = lrr.df_traits)
-summary(mod)
-
-mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "drought"))
-mod <- lmer(lrr~0 + (1|expgroup), data = subset(lrr.df_traits, trt_type == "mult_nutrient"))
-
 
 
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
@@ -505,7 +551,9 @@ summary(mod)
 #####################
 ###Compare species and trait responses
 lrr_sp.tr <- merge(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type", "treatment", "plot_mani"), all = TRUE)%>%
-  dplyr::rename(c(lrr.species = lrr.x, lrr.traits = lrr.y))
+  dplyr::rename(c(lrr.species = lrr.x, lrr.traits = lrr.y))%>%
+  tidyr::separate( expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+
 
 #visualize
 lrr_sp.tr$trt_type <- factor(lrr_sp.tr$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" 
@@ -549,13 +597,27 @@ ggsave(
 
 
 #models to test results
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "drought")))
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "irr")))
-#summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "CO2")))
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "N")))
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "P")))
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "mult_nutrient")))
-#summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "mult_GCD")))
+library(MuMIn)
+mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "drought"))
+summary(mod)
+r.squaredGLMM(mod)
+
+mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "irr"))
+summary(mod)
+r.squaredGLMM(mod)
+
+mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N"))
+summary(mod)
+r.squaredGLMM(mod)
+
+mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "P"))
+summary(mod)
+r.squaredGLMM(mod)
+
+mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "mult_nutrient"))
+summary(mod)
+r.squaredGLMM(mod)
+
 summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "temp")))
 
 
@@ -698,6 +760,27 @@ visreg(mod)
 mod <- lmer(lrr~experiment_length + (1|site_code), data = mult_nutrient)
 summary(mod)
 visreg(mod)
+
+
+
+
+ggplot(lrr_covariate_traits, aes(x=MAP, y = lrr))+
+  facet_wrap(~trt_type)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+
+ggplot(lrr_covariate_traits, aes(x=MAT, y = lrr))+
+  facet_wrap(~trt_type)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+  
+ggplot(lrr_covariate_traits, aes(x=rrich, y = lrr))+
+  facet_wrap(~trt_type)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
 
 
 ##with treatment information
@@ -877,7 +960,7 @@ ggsave(
 )
 
 
-tempdf <- subset(full_lrr.df, trt_type == "drought" | trt_type == "N" | trt_type == "mult_nutrient")
+tempdf <- full_lrr.df#subset(full_lrr.df, trt_type == "drought" | trt_type == "N" | trt_type == "mult_nutrient")
 ggplot(tempdf, aes(sub.rich, lrr))+
   facet_wrap(~trt_type)+
   geom_point()+
@@ -1078,7 +1161,7 @@ r2
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
-  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  tibble::add_column(sig = c("0","0", "0", "0"))%>%
   ggplot( aes(term, estimate, fill = sig))+
   geom_bar(color = "black",stat = "identity")+
   ylim(0,.2)+
@@ -1126,7 +1209,7 @@ r2
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
-  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  tibble::add_column(sig = c("0","0", "0", "0"))%>%
   ggplot( aes(term, estimate, fill = sig))+
   geom_bar(color = "black",stat = "identity")+
   ylim(0,.2)+
