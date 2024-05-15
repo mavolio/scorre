@@ -1000,9 +1000,9 @@ library(partR2)
 library(tibble)
 
 tempdf <- subset(full_lrr.df, trt_type == "drought")
-mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|site_code), data = tempdf)
 summary(mod) #sig include marginal sub.rank
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
 r2
 
 r2$R2%>%
@@ -1039,7 +1039,7 @@ tempdf <- tempdf <- subset(full_lrr.df, trt_type == "N")%>%
   filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 summary(mod) #sig include sub.rank, sub.sp
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
 r2
 
 r2$R2%>%
@@ -1077,7 +1077,7 @@ tempdf <- subset(full_lrr.df, trt_type == "mult_nutrient")%>%
   filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 summary(mod) #sig include sub.rank, sub.eve
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
 r2
 
 r2$R2%>%
@@ -1116,13 +1116,13 @@ tempdf <- subset(full_lrr.df, trt_type == "P")%>%
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
 summary(mod) #sig include sub.rank, sub.eve
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
 r2
 
 r2$R2%>%
   subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
   mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
-  tibble::add_column(sig = c("0","0", "1", "0"))%>%
+  tibble::add_column(sig = c("0","0", "0", "0"))%>%
   ggplot( aes(term, estimate, fill = sig))+
   geom_bar(color = "black",stat = "identity")+
   ylim(0,.2)+
@@ -1155,7 +1155,7 @@ tempdf <- subset(full_lrr.df, trt_type == "irr")%>%
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
 summary(mod) #sig include sub.rank, sub.eve
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
 r2
 
 r2$R2%>%
@@ -1196,19 +1196,23 @@ ggsave(
 
 
 
-
+library(sensemakr)
 tempdf <- subset(full_lrr.df, trt_type == "temp")%>%
   dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
   filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
 mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
 summary(mod) #sig include sub.rank, sub.eve
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
-r2
+r2 <- as.data.frame(partial_r2(mod))
+r2$term <- rownames(r2)
+r2$estimate <- r2$`partial_r2(mod)`
+#r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 10)
+#r2
 
-r2$R2%>%
-  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
-  mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+r2%>%
+  #subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+  #mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+  subset(term != "(Intercept)" )%>%
   tibble::add_column(sig = c("0","0", "0", "0"))%>%
   ggplot( aes(term, estimate, fill = sig))+
   geom_bar(color = "black",stat = "identity")+
