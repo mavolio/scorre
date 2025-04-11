@@ -311,15 +311,15 @@ p_mean<-CT_diff%>%
 # ##multiple treatments only use species that are found in 3 or more experiments
 ## deciding to no longer do this b/c we are changing the mult trt
 # 
-# allmult_subset<-CT_diff%>%
-#   filter(multtrts==1)%>%
-#   ungroup()%>%
-#   select(species_matched, trt_type)%>%
-#   unique()%>%
-#   group_by(species_matched)%>%
-#   summarize(n=length(trt_type))%>%
-#   filter(n>2)%>%
-#   select(-n)
+allmult_subset<-CT_diff%>%
+  filter(multtrts==1)%>%
+  ungroup()%>%
+  select(species_matched, trt_type)%>%
+  unique()%>%
+  group_by(species_matched)%>%
+  summarize(n=length(trt_type))%>%
+  filter(n>2)%>%
+  select(-n)
 
 allmult_sites<-CT_diff%>%
   filter(multtrts==1)%>%
