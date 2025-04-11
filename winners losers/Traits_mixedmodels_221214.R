@@ -20,12 +20,12 @@ scale_fun = function(x) {
   x.new
 }
 
-#open TraitBoxPlots code and run the funciton make_boxplots
+#open TraitBoxPlots code and run the function make_boxplots
 
 setwd('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript')
 
 # Read in dci diff
-dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsDec2023.csv") %>% 
+dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsMarch2024.csv") %>% 
   rename(species=species_matched)
 
 length(unique(dcidiff_models$species))
@@ -55,7 +55,7 @@ conttraits1<-read.csv(infile2,header=F
                         "error_risk_genus",     
                         "source"    ), check.names=TRUE)
 
-unlink(infile2)
+ unlink(infile2)
 
 #error risk < 3 drops ~28 observations
 #error risk < 2.5 drops ~99 observations
@@ -228,7 +228,7 @@ trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
-pdf("traits_by_treat_contDec2023.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_contMarch2024_2.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplot,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -471,7 +471,7 @@ tord = rev(c(12, 6,
              13,1))
 
 if(FALSE) {
-pdf("traits_by_treat_catDec2023.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_catMarch2024.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -507,7 +507,7 @@ gcol_split2 = adjustcolor(rev(c(rep("red", 2),
                                 rep("orange",2))), alpha.f = 0.08)
 
 
-pdf("traits_by_treat_cat_2colDec2023_new.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colMarch2024.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -577,14 +577,14 @@ TraitSyndrome<-alldat_cat_full %>%
   unique() %>% 
  mutate(syndrome=
           ifelse(photosynthetic_pathway=="C4/CAM", 'C4/CAM', 
-          ifelse(growth_form=='forb'&lifespan=='annual', 'ForbAnn',
-          ifelse(growth_form=='graminoid'&lifespan=='annual', 'GramAnn', 
-          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='none'&n_fixation_type=='none', 'ForbPernNoMut', 
-          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&n_fixation_type=='N-fixer', 'ForbPernNfix', 
-          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='yes','ForbPernMyc', 
+          ifelse(growth_form=='forb'&lifespan=='annual', 'Annual forb',
+          ifelse(growth_form=='graminoid'&lifespan=='annual', 'Annual gram.', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='none'&n_fixation_type=='none', 'Non-mutualistic peren. forb', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&n_fixation_type=='N-fixer', 'N-fixing peren. forb', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='yes','Mycorrhizal forb', 
           #ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&clonal=='no'&mycorrhizal_type=='yes', 'ForbPernNoClonMyc',
           ifelse(growth_form=='woody', 'Woody', 
-          ifelse(growth_form=='graminoid'&lifespan=='Perenn./Bienn.', 'GramPern', 'todo')))))))))
+          ifelse(growth_form=='graminoid'&lifespan=='Perenn./Bienn.', 'Peren. Gram.', 'todo')))))))))
 
 SyndromeN<-TraitSyndrome %>% 
   group_by(syndrome) %>% 
@@ -646,20 +646,20 @@ toplotsynd$Estimate = toplotsynd$emmean
 toplotsynd$trait = toplotsynd$value
 
 
-pdf("syndromes_by_treat_contDec2023.pdf", width = 5.2, height=10)
+pdf("syndromes_by_treat_contMarch2024.pdf", width = 6, height=10)
 make_boxplot(toplot_data = toplotsynd,
              trt.labels_data = trt.labels,
              trait.labels_data=trait.labels,
              groupbytrait = FALSE,
              legend_line_length = 1.4,
-             legend_textwidth = 0.012,
+             legend_textwidth = 0.02,
              legend_yadj = 0.175,
              legend_xadj = -0.002,
              p_alpha = 0.05,
              lower_margin = 6.8,
              sigadj = -0.03,
              traitorder = rev(c(1,2,3,4,5, 6, 7, 8)),#number refers to position in trt label vector, do in reverse
-             group_colors = adjustcolor(rev(c('yellow', 'pink', 'pink', 'pink','pink', 'green', 'green', 'brown')), alpha.f = 0.08),
+             #group_colors = adjustcolor(rev(c('yellow', 'pink', 'pink', 'pink','pink', 'green', 'green', 'brown')), alpha.f = 0.08),
              n_table = synd_n_data)
 dev.off()
 
