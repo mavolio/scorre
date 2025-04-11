@@ -228,7 +228,7 @@ trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
-pdf("traits_by_treat_contMarch2024_2.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_contApril2025.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplot,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -471,7 +471,7 @@ tord = rev(c(12, 6,
              13,1))
 
 if(FALSE) {
-pdf("traits_by_treat_catMarch2024.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_catApril2025.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -507,7 +507,7 @@ gcol_split2 = adjustcolor(rev(c(rep("red", 2),
                                 rep("orange",2))), alpha.f = 0.08)
 
 
-pdf("traits_by_treat_cat_2colMarch2024.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colApril2025.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -646,7 +646,7 @@ toplotsynd$Estimate = toplotsynd$emmean
 toplotsynd$trait = toplotsynd$value
 
 
-pdf("syndromes_by_treat_contMarch2024.pdf", width = 6, height=10)
+pdf("syndromes_by_treat_contApril2025.pdf", width = 6, height=10)
 make_boxplot(toplot_data = toplotsynd,
              trt.labels_data = trt.labels,
              trait.labels_data=trait.labels,
