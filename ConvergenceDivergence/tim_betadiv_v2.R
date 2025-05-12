@@ -110,8 +110,8 @@ dplyr::select(site_code, project_name, community_type, treatment_year)%>%
 #subset by criteria
 test <- crest %>%
   #subset(treats_wanted != "NA")%>%
-  subset( rep_num >=5)%>%
-  subset(treatment_year == 3) #lets try treatment year 3
+  subset( rep_num >=5)#%>%
+  #subset(treatment_year == 3) #lets try treatment year 3
 
 
 test$trt_type <-  revalue(test$trt_type, c("N*P" = "mult_nutrient","CO2*temp" = "mult_GCD", "drought*CO2*temp" = "mult_GCD","irr*CO2" = "mult_GCD","irr*CO2*temp" = "mult_GCD","N*CO2*temp" = "mult_GCD","N*irr*CO2" = "mult_GCD", "mult_nutrient*irr" = "mult_GCD","N*irr*CO2*temp" = "mult_GCD", "N*CO2" = "mult_GCD","N*drought" = "mult_GCD","N*irr" = "mult_GCD","N*irr*temp" = "mult_GCD","N*temp" = "mult_GCD","mult_nutrient*temp" = "mult_GCD","N*P*temp" = "mult_GCD","drought*temp" = "mult_GCD","irr*temp" = "mult_GCD") ) #all expect for the first term are used for mult_GCD category which is no longer being used
@@ -122,15 +122,15 @@ test <- test%>%
   )#%>%  #keep only the focal treatments
 
 #Set minimum treatment years. Note that criteria is relaxed for drought experiments for: reasons
-N <-  subset(test[test$trt_type %in% "N",], n.trt.yrs >= 3)
-P <-  subset(test[test$trt_type %in% "P",], n.trt.yrs >= 3)
-irr <-  subset(test[test$trt_type %in% "irr",], n.trt.yrs >= 3)
+N <-  test[test$trt_type %in% "N",]
+P <-  test[test$trt_type %in% "P",]
+irr <-  test[test$trt_type %in% "irr",]
 #CO2 <-  subset(test[test$trt_type %in% "CO2",], n.trt.yrs >= 6)
-temp <-  subset(test[test$trt_type %in% "temp",], n.trt.yrs >= 3)
-mult_nutrient <-  subset(test[test$trt_type %in% "mult_nutrient",], n.trt.yrs >= 3)
+temp <-  test[test$trt_type %in% "temp",]
+mult_nutrient <-  test[test$trt_type %in% "mult_nutrient",]
 #mult_GCD <-  subset(test[test$trt_type %in% "mult_GCD",], n.trt.yrs >= 6)
-drought <-  subset(test[test$trt_type %in% "drought",], n.trt.yrs >= 3)
-control <-  subset(test[test$trt_type %in% "control",], n.trt.yrs >= 3)
+drought <-  test[test$trt_type %in% "drought",]
+control <-  test[test$trt_type %in% "control",]
 
 test <- bind_rows(N, P, irr, temp, mult_nutrient, drought, control
                   #, mult_GCD, CO2
@@ -175,7 +175,7 @@ sites <- unite(sites, temp, c("project_name", "community_type"), sep = "::", rem
 
 kevin <- unite(test, expgroup, c("site_code", "project_name", "community_type"), remove = FALSE, sep = "::" ) #named Kevin because Kevin Wilcox helped make this loop
 kevin <- subset(kevin, species_matched != "NA")%>%
-  ddply(.(expgroup, site_code, project_name, community_type, treatment_year, plot_id, species_matched, trt_type, plot_mani, treatment),
+  ddply(.(expgroup, site_code, project_name, community_type, treatment_year, plot_id, species_matched, trt_type, plot_mani, treatment, treatment_year),
         function(x)data.frame(
           relcov = sum(x$relcov)
         )) #with species names matched to trait data, separate observations in the cover data can become multiple observations of the same species, therefore, must sum cover values
@@ -191,7 +191,7 @@ for(i in 1:length(expgroup_vector)) {
     pivot_wider(names_from = species_matched, values_from = relcov, values_fill = 0)
   temp.distances <- vegdist(temp.wide[10:ncol(temp.wide)], method = "bray")
   temp.mod <- betadisper(temp.distances, group = temp.wide$trt_type, type = "centroid")
-  distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist)
+  distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist, treatment_year = temp.wide$treatment_year)
   #distances_temp <- subset(distances_temp, dist > 0.00000000001) #not necessary when cO2 treatment excluded
   #distances_temp$dist <- ifelse(distances_temp$dist > 0.00000000001, distances_temp$dist, 0.001) #changes value for single serc experiment where distance equals essentially 0 which doesn't work with response ratios
   distances_master <- rbind(distances_master, distances_temp )
@@ -200,20 +200,20 @@ for(i in 1:length(expgroup_vector)) {
 
 
 
-mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani), function(x)data.frame( mean_dist = mean(x$dist)))
+mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
 
 trt.df <- subset(mean.dist.df, plot_mani >= 1)%>%
   dplyr::rename(dist.trt = mean_dist)
 con.df <- subset(mean.dist.df, plot_mani == 0)%>%
   dplyr::rename(dist.con = mean_dist)%>%
-  dplyr::select(expgroup, dist.con)
+  dplyr::select(expgroup, dist.con, treatment_year)
 
-lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
+lrr.df <- left_join(trt.df, con.df, by = c("expgroup","treatment_year"))%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.con-dist.trt)
 
 lrr.df.conf <- lrr.df%>%
-  ddply(.(trt_type), function(x)data.frame(
+  ddply(.(trt_type, treatment_year), function(x)data.frame(
     lrr.mean = mean(x$lrr),
     lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
     lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
@@ -227,7 +227,8 @@ lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error
 
 
 #visualize
-ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
+ggplot(subset(subset(lrr.df.conf, treatment_year >=1 &treatment_year <=8), trt_type == "N"|trt_type == "P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
+  facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
   xlab("")+
@@ -250,24 +251,24 @@ ggsave(
   limitsize = TRUE
 )
 
-#models to test results
+#models to test results - below code is kind of defunct if we include year
 #mod <- lmer(lrr~0+ (1|expgroup), data = subset(lrr.df, trt_type == "drought" ))
 #summary(mod)
-tempdf <- tidyr::separate(lrr.df, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
-summary(mod)
+#tempdf <- tidyr::separate(lrr.df, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+#mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
+#summary(mod)
 library(emmeans)
-modoutput <- data.frame(emmeans(mod, ~trt_type))
+#modoutput <- data.frame(emmeans(mod, ~trt_type))
 
-ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
-  xlab("")+
-  ylab("Species composition LRR distance between plots within treatment")+
-  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
-  coord_flip()+
-  theme_base()+
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+#ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
+#  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
+#  geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
+#  xlab("")+
+#  ylab("Species composition LRR distance between plots within treatment")+
+#  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
+#  coord_flip()+
+#  theme_base()+
+#  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 
 
@@ -301,8 +302,8 @@ expgroup_drought <- c(distances_master.1%>%
                         unique())$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_drought)%>%
   subset(trt_type == "control" | trt_type == "drought")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+#summary(mod)
 
 
 
@@ -311,40 +312,40 @@ expgroup_irr <- c(distances_master.1%>%
                     subset(trt_type == "irr"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_irr)%>%
   subset(trt_type == "control" | trt_type == "irr")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+#summary(mod)
 
 expgroup_temp <- c(distances_master.1%>%
                      dplyr::select(expgroup, trt_type)%>%
                      subset(trt_type == "temp"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_temp)%>%
   subset(trt_type == "control" | trt_type == "temp")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+#summary(mod)
 
 expgroup_N <- c(distances_master.1%>%
                   dplyr::select(expgroup, trt_type)%>%
                   subset(trt_type == "N"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_N)%>%
   subset(trt_type == "control" | trt_type == "N")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+#summary(mod)
 
 expgroup_P <- c(distances_master.1%>%
                   dplyr::select(expgroup, trt_type)%>%
                   subset(trt_type == "P"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_P)%>%
   subset(trt_type == "control" | trt_type == "P")
-mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf) #not enough samples for continent as random effect
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf) #not enough samples for continent as random effect
+#summary(mod)
 
 expgroup_mult_nutrient <- c(distances_master.1%>%
                               dplyr::select(expgroup, trt_type)%>%
                               subset(trt_type == "mult_nutrient"))$expgroup
 tempdf <- subset(distances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
   subset(trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
+#summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
 
@@ -414,7 +415,7 @@ for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(summarize.cwm, expgroup == expgroup_vector[i])
   temp.gow <- gowdis(temp.df[8:ncol(temp.df)])
   temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
-  tdistances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani)
+  tdistances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani, treatment_year = temp.df$treatment_year)
   #  tdistances_temp <- subset(tdistances_temp, dist > 0.00000000001) #not necesssary when excluding CO2 treatment
   #  tdistances_temp$dist <- ifelse(tdistances_temp$dist > 0.00000000001, tdistances_temp$dist, 0.001) #changes value for single serc experiment where distance equals essentially 0 which doesn't work with response ratios
   tdistances_master <- rbind(tdistances_master, tdistances_temp )
@@ -422,20 +423,20 @@ for(i in 1:length(expgroup_vector)) {
   
 }
 
-mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani), function(x)data.frame( mean_dist = mean(x$dist)))
+mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
 
 trt.df <- subset(mean.dist.df, plot_mani >= 1)%>%
   dplyr::rename(dist.trt = mean_dist)
 con.df <- subset(mean.dist.df, plot_mani == 0)%>%
   dplyr::rename(dist.con = mean_dist)%>%
-  dplyr::select(expgroup, dist.con)
+  dplyr::select(expgroup, dist.con, treatment_year)
 
-lrr.df <- merge(trt.df, con.df, by = "expgroup", all.x = TRUE)%>%
+lrr.df <- left_join(trt.df, con.df, by = c("expgroup", "treatment_year"))%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.trt/dist.con)
 
 lrr.df.conf <- lrr.df%>%
-  ddply(.(trt_type), function(x)data.frame(
+  ddply(.(trt_type, treatment_year), function(x)data.frame(
     lrr.mean = mean(x$lrr),
     lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
     lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
@@ -452,7 +453,8 @@ lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error
 lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" 
                                                                 #,"mult_GCD", "CO2"
 ))
-ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
+ggplot(subset(subset(lrr.df.conf, treatment_year >= 1 &treatment_year <= 8), trt_type== "N"| trt_type=="P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
+facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
   xlab("")+
@@ -463,31 +465,24 @@ ggplot(lrr.df.conf, aes(trt_type, lrr.mean, color = trt_type))+
 
 
 
-
-
-
-
 lrr.df_traits <- lrr.df
 
 #models to test results
-tempdf <- tidyr::separate(lrr.df_traits, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
-summary(mod)
-library(emmeans)
-modoutput <- data.frame(emmeans(mod, ~trt_type))
+#tempdf <- tidyr::separate(lrr.df_traits, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+#mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
+#summary(mod)
+#library(emmeans)
+#modoutput <- data.frame(emmeans(mod, ~trt_type))
 
-ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
-  xlab("")+
-  ylab("Trait composition LRR distance between plots within treatment")+
-  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
-  coord_flip()+
-  theme_base()+
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-
-
-
+#ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
+#  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
+#  geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
+#  xlab("")+
+#  ylab("Trait composition LRR distance between plots within treatment")+
+#  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
+#  coord_flip()+
+#  theme_base()+
+#  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 ggsave(
   "C:/Users/ohler/Documents/converge-diverge/fig1_trait.pdf",
@@ -508,58 +503,58 @@ tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code
   left_join(siteLocationClimate, by = "site_code", keep = FALSE)
 
 expgroup_drought <- c(tdistances_master.1%>%
-                        dplyr::select(expgroup, trt_type)%>%
+                        dplyr::select(expgroup, trt_type, treatment_year)%>%
                         subset(trt_type == "drought"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_drought)%>%
   subset(trt_type == "control" | trt_type == "drought")
-mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
+#summary(mod)
 
 expgroup_irr <- c(tdistances_master.1%>%
-                    dplyr::select(expgroup, trt_type)%>%
+                    dplyr::select(expgroup, trt_type, treatment_year)%>%
                     subset(trt_type == "irr"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_irr)%>%
   subset(trt_type == "control" | trt_type == "irr")
-mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
+#summary(mod)
 
 expgroup_temp <- c(tdistances_master.1%>%
-                     dplyr::select(expgroup, trt_type)%>%
+                     dplyr::select(expgroup, trt_type, treatment_year)%>%
                      subset(trt_type == "temp"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_temp)%>%
   subset(trt_type == "control" | trt_type == "temp")
-mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
+#summary(mod)
 
 expgroup_N <- c(tdistances_master.1%>%
-                  dplyr::select(expgroup, trt_type)%>%
+                  dplyr::select(expgroup, trt_type, treatment_year)%>%
                   subset(trt_type == "N"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_N)%>%
   subset(trt_type == "control" | trt_type == "N")
-mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
+#summary(mod)
 
 expgroup_P <- c(tdistances_master.1%>%
-                  dplyr::select(expgroup, trt_type)%>%
+                  dplyr::select(expgroup, trt_type, treatment_year)%>%
                   subset(trt_type == "P"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_P)%>%
   subset(trt_type == "control" | trt_type == "P")
-mod <- lmer(dist~trt_type + (1|site_code), data = tempdf) #not enough samples to use continent as random effect
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|site_code), data = tempdf) #not enough samples to use continent as random effect
+#summary(mod)
 
 expgroup_mult_nutrient <- c(tdistances_master.1%>%
-                              dplyr::select(expgroup, trt_type)%>%
+                              dplyr::select(expgroup, trt_type, treatment_year)%>%
                               subset(trt_type == "mult_nutrient"))$expgroup
 tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
   subset(trt_type == "control" | trt_type == "mult_nutrient")
-mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-summary(mod)
+#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
+#summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
 #summary(mod)
 
 #####################
 ###Compare species and trait responses
-lrr_sp.tr <- merge(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type", "treatment", "plot_mani"), all = TRUE)%>%
+lrr_sp.tr <- left_join(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type", "treatment", "plot_mani", "treatment_year"), keep = FALSE)%>%
   dplyr::rename(c(lrr.species = lrr.x, lrr.traits = lrr.y))%>%
   tidyr::separate( expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
