@@ -11,6 +11,7 @@ library(FD)
 library(visreg)
 library(ggthemes)
 library(codyn)
+library(emmeans)
 
 #Read in data
 traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
@@ -252,25 +253,23 @@ ggsave(
 )
 
 #models to test results - below code is kind of defunct if we include year
-#mod <- lmer(lrr~0+ (1|expgroup), data = subset(lrr.df, trt_type == "drought" ))
-#summary(mod)
-#tempdf <- tidyr::separate(lrr.df, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-#mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
-#summary(mod)
-library(emmeans)
-#modoutput <- data.frame(emmeans(mod, ~trt_type))
+#N
+mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "N" ))
+summary(mod)
 
-#ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
-#  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-#  geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
-#  xlab("")+
-#  ylab("Species composition LRR distance between plots within treatment")+
-#  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
-#  coord_flip()+
-#  theme_base()+
-#  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+#P
+mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "P" ))
+summary(mod)
+
+#mult_nutrient
+mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "mult_nutrient" ))
+summary(mod)
 
 
+ggplot(subset(subset(lrr.df, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ),treatment_year <=10), aes(treatment_year, lrr, color = trt_type))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
 
 
 ggsave(
@@ -285,9 +284,6 @@ ggsave(
   dpi = 600,
   limitsize = TRUE
 )
-
-
-
 
 
 distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
@@ -468,21 +464,25 @@ facet_wrap(~treatment_year)+
 lrr.df_traits <- lrr.df
 
 #models to test results
-#tempdf <- tidyr::separate(lrr.df_traits, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-#mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = tempdf)
-#summary(mod)
-#library(emmeans)
-#modoutput <- data.frame(emmeans(mod, ~trt_type))
+#N
+mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "N" ))
+summary(mod)
 
-#ggplot(modoutput, aes(factor(trt_type, levels=c("drought", "irr", "temp","P", "N", "mult_nutrient")), emmean, color = trt_type))+
-#  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-#  geom_pointrange(aes(ymin=lower.CL,ymax=upper.CL))+
-#  xlab("")+
-#  ylab("Trait composition LRR distance between plots within treatment")+
-#  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
-#  coord_flip()+
-#  theme_base()+
-#  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+#P
+mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "P" ))
+summary(mod)
+
+#mult_nutrient
+mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "mult_nutrient" ))
+summary(mod)
+
+
+ggplot(subset(subset(lrr.df_traits, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ),treatment_year <=10), aes(treatment_year, lrr, color = trt_type))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+
+
 
 ggsave(
   "C:/Users/ohler/Documents/converge-diverge/fig1_trait.pdf",
@@ -502,27 +502,27 @@ tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code
 tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
   left_join(siteLocationClimate, by = "site_code", keep = FALSE)
 
-expgroup_drought <- c(tdistances_master.1%>%
-                        dplyr::select(expgroup, trt_type, treatment_year)%>%
-                        subset(trt_type == "drought"))$expgroup
-tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_drought)%>%
-  subset(trt_type == "control" | trt_type == "drought")
+#expgroup_drought <- c(tdistances_master.1%>%
+#                        dplyr::select(expgroup, trt_type, treatment_year)%>%
+#                        subset(trt_type == "drought"))$expgroup
+#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_drought)%>%
+#  subset(trt_type == "control" | trt_type == "drought")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 #summary(mod)
 
-expgroup_irr <- c(tdistances_master.1%>%
-                    dplyr::select(expgroup, trt_type, treatment_year)%>%
-                    subset(trt_type == "irr"))$expgroup
-tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_irr)%>%
-  subset(trt_type == "control" | trt_type == "irr")
+#expgroup_irr <- c(tdistances_master.1%>%
+#                    dplyr::select(expgroup, trt_type, treatment_year)%>%
+#                    subset(trt_type == "irr"))$expgroup
+#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_irr)%>%
+#  subset(trt_type == "control" | trt_type == "irr")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 #summary(mod)
 
-expgroup_temp <- c(tdistances_master.1%>%
-                     dplyr::select(expgroup, trt_type, treatment_year)%>%
-                     subset(trt_type == "temp"))$expgroup
-tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_temp)%>%
-  subset(trt_type == "control" | trt_type == "temp")
+#expgroup_temp <- c(tdistances_master.1%>%
+#                     dplyr::select(expgroup, trt_type, treatment_year)%>%
+#                     subset(trt_type == "temp"))$expgroup
+#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_temp)%>%
+#  subset(trt_type == "control" | trt_type == "temp")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 #summary(mod)
 
@@ -602,27 +602,60 @@ ggsave(
 
 #models to test results
 library(MuMIn)
-mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "drought"))
+#mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "drought"))
+#summary(mod)
+#r.squaredGLMM(mod)
+
+#mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "irr"))
+#summary(mod)
+#r.squaredGLMM(mod)
+
+mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N" & treatment_year <= 10))
 summary(mod)
 r.squaredGLMM(mod)
 
-mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "irr"))
+
+ggplot(subset(lrr_sp.tr, trt_type == "N" & treatment_year <= 10), aes(lrr.species, lrr.traits))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  geom_abline(slope = 1, linetype = "dotted")+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  theme_base()
+
+
+
+mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "P"& treatment_year <= 10))
 summary(mod)
 r.squaredGLMM(mod)
 
-mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N"))
+ggplot(subset(lrr_sp.tr, trt_type == "P" & treatment_year <= 10), aes(lrr.species, lrr.traits))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  geom_abline(slope = 1, linetype = "dotted")+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  theme_base()
+
+
+mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "mult_nutrient"& treatment_year <= 10))
 summary(mod)
 r.squaredGLMM(mod)
 
-mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "P"))
-summary(mod)
-r.squaredGLMM(mod)
+ggplot(subset(lrr_sp.tr, trt_type == "mult_nutrient" & treatment_year <= 10), aes(lrr.species, lrr.traits))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  geom_abline(slope = 1, linetype = "dotted")+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  theme_base()
 
-mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "mult_nutrient"))
-summary(mod)
-r.squaredGLMM(mod)
 
-summary(lm(lrr.traits~lrr.species, data = subset(lrr_sp.tr, trt_type == "temp")))
+
+
 
 
 ############
@@ -642,35 +675,35 @@ lrr_covariate <- left_join(lrr.df_species, CoRRE_project_summary, by = c("site_c
 lrr_covariate_traits <- left_join(lrr.df_traits, CoRRE_project_summary, by = c("site_code", "project", "community"))
 
 ##DROUGHT
-drought <- subset(lrr_covariate, trt_type == "drought")
-mod <- lmer(lrr~MAP + (1|site_code), data = drought)
+#drought <- subset(lrr_covariate, trt_type == "drought")
+#mod <- lmer(lrr~MAP + (1|site_code), data = drought)
 #mod <- lm(lrr~MAP, data = drought)
-summary(mod)
-visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
-mod <- lmer(lrr~MAT + (1|site_code), data = drought)
-summary(mod)
-visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
-mod <- lmer(lrr~rrich + (1|site_code), data = drought)
-summary(mod)
-visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
-mod <- lmer(lrr~experiment_length + (1|site_code), data = drought)
-summary(mod)
-visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
+#summary(mod)
+#visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
+#mod <- lmer(lrr~MAT + (1|site_code), data = drought)
+#summary(mod)
+#visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
+#mod <- lmer(lrr~rrich + (1|site_code), data = drought)
+#summary(mod)
+#visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
+#mod <- lmer(lrr~experiment_length + (1|site_code), data = drought)
+#summary(mod)
+#visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
 
 ##IRRIGATION
-irrigation <- subset(lrr_covariate, trt_type == "irr")
-mod <- lmer(lrr~MAP + (1|site_code), data = irrigation)
-summary(mod)
-visreg(mod, ylab = "lrr beta diversity", main = "Irrigation treatment")
-mod <- lmer(lrr~MAT + (1|site_code), data = irrigation)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = irrigation)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = irrigation)
-summary(mod)
-visreg(mod)
+#irrigation <- subset(lrr_covariate, trt_type == "irr")
+#mod <- lmer(lrr~MAP + (1|site_code), data = irrigation)
+#summary(mod)
+#visreg(mod, ylab = "lrr beta diversity", main = "Irrigation treatment")
+#mod <- lmer(lrr~MAT + (1|site_code), data = irrigation)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~rrich + (1|site_code), data = irrigation)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~experiment_length + (1|site_code), data = irrigation)
+#summary(mod)
+#visreg(mod)
 
 ##NITROGEN
 N <- subset(lrr_covariate, trt_type == "N")
@@ -721,19 +754,19 @@ visreg(mod)
 
 ###trait models
 ##DROUGHT
-drought <- subset(lrr_covariate_traits, trt_type == "drought")
-mod <- lmer(lrr~MAP + (1|site_code), data = drought)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = drought)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = drought)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = drought)
-summary(mod)
-visreg(mod)
+#drought <- subset(lrr_covariate_traits, trt_type == "drought")
+#mod <- lmer(lrr~MAP + (1|site_code), data = drought)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~MAT + (1|site_code), data = drought)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~rrich + (1|site_code), data = drought)
+#summary(mod)
+#visreg(mod)
+#mod <- lmer(lrr~experiment_length + (1|site_code), data = drought)
+#summary(mod)
+#visreg(mod)
 
 ##NITROGEN
 N <- subset(lrr_covariate_traits, trt_type == "N")
@@ -799,41 +832,42 @@ lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site
 
 
 ##ANY WATER MANIPULATION
-water_mani <- subset(lrr_treat_species, trt_type == "drought"|
-                       trt_type == "irr")
-mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
-summary(mod)
-ggplot(water_mani, aes(precip, lrr))+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(aes(color = trt_type), size = 4)+
-  scale_color_manual(values = c("#df0000", "#0099f6"))+
-  ylab("LRR community composition beta diversity")+
-  xlab("Precip treatment as percentage of MAP")+
-  ylim(-1, 1)+
-  geom_smooth(method = "lm", se = FALSE, color = "black")+
-  theme_base()+
-  theme(legend.position = "none")
+#water_mani <- subset(lrr_treat_species, trt_type == "drought"|
+#                       trt_type == "irr")
+#mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
+#summary(mod)
+#ggplot(water_mani, aes(precip, lrr))+
+#  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+#  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+#  geom_point(aes(color = trt_type), size = 4)+
+#  scale_color_manual(values = c("#df0000", "#0099f6"))+
+#  ylab("LRR community composition beta diversity")+
+#  xlab("Precip treatment as percentage of MAP")+
+#  ylim(-1, 1)+
+#  geom_smooth(method = "lm", se = FALSE, color = "black")+
+#  theme_base()+
+#  theme(legend.position = "none")
 
-ggsave(
-  "C:/Users/ohler/Documents/converge-diverge/wate_mani.pdf",
-  plot = last_plot(),
-  device = "pdf",
-  path = NULL,
-  scale = 1,
-  width = 5,
-  height = 5,
-  units = c("in"),
-  dpi = 600,
-  limitsize = TRUE
-)
+#ggsave(
+#  "C:/Users/ohler/Documents/converge-diverge/wate_mani.pdf",
+#  plot = last_plot(),
+#  device = "pdf",
+#  path = NULL,
+#  scale = 1,
+#  width = 5,
+#  height = 5,
+#  units = c("in"),
+#  dpi = 600,
+#  limitsize = TRUE
+#)
 
 
 ##Nitrogen gradient
 temp <- subset(lrr_treat_species, trt_type == "N")
-mod <- lmer(lrr~n + (1|expgroup) ,data = temp)
+mod <- lmer(lrr~n*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
 ggplot(temp, aes(n, lrr))+
+  facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_point(size = 4, color = "#00b844")+
   ylab("LRR species composition beta diversity")+
@@ -858,28 +892,31 @@ ggsave(
 
 
 ##traits
-water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
-mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
-summary(mod)
+#water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
+#mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
+#summary(mod)
 
 
-visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr trait beta diversity", xlab = "Precipitation treatment", gg = TRUE)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  theme_base()
+#visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr trait beta diversity", xlab = "Precipitation treatment", gg = TRUE)+
+#  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
+#  theme_base()
 
 N <- subset(lrr_treat_traits, trt_type == "N")
-mod <- lmer(lrr~n  + (1|expgroup) ,data = N)
+mod <- lmer(lrr~n*treatment_year  + (1|expgroup) ,data = N)
 summary(mod)
 ggplot(N, aes(n, lrr))+
+  facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_point(size = 4, color = "#00b844")+
   ylab("LRR trait beta diversity")+
   xlab("N addition treatment (units)")+
   #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
   theme_base()
-visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
-  geom_hline(yintercept = 0)+
-  theme_base()
+
+
+#visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
+#  geom_hline(yintercept = 0)+
+#  theme_base()
 
 
 ###########################################
@@ -1003,39 +1040,39 @@ library(remotes)
 library(partR2)
 library(tibble)
 
-tempdf <- subset(full_lrr.df, trt_type == "drought")
-mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|site_code), data = tempdf)
-summary(mod) #sig include marginal sub.rank
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
-r2
+#tempdf <- subset(full_lrr.df, trt_type == "drought")
+#mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|site_code), data = tempdf)
+#summary(mod) #sig include marginal sub.rank
+#r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
+#r2
 
-r2$R2%>%
-  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
-  mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
-  tibble::add_column(sig = c("0","0", "0", "0"))%>%
-  ggplot( aes(term, estimate, fill = sig))+
-  geom_bar(color = "black",stat = "identity")+
-  ylim(0,.2)+
-  ylab("Partial r-squared")+
-  scale_fill_manual(values = c( "white", "black"))+
-  coord_flip()+
-  ggtitle("DROUGHT")+
-  xlab("")+
-  theme_classic()+
-  theme(legend.position = "none")
+#r2$R2%>%
+#  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+#  mutate(term = factor(term, levels = c("sub.eve","sub.rich",  "sub.sp", "sub.rank"))) %>%
+#  tibble::add_column(sig = c("0","0", "0", "0"))%>%
+#  ggplot( aes(term, estimate, fill = sig))+
+#  geom_bar(color = "black",stat = "identity")+
+#  ylim(0,.2)+
+#  ylab("Partial r-squared")+
+#  scale_fill_manual(values = c( "white", "black"))+
+#  coord_flip()+
+#  ggtitle("DROUGHT")+
+#  xlab("")+
+#  theme_classic()+
+#  theme(legend.position = "none")
 
-ggsave(
-  "C:/Users/ohler/Documents/converge-diverge/partialR2_drought.pdf",
-  plot = last_plot(),
-  device = "pdf",
-  path = NULL,
-  scale = 1,
-  width = 3,
-  height = 10,
-  units = c("in"),
-  dpi = 600,
-  limitsize = TRUE
-)
+#ggsave(
+#  "C:/Users/ohler/Documents/converge-diverge/partialR2_drought.pdf",
+#  plot = last_plot(),
+#  device = "pdf",
+#  path = NULL,
+#  scale = 1,
+#  width = 3,
+#  height = 10,
+#  units = c("in"),
+#  dpi = 600,
+#  limitsize = TRUE
+#)
 
 
 tempdf <- tempdf <- subset(full_lrr.df, trt_type == "N")%>%
@@ -1118,7 +1155,7 @@ tempdf <- subset(full_lrr.df, trt_type == "P")%>%
   dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
   filter(complete.cases(.))
 mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
-mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
+#mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
 summary(mod) #sig include sub.rank, sub.eve
 r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
 r2
@@ -1153,42 +1190,42 @@ ggsave(
 
 
 
-tempdf <- subset(full_lrr.df, trt_type == "irr")%>%
-  dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
-  filter(complete.cases(.))
-mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
-mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
-summary(mod) #sig include sub.rank, sub.eve
-r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
-r2
+#tempdf <- subset(full_lrr.df, trt_type == "irr")%>%
+#  dplyr::select(lrr, sub.rich, sub.eve, sub.rank, sub.sp, expgroup)%>%
+#  filter(complete.cases(.))
+#mod <- lmer(lrr~sub.rich+sub.eve + sub.rank + sub.sp + (1|expgroup), data = tempdf)
+#mod <- lm(lrr~sub.rich+sub.eve + sub.rank + sub.sp, data = tempdf)
+#summary(mod) #sig include sub.rank, sub.eve
+#r2 <- partR2(mod, data = tempdf, partvars = c("sub.rich","sub.eve" , "sub.rank" , "sub.sp"), R2_type = "marginal", nboot = 20)
+#r2
 
-r2$R2%>%
-  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
-  mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
-  tibble::add_column(sig = c("0","0", "0", "0"))%>%
-  ggplot( aes(term, estimate, fill = sig))+
-  geom_bar(color = "black",stat = "identity")+
-  ylim(0,.2)+
-  ylab("Partial r-squared")+
-  scale_fill_manual(values = c( "white", "black"))+
-  coord_flip()+
-  ggtitle("irr")+
-  xlab("")+
-  theme_classic()+
-  theme(legend.position = "none")
+#r2$R2%>%
+#  subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+#  mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+#  tibble::add_column(sig = c("0","0", "0", "0"))%>%
+#  ggplot( aes(term, estimate, fill = sig))+
+#  geom_bar(color = "black",stat = "identity")+
+#  ylim(0,.2)+
+#  ylab("Partial r-squared")+
+#  scale_fill_manual(values = c( "white", "black"))+
+#  coord_flip()+
+#  ggtitle("irr")+
+#  xlab("")+
+#  theme_classic()+
+#  theme(legend.position = "none")
 
-ggsave(
-  "C:/Users/ohler/Documents/converge-diverge/partialR2_irr.pdf",
-  plot = last_plot(),
-  device = "pdf",
-  path = NULL,
-  scale = 1,
-  width = 3,
-  height = 10,
-  units = c("in"),
-  dpi = 600,
-  limitsize = TRUE
-)
+#ggsave(
+#  "C:/Users/ohler/Documents/converge-diverge/partialR2_irr.pdf",
+#  plot = last_plot(),
+#  device = "pdf",
+#  path = NULL,
+#  scale = 1,
+#  width = 3,
+#  height = 10,
+#  units = c("in"),
+#  dpi = 600,
+#  limitsize = TRUE
+#)
 
 
 
@@ -1455,57 +1492,57 @@ trait_variance <- tidyr::separate(trait_variance, expgroup, c("site_code", "proj
 
 #Tim, start working on this chunk
 #drought
-tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "drought")%>%
-  subset(expgroup %in% expgroup_drought)
+#tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "drought")%>%
+#  subset(expgroup %in% expgroup_drought)
 
-mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code/expgroup), data = tempdf)
-summary(mod)
-mod <- lmer(LDMC.var~trt_type + (1|site_code/expgroup), data = tempdf)
-summary(mod)
-mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code/expgroup), data = tempdf)
-summary(mod)
-mod <- lmer(SLA.var~trt_type + (1|site_code/expgroup), data = tempdf)
-summary(mod)
-mod <- lmer(SRL.var~trt_type + (1|site_code/expgroup), data = tempdf)
-summary(mod)
-mod <- lmer(leaf_N.var~trt_type + (1|site_code/expgroup), data = tempdf)
-summary(mod)
+#mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code/expgroup), data = tempdf)
+#summary(mod)
+#mod <- lmer(LDMC.var~trt_type + (1|site_code/expgroup), data = tempdf)
+#summary(mod)
+#mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code/expgroup), data = tempdf)
+#summary(mod)
+#mod <- lmer(SLA.var~trt_type + (1|site_code/expgroup), data = tempdf)
+#summary(mod)
+#mod <- lmer(SRL.var~trt_type + (1|site_code/expgroup), data = tempdf)
+#summary(mod)
+#mod <- lmer(leaf_N.var~trt_type + (1|site_code/expgroup), data = tempdf)
+#summary(mod)
 
 
 #irrigation
-tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "irr")%>%
-  subset(expgroup %in% expgroup_irr)
+#tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "irr")%>%
+#  subset(expgroup %in% expgroup_irr)
 
-mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
+#mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
 
 
 #temperature
-tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "temp")%>%
-  subset(expgroup %in% expgroup_temp)
+#tempdf <- subset(trait_variance, trt_type == "control" |trt_type == "temp")%>%
+#  subset(expgroup %in% expgroup_temp)
 
-mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
-mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
-summary(mod)
+#mod <- lmer(seed_dry_mass.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(LDMC.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(plant_height_vegetative.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(SLA.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(SRL.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
+#mod <- lmer(leaf_N.var~trt_type + (1|site_code), data = tempdf)
+#summary(mod)
 
 
 #P
