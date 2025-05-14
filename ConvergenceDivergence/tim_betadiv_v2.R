@@ -12,6 +12,8 @@ library(visreg)
 library(ggthemes)
 library(codyn)
 library(emmeans)
+library(fixest)
+library(nlme)
 
 #Read in data
 traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
@@ -27,7 +29,8 @@ traits <- read.csv("C:/Users/ohler/Downloads/CoRRE_allTraitData_wide_June2023.cs
 
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
-  filter(drop==0) #remove some Cedar Creek treatments since that site is somewhat overrepresented
+  filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
+  subset(treatment_year <=10)
 
 
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
@@ -101,7 +104,7 @@ crest <- cover %>%
 
 #number of sites for each year
 n_sites <- crest %>%
-  subset( rep_num >=5)
+  subset( rep_num >=5)%>%
 dplyr::select(site_code, project_name, community_type, treatment_year)%>%
   unique()%>%
   group_by(treatment_year)%>%
@@ -191,7 +194,7 @@ for(i in 1:length(expgroup_vector)) {
   temp.wide <- temp.df%>%
     pivot_wider(names_from = species_matched, values_from = relcov, values_fill = 0)
   temp.distances <- vegdist(temp.wide[10:ncol(temp.wide)], method = "bray")
-  temp.mod <- betadisper(temp.distances, group = temp.wide$trt_type, type = "centroid")
+  temp.mod <- betadisper(temp.distances, group = temp.wide$treatment, type = "centroid")
   distances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.wide$trt_type, treatment = temp.wide$treatment, plot_mani = temp.wide$plot_mani, dist = temp.mod$dist, treatment_year = temp.wide$treatment_year)
   #distances_temp <- subset(distances_temp, dist > 0.00000000001) #not necessary when cO2 treatment excluded
   #distances_temp$dist <- ifelse(distances_temp$dist > 0.00000000001, distances_temp$dist, 0.001) #changes value for single serc experiment where distance equals essentially 0 which doesn't work with response ratios
@@ -203,6 +206,7 @@ for(i in 1:length(expgroup_vector)) {
 
 mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
 
+
 trt.df <- subset(mean.dist.df, plot_mani >= 1)%>%
   dplyr::rename(dist.trt = mean_dist)
 con.df <- subset(mean.dist.df, plot_mani == 0)%>%
@@ -213,6 +217,24 @@ lrr.df <- left_join(trt.df, con.df, by = c("expgroup","treatment_year"))%>%
   mutate(lrr = log(dist.trt/dist.con))%>%
   mutate(con_minus_trt = dist.con-dist.trt)
 
+
+            
+            
+lrr.df.conf <- lrr.df%>%
+  ddply(.(trt_type, treatment_year), function(x)data.frame(
+    lrr.mean = mean(x$lrr),
+    lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
+    lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
+    num_experiments = length(x$expgroup)
+  ))
+
+lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient"#, "mult_GCD", "CO2"
+))
+lrr.df.conf$min <- lrr.df.conf$lrr.mean-lrr.df.conf$lrr.error
+lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error 
+
+
+#visualize
 lrr.df.conf <- lrr.df%>%
   ddply(.(trt_type, treatment_year), function(x)data.frame(
     lrr.mean = mean(x$lrr),
@@ -227,8 +249,8 @@ lrr.df.conf$min <- lrr.df.conf$lrr.mean-lrr.df.conf$lrr.error
 lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error
 
 
-#visualize
-ggplot(subset(subset(lrr.df.conf, treatment_year >=1 &treatment_year <=8), trt_type == "N"|trt_type == "P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
+
+ggplot(subset(subset(lrr.df.conf, treatment_year >=1), trt_type == "N"|trt_type == "P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
@@ -252,7 +274,11 @@ ggsave(
   limitsize = TRUE
 )
 
-#models to test results - below code is kind of defunct if we include year
+#models to test results -
+mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+summary(mod)
+
+
 #N
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "N" ))
 summary(mod)
@@ -266,7 +292,7 @@ mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == 
 summary(mod)
 
 
-ggplot(subset(subset(lrr.df, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ),treatment_year <=10), aes(treatment_year, lrr, color = trt_type))+
+ggplot(subset(lrr.df, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ), aes(treatment_year, lrr, color = trt_type))+
   geom_point()+
   geom_smooth(method = "lm")+
   theme_base()
@@ -464,6 +490,9 @@ facet_wrap(~treatment_year)+
 lrr.df_traits <- lrr.df
 
 #models to test results
+mod <- lmer(lrr~0+trt_type+ (1|expgroup), data = subset(subset(lrr.df_traits, trt_type == "N" | trt_type == "P"| trt_type == "mult_nutrient"), treatment_year != 0))
+summary(mod)
+
 #N
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "N" ))
 summary(mod)
@@ -610,12 +639,12 @@ library(MuMIn)
 #summary(mod)
 #r.squaredGLMM(mod)
 
-mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N" & treatment_year <= 10))
+mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N" ))
 summary(mod)
 r.squaredGLMM(mod)
 
 
-ggplot(subset(lrr_sp.tr, trt_type == "N" & treatment_year <= 10), aes(lrr.species, lrr.traits))+
+ggplot(subset(lrr_sp.tr, trt_type == "N" ), aes(lrr.species, lrr.traits))+
   facet_wrap(~treatment_year)+
   geom_point()+
   geom_smooth(method = "lm")+
@@ -626,11 +655,11 @@ ggplot(subset(lrr_sp.tr, trt_type == "N" & treatment_year <= 10), aes(lrr.specie
 
 
 
-mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "P"& treatment_year <= 10))
+mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "P"))
 summary(mod)
 r.squaredGLMM(mod)
 
-ggplot(subset(lrr_sp.tr, trt_type == "P" & treatment_year <= 10), aes(lrr.species, lrr.traits))+
+ggplot(subset(lrr_sp.tr, trt_type == "P"), aes(lrr.species, lrr.traits))+
   facet_wrap(~treatment_year)+
   geom_point()+
   geom_smooth(method = "lm")+
@@ -640,7 +669,7 @@ ggplot(subset(lrr_sp.tr, trt_type == "P" & treatment_year <= 10), aes(lrr.specie
   theme_base()
 
 
-mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "mult_nutrient"& treatment_year <= 10))
+mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "mult_nutrient"))
 summary(mod)
 r.squaredGLMM(mod)
 
