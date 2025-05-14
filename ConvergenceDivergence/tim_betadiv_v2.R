@@ -30,7 +30,7 @@ traits <- read.csv("C:/Users/ohler/Downloads/CoRRE_allTraitData_wide_June2023.cs
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
-  subset(treatment_year <=10)
+  subset(treatment_year <=7)
 
 
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
@@ -318,54 +318,54 @@ distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code",
 
 
 
-expgroup_drought <- c(distances_master.1%>%
-                        dplyr::select(expgroup, trt_type)%>%
-                        subset(trt_type == "drought")%>%
-                        unique())$expgroup
-tempdf <- subset(distances_master.1, expgroup %in% expgroup_drought)%>%
-  subset(trt_type == "control" | trt_type == "drought")
+#expgroup_drought <- c(distances_master.1%>%
+#                        dplyr::select(expgroup, trt_type)%>%
+#                        subset(trt_type == "drought")%>%
+#                        unique())$expgroup
+#tempdf <- subset(distances_master.1, expgroup %in% expgroup_drought)%>%
+#  subset(trt_type == "control" | trt_type == "drought")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 #summary(mod)
 
 
 
-expgroup_irr <- c(distances_master.1%>%
-                    dplyr::select(expgroup, trt_type)%>%
-                    subset(trt_type == "irr"))$expgroup
-tempdf <- subset(distances_master.1, expgroup %in% expgroup_irr)%>%
-  subset(trt_type == "control" | trt_type == "irr")
+#expgroup_irr <- c(distances_master.1%>%
+#                    dplyr::select(expgroup, trt_type)%>%
+#                    subset(trt_type == "irr"))$expgroup
+#tempdf <- subset(distances_master.1, expgroup %in% expgroup_irr)%>%
+#  subset(trt_type == "control" | trt_type == "irr")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 #summary(mod)
 
-expgroup_temp <- c(distances_master.1%>%
-                     dplyr::select(expgroup, trt_type)%>%
-                     subset(trt_type == "temp"))$expgroup
-tempdf <- subset(distances_master.1, expgroup %in% expgroup_temp)%>%
-  subset(trt_type == "control" | trt_type == "temp")
+#expgroup_temp <- c(distances_master.1%>%
+#                     dplyr::select(expgroup, trt_type)%>%
+#                     subset(trt_type == "temp"))$expgroup
+#tempdf <- subset(distances_master.1, expgroup %in% expgroup_temp)%>%
+#  subset(trt_type == "control" | trt_type == "temp")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 #summary(mod)
 
-expgroup_N <- c(distances_master.1%>%
-                  dplyr::select(expgroup, trt_type)%>%
-                  subset(trt_type == "N"))$expgroup
-tempdf <- subset(distances_master.1, expgroup %in% expgroup_N)%>%
-  subset(trt_type == "control" | trt_type == "N")
+#expgroup_N <- c(distances_master.1%>%
+#                  dplyr::select(expgroup, trt_type)%>%
+#                  subset(trt_type == "N"))$expgroup
+#tempdf <- subset(distances_master.1, expgroup %in% expgroup_N)%>%
+#  subset(trt_type == "control" | trt_type == "N")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 #summary(mod)
 
-expgroup_P <- c(distances_master.1%>%
-                  dplyr::select(expgroup, trt_type)%>%
-                  subset(trt_type == "P"))$expgroup
-tempdf <- subset(distances_master.1, expgroup %in% expgroup_P)%>%
-  subset(trt_type == "control" | trt_type == "P")
+#expgroup_P <- c(distances_master.1%>%
+#                  dplyr::select(expgroup, trt_type)%>%
+#                  subset(trt_type == "P"))$expgroup
+#tempdf <- subset(distances_master.1, expgroup %in% expgroup_P)%>%
+#  subset(trt_type == "control" | trt_type == "P")
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf) #not enough samples for continent as random effect
 #summary(mod)
 
-expgroup_mult_nutrient <- c(distances_master.1%>%
-                              dplyr::select(expgroup, trt_type)%>%
-                              subset(trt_type == "mult_nutrient"))$expgroup
-tempdf <- subset(distances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
-  subset(trt_type == "control" | trt_type == "mult_nutrient")
+#expgroup_mult_nutrient <- c(distances_master.1%>%
+#                              dplyr::select(expgroup, trt_type)%>%
+#                              subset(trt_type == "mult_nutrient"))$expgroup
+#tempdf <- subset(distances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
+#  subset(trt_type == "control" | trt_type == "mult_nutrient")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 #summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
@@ -475,7 +475,7 @@ lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error
 lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" 
                                                                 #,"mult_GCD", "CO2"
 ))
-ggplot(subset(subset(lrr.df.conf, treatment_year >= 1 &treatment_year <= 8), trt_type== "N"| trt_type=="P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
+ggplot(subset(subset(lrr.df.conf, treatment_year >= 1), trt_type== "N"| trt_type=="P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
 facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
   geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
@@ -506,7 +506,7 @@ mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_t
 summary(mod)
 
 
-ggplot(subset(subset(lrr.df_traits, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ),treatment_year <=10), aes(treatment_year, lrr, color = trt_type))+
+ggplot(subset(lrr.df_traits, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ), aes(treatment_year, lrr, color = trt_type))+
   geom_point()+
   geom_smooth(method = "lm")+
   theme_base()
@@ -555,27 +555,27 @@ tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code
 #mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 #summary(mod)
 
-expgroup_N <- c(tdistances_master.1%>%
-                  dplyr::select(expgroup, trt_type, treatment_year)%>%
-                  subset(trt_type == "N"))$expgroup
-tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_N)%>%
-  subset(trt_type == "control" | trt_type == "N")
+#expgroup_N <- c(tdistances_master.1%>%
+#                  dplyr::select(expgroup, trt_type, treatment_year)%>%
+#                  subset(trt_type == "N"))$expgroup
+#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_N)%>%
+#  subset(trt_type == "control" | trt_type == "N")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
 #summary(mod)
 
-expgroup_P <- c(tdistances_master.1%>%
-                  dplyr::select(expgroup, trt_type, treatment_year)%>%
-                  subset(trt_type == "P"))$expgroup
-tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_P)%>%
-  subset(trt_type == "control" | trt_type == "P")
+#expgroup_P <- c(tdistances_master.1%>%
+#                  dplyr::select(expgroup, trt_type, treatment_year)%>%
+#                  subset(trt_type == "P"))$expgroup
+#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_P)%>%
+#  subset(trt_type == "control" | trt_type == "P")
 #mod <- lmer(dist~trt_type + (1|site_code), data = tempdf) #not enough samples to use continent as random effect
 #summary(mod)
 
-expgroup_mult_nutrient <- c(tdistances_master.1%>%
-                              dplyr::select(expgroup, trt_type, treatment_year)%>%
-                              subset(trt_type == "mult_nutrient"))$expgroup
-tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
-  subset(trt_type == "control" | trt_type == "mult_nutrient")
+#expgroup_mult_nutrient <- c(tdistances_master.1%>%
+#                              dplyr::select(expgroup, trt_type, treatment_year)%>%
+#                              subset(trt_type == "mult_nutrient"))$expgroup
+#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
+#  subset(trt_type == "control" | trt_type == "mult_nutrient")
 #mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
 #summary(mod)
 #mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
@@ -920,16 +920,44 @@ ggsave(
 )
 
 
+
+##P gradient
+temp <- subset(lrr_treat_species, trt_type == "P")
+mod <- lmer(lrr~p*treatment_year + (1|expgroup) ,data = temp)
+summary(mod)
+ggplot(temp, aes(p, lrr))+
+  facet_wrap(~treatment_year)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_point(size = 4, color = "#00b844")+
+  ylab("LRR species composition beta diversity")+
+  xlab("N addition treatment (grams/m2)")+
+  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
+  theme_base()+
+  theme(legend.position = "none")
+
+
+
+##mult nutrient (number of nutrients)
+temp <- subset(lrr_treat_species, trt_type == "mult_nutrient")
+mod <- lmer(lrr~plot_mani*treatment_year + (1|expgroup) ,data = temp)
+summary(mod)
+ggplot(temp, aes(plot_mani, lrr))+
+  facet_wrap(~treatment_year)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_point(size = 4, color = "#00b844")+
+  ylab("LRR species composition beta diversity")+
+  xlab("N addition treatment (grams/m2)")+
+  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
+  theme_base()+
+  theme(legend.position = "none")
+
 ##traits
 #water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
 #mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
 #summary(mod)
 
 
-#visreg(mod, xvar = "precip", yvar = "lrr", ylab = "lrr trait beta diversity", xlab = "Precipitation treatment", gg = TRUE)+
-#  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-#  theme_base()
-
+#N gradient
 N <- subset(lrr_treat_traits, trt_type == "N")
 mod <- lmer(lrr~n*treatment_year  + (1|expgroup) ,data = N)
 summary(mod)
@@ -943,9 +971,67 @@ ggplot(N, aes(n, lrr))+
   theme_base()
 
 
-#visreg(mod, xvar = "n", yvar = "lrr", ylab = "lrr beta diversity", xlab = "Nitrogen application", gg = TRUE)+
-#  geom_hline(yintercept = 0)+
-#  theme_base()
+
+##P gradient
+temp <- subset(lrr_treat_traits, trt_type == "P")
+mod <- lmer(lrr~p*treatment_year + (1|expgroup) ,data = temp)
+summary(mod)
+ggplot(temp, aes(p, lrr))+
+  facet_wrap(~treatment_year)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_point(size = 4, color = "#00b844")+
+  ylab("LRR species composition beta diversity")+
+  xlab("N addition treatment (grams/m2)")+
+  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
+  theme_base()+
+  theme(legend.position = "none")
+
+
+
+##mult nutrient (number of nutrients)
+temp <- subset(lrr_treat_traits, trt_type == "mult_nutrient")
+mod <- lmer(lrr~plot_mani*treatment_year + (1|expgroup) ,data = temp)
+summary(mod)
+ggplot(temp, aes(plot_mani, lrr))+
+  facet_wrap(~treatment_year)+
+  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
+  geom_point(size = 4, color = "#00b844")+
+  ylab("LRR species composition beta diversity")+
+  xlab("N addition treatment (grams/m2)")+
+  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
+  theme_base()+
+  theme(legend.position = "none")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ###########################################
