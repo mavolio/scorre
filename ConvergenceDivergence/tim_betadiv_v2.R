@@ -275,8 +275,18 @@ ggsave(
 )
 
 #models to test results -
-mod <- lmer(lrr~0+ trt_type + (1|expgroup), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+mod <- lmer(lrr~0+ trt_type + (1|expgroup)+ (1|treatment_year), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
 summary(mod)
+
+library(ggeffects)
+x <- ggpredict(mod, c("trt_type"))
+#plot(x, ci=FALSE)#+
+  #ylim(0, 200)+
+ggplot(x , aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  
+  geom_hline(yintercept = 0)+
+  theme_base()
 
 
 #N
@@ -293,6 +303,7 @@ summary(mod)
 
 
 ggplot(subset(lrr.df, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ), aes(treatment_year, lrr, color = trt_type))+
+  facet_wrap(~trt_type)+
   geom_point()+
   geom_smooth(method = "lm")+
   theme_base()
@@ -594,7 +605,7 @@ lrr_sp.tr$trt_type <- factor(lrr_sp.tr$trt_type, levels = c("drought", "irr", "t
 ))
 
 library(ggpmisc)
-ggplot(lrr_sp.tr, aes(lrr.species, lrr.traits))+
+ggplot(subset(lrr_sp.tr, trt_type == "N"|trt_type == "P"|trt_type == "mult_nutrient"),  aes(lrr.species, lrr.traits))+
   facet_wrap(~trt_type)+
   geom_abline(slope = 1, linetype = "dotted")+
   geom_point()+
@@ -892,10 +903,10 @@ lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site
 
 
 ##Nitrogen gradient
-temp <- subset(lrr_treat_species, trt_type == "N")
+temp <- subset(lrr_treat_species, trt_type == "N" )
 mod <- lmer(lrr~n*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
-ggplot(temp, aes(n, lrr))+
+ggplot(subset(temp, treatment_year != 0), aes(n, lrr))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_point(size = 4, color = "#00b844")+
@@ -925,12 +936,12 @@ ggsave(
 temp <- subset(lrr_treat_species, trt_type == "P")
 mod <- lmer(lrr~p*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
-ggplot(temp, aes(p, lrr))+
+ggplot(subset(temp, treatment_year != 0), aes(p, lrr))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "#00b844")+
+  geom_point(size = 4, color = "blue")+
   ylab("LRR species composition beta diversity")+
-  xlab("N addition treatment (grams/m2)")+
+  xlab("P addition treatment (grams/m2)")+
   #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
   theme_base()+
   theme(legend.position = "none")
@@ -941,12 +952,12 @@ ggplot(temp, aes(p, lrr))+
 temp <- subset(lrr_treat_species, trt_type == "mult_nutrient")
 mod <- lmer(lrr~plot_mani*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
-ggplot(temp, aes(plot_mani, lrr))+
+ggplot(subset(temp, treatment_year != 0), aes(plot_mani, lrr))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "#00b844")+
+  geom_point(size = 4, color = "purple")+
   ylab("LRR species composition beta diversity")+
-  xlab("N addition treatment (grams/m2)")+
+  xlab("Number of additional nutrients")+
   #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
   theme_base()+
   theme(legend.position = "none")
