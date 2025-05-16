@@ -30,6 +30,10 @@ dcidiff_models<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLo
 
 length(unique(dcidiff_models$species))
 
+#which exeriments
+spc<-dcidiff_models %>% 
+  select(site_code, project_name, community_type, treatment, trt_type2) %>% 
+  unique
 
 # Continuous trait data ---------------------------------------------------
 
