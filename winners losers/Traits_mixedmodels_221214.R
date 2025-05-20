@@ -228,7 +228,7 @@ trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
-pdf("traits_by_treat_contMay2025.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_contApril2025.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplot,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -244,7 +244,7 @@ make_boxplot(toplot_data = toplot,
                         group_colors = adjustcolor(rev(c("darkgreen",
                                                          "darkgreen",
                                                          "darkgreen",
-                                                         "red",
+                                                         "blue",
                                                          "blue",
                                                          "orange")), alpha.f = 0.08))
 dev.off()
@@ -289,6 +289,8 @@ catTraits <- cattraits1 %>%
               ifelse(trait=='lifespan' & trait_value2 %in% c('Perenn./Bienn.', 'annual'), 0, 1))))))) %>% 
   filter(drop==0)
 
+
+
 alldat_cat<-dcidiff_models%>%
   left_join(catTraits) %>% 
   select(-trait_value, -source, -error_risk_overall) %>% 
@@ -308,12 +310,8 @@ tmp = tmp[!is.na(tmp$diff),]
 tmp$trait_value = paste(tmp$trait, tmp$trait_value2, sep = "_")
 cat_n_data = table(unique(tmp[,c("species", "trt_type2", "trait_value")]))
 cat_n_data = apply(cat_n_data, 2:3, sum)
-cat_n_data2 = table(unique(tmp[,c("species", "trt_type2")]))
-cat_n_data2 = apply(cat_n_data2, 2, sum)
-Overall<-cat_n_data2
-cat_n_data3<-cbind(cat_n_data, Overall)
 
-value2 = colnames(cat_n_data3)
+value2 = colnames(cat_n_data)
 tmp=ifelse(value2=='clonal_no', "Non-Clonal",
   ifelse(value2=='clonal_yes', 'Clonal',
   ifelse(value2=='lifespan_annual', 'Annual',
@@ -326,7 +324,7 @@ tmp=ifelse(value2=='clonal_no', "Non-Clonal",
   ifelse(value2=='photosynthetic_pathway_C4/CAM', 'C4/CAM', value2))))))))))
 tmp = gsub("growth_form_", "", tmp, fixed = TRUE)
 #tmp = paste(toupper(substr(tmp,1,1)), substr(tmp,2,99), sep = "")
-colnames(cat_n_data3) = tmp
+colnames(cat_n_data) = tmp
 #write.csv(cat_n_data, "cat_n_data.csv")
 
 
@@ -473,7 +471,7 @@ tord = rev(c(12, 6,
              13,1))
 
 if(FALSE) {
-pdf("traits_by_treat_catMay2025.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_catApril2025.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -509,7 +507,7 @@ gcol_split2 = adjustcolor(rev(c(rep("red", 2),
                                 rep("orange",2))), alpha.f = 0.08)
 
 
-pdf("traits_by_treat_cat_2colMay2025.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colApril2025.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -525,7 +523,7 @@ make_boxplot(toplot_data = toplotesacat,
              xlm = c(-0.12,0.12),
              traitorder = tord1,
              group_colors = gcol_split1, 
-             xtit = "", autopar = FALSE, n_table = cat_n_data3)
+             xtit = "", autopar = FALSE, n_table = cat_n_data)
 
 par(mar=c(2,0.2,3.5,6.8))
 make_boxplot(toplot_data = toplotesacat,
@@ -542,10 +540,10 @@ make_boxplot(toplot_data = toplotesacat,
              xlm = c(-0.12,0.12),
              traitorder = tord2,
              group_colors = gcol_split2,
-             xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data3)
+             xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data)
 mtext("Effect Size, Mean DCi diff. by. Trait", side = 1, outer = TRUE, line = 1.2, cex = 1.7)
 dev.off()
-
+dev.off()
 
 
 
@@ -577,10 +575,12 @@ TraitSyndrome<-alldat_cat_full %>%
   pivot_wider(names_from=trait, values_from = trait_value2, values_fill = NA) %>% 
   select(species, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type) %>% 
   unique() %>% 
-  mutate(syndrome=ifelse(photosynthetic_pathway=="C4/CAM", 'C4/CAM',
-                        ifelse(growth_form=='forb'&lifespan=='annual', 'Annual forb',
-                        ifelse(growth_form=='graminoid'&lifespan=='annual', 'Annual gram.',          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='none'&n_fixation_type=='none', 'Non-mutualistic forb', 
-          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&n_fixation_type=='N-fixer', 'N-fixing forb', 
+ mutate(syndrome=
+          ifelse(photosynthetic_pathway=="C4/CAM", 'C4/CAM', 
+          ifelse(growth_form=='forb'&lifespan=='annual', 'Annual forb',
+          ifelse(growth_form=='graminoid'&lifespan=='annual', 'Annual gram.', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='none'&n_fixation_type=='none', 'Non-mutualistic peren. forb', 
+          ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&n_fixation_type=='N-fixer', 'N-fixing peren. forb', 
           ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&mycorrhizal_type=='yes','Mycorrhizal forb', 
           #ifelse(growth_form=='forb'&lifespan=='Perenn./Bienn.'&clonal=='no'&mycorrhizal_type=='yes', 'ForbPernNoClonMyc',
           ifelse(growth_form=='woody', 'Woody', 
@@ -646,7 +646,7 @@ toplotsynd$Estimate = toplotsynd$emmean
 toplotsynd$trait = toplotsynd$value
 
 
-pdf("syndromes_by_treat_contMay2025.pdf", width = 6, height=10)
+pdf("syndromes_by_treat_contApril2025.pdf", width = 6, height=10)
 make_boxplot(toplot_data = toplotsynd,
              trt.labels_data = trt.labels,
              trait.labels_data=trait.labels,

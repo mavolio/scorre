@@ -650,7 +650,7 @@ library(MuMIn)
 #summary(mod)
 #r.squaredGLMM(mod)
 
-mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N" ))
+mod <- lmer(lrr.traits~1+lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N" ))
 summary(mod)
 r.squaredGLMM(mod)
 
@@ -952,13 +952,15 @@ ggplot(subset(temp, treatment_year != 0), aes(p, lrr))+
 temp <- subset(lrr_treat_species, trt_type == "mult_nutrient")
 mod <- lmer(lrr~plot_mani*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
+#mod <- lmer(lrr~plot_mani + (1|expgroup) + (1|treatment_year) ,data = temp)
+#summary(mod)
 ggplot(subset(temp, treatment_year != 0), aes(plot_mani, lrr))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
   geom_point(size = 4, color = "purple")+
   ylab("LRR species composition beta diversity")+
   xlab("Number of additional nutrients")+
-  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
+  geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
   theme_base()+
   theme(legend.position = "none")
 
