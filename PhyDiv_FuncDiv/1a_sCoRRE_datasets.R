@@ -92,7 +92,7 @@ comm <- comm2 %>%
   filter(!is.na(family)) %>% #remove species without continuous trait data (drops 38,288 data points, 11.4% of data)
   left_join(totCover) %>% 
   mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% #rename plot id for NSFC expt
-  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, species, relcov, totcov) %>% 
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, family, species, relcov, totcov) %>% 
   mutate(plot_id2 = paste(site_code, project_name, community_type, calendar_year, plot_id, sep = "::")) %>%  #create new plot identifier
   group_by(plot_id2) %>% 
   mutate(richness=length(species)) %>% 
@@ -101,7 +101,7 @@ comm <- comm2 %>%
          totcov>0.8) #remove plots with less than 80% cover of species with known trait values (drops 59,7749 data points, 20.2% of data points)
 
 #lists
-spp <- comm %>% select(species) %>% unique() #1559 spp
+spp <- comm %>% select(family, species) %>% unique() #1559 spp
 plots <- comm %>% select(site_code, project_name, community_type, plot_id) %>% unique() #3408 plots
 expt <- comm %>% select(site_code, project_name, community_type) %>% unique() #125 experiments
 sites <- unique(comm$site_code) #66 sites
