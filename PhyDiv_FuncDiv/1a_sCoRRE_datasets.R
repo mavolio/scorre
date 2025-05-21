@@ -109,4 +109,5 @@ sites <- unique(comm$site_code) #66 sites
 
 #### save data ####
 
-saveRDS(comm, file = ".rds") # saving derived data for analyses
+# saveRDS(comm, file = "PhyDiv_FuncDiv/PD_FD_commData.rds") # saving subset of CoRRE database for analysis
+# saveRDS(spp, file = "PhyDiv_FuncDiv/sppList.rds") # saving species list for analysis
