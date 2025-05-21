@@ -149,42 +149,42 @@ lowTraitCover <- relCover %>%
   select(-relcover, -trt_type)
 
 
-##### selecting relevant treatments for analysis (high resource, high stress) #####
-trt_analysis <- trt %>%
-  mutate(alltrts=ifelse(trt_type %in% c("control", "CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0)) %>%
-  filter(alltrts==1) %>%
-  mutate(dist=ifelse(trt_type %in% c("mow_clip","burn","burn*graze","disturbance","burn*mow_clip"), 1, 0), #unify codes across datasets
-         # tCO2=ifelse(trt_type %in% c("CO2"), 1, 0),
-         drought=ifelse(trt_type %in% c("drought"), 1, 0),
-         # therb_removal=ifelse(trt_type %in% c("herb_removal"), 1, 0),
-         irg=ifelse(trt_type %in% c("irr"), 1, 0),
-         # ttemp=ifelse(trt_type %in% c("temp"), 1, 0),
-         # tn=ifelse(trt_type %in% c("N"), 1, 0),
-         # tp=ifelse(trt_type %in% c("P"), 1, 0),
-         multtrts=ifelse(trt_type %in% c("CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp","mult_nutrient","N*P"),1,0)) %>%
-  mutate(trt_type2=ifelse(dist==1, 'disturbance', ifelse(multtrts==1, 'multiple trts', trt_type))) %>%
-  select(site_code, project_name, community_type, treatment, alltrts, dist, drought, irg, multtrts, trt_type2) %>%
-  unique()
-
-#pick treatments here
-allDivTrt <- allDiv %>%
-  right_join(trt_analysis) %>%
-  mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>% 
-  mutate(drop=ifelse(site_code=="CDR"&treatment %in% c(2, 3, 4, 5, 7), 1, 0)) %>% #drop some of the CDR e001 and e002 treatments to prevent over-representation
-  filter(drop==0) %>%
-  filter(!(site_proj_comm %in% c('DCGS::gap::0'))) %>% #remove pulse light expt
-  mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.)))) %>% #scale site characteristics
-  filter(!(is.na(site_proj_comm))) %>% 
-  left_join(lowTraitCover) %>% 
-  filter(is.na(unknown_spp)) %>% #filter where there are too many unknown species to have trait data for plot, removes 1734 data points
-# filter(richness>3) %>% #filter plots with richness less than 4 because they have volatile values for functional and phylogenetic diversity responses (removes 5793 data points)
-  group_by(site_code, project_name, community_type, treatment, treatment_year, trt_type2) %>% 
-  mutate(length=length(unique(plot_id))) %>% 
-  ungroup() %>% 
-  mutate(drop2=ifelse(plot_mani>0 & length<2, 1, 0)) %>% 
-  filter(drop2==0) %>% #filter out any experimental treatment where N<3 for a given year, removes 93 data points
-  filter(mpd.raw<780) %>% #filter a single outlier in diversity metrics
-  select(-unknown_spp, -length, -drop, -drop2)
+# ##### selecting relevant treatments for analysis (high resource, high stress) #####
+# trt_analysis <- trt %>%
+#   mutate(alltrts=ifelse(trt_type %in% c("control", "CO2","CO2*temp", "mow_clip","burn","burn*graze","disturbance","burn*mow_clip","drought","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N","mult_nutrient","N*P","P","N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp","temp*mow_clip","drought*temp","irr*temp","irr"),1,0)) %>%
+#   filter(alltrts==1) %>%
+#   mutate(dist=ifelse(trt_type %in% c("mow_clip","burn","burn*graze","disturbance","burn*mow_clip"), 1, 0), #unify codes across datasets
+#          # tCO2=ifelse(trt_type %in% c("CO2"), 1, 0),
+#          drought=ifelse(trt_type %in% c("drought"), 1, 0),
+#          # therb_removal=ifelse(trt_type %in% c("herb_removal"), 1, 0),
+#          irg=ifelse(trt_type %in% c("irr"), 1, 0),
+#          # ttemp=ifelse(trt_type %in% c("temp"), 1, 0),
+#          # tn=ifelse(trt_type %in% c("N"), 1, 0),
+#          # tp=ifelse(trt_type %in% c("P"), 1, 0),
+#          multtrts=ifelse(trt_type %in% c("CO2*temp", "burn*graze","burn*mow_clip","drought*CO2*temp","drought*mow_clip","drought*temp*mow_clip","herb_removal*mow_clip","irr*CO2","irr*CO2*temp","irr*mow_clip","irr*herb_removal","irr*temp*mow_clip","N*CO2*temp","N*irr*CO2","N*irr*mow_clip","N*P*burn*graze", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*mow_clip","N*burn","N*burn*graze","N*disturbance","P*burn*graze","P*burn*mow_clip","N*drought","N*herb_removal","P*herb_removal","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","mult_nutrient*mow_clip","N*burn*mow_clip","N*P*burn","N*P*mow_clip","P*burn","P*mow_clip","mult_nutrient*herb_removal","mult_nutrient*herb_removal*mow_clip","temp*mow_clip","drought*temp","irr*temp","mult_nutrient","N*P"),1,0)) %>%
+#   mutate(trt_type2=ifelse(dist==1, 'disturbance', ifelse(multtrts==1, 'multiple trts', trt_type))) %>%
+#   select(site_code, project_name, community_type, treatment, alltrts, dist, drought, irg, multtrts, trt_type2) %>%
+#   unique()
+# 
+# #pick treatments here
+# allDivTrt <- allDiv %>%
+#   right_join(trt_analysis) %>%
+#   mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>% 
+#   mutate(drop=ifelse(site_code=="CDR"&treatment %in% c(2, 3, 4, 5, 7), 1, 0)) %>% #drop some of the CDR e001 and e002 treatments to prevent over-representation
+#   filter(drop==0) %>%
+#   filter(!(site_proj_comm %in% c('DCGS::gap::0'))) %>% #remove pulse light expt
+#   mutate_at(c('MAP', 'MAT', 'rrich', 'anpp'), funs(c(scale(.)))) %>% #scale site characteristics
+#   filter(!(is.na(site_proj_comm))) %>% 
+#   left_join(lowTraitCover) %>% 
+#   filter(is.na(unknown_spp)) %>% #filter where there are too many unknown species to have trait data for plot, removes 1734 data points
+# # filter(richness>3) %>% #filter plots with richness less than 4 because they have volatile values for functional and phylogenetic diversity responses (removes 5793 data points)
+#   group_by(site_code, project_name, community_type, treatment, treatment_year, trt_type2) %>% 
+#   mutate(length=length(unique(plot_id))) %>% 
+#   ungroup() %>% 
+#   mutate(drop2=ifelse(plot_mani>0 & length<2, 1, 0)) %>% 
+#   filter(drop2==0) %>% #filter out any experimental treatment where N<3 for a given year, removes 93 data points
+#   filter(mpd.raw<780) %>% #filter a single outlier in diversity metrics
+#   select(-unknown_spp, -length, -drop, -drop2)
 
 hist(allDivTrt$mpd.raw)
 hist(allDivTrt$mpd.ses)
