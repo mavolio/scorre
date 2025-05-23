@@ -20,7 +20,7 @@ contTraitSpp <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/
   unique()
 
 #trt data - subset to relevant treatments
-trt_analysis <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundanceMarch2024.csv') %>%
+trtAnalysis <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundanceMarch2024.csv') %>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
   unique() %>%
   left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\ExperimentInfo_March2024.csv')) %>%
@@ -61,9 +61,11 @@ trt_analysis <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working g
   select(site_code, project_name, community_type, treatment, alltrts, dist, drought, irg, multtrts, trt_type2, plot_mani) %>%
   unique()
 
+
+
 #community data
 comm2 <- read.table("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RelativeCoverMarch2024.csv", header=T, sep=",", fill = TRUE) %>% 
-  right_join(trt_analysis) %>%
+  right_join(trtAnalysis) %>%
   mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>% 
   mutate(drop=ifelse(site_code=="CDR" & treatment %in% c(2, 3, 4, 5, 7),
                      1, 0)) %>% #drop some of the CDR e001 and e002 treatments to prevent over-representation
@@ -109,5 +111,6 @@ sites <- unique(comm$site_code) #66 sites
 
 #### save data ####
 
+# saveRDS(trtAnalysis, file = "PhyDiv_FuncDiv/trt_info.rds") # saving subset of CoRRE database for analysis
 # saveRDS(comm, file = "PhyDiv_FuncDiv/PD_FD_commData.rds") # saving subset of CoRRE database for analysis
 # saveRDS(spp, file = "PhyDiv_FuncDiv/sppList.rds") # saving species list for analysis
