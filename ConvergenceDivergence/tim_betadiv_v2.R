@@ -30,7 +30,7 @@ traits <- read.csv("C:/Users/ohler/Downloads/CoRRE_allTraitData_wide_June2023.cs
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
-  subset(treatment_year <=7)
+  subset(treatment_year <=5)
 
 
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
@@ -206,6 +206,8 @@ for(i in 1:length(expgroup_vector)) {
 
 mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
 
+mean.dist.comp <- mean.dist.df
+
 
 trt.df <- subset(mean.dist.df, plot_mani >= 1)%>%
   dplyr::rename(dist.trt = mean_dist)
@@ -278,6 +280,19 @@ ggsave(
 mod <- lmer(lrr~0+ trt_type + (1|expgroup)+ (1|treatment_year), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
 summary(mod)
 
+mod <- feols(lrr~0+trt_type | expgroup +treatment_year  ,data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+summary(mod)
+
+
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(mean.dist.df,  trt_type == "N"| trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(mean.dist.df,  trt_type == "P"| trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"| trt_type == "control"), treatment_year != 0))
+summary(mod)
+
 library(ggeffects)
 x <- ggpredict(mod, c("trt_type"))
 #plot(x, ci=FALSE)#+
@@ -293,13 +308,60 @@ ggplot(x , aes(x, predicted))+
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "N" ))
 summary(mod)
 
+
+
+mod <- feols(lrr~treatment_year | expgroup  ,data = subset(lrr.df, trt_type == "N" ))
+summary(mod)
+
+mod <- feols(mean_dist~trt_type+treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "N"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+library(ggeffects)
+x <- ggpredict(mod, c("trt_type"))
+#plot(x, ci=FALSE)#+
+#ylim(0, 200)+
+ggplot(x , aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+
 #P
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "P" ))
 summary(mod)
 
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "P"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+library(ggeffects)
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+#  geom_hline(yintercept = 0)+
+  theme_base()
+
+
+
 #mult_nutrient
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "mult_nutrient" ))
 summary(mod)
+
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+library(ggeffects)
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  #  geom_hline(yintercept = 0)+
+  theme_base()
+
+
+
+
+
+
 
 
 ggplot(subset(lrr.df, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ), aes(treatment_year, lrr, color = trt_type))+
@@ -458,6 +520,9 @@ for(i in 1:length(expgroup_vector)) {
 
 mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
 
+mean.dist.trait <- mean.dist.df
+
+
 trt.df <- subset(mean.dist.df, plot_mani >= 1)%>%
   dplyr::rename(dist.trt = mean_dist)
 con.df <- subset(mean.dist.df, plot_mani == 0)%>%
@@ -504,18 +569,58 @@ lrr.df_traits <- lrr.df
 mod <- lmer(lrr~0+trt_type+ (1|expgroup), data = subset(subset(lrr.df_traits, trt_type == "N" | trt_type == "P"| trt_type == "mult_nutrient"), treatment_year != 0))
 summary(mod)
 
+mod <- feols(lrr~0+trt_type | expgroup +treatment_year  ,data = subset(subset(lrr.df_traits,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+summary(mod)
+
+
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(mean.dist.df,  trt_type == "N"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(mean.dist.df,  trt_type == "P"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+
 #N
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "N" ))
 summary(mod)
+
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "N"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  #  geom_hline(yintercept = 0)+
+  theme_base()
 
 #P
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "P" ))
 summary(mod)
 
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "P"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  #  geom_hline(yintercept = 0)+
+  theme_base()
+
 #mult_nutrient
 mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "mult_nutrient" ))
 summary(mod)
 
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  #  geom_hline(yintercept = 0)+
+  theme_base()
 
 ggplot(subset(lrr.df_traits, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ), aes(treatment_year, lrr, color = trt_type))+
   geom_point()+
@@ -594,6 +699,32 @@ tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code
 
 #####################
 ###Compare species and trait responses
+
+
+mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("expgroup","trt_type", "treatment", "plot_mani","treatment_year"))%>%
+                  mutate(mean_dist.comp = mean_dist.x,mean_dist.trait = mean_dist.y)
+
+mod <- feols(mean_dist.trait~mean_dist.comp*trt_type|expgroup +treatment_year, data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+
+x <- ggpredict(mod, c("mean_dist.comp","trt_type"))
+ggplot(x, aes(x, predicted, color = group))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_base()
+
+
+
+ggplot(data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0) , aes(x = mean_dist.comp, y= mean_dist.trait, color=trt_type))+
+  geom_point()+
+  geom_smooth()+
+  #  geom_hline(yintercept = 0)+
+  theme_base()
+
+
+
+
 lrr_sp.tr <- left_join(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type", "treatment", "plot_mani", "treatment_year"), keep = FALSE)%>%
   dplyr::rename(c(lrr.species = lrr.x, lrr.traits = lrr.y))%>%
   tidyr::separate( expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
@@ -670,6 +801,9 @@ mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset
 summary(mod)
 r.squaredGLMM(mod)
 
+mod <- feols(lrr.traits~lrr.species | expgroup + treatment_year ,data = subset(lrr_sp.tr, trt_type == "P"))
+summary(mod)
+
 ggplot(subset(lrr_sp.tr, trt_type == "P"), aes(lrr.species, lrr.traits))+
   facet_wrap(~treatment_year)+
   geom_point()+
@@ -683,6 +817,10 @@ ggplot(subset(lrr_sp.tr, trt_type == "P"), aes(lrr.species, lrr.traits))+
 mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "mult_nutrient"))
 summary(mod)
 r.squaredGLMM(mod)
+
+mod <- feols(lrr.traits~lrr.species | expgroup + treatment_year ,data = subset(lrr_sp.tr, trt_type == "mult_nutrient"))
+summary(mod)
+
 
 ggplot(subset(lrr_sp.tr, trt_type == "mult_nutrient" & treatment_year <= 10), aes(lrr.species, lrr.traits))+
   facet_wrap(~treatment_year)+
@@ -906,6 +1044,8 @@ lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site
 temp <- subset(lrr_treat_species, trt_type == "N" )
 mod <- lmer(lrr~n*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
+mod <- feols(lrr~n | expgroup + treatment_year ,data = temp)
+summary(mod)
 ggplot(subset(temp, treatment_year != 0), aes(n, lrr))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
@@ -936,6 +1076,8 @@ ggsave(
 temp <- subset(lrr_treat_species, trt_type == "P")
 mod <- lmer(lrr~p*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
+mod <- feols(lrr~p | expgroup + treatment_year ,data = temp)
+summary(mod)
 ggplot(subset(temp, treatment_year != 0), aes(p, lrr))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
@@ -952,8 +1094,8 @@ ggplot(subset(temp, treatment_year != 0), aes(p, lrr))+
 temp <- subset(lrr_treat_species, trt_type == "mult_nutrient")
 mod <- lmer(lrr~plot_mani*treatment_year + (1|expgroup) ,data = temp)
 summary(mod)
-#mod <- lmer(lrr~plot_mani + (1|expgroup) + (1|treatment_year) ,data = temp)
-#summary(mod)
+mod <- feols(lrr~plot_mani | expgroup + treatment_year ,data = temp)
+summary(mod)
 ggplot(subset(temp, treatment_year != 0), aes(plot_mani, lrr))+
   facet_wrap(~treatment_year)+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+

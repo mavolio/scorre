@@ -4,10 +4,14 @@
 .Ruserdata
 phylo_ring2.png
 test.R
+<<<<<<< HEAD
 KUFS_PCA_n addition.png
 
 traits_by_treat_cont.pdf
 .gitignore
 
 
+=======
+>>>>>>> 7455101e016f9f84bd60f5c9182a0e798ffb958c
 scorre.Rproj
+PhyDiv_FuncDiv/PD_FD_commData.rds

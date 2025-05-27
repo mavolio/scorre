@@ -6,66 +6,34 @@
 ################################################################################
 
 #load packages:
+library(EDIutils)
 library(rlist)
 library(matrixStats)
 library(picante)
 library(tidyverse)
 
-#### set directory ####
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\')  #kim's computer
-my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #padu
-
+# #### set directory ####
+# setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\')  #kim's computer
+# my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #padu
 
 #### read data ####
 
 #spp names
-names <- read.csv('trait data\\corre2trykey_2021.csv') %>% 
-  select(genus_species, species_matched) %>% 
-  unique()
+names <- readRDS('PhyDiv_FuncDiv/sppList.rds')
 
 #community data
-comm <- read.table("CoRRE data\\community composition\\CoRRE_RelativeCover_Jan2023.csv", header=T, sep=",", fill = TRUE) %>% 
-  left_join(names) %>% 
-  left_join(read.csv('trait data\\sCoRRE categorical trait data_12142022.csv')) %>% 
-  filter(growth_form!='moss' & leaf_type!='microphyll') %>% 
-  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
-  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, genus_species, species_matched, relcov) %>% 
-  filter(!grepl("(sp.)$", species_matched)) %>%  #remove species identified only at the genus level
-  mutate(plot_id2 = paste(site_code, project_name, community_type, calendar_year, plot_id, sep = "::")) %>%  #create new plot identifier
-  group_by(plot_id2) %>% 
-  mutate(richness=length(genus_species)) %>% 
-  ungroup() %>% 
-  filter(richness>1) #remove plots with only one species
-
-
-#species list
-spp <- comm %>% 
-  select(genus_species, species_matched) %>% 
-  unique()
-
-
-#create list of sites
-sites <- unique(comm$site_code)
+comm <- readRDS('PhyDiv_FuncDiv/PD_FD_commData.rds')
 
 #treatment data
-trt <- read.csv('CoRRE data\\community composition\\CoRRE_RawAbundance_Jan2023.csv') %>%
-  select(site_code, project_name, community_type, calendar_year, calendar_year, treatment, plot_id) %>%
-  unique() %>%
-  left_join(read.csv('CoRRE data\\basic dataset info\\ExperimentInfo.csv')) %>%
-  group_by(site_code, project_name, community_type) %>%
-  mutate(experiment_length=max(calendar_year)) %>%
-  ungroup() %>%
-  select(site_code, project_name, community_type, calendar_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp) %>% 
-  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-  mutate(plot_id2=paste(site_proj_comm, calendar_year, plot_id, sep='::')) %>% 
-  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
-  unique()
+trt <- readRDS('PhyDiv_FuncDiv/trt_info.rds')
 
 
-#### calculate phylogenetic diversity metrics using one single tree (scenario 3) (non-weighted by abundances) ####
+#### calculate phylogenetic diversity metrics using one single tree (scenario 3) ####
 
 #load tree
-scorre.tree <- read.tree("Phylogenies\\scorre.phylo.tree.S3_20230427.tre")
+scorre.tree <- read.tree("PhyDiv_FuncDiv/corre.phylo.tree.S3_20250521.tre")
+
+sites <- unique(comm$site_code) #66 sites
 
 phylogeneticDiversityMetrics <- NULL
 
@@ -76,13 +44,13 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
   comm2 <- comm %>% 
     filter(site_code == sites[i]) %>%  #subset plots within each site
     filter(treatment_year>0) %>% #only keep treatment data
-    select(plot_id2, species_matched, relcov) %>% 
+    select(plot_id2, species, relcov) %>% 
     # mutate(relcov=ifelse(relcov>0, 1, 0)) %>% 
     unique() %>% 
-    group_by(plot_id2, species_matched) %>% 
+    group_by(plot_id2, species) %>% 
     summarize(relcov=mean(relcov)) %>% 
     ungroup() %>% 
-    pivot_wider(names_from=species_matched, values_from=relcov, values_fill=0) #make species matrix
+    pivot_wider(names_from=species, values_from=relcov, values_fill=0) #make species matrix
     
   colnames(comm2) <- gsub(" ", "_", colnames(comm2)) #add underscore in column names
   
@@ -97,7 +65,7 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
     column_to_rownames('plot_id2') %>% 
     as.matrix(.)
   
-  #calculate phylogenetic diversity metrics:
+  #calculate abundance-weighted phylogenetic diversity metrics:
   mpd.raw <- as.data.frame(mpd(samp=spp, dis=distance,  abundance.weighted = T))
   mntd.raw <- as.data.frame(mntd(samp=spp, dis=distance,  abundance.weighted = T))
   
