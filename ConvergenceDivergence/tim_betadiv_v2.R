@@ -43,15 +43,6 @@ experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data
 siteLocationClimate <- read.csv("C:/Users/ohler/Dropbox/CoRRE_database/Data/CompiledData/siteLocationClimate.csv")
 
 
-#create average trait values per species and clean outliers
-#traits<-traits1%>%
-#select(-X.1, -X, -family, -genus, -observation)%>%
-#  select(species_matched, SLA, LDMC, leaf_N, plant_height_vegetative, seed_dry_mass, SRL) %>% #SLA, LDMC, leaf N, plant height, seed mass, and SRL
-#  group_by(species_matched)%>%
-#  summarise_all(funs(mean))%>%
-#  ungroup() # %>%
-#filter(seed_dry_mass<30, plant_height_vegetative<10, rooting_depth<3, SLA<75)
-
 
 #standardize the scale of continuous traits
 cols <- c( 
@@ -276,22 +267,26 @@ ggsave(
   limitsize = TRUE
 )
 
+
+sites.n <- subset(mean.dist.df,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
+sites.p <- subset(mean.dist.df,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
+sites.multnutrient <- subset(mean.dist.df,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
+
+
+
 #models to test results -
-mod <- lmer(lrr~0+ trt_type + (1|expgroup)+ (1|treatment_year), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+#mod <- lmer(lrr~0+ trt_type + (1|expgroup)+ (1|treatment_year), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+#summary(mod)
+
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
-mod <- feols(lrr~0+trt_type | expgroup +treatment_year  ,data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
-
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(mean.dist.df,  trt_type == "N"| trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(mean.dist.df,  trt_type == "P"| trt_type == "control"), treatment_year != 0))
-summary(mod)
-
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"| trt_type == "control"), treatment_year != 0))
-summary(mod)
 
 library(ggeffects)
 x <- ggpredict(mod, c("trt_type"))
@@ -305,15 +300,13 @@ ggplot(x , aes(x, predicted))+
 
 
 #N
-mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "N" ))
-summary(mod)
+#mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "N" ))
+#summary(mod)
 
+#mod <- feols(lrr~treatment_year | expgroup  ,data = subset(lrr.df, trt_type == "N" ))
+#summary(mod)
 
-
-mod <- feols(lrr~treatment_year | expgroup  ,data = subset(lrr.df, trt_type == "N" ))
-summary(mod)
-
-mod <- feols(mean_dist~trt_type+treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "N"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 library(ggeffects)
@@ -328,10 +321,10 @@ ggplot(x , aes(x, predicted))+
 
 
 #P
-mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "P" ))
-summary(mod)
+#mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "P" ))
+#summary(mod)
 
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "P"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 library(ggeffects)
@@ -344,10 +337,10 @@ ggplot(x , aes(x = group, y= predicted, color=x))+
 
 
 #mult_nutrient
-mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "mult_nutrient" ))
-summary(mod)
+#mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df, trt_type == "mult_nutrient" ))
+#summary(mod)
 
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 library(ggeffects)
@@ -356,8 +349,6 @@ ggplot(x , aes(x = group, y= predicted, color=x))+
   geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   #  geom_hline(yintercept = 0)+
   theme_base()
-
-
 
 
 
@@ -384,65 +375,6 @@ ggsave(
   limitsize = TRUE
 )
 
-
-distances_master.1 <- tidyr::separate(distances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
-  left_join(siteLocationClimate, by = "site_code", keep = FALSE)
-
-
-
-
-#expgroup_drought <- c(distances_master.1%>%
-#                        dplyr::select(expgroup, trt_type)%>%
-#                        subset(trt_type == "drought")%>%
-#                        unique())$expgroup
-#tempdf <- subset(distances_master.1, expgroup %in% expgroup_drought)%>%
-#  subset(trt_type == "control" | trt_type == "drought")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-#summary(mod)
-
-
-
-#expgroup_irr <- c(distances_master.1%>%
-#                    dplyr::select(expgroup, trt_type)%>%
-#                    subset(trt_type == "irr"))$expgroup
-#tempdf <- subset(distances_master.1, expgroup %in% expgroup_irr)%>%
-#  subset(trt_type == "control" | trt_type == "irr")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-#summary(mod)
-
-#expgroup_temp <- c(distances_master.1%>%
-#                     dplyr::select(expgroup, trt_type)%>%
-#                     subset(trt_type == "temp"))$expgroup
-#tempdf <- subset(distances_master.1, expgroup %in% expgroup_temp)%>%
-#  subset(trt_type == "control" | trt_type == "temp")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-#summary(mod)
-
-#expgroup_N <- c(distances_master.1%>%
-#                  dplyr::select(expgroup, trt_type)%>%
-#                  subset(trt_type == "N"))$expgroup
-#tempdf <- subset(distances_master.1, expgroup %in% expgroup_N)%>%
-#  subset(trt_type == "control" | trt_type == "N")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-#summary(mod)
-
-#expgroup_P <- c(distances_master.1%>%
-#                  dplyr::select(expgroup, trt_type)%>%
-#                  subset(trt_type == "P"))$expgroup
-#tempdf <- subset(distances_master.1, expgroup %in% expgroup_P)%>%
-#  subset(trt_type == "control" | trt_type == "P")
-#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = tempdf) #not enough samples for continent as random effect
-#summary(mod)
-
-#expgroup_mult_nutrient <- c(distances_master.1%>%
-#                              dplyr::select(expgroup, trt_type)%>%
-#                              subset(trt_type == "mult_nutrient"))$expgroup
-#tempdf <- subset(distances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
-#  subset(trt_type == "control" | trt_type == "mult_nutrient")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-#summary(mod)
-#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(distances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
-#summary(mod)
 
 
 lrr.df_species <- lrr.df
@@ -565,29 +497,38 @@ facet_wrap(~treatment_year)+
 
 lrr.df_traits <- lrr.df
 
+
+
+
+
+
+sites.n <- subset(mean.dist.df,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
+sites.p <- subset(mean.dist.df,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
+sites.multnutrient <- subset(mean.dist.df,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
+
 #models to test results
-mod <- lmer(lrr~0+trt_type+ (1|expgroup), data = subset(subset(lrr.df_traits, trt_type == "N" | trt_type == "P"| trt_type == "mult_nutrient"), treatment_year != 0))
+#mod <- lmer(lrr~0+trt_type+ (1|expgroup), data = subset(subset(lrr.df_traits, trt_type == "N" | trt_type == "P"| trt_type == "mult_nutrient"), treatment_year != 0))
+#summary(mod)
+
+#mod <- feols(lrr~0+trt_type | expgroup +treatment_year  ,data = subset(subset(lrr.df_traits,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+#summary(mod)
+
+
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
-mod <- feols(lrr~0+trt_type | expgroup +treatment_year  ,data = subset(subset(lrr.df_traits,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
-
-mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(mean.dist.df,  trt_type == "N"|trt_type == "control"), treatment_year != 0))
-summary(mod)
-
-mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(mean.dist.df,  trt_type == "P"|trt_type == "control"), treatment_year != 0))
-summary(mod)
-
-mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
 #N
-mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "N" ))
-summary(mod)
+#mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "N" ))
+#summary(mod)
 
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "N"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
@@ -597,10 +538,10 @@ ggplot(x , aes(x = group, y= predicted, color=x))+
   theme_base()
 
 #P
-mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "P" ))
-summary(mod)
+#mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "P" ))
+#summary(mod)
 
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "P"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
@@ -610,10 +551,8 @@ ggplot(x , aes(x = group, y= predicted, color=x))+
   theme_base()
 
 #mult_nutrient
-mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "mult_nutrient" ))
-summary(mod)
 
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(mean.dist.df,  trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
@@ -643,59 +582,6 @@ ggsave(
 )
 
 
-tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
-  left_join(siteLocationClimate, by = "site_code", keep = FALSE)
-
-#expgroup_drought <- c(tdistances_master.1%>%
-#                        dplyr::select(expgroup, trt_type, treatment_year)%>%
-#                        subset(trt_type == "drought"))$expgroup
-#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_drought)%>%
-#  subset(trt_type == "control" | trt_type == "drought")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-#summary(mod)
-
-#expgroup_irr <- c(tdistances_master.1%>%
-#                    dplyr::select(expgroup, trt_type, treatment_year)%>%
-#                    subset(trt_type == "irr"))$expgroup
-#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_irr)%>%
-#  subset(trt_type == "control" | trt_type == "irr")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-#summary(mod)
-
-#expgroup_temp <- c(tdistances_master.1%>%
-#                     dplyr::select(expgroup, trt_type, treatment_year)%>%
-#                     subset(trt_type == "temp"))$expgroup
-#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_temp)%>%
-#  subset(trt_type == "control" | trt_type == "temp")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-#summary(mod)
-
-#expgroup_N <- c(tdistances_master.1%>%
-#                  dplyr::select(expgroup, trt_type, treatment_year)%>%
-#                  subset(trt_type == "N"))$expgroup
-#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_N)%>%
-#  subset(trt_type == "control" | trt_type == "N")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code/expgroup), data = tempdf)
-#summary(mod)
-
-#expgroup_P <- c(tdistances_master.1%>%
-#                  dplyr::select(expgroup, trt_type, treatment_year)%>%
-#                  subset(trt_type == "P"))$expgroup
-#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_P)%>%
-#  subset(trt_type == "control" | trt_type == "P")
-#mod <- lmer(dist~trt_type + (1|site_code), data = tempdf) #not enough samples to use continent as random effect
-#summary(mod)
-
-#expgroup_mult_nutrient <- c(tdistances_master.1%>%
-#                              dplyr::select(expgroup, trt_type, treatment_year)%>%
-#                              subset(trt_type == "mult_nutrient"))$expgroup
-#tempdf <- subset(tdistances_master.1, expgroup %in% expgroup_mult_nutrient)%>%
-#  subset(trt_type == "control" | trt_type == "mult_nutrient")
-#mod <- lmer(dist~trt_type + (1|Continent/site_code), data = tempdf)
-#summary(mod)
-#mod <- lmer(dist~trt_type + (1|site_code/expgroup), data = subset(tdistances_master.1, trt_type == "control" | trt_type == "mult_GCD"))
-#summary(mod)
 
 #####################
 ###Compare species and trait responses
@@ -704,21 +590,22 @@ tdistances_master.1 <- tidyr::separate(tdistances_master, expgroup, c("site_code
 mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("expgroup","trt_type", "treatment", "plot_mani","treatment_year"))%>%
                   mutate(mean_dist.comp = mean_dist.x,mean_dist.trait = mean_dist.y)
 
-mod <- feols(mean_dist.trait~mean_dist.comp*trt_type|expgroup +treatment_year, data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0))
+mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0))
 summary(mod)
 
 
-x <- ggpredict(mod, c("mean_dist.comp","trt_type"))
-ggplot(x, aes(x, predicted, color = group))+
-  geom_point()+
-  geom_smooth(method = "lm")+
-  theme_base()
+mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "P"|trt_type == "control"), treatment_year != 0))
+summary(mod)
+
+mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+summary(mod)
 
 
 
 ggplot(data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0) , aes(x = mean_dist.comp, y= mean_dist.trait, color=trt_type))+
+  facet_wrap(~treatment_year)+
   geom_point()+
-  geom_smooth()+
+  geom_smooth(method = "lm")+
   #  geom_hline(yintercept = 0)+
   theme_base()
 
@@ -772,18 +659,10 @@ ggsave(
 
 
 #models to test results
-library(MuMIn)
-#mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "drought"))
-#summary(mod)
-#r.squaredGLMM(mod)
-
-#mod <- lmer(lrr.traits~lrr.species + (1|site_code), data = subset(lrr_sp.tr, trt_type == "irr"))
-#summary(mod)
-#r.squaredGLMM(mod)
 
 mod <- lmer(lrr.traits~1+lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "N" ))
 summary(mod)
-r.squaredGLMM(mod)
+#r.squaredGLMM(mod)
 
 
 ggplot(subset(lrr_sp.tr, trt_type == "N" ), aes(lrr.species, lrr.traits))+
@@ -799,7 +678,7 @@ ggplot(subset(lrr_sp.tr, trt_type == "N" ), aes(lrr.species, lrr.traits))+
 
 mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "P"))
 summary(mod)
-r.squaredGLMM(mod)
+#r.squaredGLMM(mod)
 
 mod <- feols(lrr.traits~lrr.species | expgroup + treatment_year ,data = subset(lrr_sp.tr, trt_type == "P"))
 summary(mod)
@@ -816,7 +695,7 @@ ggplot(subset(lrr_sp.tr, trt_type == "P"), aes(lrr.species, lrr.traits))+
 
 mod <- lmer(lrr.traits~lrr.species*treatment_year + (1|site_code), data = subset(lrr_sp.tr, trt_type == "mult_nutrient"))
 summary(mod)
-r.squaredGLMM(mod)
+#r.squaredGLMM(mod)
 
 mod <- feols(lrr.traits~lrr.species | expgroup + treatment_year ,data = subset(lrr_sp.tr, trt_type == "mult_nutrient"))
 summary(mod)
@@ -852,36 +731,7 @@ lrr.df_traits <- tidyr::separate(lrr.df_traits, expgroup, c("site_code", "projec
 lrr_covariate <- left_join(lrr.df_species, CoRRE_project_summary, by = c("site_code", "project", "community"))
 lrr_covariate_traits <- left_join(lrr.df_traits, CoRRE_project_summary, by = c("site_code", "project", "community"))
 
-##DROUGHT
-#drought <- subset(lrr_covariate, trt_type == "drought")
-#mod <- lmer(lrr~MAP + (1|site_code), data = drought)
-#mod <- lm(lrr~MAP, data = drought)
-#summary(mod)
-#visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
-#mod <- lmer(lrr~MAT + (1|site_code), data = drought)
-#summary(mod)
-#visreg(mod, ylab = "lrr beta diversity", main = "Drought treatment")
-#mod <- lmer(lrr~rrich + (1|site_code), data = drought)
-#summary(mod)
-#visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
-#mod <- lmer(lrr~experiment_length + (1|site_code), data = drought)
-#summary(mod)
-#visreg(mod,  ylab = "lrr beta diversity", main = "Drought treatment")
 
-##IRRIGATION
-#irrigation <- subset(lrr_covariate, trt_type == "irr")
-#mod <- lmer(lrr~MAP + (1|site_code), data = irrigation)
-#summary(mod)
-#visreg(mod, ylab = "lrr beta diversity", main = "Irrigation treatment")
-#mod <- lmer(lrr~MAT + (1|site_code), data = irrigation)
-#summary(mod)
-#visreg(mod)
-#mod <- lmer(lrr~rrich + (1|site_code), data = irrigation)
-#summary(mod)
-#visreg(mod)
-#mod <- lmer(lrr~experiment_length + (1|site_code), data = irrigation)
-#summary(mod)
-#visreg(mod)
 
 ##NITROGEN
 N <- subset(lrr_covariate, trt_type == "N")
@@ -930,21 +780,7 @@ mod <- lmer(lrr~experiment_length + (1|site_code), data = mult_nutrient)
 summary(mod)
 visreg(mod)
 
-###trait models
-##DROUGHT
-#drought <- subset(lrr_covariate_traits, trt_type == "drought")
-#mod <- lmer(lrr~MAP + (1|site_code), data = drought)
-#summary(mod)
-#visreg(mod)
-#mod <- lmer(lrr~MAT + (1|site_code), data = drought)
-#summary(mod)
-#visreg(mod)
-#mod <- lmer(lrr~rrich + (1|site_code), data = drought)
-#summary(mod)
-#visreg(mod)
-#mod <- lmer(lrr~experiment_length + (1|site_code), data = drought)
-#summary(mod)
-#visreg(mod)
+
 
 ##NITROGEN
 N <- subset(lrr_covariate_traits, trt_type == "N")
@@ -1005,57 +841,39 @@ treatment_info$project <- treatment_info$project_name
 treatment_info$community <- treatment_info$community_type
 treatment_info <- treatment_info[,c("site_code", "project", "community", "plot_mani", "trt_type", "treatment", "n", "p",  "CO2", "precip", "temp")]
 treatment_info <- unique(treatment_info)
+
 lrr_treat_species <- left_join(lrr_covariate, treatment_info, by = c("site_code", "project", "community", "plot_mani", "trt_type", "treatment"))
 lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site_code", "project", "community", "plot_mani", "trt_type", "treatment"))
 
 
-##ANY WATER MANIPULATION
-#water_mani <- subset(lrr_treat_species, trt_type == "drought"|
-#                       trt_type == "irr")
-#mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
-#summary(mod)
-#ggplot(water_mani, aes(precip, lrr))+
-#  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-#  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-#  geom_point(aes(color = trt_type), size = 4)+
-#  scale_color_manual(values = c("#df0000", "#0099f6"))+
-#  ylab("LRR community composition beta diversity")+
-#  xlab("Precip treatment as percentage of MAP")+
-#  ylim(-1, 1)+
-#  geom_smooth(method = "lm", se = FALSE, color = "black")+
-#  theme_base()+
-#  theme(legend.position = "none")
+sites.n <- subset(mean.dist.both,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
+sites.p <- subset(mean.dist.both,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
+sites.multnutrient <- subset(mean.dist.both,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
 
-#ggsave(
-#  "C:/Users/ohler/Documents/converge-diverge/wate_mani.pdf",
-#  plot = last_plot(),
-#  device = "pdf",
-#  path = NULL,
-#  scale = 1,
-#  width = 5,
-#  height = 5,
-#  units = c("in"),
-#  dpi = 600,
-#  limitsize = TRUE
-#)
+
+n.df <- mean.dist.both%>%
+        subset(expgroup %in% sites.n$expgroup)%>%
+        subset(trt_type=="N"|trt_type=="control")%>%
+  left_join( unite(data= treatment_info, expgroup, c("site_code", "project", "community"), sep = "::"), by = c("expgroup", "plot_mani", "trt_type", "treatment"))
+
+
+p.df <- mean.dist.both%>%
+  subset(expgroup %in% sites.p$expgroup)%>%
+  subset(trt_type=="P"|trt_type=="control")%>%
+  left_join( unite(data= treatment_info, expgroup, c("site_code", "project", "community"), sep = "::"), by = c("expgroup", "plot_mani", "trt_type", "treatment"))
+
+mult.df <- mean.dist.both%>%
+  subset(expgroup %in% sites.multnutrient$expgroup)%>%
+  subset(trt_type=="mult_nutrient"|trt_type=="control")
 
 
 ##Nitrogen gradient
-temp <- subset(lrr_treat_species, trt_type == "N" )
-mod <- lmer(lrr~n*treatment_year + (1|expgroup) ,data = temp)
-summary(mod)
-mod <- feols(lrr~n | expgroup + treatment_year ,data = temp)
-summary(mod)
-ggplot(subset(temp, treatment_year != 0), aes(n, lrr))+
-  facet_wrap(~treatment_year)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "#00b844")+
-  ylab("LRR species composition beta diversity")+
-  xlab("N addition treatment (grams/m2)")+
-  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
-  theme_base()+
-  theme(legend.position = "none")
 
+mod <- feols(mean_dist.comp~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
+summary(mod)
+
+mod <- feols(mean_dist.trait~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
+summary(mod)
 
 ggsave(
   "C:/Users/ohler/Documents/converge-diverge/N_gradient.pdf",
@@ -1073,112 +891,20 @@ ggsave(
 
 
 ##P gradient
-temp <- subset(lrr_treat_species, trt_type == "P")
-mod <- lmer(lrr~p*treatment_year + (1|expgroup) ,data = temp)
-summary(mod)
-mod <- feols(lrr~p | expgroup + treatment_year ,data = temp)
-summary(mod)
-ggplot(subset(temp, treatment_year != 0), aes(p, lrr))+
-  facet_wrap(~treatment_year)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "blue")+
-  ylab("LRR species composition beta diversity")+
-  xlab("P addition treatment (grams/m2)")+
-  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
-  theme_base()+
-  theme(legend.position = "none")
 
+mod <- feols(mean_dist.comp~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
+summary(mod)
+
+mod <- feols(mean_dist.trait~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
+summary(mod)
 
 
 ##mult nutrient (number of nutrients)
-temp <- subset(lrr_treat_species, trt_type == "mult_nutrient")
-mod <- lmer(lrr~plot_mani*treatment_year + (1|expgroup) ,data = temp)
+mod <- feols(mean_dist.comp~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
-mod <- feols(lrr~plot_mani | expgroup + treatment_year ,data = temp)
+
+mod <- feols(mean_dist.trait~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
-ggplot(subset(temp, treatment_year != 0), aes(plot_mani, lrr))+
-  facet_wrap(~treatment_year)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "purple")+
-  ylab("LRR species composition beta diversity")+
-  xlab("Number of additional nutrients")+
-  geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
-  theme_base()+
-  theme(legend.position = "none")
-
-##traits
-#water_mani <- subset(lrr_treat_traits, trt_type == "drought" | trt_type == "irr")
-#mod <- lmer(lrr~precip + (1|expgroup) ,data = water_mani)
-#summary(mod)
-
-
-#N gradient
-N <- subset(lrr_treat_traits, trt_type == "N")
-mod <- lmer(lrr~n*treatment_year  + (1|expgroup) ,data = N)
-summary(mod)
-ggplot(N, aes(n, lrr))+
-  facet_wrap(~treatment_year)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "#00b844")+
-  ylab("LRR trait beta diversity")+
-  xlab("N addition treatment (units)")+
-  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
-  theme_base()
-
-
-
-##P gradient
-temp <- subset(lrr_treat_traits, trt_type == "P")
-mod <- lmer(lrr~p*treatment_year + (1|expgroup) ,data = temp)
-summary(mod)
-ggplot(temp, aes(p, lrr))+
-  facet_wrap(~treatment_year)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "#00b844")+
-  ylab("LRR species composition beta diversity")+
-  xlab("N addition treatment (grams/m2)")+
-  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
-  theme_base()+
-  theme(legend.position = "none")
-
-
-
-##mult nutrient (number of nutrients)
-temp <- subset(lrr_treat_traits, trt_type == "mult_nutrient")
-mod <- lmer(lrr~plot_mani*treatment_year + (1|expgroup) ,data = temp)
-summary(mod)
-ggplot(temp, aes(plot_mani, lrr))+
-  facet_wrap(~treatment_year)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
-  geom_point(size = 4, color = "#00b844")+
-  ylab("LRR species composition beta diversity")+
-  xlab("N addition treatment (grams/m2)")+
-  #geom_smooth(method = "lm", se = FALSE)+ #makes sense to remove the geom_smooth layer as long as it's not a significant relationship
-  theme_base()+
-  theme(legend.position = "none")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1888,12 +1614,3 @@ summary(mod)
 #mod <- lmer(leaf_C.N.var~trt_type + (1|expgroup), data = trait_variance)
 #summary(mod)
 
-
-
-######TIME ANALYSIS
-lrr_sp.tr <- nyear %>%
-  tidyr::unite(expgroup,c("site_code", "project_name", "community_type"), sep = "::")%>%
-  left_join(lrr_sp.tr, by = "expgroup")
-
-mod <- lmer(lrr.species~trt_type * n.trt.yrs + (1|expgroup), data = lrr_sp.tr)
-summary(mod) #This quick analysis shows that time isn't important for any of the treatments
