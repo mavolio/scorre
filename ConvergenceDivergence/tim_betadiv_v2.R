@@ -30,7 +30,7 @@ traits <- read.csv("C:/Users/ohler/Downloads/CoRRE_allTraitData_wide_June2023.cs
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
-  subset(treatment_year <=5)
+  subset(treatment_year <=5& treatment_year > 0)
 
 
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
@@ -243,29 +243,29 @@ lrr.df.conf$max <- lrr.df.conf$lrr.mean+lrr.df.conf$lrr.error
 
 
 
-ggplot(subset(subset(lrr.df.conf, treatment_year >=1), trt_type == "N"|trt_type == "P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
-  facet_wrap(~treatment_year)+
-  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
-  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
-  xlab("")+
-  ylab("Species composition LRR distance between plots within treatment")+
-  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
-  theme_base()+
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+#ggplot(subset(subset(lrr.df.conf, treatment_year >=1), trt_type == "N"|trt_type == "P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
+#  facet_wrap(~treatment_year)+
+#  geom_hline(yintercept = 0, size = 1, linetype = "dashed")+
+#  geom_pointrange(aes(ymin = lrr.mean-lrr.error, ymax = lrr.mean+lrr.error), size = 1.5)+
+#  xlab("")+
+#  ylab("Species composition LRR distance between plots within treatment")+
+#  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc", "black"))+
+#  theme_base()+
+#  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 
-ggsave(
-  "C:/Users/ohler/Documents/converge-diverge/fig1_comp.pdf",
-  plot = last_plot(),
-  device = "pdf",
-  path = NULL,
-  scale = 1,
-  width = 7,
-  height = 6,
-  units = c("in"),
-  dpi = 600,
-  limitsize = TRUE
-)
+#ggsave(
+#  "C:/Users/ohler/Documents/converge-diverge/fig1_comp.pdf",
+#  plot = last_plot(),
+#  device = "pdf",
+#  path = NULL,
+#  scale = 1,
+#  width = 7,
+#  height = 6,
+#  units = c("in"),
+#  dpi = 600,
+#  limitsize = TRUE
+#)
 
 
 sites.n <- subset(mean.dist.df,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
@@ -286,6 +286,37 @@ summary(mod)
 
 mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
+
+
+n.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control")%>%
+        group_by(trt_type)%>%
+        dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+
+p.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control")%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+
+mult.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+
+  
+ggplot(n.df, aes(trt_type, mean, color = trt_type))+
+  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+  theme_base()
+
+ggplot(p.df, aes(trt_type, mean, color = trt_type))+
+  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+  theme_base()
+
+ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
+  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+  theme_base()
+
+
+
+
+
 
 
 library(ggeffects)
@@ -725,113 +756,88 @@ CoRRE_project_summary$community <- CoRRE_project_summary$community_type
 CoRRE_project_summary <- CoRRE_project_summary %>% dplyr::select(-c(project_name, community_type))
 
 
-lrr.df_species <- tidyr::separate(lrr.df_species, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
-lrr.df_traits <- tidyr::separate(lrr.df_traits, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+#lrr.df_species <- tidyr::separate(lrr.df_species, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
+#lrr.df_traits <- tidyr::separate(lrr.df_traits, expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
-lrr_covariate <- left_join(lrr.df_species, CoRRE_project_summary, by = c("site_code", "project", "community"))
-lrr_covariate_traits <- left_join(lrr.df_traits, CoRRE_project_summary, by = c("site_code", "project", "community"))
-
-
-
-##NITROGEN
-N <- subset(lrr_covariate, trt_type == "N")
-mod <- lmer(lrr~MAP + (1|site_code), data = N)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = N)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = N)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = N)
-summary(mod)
-visreg(mod)
-
-##PHOSPORUS
-P <- subset(lrr_covariate, trt_type == "P")
-mod <- lmer(lrr~MAP + (1|site_code), data = P)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = P)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = P)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = P)
-summary(mod)
-visreg(mod)
+#lrr_covariate <- left_join(lrr.df_species, CoRRE_project_summary, by = c("site_code", "project", "community"))
+#lrr_covariate_traits <- left_join(lrr.df_traits, CoRRE_project_summary, by = c("site_code", "project", "community"))
 
 
-#MULT_NUTRIENT
-mult_nutrient <- subset(lrr_covariate, trt_type == "mult_nutrient")
-mod <- lmer(lrr~MAP + (1|site_code), data = mult_nutrient)
-summary(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = mult_nutrient)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = mult_nutrient)
-summary(mod)
-visreg(mod)
-visreg(mod, xvar = "rrich", yvar = "lrr", ylab = "lrr beta diversity", main = "Mutliple nutrient addition", gg = TRUE)+
-  theme_base()
-mod <- lmer(lrr~experiment_length + (1|site_code), data = mult_nutrient)
-summary(mod)
-visreg(mod)
+
+library(grf)
+
+dist.both <- mean.dist.both%>%
+  tidyr::separate(expgroup, into = c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
+  left_join(CoRRE_siteLocationClimate_Dec2021, by = c("site_code"))
+
+sites.n <- subset(dist.both,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
+sites.p <- subset(dist.both,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
+sites.multnutrient <- subset(dist.both,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
 
 
+n.df <- dist.both%>%
+  subset(expgroup %in% sites.n$expgroup)%>%
+  subset(trt_type=="N"|trt_type=="control")%>%
+  left_join( unite(data= treatment_info, expgroup, c("site_code", "project", "community"), sep = "::"), by = c("expgroup", "plot_mani", "trt_type", "treatment"))
+
+
+p.df <- dist.both%>%
+  subset(expgroup %in% sites.p$expgroup)%>%
+  subset(trt_type=="P"|trt_type=="control")%>%
+  left_join( unite(data= treatment_info, expgroup, c("site_code", "project", "community"), sep = "::"), by = c("expgroup", "plot_mani", "trt_type", "treatment"))
+
+mult.df <- dist.both%>%
+  subset(expgroup %in% sites.multnutrient$expgroup)%>%
+  subset(trt_type=="mult_nutrient"|trt_type=="control")
+
+
+#NITROGEN
+
+#tau.forest <- causal_forest(x = matrix(n.df$MAP, n.df$MAT, n.df$rrich), y = n.df$mean_dist.comp, w = n.df$trt_type)
 
 ##NITROGEN
-N <- subset(lrr_covariate_traits, trt_type == "N")
-mod <- lmer(lrr~MAP + (1|site_code), data = N)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = n.df)
 summary(mod)
-visreg(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = N)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = N)
-summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = N)
-summary(mod)
-visreg(mod)
 
-##mult_nutrient
-mult_nutrient <- subset(lrr_covariate_traits, trt_type == "mult_nutrient")
-mod <- lmer(lrr~MAP + (1|site_code), data = mult_nutrient)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = n.df)
 summary(mod)
-visreg(mod)
-mod <- lmer(lrr~MAT + (1|site_code), data = mult_nutrient)
+
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = n.df)
 summary(mod)
-visreg(mod)
-mod <- lmer(lrr~rrich + (1|site_code), data = mult_nutrient)
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = n.df)
 summary(mod)
-visreg(mod)
-mod <- lmer(lrr~experiment_length + (1|site_code), data = mult_nutrient)
-summary(mod)
-visreg(mod)
 
 
+#PHOSPHORUS
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = p.df)
+summary(mod)
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = p.df)
+summary(mod)
+
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = p.df)
+summary(mod)
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = p.df)
+summary(mod)
+
+#mult nutrient
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = mult.df)
+summary(mod)
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = mult.df)
+summary(mod)
+
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = mult.df)
+summary(mod)
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = mult.df)
+summary(mod)
 
 
-ggplot(lrr_covariate_traits, aes(x=MAP, y = lrr))+
-  facet_wrap(~trt_type)+
-  geom_point()+
-  geom_smooth(method = "lm")+
-  theme_base()
 
-ggplot(lrr_covariate_traits, aes(x=MAT, y = lrr))+
-  facet_wrap(~trt_type)+
-  geom_point()+
-  geom_smooth(method = "lm")+
-  theme_base()
 
-ggplot(lrr_covariate_traits, aes(x=rrich, y = lrr))+
-  facet_wrap(~trt_type)+
-  geom_point()+
-  geom_smooth(method = "lm")+
-  theme_base()
 
 
 ##with treatment information
@@ -875,6 +881,19 @@ summary(mod)
 mod <- feols(mean_dist.trait~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
 
+ggplot(n.df, aes(x=n, y=mean_dist.comp))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+ggplot(n.df, aes(x=n, y=mean_dist.trait))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+
 ggsave(
   "C:/Users/ohler/Documents/converge-diverge/N_gradient.pdf",
   plot = last_plot(),
@@ -898,6 +917,18 @@ summary(mod)
 mod <- feols(mean_dist.trait~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
 
+ggplot(p.df, aes(x=p, y=mean_dist.comp))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+ggplot(p.df, aes(x=p, y=mean_dist.trait))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
 
 ##mult nutrient (number of nutrients)
 mod <- feols(mean_dist.comp~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
@@ -905,7 +936,6 @@ summary(mod)
 
 mod <- feols(mean_dist.trait~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
-
 
 
 
