@@ -295,15 +295,29 @@ mult.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), tr
   
 ggplot(n.df, aes(trt_type, mean, color = trt_type))+
   geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  theme_base()
+  scale_color_manual(values = c("black", "#0099f6"))+
+  xlab("")+
+  ylab("Beta diversity")+
+  theme_base()+
+  theme(legend.position="none")
+
+#"#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"
 
 ggplot(p.df, aes(trt_type, mean, color = trt_type))+
   geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  theme_base()
+  scale_color_manual(values = c("black", "#00b844"))+
+  xlab("")+
+  ylab("Beta diversity")+
+  theme_base()+
+  theme(legend.position="none")
 
 ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
   geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  theme_base()
+  scale_color_manual(values = c("black", "#6305dc"))+
+  xlab("")+
+  ylab("Beta diversity")+
+  theme_base()+
+  theme(legend.position="none")
 
 
 
@@ -326,8 +340,10 @@ summary(mod)
 
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
 ggplot(x , aes(x = group, y= predicted, color=x))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
-  #  geom_hline(yintercept = 0)+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#0099f6"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
 
 ##Stats about change over time: Phosphorus
@@ -336,8 +352,10 @@ summary(mod)
 
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
 ggplot(x , aes(x = group, y= predicted, color=x))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
-  #  geom_hline(yintercept = 0)+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#00b844"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
 
 ##Stats about change over time: multiple nutrient addition
@@ -347,8 +365,10 @@ summary(mod)
 
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
 ggplot(x , aes(x = group, y= predicted, color=x))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
-  #  geom_hline(yintercept = 0)+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#6305dc"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
 
 
@@ -508,6 +528,18 @@ sites.multnutrient <- subset(mean.dist.df,  trt_type == "mult_nutrient")%>%dplyr
 #mod <- feols(lrr~0+trt_type | expgroup +treatment_year  ,data = subset(subset(lrr.df_traits,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
 #summary(mod)
 
+n.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control")%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+
+p.df <-  subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control")%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+
+mult.df <-  subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+
 #stats for Nitrogen effect (traits)
 mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
@@ -521,6 +553,32 @@ mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(
 summary(mod)
 
 
+ggplot(n.df, aes(trt_type, mean, color = trt_type))+
+  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+  scale_color_manual(values = c("black", "#0099f6"))+
+  xlab("")+
+  ylab("Beta diversity")+
+  theme_base()+
+  theme(legend.position="none")
+
+ggplot(p.df, aes(trt_type, mean, color = trt_type))+
+  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+  scale_color_manual(values = c("black", "#00b844"))+
+  xlab("")+
+  ylab("Beta diversity")+
+  theme_base()+
+  theme(legend.position="none")
+
+ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
+  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+  scale_color_manual(values = c("black", "#6305dc"))+
+  xlab("")+
+  ylab("Beta diversity")+
+  theme_base()+
+  theme(legend.position="none")
+
+
+
 #N
 #mod <- lmer(lrr~treatment_year+ (1|expgroup), data = subset(lrr.df_traits, trt_type == "N" ))
 #summary(mod)
@@ -531,29 +589,40 @@ summary(mod)
 
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
 ggplot(x , aes(x = group, y= predicted, color=x))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
-  #  geom_hline(yintercept = 0)+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#0099f6"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
+
+
 
 #stats for phosphorus effect (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
+
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
 ggplot(x , aes(x = group, y= predicted, color=x))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
-  #  geom_hline(yintercept = 0)+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#00b844"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
+
 
 
 #stats for multiple nutrient effect over time (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
+
 x <- ggpredict(mod, c("trt_type", "treatment_year"))
 ggplot(x , aes(x = group, y= predicted, color=x))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
-  #  geom_hline(yintercept = 0)+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#6305dc"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
 
 #ggplot(subset(lrr.df_traits, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ), aes(treatment_year, lrr, color = trt_type))+
@@ -801,8 +870,8 @@ treatment_info$community <- treatment_info$community_type
 treatment_info <- treatment_info[,c("site_code", "project", "community", "plot_mani", "trt_type", "treatment", "n", "p",  "CO2", "precip", "temp")]
 treatment_info <- unique(treatment_info)
 
-lrr_treat_species <- left_join(lrr_covariate, treatment_info, by = c("site_code", "project", "community", "plot_mani", "trt_type", "treatment"))
-lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site_code", "project", "community", "plot_mani", "trt_type", "treatment"))
+#lrr_treat_species <- left_join(lrr_covariate, treatment_info, by = c("site_code", "project", "community", "plot_mani", "trt_type", "treatment"))
+#lrr_treat_traits <- left_join(lrr_covariate_traits, treatment_info, by = c("site_code", "project", "community", "plot_mani", "trt_type", "treatment"))
 
 
 sites.n <- subset(mean.dist.both,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
@@ -834,15 +903,17 @@ summary(mod)
 mod <- feols(mean_dist.trait~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
 
-ggplot(n.df, aes(x=n, y=mean_dist.comp))+
+ggplot(n.df, aes(x=n, y=mean_dist.comp, color=trt_type))+
   facet_wrap(~treatment_year)+
   geom_point()+
+  scale_color_manual(values = c("black", "#0099f6"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
 ggplot(n.df, aes(x=n, y=mean_dist.trait))+
   facet_wrap(~treatment_year)+
   geom_point()+
+  scale_color_manual(values = c("black", "#0099f6"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
@@ -870,15 +941,17 @@ summary(mod)
 mod <- feols(mean_dist.trait~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
 
-ggplot(p.df, aes(x=p, y=mean_dist.comp))+
+ggplot(p.df, aes(x=p, y=mean_dist.comp, color = trt_type))+
   facet_wrap(~treatment_year)+
   geom_point()+
+  scale_color_manual(values = c("black", "#00b844"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
-ggplot(p.df, aes(x=p, y=mean_dist.trait))+
+ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
   facet_wrap(~treatment_year)+
   geom_point()+
+  scale_color_manual(values = c("black", "#00b844"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
@@ -889,6 +962,33 @@ summary(mod)
 
 mod <- feols(mean_dist.trait~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
+
+ggplot(mult.df, aes(x=plot_mani, y=mean_dist.comp, color=trt_type))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  scale_color_manual(values = c("black", "#6305dc"))+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+ggplot(mult.df, aes(x=plot_mani, y=mean_dist.trait, color=trt_type))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  scale_color_manual(values = c("black", "#6305dc"))+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+
+
+
+#scale_color_manual(values = c("black", "#0099f6"))+
+#  scale_color_manual(values = c("black", "#00b844"))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+
+
+
+
+
+
 
 
 
