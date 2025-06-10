@@ -41,7 +41,7 @@ traits <- left_join(traits, traits_cat, by = "species_matched")#merge w/ categor
 
 
 ##Read in cover data
-cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv") %>% #community comp relative cover data
+cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_March 2024.csv") %>% #community comp relative cover data
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
   subset(treatment_year <=10& treatment_year > 0) #only use treatment data and subset the number of years to be used
@@ -52,7 +52,7 @@ corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", keep = FALSE)
 
-experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
+experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_March2024.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
 
 siteLocationClimate <- read.csv("C:/Users/ohler/Dropbox/CoRRE_database/Data/CompiledData/siteLocationClimate.csv") #information about sites
 
