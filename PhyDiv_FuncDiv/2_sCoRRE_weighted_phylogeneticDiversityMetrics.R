@@ -12,9 +12,6 @@ library(matrixStats)
 library(picante)
 library(tidyverse)
 
-# #### set directory ####
-# setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\')  #kim's computer
-# my.wd <- "/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/" #padu
 
 #### read data ####
 
@@ -67,11 +64,9 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
   
   #calculate abundance-weighted phylogenetic diversity metrics:
   mpd.raw <- as.data.frame(mpd(samp=spp, dis=distance,  abundance.weighted = T))
-  mntd.raw <- as.data.frame(mntd(samp=spp, dis=distance,  abundance.weighted = T))
   
-  pd.raw <- cbind(comm2[,1], mpd.raw, mntd.raw) %>% 
-    rename(mpd="mpd(samp = spp, dis = distance, abundance.weighted = T)",
-           mntd="mntd(samp = spp, dis = distance, abundance.weighted = T)") %>% 
+  pd.raw <- cbind(comm2[,1], mpd.raw) %>% 
+    rename(mpd="mpd(samp = spp, dis = distance, abundance.weighted = T)") %>% 
     mutate(permutation=0)
   
   pd.ses <- {}
@@ -85,11 +80,9 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
       as.matrix(.)
     
     mpd.ses <- as.data.frame(mpd(samp=spp, dis=distanceShuffle,  abundance.weighted = T))
-    mntd.ses <- as.data.frame(mntd(samp=spp, dis=distanceShuffle,  abundance.weighted = T))
     
-    ses <- cbind(comm2[,1], mpd.ses, mntd.ses) %>% 
-      rename(mpd="mpd(samp = spp, dis = distanceShuffle, abundance.weighted = T)",
-             mntd="mntd(samp = spp, dis = distanceShuffle, abundance.weighted = T)") %>% 
+    ses <- cbind(comm2[,1], mpd.ses) %>% 
+      rename(mpd="mpd(samp = spp, dis = distanceShuffle, abundance.weighted = T)") %>% 
       mutate(permutation=sesVector[n])
     
     pd.ses <- rbind(pd.ses, ses)
@@ -99,87 +92,28 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
   
   pd.all <- rbind(pd.raw, pd.ses)
   
-  #mean MPD and MNTD for null distribution to create SES MPD and MNTD
+  #mean MPD and MNTD for null distribution to create SES MPD
   sesSubsetMean <- pd.all %>% 
     separate(plot_id2, into=c('site_code', 'project_name', 'community_type', 'calendar_year', 'plot_id'), sep='::') %>% 
     mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
     mutate(plot_id2=paste(site_proj_comm, calendar_year, plot_id, sep='::')) %>% 
     mutate(calendar_year=as.integer(calendar_year)) %>% 
     group_by(plot_id2, site_proj_comm, calendar_year, plot_id) %>% 
-    summarise(across(c('mpd', 'mntd'), list(mean=mean, sd=sd))) %>% 
+    summarise(across(c('mpd'), list(mean=mean, sd=sd))) %>% 
     ungroup()
   
-  #calculate SES values for MPD and MNTD
-  mpdMNTDSubsetSES <- pd.all %>% 
+  #calculate SES values for MPD 
+  mpdSubsetSES <- pd.all %>% 
     full_join(sesSubsetMean) %>% 
     filter(permutation==0) %>% 
-    mutate(MNTD_phylo_ses=(mntd-mntd_mean)/mntd_sd,
-           MPD_phylo_ses=(mpd-mpd_mean)/mpd_sd) %>%
-    select(plot_id2, site_proj_comm, calendar_year, plot_id, mpd, mntd, MPD_phylo_ses, MNTD_phylo_ses) %>% 
-    rename(MPD_phylo=mpd,
-           MNTD_phylo=mntd)
-  
-  #subset control plots
-  mpdMNTDSubsetSESctl <- mpdMNTDSubsetSES %>% 
-    left_join(trt) %>% 
-    filter(plot_mani==0) %>% 
-    group_by(site_proj_comm, calendar_year) %>% 
-    summarise(across(c('MNTD_phylo', 'MPD_phylo', 'MNTD_phylo_ses', 'MPD_phylo_ses'), list(mean=mean))) %>% 
-    ungroup()
-  
-  #calculate lnRR for ses values of MPD and MNTD
-  mpdMNTDSubsetRRses <- mpdMNTDSubsetSES %>% 
-    left_join(trt) %>% 
-    full_join(mpdMNTDSubsetSESctl) %>% 
-    mutate(RR_MNTD_phylo=ifelse(plot_mani>0, log(MNTD_phylo/MNTD_phylo_mean), NA),
-           RR_MPD_phylo=ifelse(plot_mani>0, log(MPD_phylo/MPD_phylo_mean), NA),
-           RR_MNTD_phylo_ses=ifelse(plot_mani>0, ((MNTD_phylo_ses-MNTD_phylo_ses_mean)/MNTD_phylo_ses_mean), NA), #percent difference for ses due to neg values
-           RR_MPD_phylo_ses=ifelse(plot_mani>0, ((MPD_phylo_ses-MPD_phylo_ses_mean)/MPD_phylo_ses_mean), NA)) %>% #percent difference for ses due to neg values
-    select(plot_id2, site_proj_comm, calendar_year, plot_id, MNTD_phylo, MNTD_phylo_ses, MPD_phylo, 
-           MPD_phylo_ses, RR_MNTD_phylo, RR_MPD_phylo, RR_MNTD_phylo_ses, RR_MPD_phylo_ses)
-  
-  #lnRR MPD and MNTD for null distribution to create SES lnRR MPD and SES lnRR MNTD
-  mpdMNTDSubsetPermCtl <- pd.all %>% 
-    left_join(trt) %>% 
-    filter(plot_mani==0) %>% 
-    group_by(site_proj_comm, calendar_year, permutation) %>% 
-    summarize_at(vars(mpd, 
-                      mntd), 
-                 list(mean=mean), na.rm=T) %>% #average across plots
-    ungroup() %>% 
-    rename(MNTD_phylo_ctl=mntd_mean,
-           MPD_phylo_ctl=mpd_mean)
-  
-  RRmpdMNTDSubset <- pd.all %>% 
-    left_join(trt) %>% 
-    filter(plot_mani!=0) %>% 
-    left_join(mpdMNTDSubsetPermCtl) %>% 
-    mutate(RR_MNTD_phylo=log(mntd/MNTD_phylo_ctl),
-           RR_MPD_phylo=log(mpd/MPD_phylo_ctl))
-  
-  RRmpdMNTDSubsetRaw <- RRmpdMNTDSubset %>% 
-    filter(permutation==0) %>% 
-    select(site_proj_comm, calendar_year, plot_id, RR_MNTD_phylo, RR_MPD_phylo)
-  
-  mpdMNTDSubsetSESrr <- RRmpdMNTDSubset %>% 
-    group_by(site_proj_comm, calendar_year, plot_id) %>% 
-    summarize_at(vars(RR_MNTD_phylo, 
-                      RR_MPD_phylo), 
-                 list(mean=mean, sd=sd), na.rm=T) %>% #average across permutation
-    ungroup() %>% 
-    left_join(RRmpdMNTDSubsetRaw) %>% 
-    mutate(SES_RR_MNTD_phylo=(RR_MNTD_phylo-RR_MNTD_phylo_mean)/RR_MNTD_phylo_sd,
-           SES_RR_MPD_phylo=(RR_MPD_phylo-RR_MPD_phylo_mean)/RR_MPD_phylo_sd) %>% 
-    select(site_proj_comm, calendar_year, plot_id, SES_RR_MNTD_phylo, SES_RR_MPD_phylo)
-  
-  allSubset <- mpdMNTDSubsetRRses %>% 
-    full_join(mpdMNTDSubsetSESrr) %>% 
-    left_join(trt)
+    mutate(MPD_phylo_ses=(mpd-mpd_mean)/mpd_sd) %>%
+    select(plot_id2, site_proj_comm, calendar_year, plot_id, mpd, MPD_phylo_ses) %>% 
+    rename(MPD_phylo=mpd)
   
   #bind values into RR dataframe
-  phylogeneticDiversityMetrics <- rbind(phylogeneticDiversityMetrics, allSubset)
+  phylogeneticDiversityMetrics <- rbind(phylogeneticDiversityMetrics, mpdSubsetSES)
 
 }
 
 #save output:
-write.csv(phylogeneticDiversityMetrics, "CoRRE_PD_metrics_weighted_April2023.csv", row.names=F)
+saveRDS(phylogeneticDiversityMetrics, file = "PhyDiv_FuncDiv/phylogeneticDiversityMetrics.rds")
