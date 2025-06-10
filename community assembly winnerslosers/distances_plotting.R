@@ -15,10 +15,18 @@ CT_diff <- read.csv("/Users/MagdaGarbowski 1/scorre/community assembly winnerslo
 # reading Kevin's files in
 dat_focal_all_sps_df <- read.csv(paste0(my.wd, "distances_avgs.csv"))
 CT_diff <- read.csv(paste0(my.wd, "CT_diff_2022Dec15.csv")) %>%
-  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_"))
+  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) 
+
+# Add in winner and loser information
+diff_quantiles <- read.csv(paste0(my.wd, "diff_quantile_2022Dec15.csv"))
+CT_diff_quantiles <- merge(CT_diff, diff_quantiles, by = c("site_proj_comm", "treatment"), all.x= TRUE)
+CT_diff_quantiles$species_status_90_10 <- ifelse(CT_diff_quantiles$DCi==0 & CT_diff_quantiles$treatDCi>0, "colonizer",
+                                                 ifelse(CT_diff_quantiles$diff < CT_diff_quantiles$p10, "loser",
+                                                        ifelse(CT_diff_quantiles$diff > CT_diff_quantiles$p90, "winner","neutral")))
+
 
 # get plot information from CT diff
-CT_diff_ss <- CT_diff[c("site_code", "project_name", "treatment", "treatDCi", "DCi", "diff", "trt_type", "species_matched", "site_proj_comm")]
+CT_diff_ss <- CT_diff_quantiles[c("site_code", "project_name", "treatment", "treatDCi", "DCi", "diff", "trt_type", "species_matched", "site_proj_comm","species_status_90_10")]
 #CT_diff_ss$site_proj_comm <- gsub(" ", "_", CT_diff_ss$site_proj_comm)
 
 
@@ -49,7 +57,7 @@ list2env(ls_out, .GlobalEnv)
 
 plot_function <- function(df, distance, y_var, y_var_title, title){
   plot_out <- ggplot(df, aes(x = distance, y = y_var))+
-    geom_point() + 
+    geom_point(inherit.aes=F, aes(x = distance, y = y_var)) + 
     geom_smooth(method = "lm") + 
     facet_wrap(~site_code) + labs(title = title, y = y_var_title)
   return(plot_out)
@@ -65,7 +73,7 @@ drought_all_diff <- plot_function(dat_focal_all_drought, dat_focal_all_drought$a
 drought_NN_diff <- plot_function(dat_focal_all_drought, dat_focal_all_drought$avg_distance_NN, dat_focal_all_drought$diff, "diff", "Drought  TRT - Nearest neighbor")
 
 # plot absolute values of delta Dci and color by species catagory
-nitrogen_all_absdiff <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_all, abs(dat_focal_all_N$diff), "|diff|", "Nitrogen TRT - All Comparisons")
+nitrogen_all_absdiff <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_all, abs(dat_focal_all_N$diff), "|diff|", "Nitrogen TRT - All Comparisons", group="species_status_90_10")
 nitrogen_NN_absdiff <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_NN,abs(dat_focal_all_N$diff), "|diff|", "Nitrogen TRT - Nearest neighbor")
 
 mult_all_absdiff <- plot_function(dat_focal_all_mult, dat_focal_all_mult$avg_distance_all, abs(dat_focal_all_mult$diff), "|diff|", "Mult Nutrient TRT - All Comparisons")
@@ -80,62 +88,65 @@ drought_NN_absdiff <- plot_function(dat_focal_all_drought, dat_focal_all_drought
 nitrogen_all_DCi <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_all, dat_focal_all_N$DCi, "DCi", "Nitrogen TRT - All Comparisons")
 nitrogen_NN_DCi <- plot_function(dat_focal_all_N, dat_focal_all_N$avg_distance_NN,dat_focal_all_N$DCi, "DCi", "Nitrogen TRT - Nearest neighbor")
 
-# just boxplots of comparisons between groups 
-dat_groups_N <- dat_focal_all_sps_df_merged[(dat_focal_all_sps_df_merged$trt_type == "N" & 
-                                               dat_focal_all_sps_df_merged$data_set %in% c("winner_winner", "winner_neutral", "winner_loser")),]
-
-dat_groups_mult <- dat_focal_all_sps_df_merged[(dat_focal_all_sps_df_merged$trt_type == "mult_nutrient" & 
-                                               dat_focal_all_sps_df_merged$data_set %in% c("winner_winner", "winner_neutral", "winner_loser")),]
-
-dat_groups_drought <- dat_focal_all_sps_df_merged[(dat_focal_all_sps_df_merged$trt_type == "drought" & 
-                                                  dat_focal_all_sps_df_merged$data_set %in% c("winner_winner", "winner_neutral", "winner_loser")),]
-
-# keep datasets with all three groups 
-
-dat_prep_2 <- function(df){
-  len = length(levels(as.factor(df$data_set)))
-if(len  > 2)
-  return(df)
-}
-
-dat_groups_N_splits <- split(dat_groups_N, list(dat_groups_N$site_code))
-out_N <- lapply(dat_groups_N_splits, dat_prep_2)
-out_N[sapply(out_N, is.null)] <- NULL
-out_N <- do.call(rbind, out_N)
-
-dat_groups_mult_splits <- split(dat_groups_mult, list(dat_groups_mult$site_code))
-out_mult <- lapply(dat_groups_mult_splits, dat_prep_2)
-out_mult[sapply(out_mult, is.null)] <- NULL
-out_mult <- do.call(rbind, out_mult)
-
-dat_groups_drought_splits <- split(dat_groups_drought, list(dat_groups_drought$site_code))
-out_drought <- lapply(dat_groups_drought_splits, dat_prep_2)
-out_drought[sapply(out_drought, is.null)] <- NULL
-out_drought <- do.call(rbind, out_drought)
 
 
+### Simple ggplots
+ggplot(dat_focal_all_N, aes(x = avg_distance_all, y = abs(diff)))+
+  geom_point(inherit.aes=F, aes(x = avg_distance_all, y = abs(diff), col=species_status_90_10), pch=21) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~site_proj_comm) + labs(title = "N trt - All comparisons", y = "DCi") +
+  scale_color_manual(values=c("purple", "red","darkgrey","blue"))
+
+ggsave("figures//n_all distances.jpg", width=30, height=20, unit="in")
+
+ggplot(dat_focal_all_N, aes(x = avg_distance_NN, y = abs(diff)))+
+  geom_point(inherit.aes=F, aes(x = avg_distance_NN, y = abs(diff), col=species_status_90_10), pch=21) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~site_proj_comm) + labs(title = "N trt - NN comparisons", y = "DCi") +
+  scale_color_manual(values=c("purple", "red","darkgrey","blue"))
+
+ggsave("figures//n_NN distances.jpg", width=30, height=20, unit="in")
+
+# mult nutrient
+ggplot(dat_focal_all_mult, aes(x = avg_distance_all, y = abs(diff)))+
+  geom_point(inherit.aes=F, aes(x = avg_distance_all, y = abs(diff), col=species_status_90_10), pch=21) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~site_proj_comm) + labs(title = "Mult trt - All comparisons", y = "DCi") +
+  scale_color_manual(values=c("purple", "red","darkgrey","blue"))
+
+ggsave("figures//mult_all distances.jpg", width=30, height=20, unit="in")
+
+ggplot(dat_focal_all_N, aes(x = avg_distance_NN, y = abs(diff)))+
+  geom_point(inherit.aes=F, aes(x = avg_distance_NN, y = abs(diff), col=species_status_90_10), pch=21) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~site_proj_comm) + labs(title = "mult trt - NN comparisons", y = "DCi") +
+  scale_color_manual(values=c("purple", "red","darkgrey","blue"))
+
+ggsave("figures//mult_NN distances.jpg", width=30, height=20, unit="in")
+
+# drought nutrient
+ggplot(dat_focal_all_drought, aes(x = avg_distance_all, y = abs(diff)))+
+  geom_point(inherit.aes=F, aes(x = avg_distance_all, y = abs(diff), col=species_status_90_10), pch=21) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~site_proj_comm) + labs(title = "drought trt - All comparisons", y = "DCi") +
+  scale_color_manual(values=c("purple", "red","darkgrey","blue"))
+
+ggsave("figures//drought_all distances.jpg", width=30, height=20, unit="in")
+
+ggplot(dat_focal_all_N, aes(x = avg_distance_NN, y = abs(diff)))+
+  geom_point(inherit.aes=F, aes(x = avg_distance_NN, y = abs(diff), col=species_status_90_10), pch=21) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~site_proj_comm) + labs(title = "drought trt - NN comparisons", y = "DCi") +
+  scale_color_manual(values=c("purple", "red","darkgrey","blue"))
+
+ggsave("figures//drought_NN distances.jpg", width=30, height=20, unit="in")
 
 
+ggplot(dat_focal_all_N, aes(x = avg_distance_all, y = abs(diff), col=species_status_90_10))+
+  geom_point(pch=21) + 
+  geom_smooth(method = "lm", se=F) + 
+  facet_wrap(~site_proj_comm) + labs(title = "N trt - All comparisons", y = "DCi") +
+  scale_color_manual(values=c("purple", "red","darkgrey","blue"))
 
 
-
-
-N <- ggplot(out_N, aes(x = data_set, y = avg_distance_all)) + 
-  geom_boxplot() + 
-  facet_wrap(~site_code)+ labs(title = "Nitrogen")
-
-mult <- ggplot(out_mult, aes(x = data_set, y = avg_distance_all)) + 
-  geom_boxplot() + 
-  facet_wrap(~site_code)+ labs(title = "Mult Nutrients")
-
-drought <- ggplot(out_drought, aes(x = data_set, y = avg_distance_all)) + 
-  geom_boxplot() + 
-  facet_wrap(~site_code) + labs(title = "Drought")
-
-# just boxplots of comparisons between groups 
-
-
-
-
-
-
+ggsave("figures//testing.jpg", width=30, height=20, unit="in")
