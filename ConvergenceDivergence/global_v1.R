@@ -203,7 +203,7 @@ summarize.traits.continuous <- unique(summarize.traits.continuous)
 
 trt_vector <- unique(summarize.cwm$trt_type)
 
-tdistances_master <- {}
+#tdistances_master <- {}
 
 for(i in 1:length(trt_vector)) {
   
@@ -214,30 +214,63 @@ temp.df <- subset(subset(summarize.cwm,  expgroup%in%site.list$expgroup), trt_ty
   
 temp.gow <- gowdis(temp.df[6:ncol(temp.df)])
 temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
-tdistances_temp <- data.frame(expgroup = temp.df$expgroup, trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani, treatment_year = temp.df$treatment_year)
+tdistances_temp <- data.frame(site = separate(temp.df,expgroup, into = c("site", "project", "community"), sep = "::")$site,
+  expgroup = temp.df$expgroup, trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani, treatment_year = temp.df$treatment_year)
 
 assign(paste0("df", trt_vector[i]),tdistances_temp)
 }
 
 
-mod <- feols(dist~trt_type | expgroup +treatment_year, data = dfN)
+mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfN)
 summary(mod)
 
-mod <- feols(dist~trt_type | expgroup +treatment_year, data = dfP)
+mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfP)
 summary(mod)
 
-mod <- feols(dist~trt_type | expgroup +treatment_year, data = dfmult_nutrient)
+mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfmult_nutrient)
 summary(mod)
 
-mod <- feols(dist~trt_type | expgroup +treatment_year, data = dfirr)
+mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfirr)
 summary(mod)
 
-mod <- feols(dist~trt_type | expgroup +treatment_year, data = dfCO2)
+mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfCO2)
 summary(mod)
 
+mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = `dfN*irr`)
+summary(mod)
 
 
 ggplot(dfmult_nutrient, aes(trt_type, dist))+
   geom_boxplot()
 
 
+
+###All together now!
+temp.gow <- gowdis(summarize.cwm[6:ncol(summarize.cwm)])
+temp.beta <- betadisper(temp.gow, group = summarize.cwm$trt_type, type = "centroid")
+tdistances_temp <- data.frame(site = separate(summarize.cwm,expgroup, into = c("site", "project", "community"), sep = "::")$site,
+                              expgroup = summarize.cwm$expgroup, trt_type = summarize.cwm$trt_type, treatment = summarize.cwm$treatment,  dist = temp.beta$dist, plot_mani = summarize.cwm$plot_mani, treatment_year = summarize.cwm$treatment_year)
+
+
+
+mod <- feols(dist~plot_mani | site + expgroup + treatment_year, data = tdistances_temp)
+summary(mod)
+
+x <- ggpredict(mod, "plot_mani")
+ggplot(tdistances_temp, aes(plot_mani, dist))+
+  geom_point(aes(color = trt_type), alpha = 0.1)+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
+  #geom_smooth(method = "loess")+
+  theme_base()
+
+mod <- feols(dist~plot_mani*treatment_year | site + expgroup , data = tdistances_temp)
+summary(mod)
+
+x <- ggpredict(mod, c("plot_mani", "treatment_year"))
+ggplot(tdistances_temp, aes(plot_mani, dist))+
+  facet_wrap(~treatment_year)+
+  geom_point(aes(color = trt_type), alpha = 0.1)+
+  #geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
+  geom_smooth(method = "loess")+
+  theme_base()
+  
