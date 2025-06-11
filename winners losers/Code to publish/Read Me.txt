@@ -1,0 +1,35 @@
+Caluclate DCi Responses for each species in each experiment
+Step 1. DCi Responses
+
+this will export a file for phylogentic analyses: 
+(1) Species_DCiDiff_newtrts.csv
+
+this will also export a file for the mixed model trait analyses: (2) Species_DCiDiff_formixedmodels.csv
+
+Phylogentic Analyses.
+Step 1. Tree_ring
+
+this will trim a tree for all the species that will be used and to remove non vascular plants
+
+This exports:
+(1) scorre.tree.win.los.tre
+Species_DCiDiff_newtrts_filtered.csv
+
+##not sure this is right.
+Step 2. DCi_nodes_scorre
+
+run this and store the funciton to determine significant clades
+
+Step 3. DCi_Clades
+
+this creates all the trees with labeled nodes that are significant.
+
+Step 4. Phylogenetic signal
+
+This code uses lambda to deterimen if there is an overall signal to the responsivness of species to GCD drivers
+
+Trait analyses
+Step 1. Traits - mixed models
+Step 2. run TraitBoxPlots to make figures
+
+
