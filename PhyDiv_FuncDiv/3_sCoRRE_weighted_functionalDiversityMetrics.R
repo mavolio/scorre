@@ -5,7 +5,8 @@
 ##  Date created: April 7, 2021
 ################################################################################
 
-library(FD)
+library(cluster)
+library(fundiversity)
 library(car)
 library(tidyverse)
 
@@ -207,30 +208,31 @@ for(s in 1:length(site_vector)){
   
   ### Calculate functional diversity metrics ###
   relCoverMatrixSubset <- as.matrix(relCoverWideSubset2)
-  traitMatrixSubset <- as.matrix(gowdis(traitsSubsetArranged))
+  traitMatrixSubset <- as.matrix(daisy(traitsSubsetArranged, metric = "gower"))
   
-  #FDis and RaoQ
-  FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
-                   a=relCoverWideSubset2, # matrix of species
-                   w.abun=T, # don't weight by abundance
-                   cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
-                   calc.FRic=F, calc.FDiv=F, calc.CWM=F)
-  
-  FDsubset2 <- do.call(cbind.data.frame, FDsubset) %>%
-    rownames_to_column(var = "identifier") %>% 
+  # RaoQ
+  rao_q <- fd_raoq(sp_com=relCoverMatrixSubset, dist_matrix=traitMatrixSubset) %>%
+    rename(identifier=site) %>% 
     separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
-    mutate(calendar_year = as.numeric(calendar_year)) %>% 
-    select(-FEve) %>% 
-    mutate(permutation=0)
-
-  #MPD 
-  # mpdSubset <- data.frame(
-  #   plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
-  #   MPD_traits = picante::mpd(relCoverMatrixSubset, traitMatrixSubset)) %>% 
-  #   full_join(plotInfoSubset)
+    mutate(calendar_year = as.numeric(calendar_year),
+           permutation=0)
   
-  # distanceSubset <- FD %>%
-  #   full_join(mpdMNTD)
+  # # FDis
+  # FDis <- fd_fdis() # can't use because only takes numeric traits
+  # 
+  # #below is using FD package, so slow! will take days to run 
+  # FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
+  #                  a=relCoverWideSubset2, # matrix of species
+  #                  w.abun=T, # don't weight by abundance
+  #                  cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
+  #                  calc.FRic=F, calc.FGR=F, calc.CWM=F, calc.FDiv=F)
+  # 
+  # FDsubset2 <- do.call(cbind.data.frame, FDsubset) %>%
+  #   rownames_to_column(var = "identifier") %>% 
+  #   separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+  #   mutate(calendar_year = as.numeric(calendar_year)) %>% 
+  #   select(-FEve) %>% 
+  #   mutate(permutation=0)
   
   #null distributions for RaoQ
   ses <- {}
@@ -248,27 +250,30 @@ for(s in 1:length(site_vector)){
       arrange(species_matched) %>%
       column_to_rownames("species_matched")
     
-    traitMatrixSubsetSES <- as.matrix(gowdis(traitsSubsetArrangedSES))
+    traitMatrixSubsetSES <- as.matrix(daisy(traitsSubsetArrangedSES, metric = "gower"))
     
-    # mpdSubsetSES <- data.frame(
-    #   plotInfoSubset[,c("site_proj_comm", "calendar_year", "plot_id")],
-    #   MPD_traits = picante::mpd(relCoverMatrixSubset, traitMatrixSubsetSES)) %>% 
-    #   mutate(permutation=sesVector[n])
-    
-    FDsubsetSES <- dbFD(x=traitMatrixSubsetSES, # matrix of traits
-                        a=relCoverWideSubset2, # matrix of species
-                        w.abun=T, # weight by abundance
-                        cor="cailliez", 
-                     calc.FRic=F, calc.FDiv=F, calc.CWM=F)
-    
-    FDsubsetSES2 <- do.call(cbind.data.frame, FDsubsetSES) %>%
-      rownames_to_column(var = "identifier") %>% 
+    ses2 <- fd_raoq(sp_com=relCoverMatrixSubset, 
+                         dist_matrix=traitMatrixSubsetSES) %>%
+      rename(identifier=site) %>% 
       separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
-      mutate(calendar_year = as.numeric(calendar_year)) %>% 
-      select(-FEve) %>% 
-        mutate(permutation=sesVector[n])
+      mutate(calendar_year = as.numeric(calendar_year),
+             permutation=sesVector[n])
     
-    ses <- rbind(ses, FDsubsetSES2) 
+    # FDis - so slow, takes days
+    # FDsubsetSES <- dbFD(x=traitMatrixSubsetSES, # matrix of traits
+    #                     a=relCoverWideSubset2, # matrix of species
+    #                     w.abun=T, # weight by abundance
+    #                     cor="cailliez", 
+    #                  calc.FRic=F, calc.FDiv=F, calc.CWM=F)
+    # 
+    # FDsubsetSES2 <- do.call(cbind.data.frame, FDsubsetSES) %>%
+    #   rownames_to_column(var = "identifier") %>% 
+    #   separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+    #   mutate(calendar_year = as.numeric(calendar_year)) %>% 
+    #   select(-FEve) %>% 
+    #     mutate(permutation=sesVector[n])
+    
+    ses <- rbind(ses, ses2) 
     
     rm(list=ls()[grep("SES", ls())])
   }
@@ -276,17 +281,16 @@ for(s in 1:length(site_vector)){
   #mean RaoQ for null distribution to create SES RaoQ
   sesSubsetMean <- ses %>% 
     group_by(site_proj_comm, calendar_year, plot_id) %>% 
-    summarise(across(c('FDis','RaoQ'), list(mean=mean, sd=sd))) %>% 
+    summarise(across(c('Q'), list(mean=mean, sd=sd))) %>% 
     ungroup()
   
   #calculate SES values for RaoQ 
-  raoqSubsetSES <- FDsubset2 %>% 
+  raoqSubsetSES <- rao_q %>% 
     full_join(sesSubsetMean) %>% 
-    mutate(RaoQ_ses=(RaoQ-RaoQ_mean)/RaoQ_sd,
-           FDis_ses=(FDis-FDis_mean)/FDis_sd) %>% 
-    select(site_proj_comm, calendar_year, plot_id, RaoQ_ses, FDis_ses)
+    mutate(RaoQ_ses=(Q-Q_mean)/Q_sd) %>% 
+    select(site_proj_comm, calendar_year, plot_id, RaoQ_ses)
   
-  allSubset <- FDsubset2 %>% 
+  allSubset <- rao_q %>% 
     full_join(raoqSubsetSES) %>% 
     left_join(trt)
   

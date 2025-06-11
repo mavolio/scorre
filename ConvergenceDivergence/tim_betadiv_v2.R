@@ -206,7 +206,9 @@ for(i in 1:length(expgroup_vector)) {
 
 
 
-mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
+mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))%>%
+              separate(expgroup, into = c("site", "project", "community"), sep = "::", remove = FALSE)
+
 
 mean.dist.comp <- mean.dist.df
 
@@ -284,32 +286,40 @@ sites.p <- subset(mean.dist.df,  trt_type == "P")%>%dplyr::select(expgroup)%>%un
 sites.multnutrient <- subset(mean.dist.df,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
 sites.irr <- subset(mean.dist.df,  trt_type == "irr")%>%dplyr::select(expgroup)%>%unique()
 sites.co2 <- subset(mean.dist.df,  trt_type == "CO2")%>%dplyr::select(expgroup)%>%unique()
+sites.nirr <- subset(mean.dist.df,  trt_type == "N*irr")%>%dplyr::select(expgroup)%>%unique()
 
 #models to test results -
 #mod <- lmer(lrr~0+ trt_type + (1|expgroup)+ (1|treatment_year), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
 #summary(mod)
 
 #stats for nitrogen treatment
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 #stats for phosphorus treatment
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 #stats for multiple nutrient addition
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 #stats for irrigation
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
 
 #stats for co2
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = 
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
                subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
                mutate(trt_type = fct_relevel(trt_type, "control"))
              )
+summary(mod)
+
+#stats for N*irr
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
+               subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
+               mutate(trt_type = fct_relevel(trt_type, "control"))
+)
 summary(mod)
 
 
@@ -389,7 +399,7 @@ ggplot(co2.df, aes(trt_type, mean, color = trt_type))+
 #  theme_base()
 
 ##Stats about change over time: Nitrogen
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 
@@ -408,7 +418,7 @@ subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_yea
 #  theme_base()
 
 ##Stats about change over time: Phosphorus
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 
@@ -427,7 +437,7 @@ subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_yea
 #  theme_base()
 
 ##Stats about change over time: multiple nutrient addition
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
@@ -469,7 +479,7 @@ subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), tr
 
 ###Summarize sites being used
 sites <- test%>%
-  dplyr::select(site_code, project_name, community_type, treatment_year, trt_type, treatment)%>%
+  dplyr::select(site_code, project_name, community_type, trt_type, treatment)%>%
   tidyr::unite("expgroup", c("site_code", "project_name", "community_type"))%>%
   unique()%>%
   subset(trt_type != "control")
@@ -478,9 +488,9 @@ n <- sites%>%
   
   ddply(.(trt_type), function(x)data.frame(n = length(x$expgroup)))
 
-trt.by.year <- sites%>%
+#trt.by.year <- sites%>%
   #  tidyr::unite("expgroup", c("site_code", "project_name", "community_type"))%>%
-  ddply(.( trt_type, treatment_year), function(x)data.frame(n = length(x$expgroup)))
+#  ddply(.( trt_type, treatment_year), function(x)data.frame(n = length(x$expgroup)))
 
 
 
@@ -534,7 +544,9 @@ tdistances_master <- {}
 
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(summarize.cwm, expgroup == expgroup_vector[i])
-  temp.gow <- gowdis(temp.df[8:ncol(temp.df)])
+  temp.gow <- gowdis(temp.df[8:13
+                             #ncol(temp.df)
+                             ])
   temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
   tdistances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani, treatment_year = temp.df$treatment_year)
   #  tdistances_temp <- subset(tdistances_temp, dist > 0.00000000001) #not necesssary when excluding CO2 treatment
@@ -544,7 +556,8 @@ for(i in 1:length(expgroup_vector)) {
   
 }
 
-mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
+mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))%>%
+            separate(expgroup, into = c("site", "project", "community"), sep = "::", remove = FALSE)
 
 mean.dist.trait <- mean.dist.df
 
@@ -602,7 +615,7 @@ sites.p <- subset(mean.dist.df,  trt_type == "P")%>%dplyr::select(expgroup)%>%un
 sites.multnutrient <- subset(mean.dist.df,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
 sites.irr <- subset(mean.dist.df,  trt_type == "irr")%>%dplyr::select(expgroup)%>%unique()
 sites.co2 <- subset(mean.dist.df,  trt_type == "CO2")%>%dplyr::select(expgroup)%>%unique()
-
+sites.nirr <- subset(mean.dist.df,  trt_type == "N*irr")%>%dplyr::select(expgroup)%>%unique()
 
 #models to test results
 #mod <- lmer(lrr~0+trt_type+ (1|expgroup), data = subset(subset(lrr.df_traits, trt_type == "N" | trt_type == "P"| trt_type == "mult_nutrient"), treatment_year != 0))
@@ -624,30 +637,35 @@ mult.df <-  subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$e
   dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
 #stats for Nitrogen effect (traits)
-mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 #stats for phosphorus effect (traits)
-mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site+ expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 #stats for multiple nutrient addition effect (traits)
-mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
 #stats for irrigation
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
 
 #stats for co2
-mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = 
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
                subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
 
-
+#stats for N*irr
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
+               subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
+               mutate(trt_type = fct_relevel(trt_type, "control"))
+)
+summary(mod)
 
 
 ggplot(n.df, aes(trt_type, mean, color = trt_type))+
@@ -681,7 +699,7 @@ ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
 #summary(mod)
 
 #stats for Nitrogen effect over time (traits)
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 #x <- ggpredict(mod, c("trt_type", "treatment_year"))
@@ -695,7 +713,7 @@ summary(mod)
 
 
 #stats for phosphorus effect (traits)
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 
@@ -710,7 +728,7 @@ summary(mod)
 
 
 #stats for multiple nutrient effect over time (traits)
-mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
@@ -748,7 +766,7 @@ summary(mod)
 ###Compare species and trait responses
 
 
-mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("expgroup","trt_type", "treatment", "plot_mani","treatment_year"))%>%
+mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("site", "project", "community","expgroup","trt_type", "treatment", "plot_mani","treatment_year"))%>%
                   mutate(mean_dist.comp = mean_dist.x,mean_dist.trait = mean_dist.y)
 
 #some stats below but I'm not sure what they're good for
@@ -767,6 +785,8 @@ ggplot(data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control
   geom_smooth(method = "lm")+
   #  geom_hline(yintercept = 0)+
   theme_base()
+
+
 
 
 
@@ -891,8 +911,8 @@ CoRRE_project_summary <- CoRRE_project_summary %>% dplyr::select(-c(project_name
 #library(grf)
 
 dist.both <- mean.dist.both%>%
-  tidyr::separate(expgroup, into = c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
-  left_join(CoRRE_siteLocationClimate_Dec2021, by = c("site_code"))
+  mutate(site_code = site)%>%
+  left_join(CoRRE_siteLocationClimate_Dec2021, by = "site_code")
 
 sites.n <- subset(dist.both,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
 sites.p <- subset(dist.both,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
@@ -918,43 +938,43 @@ mult.df <- dist.both%>%
 #tau.forest <- causal_forest(x = matrix(n.df$MAP, n.df$MAT, n.df$rrich), y = n.df$mean_dist.comp, w = n.df$trt_type)
 
 ##NITROGEN
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site + expgroup+treatment_year, data = n.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site + expgroup+treatment_year, data = n.df)
 summary(mod)
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT| site+expgroup+treatment_year, data = n.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = n.df)
 summary(mod)
 
 
 #PHOSPHORUS
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = p.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = p.df)
 summary(mod)
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = p.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = p.df)
 summary(mod)
 
 #mult nutrient
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = mult.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = mult.df)
 summary(mod)
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = mult.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = mult.df)
 summary(mod)
 
 
@@ -994,10 +1014,10 @@ mult.df <- mean.dist.both%>%
 
 ##Nitrogen gradient
 
-mod <- feols(mean_dist.comp~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
+mod <- feols(mean_dist.comp~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
 
-mod <- feols(mean_dist.trait~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
+mod <- feols(mean_dist.trait~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
 
 ggplot(n.df, aes(x=n, y=mean_dist.comp, color=trt_type))+
@@ -1032,10 +1052,10 @@ ggplot(n.df, aes(x=n, y=mean_dist.trait))+
 
 ##P gradient
 
-mod <- feols(mean_dist.comp~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
+mod <- feols(mean_dist.comp~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
 
-mod <- feols(mean_dist.trait~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
+mod <- feols(mean_dist.trait~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
 
 ggplot(p.df, aes(x=p, y=mean_dist.comp, color = trt_type))+
@@ -1054,10 +1074,10 @@ ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
 
 
 ##mult nutrient (number of nutrients)
-mod <- feols(mean_dist.comp~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
+mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
 
-mod <- feols(mean_dist.trait~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
+mod <- feols(mean_dist.trait~ plot_mani | site+expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
 
 ggplot(mult.df, aes(x=plot_mani, y=mean_dist.comp, color=trt_type))+
@@ -1075,6 +1095,38 @@ ggplot(mult.df, aes(x=plot_mani, y=mean_dist.trait, color=trt_type))+
   theme_base()
 
 
+###BIG FIGURE PUT IN ALL TOGETHER BABY PLOT MANI FOR THE WIN
+
+mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+treatment_year, data = mean.dist.both
+              # subset(mean.dist.both, plot_mani != 0)
+             )
+summary(mod)
+
+x <- ggpredict(mod, c("plot_mani"))
+ggplot(mean.dist.both, aes(x=plot_mani, y=mean_dist.comp))+
+  #facet_wrap(~treatment_year)+
+  geom_point(aes( color = trt_type), alpha = 0.1)+
+  geom_smooth(data = x, aes(x, predicted), se = FALSE)+
+  # scale_color_manual(values = c("black", "#00b844"))+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+
+mod <- feols(mean_dist.trait~ plot_mani | site+expgroup+treatment_year, data = mean.dist.both
+             # subset(mean.dist.both, plot_mani != 0)
+)
+summary(mod)
+
+
+x <- ggpredict(mod, c("plot_mani"))
+ggplot(mean.dist.both, aes(x=plot_mani, y=mean_dist.trait))+
+  #facet_wrap(~treatment_year)+
+  geom_point(aes( color = trt_type), alpha = 0.1)+
+  geom_smooth(data = x, aes(x, predicted), se = FALSE)+
+#  geom_smooth(method = "loess")+
+  # scale_color_manual(values = c("black", "#00b844"))+
+  geom_hline(yintercept = 0)+
+  theme_base()
 
 
 #scale_color_manual(values = c("black", "#0099f6"))+
