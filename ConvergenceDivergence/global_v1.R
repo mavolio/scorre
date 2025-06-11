@@ -230,24 +230,65 @@ assign(paste0("df", trt_vector[i]),tdistances_temp)
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfN)
 summary(mod)
 
+dfN%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+se,ymin = mean-se))+
+  theme_base()
+
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfP)
 summary(mod)
+
+dfP%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+se,ymin = mean-se))+
+  theme_base()
+
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfmult_nutrient)
 summary(mod)
 
+dfmult_nutrient%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+se,ymin = mean-se))+
+  theme_base()
+
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfirr)
 summary(mod)
+
+dfirr%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+se,ymin = mean-se))+
+  theme_base()
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfCO2)
 summary(mod)
 
+dfCO2%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+se,ymin = mean-se))+
+  theme_base()
+
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = `dfN*irr`)
 summary(mod)
 
+`dfN*irr`%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+se,ymin = mean-se))+
+  theme_base()
 
-ggplot(dfmult_nutrient, aes(trt_type, dist))+
-  geom_boxplot()
+
 
 
 
@@ -263,20 +304,40 @@ mod <- feols(dist~plot_mani | site + expgroup + treatment_year, data = tdistance
 summary(mod)
 
 x <- ggpredict(mod, "plot_mani")
-ggplot(tdistances_temp, aes(plot_mani, dist))+
-  geom_point(aes(color = trt_type), alpha = 0.1)+
+tdistances_temp%>%
+  group_by(plot_mani)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), sd = sd(dist), conf = se*1.96)%>%
+ggplot( aes(plot_mani, mean))+
+  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
+#  geom_smooth(data=x, aes(x=x, y=predicted+std.error), se = FALSE, linetype = "dashed")+
+#  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
   theme_base()
 
 mod <- feols(dist~plot_mani*treatment_year | site + expgroup , data = tdistances_temp)
 summary(mod)
 
-x <- ggpredict(mod, c("plot_mani", "treatment_year"))
-ggplot(tdistances_temp, aes(plot_mani, dist))+
-  facet_wrap(~treatment_year)+
-  geom_point(aes(color = trt_type), alpha = 0.1)+
+#x <- ggpredict(mod, c("plot_mani", "treatment_year"))
+#tdistances_temp%>%
+#  group_by(plot_mani)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+#ggplot( aes(plot_mani, mean))+
+#  facet_wrap(~treatment_year)+
+#  geom_pointrange(alpha = 0.1)+
   #geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
-  geom_smooth(method = "loess")+
-  theme_base()
+#  geom_smooth(method = "loess")+
+#  theme_base()
   
+
+tdistances_temp$any.treatment <-revalue(tdistances_temp$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
+))
+mod <- feols(dist~any.treatment | site + expgroup + treatment_year, data = tdistances_temp)
+summary(mod)
+
+tdistances_temp%>%
+  group_by(any.treatment)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+ggplot(aes(any.treatment, mean))+
+  geom_pointrange(aes(ymax = mean+se,ymin = mean-se))+
+  theme_base()
