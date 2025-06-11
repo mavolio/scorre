@@ -5,7 +5,8 @@
 ##  Date created: April 7, 2021
 ################################################################################
 
-library(FD)
+library(cluster)
+library(fundiversity)
 library(car)
 library(tidyverse)
 
@@ -207,21 +208,62 @@ for(s in 1:length(site_vector)){
   
   ### Calculate functional diversity metrics ###
   relCoverMatrixSubset <- as.matrix(relCoverWideSubset2)
-  traitMatrixSubset <- as.matrix(gowdis(traitsSubsetArranged))
+  traitMatrixSubset <- as.matrix(daisy(traitsSubsetArranged, metric = "gower"))
+  
+  
+  ptm <- proc.time() #start the clock
   
   #FDis and RaoQ
+  rao_q <- fd_raoq(sp_com=relCoverMatrixSubset, dist_matrix=traitMatrixSubset) %>% 
+    rename(rowname=site)
+  FDis <- fd_fdis()
+  
+  fundiversityTime <- proc.time() - ptm # stop the clock
+  
+  
+  ptm <- proc.time() #start the clock
+  
   FDsubset <- dbFD(x=traitsSubsetArranged, # matrix of traits
                    a=relCoverWideSubset2, # matrix of species
                    w.abun=T, # don't weight by abundance
-                   cor="cailliez", # use Cailliez correlations because Euclidean distances could be calculated
+                   cor="cailliez", # use Cailliez correlations
                    calc.FRic=F, calc.FDiv=F, calc.CWM=F)
   
   FDsubset2 <- do.call(cbind.data.frame, FDsubset) %>%
-    rownames_to_column(var = "identifier") %>% 
-    separate(identifier, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::") %>%
+    rownames_to_column(var = "rowname") %>% 
+    separate(rowname, into=c("site_proj_comm", "calendar_year","plot_id"), sep="::", remove=F) %>%
     mutate(calendar_year = as.numeric(calendar_year)) %>% 
     select(-FEve) %>% 
     mutate(permutation=0)
+  
+  FDTime <- proc.time() - ptm # stop the clock
+  
+  
+  ptm <- proc.time() #start the clock
+  
+  raoDivSyncsa <- rao.diversity(relCoverWideSubset2, traits = traitsSubsetArranged, ord='metric')
+  
+  raoDivSyncsa2 <- as.data.frame(raoDivSyncsa$FunRao) %>% 
+    rownames_to_column()
+  names(raoDivSyncsa2)[2] <- "syncsa_RaoQ"
+  
+  syncsaTime <- proc.time() - ptm # stop the clock
+  
+  compare <- rao_q %>% full_join(FDsubset2) %>% full_join(raoDivSyncsa2) %>% 
+    select(rowname, Q, RaoQ, syncsa_RaoQ) %>% 
+    rename(fundiversity_RaoQ=Q,
+           FD_RaoQ=RaoQ)
+  
+  chart.Correlation(compare[,2:4], histogram=T, pch=19)
+  
+  
+  times <- as.data.frame(FDTime) %>% cbind(as.data.frame(syncsaTime)) %>% cbind(as.data.frame(fundiversityTime)) 
+  names(times)[1] <- "FD"
+  names(times)[2] <- "syncsa"
+  names(times)[3] <- "fundiversity"
+  
+
+  
 
   #MPD 
   # mpdSubset <- data.frame(
