@@ -44,7 +44,7 @@ traits <- left_join(traits, traits_cat, by = "species_matched")#merge w/ categor
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCoverMarch2024.csv") %>% #community comp relative cover data
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
-  subset(treatment_year <=5& treatment_year > 0) #only use treatment data and subset the number of years to be used
+  subset(treatment_year <=10& treatment_year > 0) #only use treatment data and subset the number of years to be used
 
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
