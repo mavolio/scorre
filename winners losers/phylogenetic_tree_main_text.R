@@ -15,11 +15,11 @@ library(grid)
 
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
-#my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
-#my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+
+my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 
 # Load the tree:
-tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep="")) #why not using the original tree? I detected that some species are missing from the other.
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.March2024", sep="")) #why not using the original tree? I detected that some species are missing from the other.
 
 # Load list of species with their families:
 fam<-read.table(paste(my.wd, "species_families_trees_2021.csv", sep=""), header=T, sep=",", fill = TRUE)

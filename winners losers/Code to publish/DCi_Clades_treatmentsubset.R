@@ -1,7 +1,7 @@
 
 #load libraries:
-library(devtools)
-devtools::install_github("GuangchuangYu/ggtree")
+# library(devtools)
+# devtools::install_github("GuangchuangYu/ggtree")
 
 library(ggtree)
 library(ggplot2)
@@ -12,9 +12,12 @@ library(scico)
 library(phytools)
 library(grid)
 
+# install.packages('C:\\Users\\mavolio2\\Downloads\\ggnewscale_0.4.8.tar.gz', repos=NULL, type='source')
+
+
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
-my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+
 my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 
 ###
@@ -22,12 +25,12 @@ my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\d
 ###
 
 #load species data (filtered after removing mosses and species missing from the phylogeny):
-species.data<-read.csv(paste(my.wd,"Species_DCiDiff_Nov2022.csv",sep=""))
+species.data<-read.csv(paste(my.wd,"Species_DCiDiff_March2024.csv",sep=""))
 species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 
 #load phylogenetic tree:
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.Dec2021", sep=""))
-tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep="")) #why not using the original tree? I detected that some species are missing from the other.
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.March2024", sep=""))
+#tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep="")) #why not using the original tree? I detected that some species are missing from the other.
 
 ###
 # Filter by treatment == all mult
@@ -56,8 +59,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_all_mult_Nov22.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_all_mult_Nov22.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_all_mult_Mar24.csv", sep="")) #save the result
+res<-read.table(paste(my.wd, "res_phylo_all_mult_Mar24.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -220,7 +223,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_mult_withheat.png",
-png("phylo_ring_all_mult_withheat.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_all_mult_withheat_2025.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
@@ -261,8 +264,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_all_nuts_Nov22.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_all_nuts_Nov22.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_all_nuts_Mar24.csv", sep="")) #save the result
+res<-read.table(paste(my.wd, "res_phylo_all_nuts_Mar24.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -426,7 +429,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_nutsNov22.png", 
 #    res=300,height=8,width=8,units="in"); 
-png("phylo_ring_all_nutsNov22.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_all_nuts2025.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
@@ -464,8 +467,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_n.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_n.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_n_Mar24.csv", sep="")) #save the result
+res<-read.table(paste(my.wd, "res_phylo_n_Mar24.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -628,7 +631,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_n_withheat.png",
 #    res=300,height=8,width=8,units="in"); 
-png("phylo_ring_n_withheat.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_n_withheatwithnodes.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
@@ -642,7 +645,18 @@ dev.off()
 #Section Asteraceae (decrease) <-- node 1272 (unlock line in ggtree to see the name of the node)
 sec<-caper::clade.members(1396, tree2, tip.labels = T, include.nodes=FALSE)
 sec
-write.csv(sec, "gnap.csv")
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\gnap.csv")
+
+#Section Poaceae (decrease) <-- node 2232 (unlock line in ggtree to see the name of the node)
+sec<-caper::clade.members(2232, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\eragrastideae.csv")
+
+#Section Poaceae (increase) <-- node 2306 (unlock line in ggtree to see the name of the node)
+sec<-caper::clade.members(2306, tree2, tip.labels = T, include.nodes=FALSE)
+sec
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\triticeae.csv")
+
 
 
 ###
@@ -672,8 +686,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_p.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_p.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_p_Mar24.csv", sep="")) #save the result
+res<-read.table(paste(my.wd, "res_phylo_p_Mar24.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -835,7 +849,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_p.png",
 #    res=300,height=8,width=8,units="in"); 
-png("phylo_ring_p_withheat.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_p_withheat.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
@@ -849,7 +863,8 @@ dev.off()
 #Section Poaceae (increase) <-- node 1272 (unlock line in ggtree to see the name of the node)
 sec<-caper::clade.members(1272, tree2, tip.labels = T, include.nodes=FALSE)
 sec
-write.csv(sec, "poeae.csv")
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\poeae.csv")
+
 
 
 ###
@@ -880,8 +895,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_co2.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_co2.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_co2_Mar24.csv", sep="")) #save the result
+res<-read.table(paste(my.wd, "res_phylo_co2_Mar24.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -1043,7 +1058,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_co2withheat.png",
 #    res=300,height=8,width=8,units="in"); 
-png("phylo_ring_co2_withheat.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_co2_withheat.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
@@ -1081,8 +1096,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_drought.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_drought.csv", sep=""))
+#write.table(res, paste(my.wd, "res_phylo_drought_Mar24.csv", sep="")) #save the result
+res<-read.table(paste(my.wd, "res_phylo_drought_Mar24.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -1246,7 +1261,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_drought.png",
 #    res=300,height=8,width=8,units="in"); 
-png("phylo_ring_drought.png",  res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_drought.png",  res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
@@ -1258,12 +1273,12 @@ dev.off()
 #Section Fabaceae (decrease) <-- node 775 (unlock line in ggtree to see the name of the node)
 sec<-caper::clade.members(775, tree2, tip.labels = T, include.nodes=FALSE)
 sec
-write.csv(sec, "fab_trb.csv")
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\fab_trb.csv")
 
 #Section Poaceae (decrease) <-- node 971 (unlock line in ggtree to see the name of the node)
 sec<-caper::clade.members(971, tree2, tip.labels = T, include.nodes=FALSE)
 sec
-write.csv(sec, "pooidae.csv")
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\pooidae.csv")
 
 
 
@@ -1295,8 +1310,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_irrigation.csv", sep=""))
-res<-read.table(paste(my.wd, "res_phylo_irrigation.csv", sep=""))#save the result
+#write.table(res, paste(my.wd, "res_phylo_irrigation_Mar24.csv", sep=""))
+res<-read.table(paste(my.wd, "res_phylo_irrigation_Mar24.csv", sep=""))#save the result
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -1461,7 +1476,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_irrigation_withheat.png",
 #    res=300,height=8,width=8,units="in"); 
-png("phylo_ring_irrigation_withheat.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_irrigation_withheat.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
@@ -1475,12 +1490,12 @@ dev.off()
 #Section Fabaceae (increase) <-- node 978 (unlock line in ggtree to see the name of the node)
 sec<-caper::clade.members(978, tree2, tip.labels = T, include.nodes=FALSE)
 sec
-write.csv(sec, "fab_trb2.csv")
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\fab_trb2.csv")
 
 #Section Asteraceae (increase) <-- node 797 (unlock line in ggtree to see the name of the node)
 sec<-caper::clade.members(797, tree2, tip.labels = T, include.nodes=FALSE)
 sec
-write.csv(sec, "cardu.csv")
+write.csv(sec, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Sub families\\cardu.csv")
 
 
 
@@ -1512,8 +1527,8 @@ for (i in 1:length(grp)) {
 ###
 
 #res<-node.mean(tree2, dat, 999)
-#write.table(res, paste(my.wd, "res_phylo_temp.csv", sep=""))
-res<-read.table(paste(my.wd, "res_phylo_temp.csv", sep=""))#save the result
+#write.table(res, paste(my.wd, "res_phylo_temp_Mar24.csv", sep=""))
+res<-read.table(paste(my.wd, "res_phylo_temp_Mar24.csv", sep=""))#save the result
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -1676,7 +1691,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_temp.png",
 #    res=300,height=8,width=8,units="in"); 
-png("phylo_ring_temp.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_temp.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
