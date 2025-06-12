@@ -100,7 +100,8 @@ comm <- comm2 %>%
   mutate(richness=length(species)) %>% 
   ungroup() %>% 
   filter(richness>1, #remove plots with only one species (drops 700 data points, 0.1% of data)
-         totcov>0.8) #remove plots with less than 80% cover of species with known trait values (drops 59,7749 data points, 20.2% of data points)
+         totcov>0.8) %>% #remove plots with less than 80% cover of species with known trait values (drops 59,7749 data points, 20.2% of data points)
+  select(-totcov)
 
 #lists
 spp <- comm %>% select(family, species) %>% unique() #1559 spp
