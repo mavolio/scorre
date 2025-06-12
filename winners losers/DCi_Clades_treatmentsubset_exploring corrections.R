@@ -26,7 +26,14 @@ my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\d
 ###
 
 #load species data (filtered after removing mosses and species missing from the phylogeny):
+
+#to look at BH correcting N
 species.data<-read.csv(paste(my.wd,"Species_DCiDiff_March2024.csv",sep=""))
+
+#to look at multiple nutrients with 5 or more obs / species
+species.data<-read.csv(paste(my.wd,"Species_DCiDiff_MultNuts5reps.csv",sep=""))
+
+
 species.data$species_matched<-gsub(" ", "_", species.data$species_matched) #unify nomenclature
 
 #load phylogenetic tree:
@@ -264,9 +271,9 @@ for (i in 1:length(grp)) {
 # expected if phylogenetic relationships were at random (laod function in the "DCi_nodes_scorre.R" script)
 ###
 
-#res<-node.mean(tree2, dat, 999)
+res<-node.mean(tree2, dat, 999)
 #write.table(res, paste(my.wd, "res_phylo_all_nuts_Mar24.csv", sep="")) #save the result
-res<-read.table(paste(my.wd, "res_phylo_all_nuts_Mar24.csv", sep=""))
+#res<-read.table(paste(my.wd, "res_phylo_all_nuts_Mar24.csv", sep=""))
 #res2<-subset(res, P_value<0.01) #this would tell you what nodes are significant with alpha < 0.01
 #tips(tree2, 1543) #and this would tell you what species are found in that clade
 
@@ -430,7 +437,7 @@ p1 <- gheatmap(p, dat, offset=0.3, width=.03, colnames = F, color = NULL) +
 #save output:
 #png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\Figs Dec 2021\\phylo_ring_all_nutsNov22.png", 
 #    res=300,height=8,width=8,units="in"); 
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_all_nuts2025.png", res=300,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\SI Trees 2025\\phylo_ring_all_nuts2025_5reps.png", res=300,height=8,width=8,units="in"); 
 p1
 grid.text("Winners", x = unit(0.725, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#006FA4"))
 grid.text("Losers", x = unit(0.35, "npc"), y = unit(0.09, "npc"), gp=gpar(fontsize=17, fontface="bold", col="#8A6000"))
