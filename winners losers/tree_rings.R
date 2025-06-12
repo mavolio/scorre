@@ -21,7 +21,7 @@ library(scico)
 #for V.PhyloMaker
 #library(devtools)
 #devtools::install_github("jinyizju/V.PhyloMaker")
-library(V.PhyloMaker)
+library(V.PhyloMaker2)
 
 #set directory:
 #my.wd <- "~/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/"
