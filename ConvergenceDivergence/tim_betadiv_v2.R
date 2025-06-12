@@ -17,7 +17,6 @@ library(fixest)
 library(nlme)
 
 #Read in trait data
-#traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
 traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd')%>%
     dplyr::select(-family, -source, -error_risk_overall)%>%
     pivot_wider(names_from = trait, values_from = trait_value)%>%
@@ -42,8 +41,6 @@ traits[cols] <- scale(traits[cols])
 
 
 traits <- left_join(traits, traits_cat, by = "species_matched")#merge w/ categorical traits
-
-
 
 ##Read in cover data
 cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCoverMarch2024.csv") %>% #community comp relative cover data
@@ -297,38 +294,131 @@ sites.nirr <- subset(mean.dist.df,  trt_type == "N*irr")%>%dplyr::select(expgrou
 #mod <- lmer(lrr~0+ trt_type + (1|expgroup)+ (1|treatment_year), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
 #summary(mod)
 
-#stats for overall (any treatment)
-mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
-))
-mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
-summary(mod)
 
-tidy_mod <- broom::tidy(mod)
-coefplot(mod, keep = c("Intercept","control", "treatment"),intercept = TRUE)
-
-mean.dist.df%>%
-  subset( treatment_year != 0)%>%
-  group_by(any.treatment)%>%
-  dplyr::summarize(mean = mean(mean_dist), sd = sd(mean_dist))%>%
-ggplot(aes(any.treatment, mean))+
-  geom_pointrange(aes(ymax = mean +sd, ymin = mean-sd))+
-  theme_base()
 
 #stats for nitrogen treatment
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
+mean.dist.df%>%
+  subset( expgroup%in%sites.n$expgroup)%>%
+    subset(trt_type == "N"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
+
+
 #stats for phosphorus treatment
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
+
+mean.dist.df%>%
+  subset( expgroup%in%sites.p$expgroup)%>%
+  subset(trt_type == "P"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
 
 #stats for multiple nutrient addition
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
+mean.dist.df%>%
+  subset( expgroup%in%sites.multnutrient$expgroup)%>%
+  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 #stats for irrigation
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
+
+mean.dist.df%>%
+  subset( expgroup%in%sites.irr$expgroup)%>%
+  subset(trt_type == "irr"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 #stats for co2
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
@@ -337,6 +427,33 @@ mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data =
              )
 summary(mod)
 
+mean.dist.df%>%
+  subset( expgroup%in%sites.co2$expgroup)%>%
+  subset(trt_type == "CO2"|trt_type=="control")%>%
+  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
 #stats for N*irr
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
                subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
@@ -344,82 +461,107 @@ mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data =
 )
 summary(mod)
 
+mean.dist.df%>%
+  subset( expgroup%in%sites.nirr$expgroup)%>%
+  subset(trt_type == "N*irr"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_nirr_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 ##dataframes and plots for figures
-n.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control")%>%
-        group_by(trt_type)%>%
-        dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+#n.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control")%>%
+#        group_by(trt_type)%>%
+#        dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-p.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+#p.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control")%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-mult.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+#mult.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-irr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+#irr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control")%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-co2.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+#co2.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-nirr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
+#nirr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
   
-ggplot(n.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#0099f6"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+#ggplot(n.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#0099f6"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
 
 #"#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"
 
-ggplot(p.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#00b844"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+#ggplot(p.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#00b844"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
 
-ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+#ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
 
-ggplot(irr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+#ggplot(irr.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
 
-ggplot(co2.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+#ggplot(co2.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
 
-ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+#ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
 
 
 
@@ -432,24 +574,44 @@ ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
 #  geom_hline(yintercept = 0)+
 #  theme_base()
 
+
+
 ##Stats about change over time: Nitrogen
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 
-subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control")%>%
-  ggplot(aes(treatment_year, mean_dist, color = trt_type))+
-  geom_point()+
-  geom_smooth()+
+#stats for overall (any treatment)
+mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
+))
+mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
+summary(mod)
+
+tidy_mod <- broom::tidy(mod)
+coefplot(mod, keep = c("Intercept","control", "treatment"),intercept = TRUE)
+
+mean.dist.df%>%
+  subset( treatment_year != 0)%>%
+  group_by(any.treatment)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(any.treatment, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
   theme_base()
 
-#x <- ggpredict(mod, c("trt_type", "treatment_year"))
-#ggplot(x , aes(x = group, y= predicted, color=x))+
-#  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
-#  scale_color_manual(values = c("black", "#0099f6"))+
-#  xlab("Treatment year")+
-#  ylab("Beta diversity")+
-#  theme_base()
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 ##Stats about change over time: Phosphorus
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
@@ -693,22 +855,159 @@ nirr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup),
   dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
 
+
+
+
+
+#stats for overall (any treatment)
+mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
+))
+mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
+summary(mod)
+
+mean.dist.df%>%
+  subset( treatment_year != 0)%>%
+  group_by(any.treatment)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(any.treatment, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
+
+
+
 #stats for Nitrogen effect (traits)
 mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
+
+mean.dist.df%>%
+  subset( expgroup%in%sites.n$expgroup)%>%
+  subset(trt_type == "N"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 #stats for phosphorus effect (traits)
 mod <- feols(mean_dist~trt_type | site+ expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
+mean.dist.df%>%
+  subset( expgroup%in%sites.p$expgroup)%>%
+  subset(trt_type == "P"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 #stats for multiple nutrient addition effect (traits)
 mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
+mean.dist.df%>%
+  subset( expgroup%in%sites.multnutrient$expgroup)%>%
+  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 #stats for irrigation
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
+
+mean.dist.df%>%
+  subset( expgroup%in%sites.irr$expgroup)%>%
+  subset(trt_type == "irr"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 #stats for co2
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
@@ -717,6 +1016,33 @@ mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data =
 )
 summary(mod)
 
+mean.dist.df%>%
+  subset( expgroup%in%sites.co2$expgroup)%>%
+  subset(trt_type == "CO2"|trt_type=="control")%>%
+  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between replicates within sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
 #stats for N*irr
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
                subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
@@ -724,54 +1050,82 @@ mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data =
 )
 summary(mod)
 
-
-ggplot(n.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#0099f6"))+
+mean.dist.df%>%
+  subset( expgroup%in%sites.nirr$expgroup)%>%
+  subset(trt_type == "N*irr"|trt_type=="control")%>%
+  subset( treatment_year != 0)%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
   xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+  ylab("Distance between replicates within sites")+
+  theme_base()
 
-ggplot(p.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#00b844"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_Nirr_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
-ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
 
-ggplot(irr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
 
-ggplot(co2.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
 
-ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+
+#ggplot(n.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#0099f6"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
+
+#ggplot(p.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#00b844"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
+
+#ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
+
+#ggplot(irr.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
+
+#ggplot(co2.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
+
+#ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
+#  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
+#  scale_color_manual(values = c("black", "#6305dc"))+
+#  xlab("")+
+#  ylab("Beta diversity")+
+#  theme_base()+
+#  theme(legend.position="none")
 
 
 #N
