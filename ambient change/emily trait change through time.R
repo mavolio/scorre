@@ -1,7 +1,7 @@
 #### Emily Grman modified emily DCi trends through time.R
 #### Dec 13, 2022 sCoRRE meeting 4 at iDiv
 #### May 10, 2023 sCoRRE meeting 4.1 at UNCG
-
+#### June 12, 2025 sCoRRE meeting 5 at JHU
 
 rm(list=ls())
 
@@ -25,7 +25,7 @@ my.wd <- "/Users/egrman/Library/CloudStorage/Dropbox/sDiv_sCoRRE_shared/"
 ###   READ IN TREATMENT, SPECIES NAMES, TRAIT DATA    ###
 
 #info on treatments, remove pre-treatment data, code experiments in successional environments or where seeds were added as "disturbed", remove experiments where we have less than 6 years of species comp data, remove treatments we don't want
-trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_Dec2021.csv", sep="")) %>%
+trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_March2024.csv", sep="")) %>%
   mutate(site_project_comm=as.factor(paste(site_code, project_name, community_type, sep="::"))) %>% 
   filter(treatment_year>0) %>% 
   #filter(successional==0) %>%
@@ -40,43 +40,57 @@ trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_E
   mutate(start_year_minus5=start_year-5, start_year_minus10=start_year-10)
 
 #cleaned species names
-sp <-read.csv(paste(my.wd,"CoRRE data/trait data/FullList_Nov2021.csv", sep=""))%>%
+sp <-read.csv(paste(my.wd,"CoRRE data/trait data/corre2trykey_2021.csv", sep=""))%>%
   select(genus_species, species_matched)%>%
   unique
+total.sp=sp %>%
+  summarize(n.sp=length(species_matched))
 
-#reading in categorical traits
-my_cat=read.csv(paste(my.wd, "CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv", sep="")) %>%
-  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal, n_fixation) %>%
-  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
-  filter(drop==0) 
-
-prop.table(table(my_cat$growth_form))
-prop.table(table(my_cat$photosynthetic_pathway))
-prop.table(table(my_cat$lifespan))
-prop.table(table(my_cat$clonal))
-prop.table(table(my_cat$mycorrhizal))
-prop.table(table(my_cat$n_fixation))
+#reading in categorical traits, adding cleaned species names, dropping species not in our species list
+my_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd') %>% 
+  select(-family, -source, -error_risk_overall) %>%
+  filter(trait %in% c("growth_form", "photosynthetic_pathway", "lifespan", "clonal", "mycorrhizal_type", "n_fixation_type")) %>%
+  pivot_wider(names_from=trait, values_from=trait_value) %>%
+  rename(species_matched=species) %>%
+  right_join(sp) %>%
+  select(-genus_species) 
+ 
 
 ###   READ IN SPECIES RAW AND RELATIVE ABUNDANCE DATA, CALCULATE MEANS AND DCI   ###
 
 
 #raw abundance data
-rawdat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundance_Jan2023.csv",sep=""))
+rawdat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RawAbundanceMarch2024.csv",sep=""))
 
 #relative abundance data
-reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCover_Jan2023.csv", sep=""))
+reldat<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_RelativeCoverMarch2024.csv", sep=""))
 
 #combine relative and raw abundance data with treatment, cleaned species names
 mydat<-reldat%>%
   left_join(rawdat) %>% 
-  left_join(trts) %>%
-  left_join(sp) %>% #this drops the unknowns??
-  na.omit() %>% 
-  mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
-  filter(drop==0) %>% 
+  right_join(trts) %>% #drops sites/experiments without the treatments we want (above in line 33)
+  left_join(sp) %>% #leaves NA for species name when we don't know full species ID (eg genus only)
+  na.omit() %>% #drops those unknown species?
   group_by(site_code, project_name, community_type, site_project_comm, disturbance, calendar_year, treatment_year, treatment, expt_length, block, plot_id, trt_type, my_trt, species_matched) %>% 
   summarize(relcov=sum(relcov), abundance=sum(abundance)) %>% #in case there are any duplicates within a plot?
   ungroup() 
+
+# 
+#mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
+#  filter(drop==0) %>% 
+
+
+
+
+
+trait.proportions <- my_cat %>% 
+  group_by(trait, trait_value) %>%
+  summarize(n.sp=length(unique(species_matched))) %>%
+  group_by(n.sp) %>%
+  mutate(prop.sp=n.sp/total.sp) 
+
+
+
 
 #adding in zeros for species that were absent from a plot
 spc=unique(mydat$site_project_comm)
@@ -129,16 +143,16 @@ DCi.species.per.year<-relave %>%
 
 #summarize across trait groups (lumping annuals and biennials; selecting only the traits we want)
 DCi.cat.per.year<-DCi.species.per.year %>%
-  left_join(my_cat) %>% 
+  left_join(my_cat, relationship = "many-to-many") %>% 
   mutate(lifespan=ifelse(lifespan=="annual", "ann.bien", ifelse(lifespan=="biennial", "ann.bien", lifespan))) %>%
   mutate(clonal=ifelse(clonal=="yes", "clonal", ifelse(clonal=="no", "nonclonal", clonal))) %>%
-  mutate(mycorrhizal=ifelse(mycorrhizal=="yes", "mycorrhizal", ifelse(mycorrhizal=="no", "nonmycorrhizal", mycorrhizal))) %>%
-  mutate(n_fixation=ifelse(n_fixation=="yes", "Nfixer", ifelse(n_fixation=="no", "nonNfixer", n_fixation))) %>%
-  pivot_longer(growth_form:n_fixation, names_to="prop", values_to="trait") %>%
+  mutate(mycorrhizal_type=ifelse(mycorrhizal_type %in% c("AM", "EcM", "ErM", "OM", "multiple"), "mycorrhizal", ifelse(mycorrhizal_type=="none", "nonmycorrhizal", mycorrhizal_type))) %>%
+  mutate(n_fixation_type=ifelse(n_fixation_type %in% c("actinorhizal", "rhizobial"), "Nfixer", ifelse(n_fixation_type=="none", "nonNfixer", n_fixation_type))) %>%
+  pivot_longer(growth_form:n_fixation_type, names_to="prop", values_to="trait") %>%
   mutate(trait=as.factor(trait)) %>%
   filter(trait %in% c("forb", "C3", "perennial", "clonal", "mycorrhizal", "ann.bien", "nonclonal", "graminoid", "C4", "nonmycorrhizal", "Nfixer", "nonNfixer")) %>%
-  mutate(property=as.factor(ifelse(trait %in% c("forb", "graminoid"), "Growth form", ifelse(trait %in% c("C3", "C4"), "Photosynthetic pathway", ifelse(trait %in% c("perennial", "ann.bien"), "Life span", ifelse(trait %in% c("clonal", "nonclonal"), "Clonality", ifelse(trait %in% c("Nfixer", "nonNfixer"), "N fixation", ifelse(trait %in% c("mycorrhizal", "nonmycorrhizal"), "Mycorrhizal", my_trt)))))))) %>%
-  mutate(property=factor(property, levels=c("Life span", "Photosynthetic pathway", "Clonality", "N fixation", "Mycorrhizal", "Growth form"))) %>%
+  mutate(property=as.factor(ifelse(trait %in% c("forb", "graminoid"), "Growth form", ifelse(trait %in% c("C3", "C4"), "Photosynthetic pathway", ifelse(trait %in% c("perennial", "ann.bien"), "Life span", ifelse(trait %in% c("clonal", "nonclonal"), "Clonality", ifelse(trait %in% c("Nfixer", "nonNfixer"), "N fixation Type", ifelse(trait %in% c("mycorrhizal", "nonmycorrhizal"), "Mycorrhizal Type", my_trt)))))))) %>%
+  mutate(property=factor(property, levels=c("Life span", "Photosynthetic pathway", "Clonality", "N fixation Type", "Mycorrhizal Type", "Growth form"))) %>%
   mutate(trait=factor(trait, levels=c("ann.bien", "perennial", "C3", "C4", "clonal", "nonclonal", "Nfixer", "nonNfixer", "mycorrhizal", "nonmycorrhizal", "graminoid", "forb"))) %>%
   group_by(site_code, project_name, community_type, site_project_comm, disturbance, treatment, trt_type, my_trt, calendar_year, treatment_year, expt_length, trait, property) %>%
   summarize(mean.sp.DCi=mean(DCi), sum.sp.relabund=sum(mean.relabund), sum.sp.rawabund=sum(mean.rawabund), fischer.cover=1-exp(sum(log.relcov.comp))) %>% #fischer 2015 applied veg sci
@@ -151,16 +165,16 @@ ggplot(aes(sum.sp.relabund, fischer.cover), data=DCi.cat.per.year) + geom_point(
 
 #plotting functional group abundances through time:
 ggplot(aes(calendar_year, sum.sp.relabund), data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$property=="Life span",]) + geom_point(aes(color=trait, shape=disturbance)) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F, aes(color=trait))
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/lifespan sum relabund through time.pdf", sep=""), width=20, height=12)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/lifespan sum relabund through time.pdf", sep=""), width=20, height=12)
 
 ggplot(aes(calendar_year, mean.sp.DCi), data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$property=="Life span",]) + geom_point(aes(color=trait, shape=disturbance)) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F, aes(color=trait))
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/lifespan mean DCi through time.pdf", sep=""), width=20, height=12)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/lifespan mean DCi through time.pdf", sep=""), width=20, height=12)
 
 ggplot(aes(calendar_year, sum.sp.rawabund), data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$property=="Life span",]) + geom_point(aes(color=trait, shape=disturbance)) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F, aes(color=trait))
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/lifespan sum rawabund through time.pdf", sep=""), width=20, height=12)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/lifespan sum rawabund through time.pdf", sep=""), width=20, height=12)
 
 ggplot(aes(calendar_year, fischer.cover), data=DCi.cat.per.year[DCi.cat.per.year$trt_type=="control" & DCi.cat.per.year$property=="Life span",]) + geom_point(aes(color=trait, shape=disturbance)) + facet_wrap(~site_project_comm, scales="free") + geom_smooth(method="lm", se=F, aes(color=trait))
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/lifespan fischer cover through time.pdf", sep=""), width=20, height=12)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/lifespan fischer cover through time.pdf", sep=""), width=20, height=12)
 
 
 ###   CALCULATING CHANGE OVER TIME IN FUNCTIONAL GROUPS   ###
@@ -202,9 +216,9 @@ write.csv(change_over_time, paste(my.wd, "ambient change paper/slopes of 4 metri
 hist(change_over_time[change_over_time$my_trt=="control",]$expt_length)
 min(change_over_time$expt_length)
 ggplot(aes(expt_length, fischer.slope), data=change_over_time[change_over_time$my_trt=="control",]) + geom_point(alpha=I(0.2)) + facet_wrap(~trait, scales="free", ncol=5)
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/slopes of fischer cover vs treatment length, control plots.pdf", sep=""), width=9, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/slopes of fischer cover vs treatment length, control plots.pdf", sep=""), width=9, height=5)
 ggplot(aes(disturbance, fischer.slope), data=change_over_time[change_over_time$my_trt=="control",]) + geom_boxplot()
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/fischer cover vs disturbance, control plots.pdf", sep=""), width=9, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/fischer cover vs disturbance, control plots.pdf", sep=""), width=9, height=5)
 
 
 
@@ -242,7 +256,7 @@ for(i in 1:length(propertylist)) {
 # can still try nonparametric tests. 
 
 ggplot(aes(trait, control.fischer.slope, color=trait), data=sitemean_control_change_over_time_undist) + geom_boxplot() + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black") + ggtitle("Control plots, averaged across all experiments at a site (regardless of study duration)")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses, global controls boxplots.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/FG fischer responses, global controls boxplots UNDISTURBED.pdf", sep=""), width=8, height=5)
 
 global_control_change_over_time <- sitemean_control_change_over_time_undist %>%
   group_by(trait, property) %>% 
@@ -251,7 +265,7 @@ global_control_change_over_time <- sitemean_control_change_over_time_undist %>%
   mutate(trt=factor(trt, levels=c("control", "treatment"))) %>% 
   ungroup()
 
-fig1a=ggplot(aes(trait, globalavgC, color=trait), data=global_control_change_over_time) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=globalavgC-global95CIC, ymax=globalavgC+global95CIC, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("a) Control plots") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + scale_shape_manual(values=c(1, 16), name=NULL, drop=F) + geom_hline(yintercept=0, color="black") + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1.1, color="black") + scale_y_continuous(expand = expansion(mult=0.2))
+fig1a=ggplot(aes(trait, globalavgC, color=trait), data=global_control_change_over_time) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=globalavgC-global95CIC, ymax=globalavgC+global95CIC, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("a) Control plots") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + scale_shape_manual(values=c(1, 16), name=NULL, drop=F) + geom_hline(yintercept=0, color="black") + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1.1, color="black") + scale_y_continuous(expand = expansion(mult=0.2)); fig1a
 
 
 #FIG 1, DISTURBED SITES:
@@ -276,7 +290,7 @@ for(i in 1:length(propertylist)) {
 # can still try nonparametric tests. 
 
 ggplot(aes(trait, control.fischer.slope, color=trait), data=sitemean_control_change_over_time_dist) + geom_boxplot() + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black") + ggtitle("Control plots, averaged across all experiments at a site (regardless of study duration)")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses, global controls boxplots DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/FG fischer responses, global controls boxplots DISTURBED.pdf", sep=""), width=8, height=5)
 
 global_control_change_over_time <- sitemean_control_change_over_time_dist %>%
   group_by(trait, property) %>% 
@@ -285,7 +299,7 @@ global_control_change_over_time <- sitemean_control_change_over_time_dist %>%
   mutate(trt=factor(trt, levels=c("control", "treatment"))) %>% 
   ungroup()
 
-fig1a.dist=ggplot(aes(trait, globalavgC, color=trait), data=global_control_change_over_time) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=globalavgC-global95CIC, ymax=globalavgC+global95CIC, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("a) Control plots") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + scale_shape_manual(values=c(1, 16), name=NULL, drop=F) + geom_hline(yintercept=0, color="black") + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1.1, color="black") + scale_y_continuous(expand = expansion(mult=0.2))
+fig1a.dist=ggplot(aes(trait, globalavgC, color=trait), data=global_control_change_over_time) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=globalavgC-global95CIC, ymax=globalavgC+global95CIC, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("a) Control plots") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + scale_shape_manual(values=c(1, 16), name=NULL, drop=F) + geom_hline(yintercept=0, color="black") + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1.1, color="black") + scale_y_continuous(expand = expansion(mult=0.2)); fig1a.dist
 
 
 # + scale_y_continuous(expand = expansion(mult = c(0, 0.2)))
