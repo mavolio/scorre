@@ -959,8 +959,10 @@ ggsave(
 
 
 #trait stats
-mod <- feols(mean_dist.trait~ plot_mani | site+expgroup+treatment_year, data = mean.dist.both)
+mod <- feols(mean_dist.trait~ plot_mani |site+expgroup+treatment_year, data = mean.dist.both)
 summary(mod)
+#mod <- lme(mean_dist.trait~ plot_mani, random = list(expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
+#summary(mod)
 
 #local trait figure
 x <- ggpredict(mod, "plot_mani")
@@ -972,7 +974,7 @@ mean.dist.both%>%
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
   xlab("Number of manipulations")+
   ylab("Distance between replciates within sites")+
-  ylim(0,0.17)+
+  #ylim(0,0.17)+
   theme_base()
 
 ggsave(
@@ -989,16 +991,52 @@ ggsave(
 )
 
 
-
+#subset(mean.dist.both,treatment_year == 2)
 ggplot(mean.dist.both, aes(x=plot_mani, y=mean_dist.trait))+
   #facet_wrap(~treatment_year)+
-  geom_point(aes( color = trt_type), alpha = 0.1)+
+  geom_point(, alpha = 0.1)+
   geom_smooth(data = x, aes(x, predicted), se = FALSE)+
+  #geom_smooth(aes( color = site), se = FALSE)+
   #  geom_smooth(method = "loess")+
+  # scale_color_manual(values = c("black", "#00b844"))+
+  geom_hline(yintercept = 0)+
+  theme_base()
+
+ggplot(mean.dist.both, aes(x=plot_mani, y=mean_dist.trait))+
+  #facet_wrap(~site)+
+  geom_point(aes(color = site), alpha = 0.1)+
+  geom_smooth(data = x, aes(x, predicted), se = FALSE)+
+  #geom_smooth(aes( color = site), se = FALSE)+
+  geom_smooth(aes(color = site),method = "lm", se = FALSE)+
   # scale_color_manual(values = c("black", "#00b844"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
 
 
+#below tries some stuff over time but no big deal
+mean.dist.both%>%
+  group_by(plot_mani, treatment_year)%>%
+  dplyr::summarize(mean = mean(mean_dist.comp), se = sd(mean_dist.comp)/sqrt(n()), sd = sd(mean_dist.comp), conf = se*1.96)%>%
+  ggplot( aes(treatment_year, mean, color = factor(plot_mani)))+
+  facet_wrap(~plot_mani)+
+  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  geom_smooth(method = "loess")+
+  xlab("Treatment year")+
+  ylab("Distance between replciates within sites")+
+  #ylim(0,0.5)+
+  theme_base()
 
+mean.dist.both%>%
+ # group_by(plot_mani, treatment_year)%>%
+  #dplyr::summarize(mean = mean(mean_dist.comp), se = sd(mean_dist.comp)/sqrt(n()), sd = sd(mean_dist.comp), conf = se*1.96)%>%
+  ggplot( aes(treatment_year, mean_dist.comp, color = factor(site)))+
+  facet_wrap(~plot_mani)+
+  
+  geom_point()+
+  #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  geom_smooth(method = "lm", se = FALSE)+
+  xlab("Treatment year")+
+  ylab("Distance between replciates within sites")+
+  #ylim(0,0.5)+
+  theme_base()
