@@ -51,6 +51,32 @@ trt_analysis<-trts%>%
          multtrts=ifelse(trt_type %in% c("CO2*temp", "drought*CO2*temp","irr*CO2","irr*CO2*temp","N*CO2*temp","N*irr*CO2", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*drought","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","drought*temp","irr*temp"),1,0))
 
 
+###how many obs went into this?
+numobs_trt<-dat_cleansp %>% 
+  right_join(trt_analysis) 
+
+expmets<-numobs_trt %>% 
+  ungroup() %>% 
+  select(site_code, project_name, community_type) %>% 
+  unique()
+
+
+numobs_cont<-dat_cleansp %>% 
+  left_join(trts) %>% 
+  filter(plot_mani==0) %>% 
+  right_join(expmets)
+#total obs 217244+78892
+
+##how many replicates per experiment
+numreps<-numobs_trt %>% 
+  ungroup() %>% 
+  select(site_code, project_name, community_type, treatment, plot_id) %>% 
+  unique() %>% 
+  group_by(site_code, project_name, community_type, treatment) %>% 
+  summarise(n=length(plot_id))
+
+
+
 ##Getting DCI
 
 #combine relative abundance data with treatment na.omit removes unidentified species 

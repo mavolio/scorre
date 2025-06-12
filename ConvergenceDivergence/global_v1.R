@@ -17,7 +17,11 @@ library(fixest)
 library(nlme)
 
 #Read in trait data
-traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
+traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd')%>%
+  dplyr::select(-family, -source, -error_risk_overall)%>%
+  pivot_wider(names_from = trait, values_from = trait_value)%>%
+  dplyr::rename(species_matched = species)
+#categorical trait data
 
 traits <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1533/3/169fc12d10ac20b0e504f8d5ca0b8ee8")%>% #continuous trait data
   mutate(species_matched = species)%>%
@@ -122,34 +126,8 @@ test1 <- test%>%
   dplyr::summarize(relcov = mean(relcover))
 
 
-#test <- test[c("site_code", "project_name", "community_type", "treatment_year", "species_matched", "relcov", "trt_type", "plot_mani", "treatment")]%>%
-#  unique()
-
-#plot.treatment <- test[c("site_code", "project_name", "community_type", "trt_type", "treatment")]%>%
-#  unique()
-#plot.treatment <- tidyr::unite(plot.treatment, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 df <- left_join(test1, traits, by = "species_matched", keep = FALSE)
-
-#df <- unite(df, rep, c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = FALSE)
 
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
 
@@ -159,51 +137,40 @@ df$ok <- complete.cases(df[,c("SLA", "LDMC", "leaf_N", "plant_height_vegetative"
 df <- subset(df, ok == TRUE)
 
 
-
-
 ######
 ###The same stuff with traits but they include categorical traits
-CoRRE_CWMtraits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
-CoRRE_CWMtraits_cat <- CoRRE_CWMtraits[, c(   "site_code", "project_name","community_type", "plot_id", "treatment_year", "CWM.growth_form", "CWM.photosynthetic_pathway", "CWM.lifespan", "CWM.clonal", "CWM.mycorrhizal_type", "CWM.n_fixation")]
-
-CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = TRUE)
-
-CoRRE_CWMtraits_cat$is.graminoid <- ifelse(CoRRE_CWMtraits_cat$CWM.growth_form == "graminoid", 1, 0)
-CoRRE_CWMtraits_cat$is.C4 <- ifelse(CoRRE_CWMtraits_cat$CWM.photosynthetic_pathway == "C$", 1, 0)
-CoRRE_CWMtraits_cat$is.perennial <- ifelse(CoRRE_CWMtraits_cat$CWM.lifespan == "perennial", 1, 0)
-CoRRE_CWMtraits_cat$is.clonal <- ifelse(CoRRE_CWMtraits_cat$CWM.clonal == "yes", 1, 0)
-CoRRE_CWMtraits_cat$is.AM <- ifelse(CoRRE_CWMtraits_cat$CWM.mycorrhizal_type == "arbuscular", 1, 0)
-CoRRE_CWMtraits_cat$is.n_fixer <- ifelse(CoRRE_CWMtraits_cat$CWM.n_fixation == "yes", 1, 0)
-CoRRE_CWMtraits_cat <- CoRRE_CWMtraits_cat[,c("rep", "treatment_year", "is.graminoid", "is.C4", "is.perennial", "is.clonal", "is.AM", "is.n_fixer")]
+df$growth_form <- ifelse(df$growth_form == "graminoid", 1, 0)
+df$photosynthetic_pathway <- ifelse(df$photosynthetic_pathway == "C4", 1, 0)
+df$lifespan <- ifelse(df$lifespan == "perennial", 1, 0)
+df$clonal <- ifelse(df$clonal == "yes", 1, 0)
+df$mycorrhizal_type <- ifelse(df$mycorrhizal_type == "AM", 1, 0)
+df$n_fixation_type <- ifelse(df$n_fixation_type == "rhizobial", 1, 0)
 
 
 #the below chunk collates the raw trait data into CWMs and adds the categorical data
 summarize.cwm <-   
   df %>%   # First step in the next string of statements
-  dplyr::group_by( expgroup, treatment_year,  trt_type, treatment, plot_mani) %>%   # Groups the summary file by expgroup
+  dplyr::group_by(expgroup, treatment_year, trt_type, treatment, plot_mani) %>%   # Groups the summary file by Plot number
   dplyr::summarize(           # Coding for how we want our CWMs summarized
     SLA.cwm = weighted.mean(SLA, relcov),
     LDMC.cwm = weighted.mean(LDMC, relcov),
     leaf_N.cwm = weighted.mean(leaf_N, relcov),
     plant_height_vegetative.cwm = weighted.mean(plant_height_vegetative, relcov),
     seed_dry_mass.cwm = weighted.mean(seed_dry_mass, relcov),   # Actual calculation of CWMs
-    SRL.cwm = weighted.mean(SRL, relcov)
-  )#%>%
-  #left_join(CoRRE_CWMtraits_cat, by = c("rep", "treatment_year"))
+    SRL.cwm = weighted.mean(SRL, relcov),
+    growth_form.cwm = weighted.mean(growth_form, relcov),
+    photosynthetic_pathway.cwm = weighted.mean(photosynthetic_pathway, relcov),
+    lifespan.cwm = weighted.mean(lifespan, relcov),
+    clonal.cwm = weighted.mean(clonal, relcov),
+    mycorrhizal_type.cwm = weighted.mean(mycorrhizal_type, relcov),
+    n_fixation_type.cwm = weighted.mean(n_fixation_type, relcov)
+    
+    
+  )
 
 
-summarize.traits.continuous <- traits[,c("species_matched", "SLA", "LDMC", "leaf_N","plant_height_vegetative", "seed_dry_mass", "SRL")]
-summarize.traits.continuous <- unique(summarize.traits.continuous)
-#summarize.traits.categorical <- traits[,c("species_matched", "growth_form", "photosynthetic_pathway", "lifespan", "clonal", "mycorrhizal_type", "n_fixation")]
-#summarize.traits.categorical <- subset(summarize.traits.categorical, photosynthetic_pathway == "C3" | photosynthetic_pathway == "C4" | photosynthetic_pathway == "CAM")
-
-#summarize.traits <- left_join(summarize.traits.continuous, summarize.traits.categorical, by = "species_matched")                                       
-# reassigning row names
-#summarize.traits <- unique(summarize.traits)
-
+#loop
 trt_vector <- unique(summarize.cwm$trt_type)
-
-#tdistances_master <- {}
 
 for(i in 1:length(trt_vector)) {
   
@@ -224,24 +191,161 @@ assign(paste0("df", trt_vector[i]),tdistances_temp)
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfN)
 summary(mod)
 
+dfN%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between sites")+
+  theme_base()
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_N.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfP)
 summary(mod)
+
+dfP%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between sites")+
+  theme_base()
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_P.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfmult_nutrient)
 summary(mod)
 
+dfmult_nutrient%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between sites")+
+  theme_base()
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_mult.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfirr)
 summary(mod)
+
+dfirr%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between sites")+
+  theme_base()
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_irr.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfCO2)
 summary(mod)
 
+dfCO2%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between sites")+
+  theme_base()
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_co2.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = `dfN*irr`)
 summary(mod)
 
+`dfN*irr`%>%
+  group_by(trt_type)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+  ggplot(aes(trt_type, mean))+
+  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between sites")+
+  theme_base()
 
-ggplot(dfmult_nutrient, aes(trt_type, dist))+
-  geom_boxplot()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_Nirr.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 
 
@@ -257,20 +361,74 @@ mod <- feols(dist~plot_mani | site + expgroup + treatment_year, data = tdistance
 summary(mod)
 
 x <- ggpredict(mod, "plot_mani")
-ggplot(tdistances_temp, aes(plot_mani, dist))+
-  geom_point(aes(color = trt_type), alpha = 0.1)+
-  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
+tdistances_temp%>%
+  group_by(plot_mani)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), sd = sd(dist), conf = se*1.96)%>%
+ggplot( aes(plot_mani, mean))+
+  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
+#  geom_smooth(data=x, aes(x=x, y=predicted+std.error), se = FALSE, linetype = "dashed")+
+#  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
+  xlab("Number of manipulations")+
+  ylab("Distance between sites")+
   theme_base()
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_plotmani.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 4.5,
+  height = 4,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
 
 mod <- feols(dist~plot_mani*treatment_year | site + expgroup , data = tdistances_temp)
 summary(mod)
 
-x <- ggpredict(mod, c("plot_mani", "treatment_year"))
-ggplot(tdistances_temp, aes(plot_mani, dist))+
-  facet_wrap(~treatment_year)+
-  geom_point(aes(color = trt_type), alpha = 0.1)+
+#x <- ggpredict(mod, c("plot_mani", "treatment_year"))
+#tdistances_temp%>%
+#  group_by(plot_mani)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()))%>%
+#ggplot( aes(plot_mani, mean))+
+#  facet_wrap(~treatment_year)+
+#  geom_pointrange(alpha = 0.1)+
   #geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
-  geom_smooth(method = "loess")+
-  theme_base()
+#  geom_smooth(method = "loess")+
+#  theme_base()
   
+
+tdistances_temp$any.treatment <-revalue(tdistances_temp$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
+))
+mod <- feols(dist~any.treatment | site + expgroup + treatment_year, data = tdistances_temp)
+summary(mod)
+
+tdistances_temp%>%
+  group_by(any.treatment)%>%
+  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+ggplot(aes(any.treatment, mean))+
+  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+  xlab("")+
+  ylab("Distance between sites")+
+  theme_base()
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_overall.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
