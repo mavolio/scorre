@@ -429,7 +429,27 @@ allnut_mean<-CT_diff%>%
   mutate(trt_type2="all nuts")%>%
   select(-sd)
 
+###how variable is a species' response?
+# ## a species response is pretty varaible, but we are looking at averages and this is the best approach for now. There is a lot more to explore going forwards
+# allnut_n<-CT_diff%>%
+#   filter(multnuts==1) %>% 
+#   group_by(species_matched) %>% 
+#   summarise(n=length(diff)) %>% 
+#   filter(n>20) 
+# 
+# allnut_common<-CT_diff%>%
+#   filter(multnuts==1) %>% 
+#   select(-n) %>% 
+#   right_join(allnut_n) %>% 
+#   mutate(sp=paste(n, species_matched, sep="_"))
+# 
+# ggplot(data=allnut_common, aes(x=sp, y=diff))+
+#   geom_boxplot()+
+#   theme(axis.text.x  = element_text(angle=90, vjust=0.5))+
+#   geom_hline(yintercept = 0)
 
+
+#combine to full dataset
 Fulldataset<-allmult_mean%>%
   bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 
