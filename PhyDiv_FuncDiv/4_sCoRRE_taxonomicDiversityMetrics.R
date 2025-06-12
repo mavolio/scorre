@@ -38,14 +38,14 @@ relCover <- read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komats
 
 ##### calculate diversity metrics ##### 
 #getting community diversity metrics for each plot
-richness <- community_structure(relCover, time.var="treatment_year", abundance.var="relcov", replicate.var="replicate") %>%
+richness <- community_structure(relCover, time.var="calendar_year", abundance.var="relcov", replicate.var="replicate") %>%
   separate(replicate, into=c("site_code", "project_name", "community_type", "treatment", "plot_id"), sep='::')
 
 #hill numbers
 sppMatrix <- relCover %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-  select(site_proj_comm, treatment, treatment_year, plot_id, genus_species, relcov) %>% 
-  group_by(site_proj_comm, treatment, treatment_year, plot_id, genus_species) %>% 
+  select(site_proj_comm, treatment, calendar_year, plot_id, genus_species, relcov) %>% 
+  group_by(site_proj_comm, treatment, calendar_year, plot_id, genus_species) %>% 
   summarise(relcov=mean(relcov)) %>% #average for CHY EDGE, which has multiple values per plot
   ungroup() %>% 
   filter(genus_species!='')
