@@ -112,7 +112,11 @@ relCoverRaw <- read.csv("C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Kom
   mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="_")) %>%
   mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
   mutate(plot_id=ifelse(project_name=='IRG', paste(block, plot_id, sep='__'), plot_id)) %>% 
-  select(site_code:community_type, site_proj_comm, calendar_year:relcov)
+  select(site_code:community_type, site_proj_comm, calendar_year:relcov) %>% 
+  mutate(drop=ifelse(site_code=="CDR"&treatment %in% c(2, 3, 4, 5, 7), 1, 0)) %>% #drop some of the CDR e001 and e002 treatments to prevent over-representation
+  filter(drop==0) %>% 
+  select(-drop)
+  
 
 # corre to try species names key
 corre_to_try <- read.csv("C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\corre2trykey_2021.csv") %>%
@@ -121,8 +125,6 @@ corre_to_try <- read.csv("C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Ko
 
 relCovClean <- relCoverRaw %>%
   left_join(corre_to_try, by="genus_species") %>%
-  mutate(plot_id=ifelse(site_proj_comm=='DL_NSFC_0', paste(plot_id, treatment, sep='__'), plot_id)) %>% 
-  mutate(plot_id=ifelse(project_name=='IRG', paste(block, plot_id, sep='__'), plot_id)) %>% 
   mutate(species_matched=ifelse(is.na(species_matched), genus_species, species_matched)) %>% 
   select(-genus_species)
 
