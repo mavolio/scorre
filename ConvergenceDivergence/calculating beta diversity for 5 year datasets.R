@@ -1,12 +1,18 @@
+###
+### Beta diversity comparisons -- subsetting 5 years only 
+###
+### Tim and Kevin
+
+
 library(tidyverse)
 library(tidyr)
 library(ggplot2)
 library(ggeffects)
 library(dplyr)
 library(plyr)
-library(reshape2)
+#library(reshape2)
 library(lmerTest)
-library(ggpubr)
+#library(ggpubr)
 library(vegan)
 library(FD)
 library(visreg)
@@ -16,56 +22,259 @@ library(emmeans)
 library(fixest)
 library(nlme)
 
+## Set workspace (Kevin)
+setwd("C:\\Users\\k_wilcox\\Dropbox\\shared working groups\\sDiv_sCoRRE_shared\\CoRRE data\\")
+
 #Read in trait data
-#traits_cat <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/sCoRRE categorical trait data_12142022.csv") #categorical trait data
-traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd')%>%
-    dplyr::select(-family, -source, -error_risk_overall)%>%
-    pivot_wider(names_from = trait, values_from = trait_value)%>%
-    dplyr::rename(species_matched = species)
+traits_cont <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/169fc12d10ac20b0e504f8d5ca0b8ee8') %>% 
+  select(-family, -source, -imputation_error, -error_risk_overall, -error_risk_family, -error_risk_genus)
 
-traits <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1533/3/169fc12d10ac20b0e504f8d5ca0b8ee8")%>% #continuous trait data
-  mutate(species_matched = species)%>%
-  dplyr::select(species_matched, trait, trait_value)%>%
-  pivot_wider(names_from = trait, values_from = trait_value)
+traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd') %>% 
+  select(-family, -source, -error_risk_overall)
 
-#standardize the scale of continuous traits
-cols <- c( 
-  "SLA", 
-  "LDMC", 
-  "leaf_N", 
-  "plant_height_vegetative", 
-  "seed_dry_mass", 
-  "SRL"
-)
-
-traits[cols] <- scale(traits[cols])
-
-
-traits <- left_join(traits, traits_cat, by = "species_matched")#merge w/ categorical traits
-
-
+traits_all_wide <- traits_cont %>%
+  pivot_wider(names_from=trait, values_from=trait_value) %>%
+  full_join(traits_cat %>% pivot_wider(names_from=trait, values_from=trait_value))
 
 ##Read in cover data
-cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_RelativeCoverMarch2024.csv") %>% #community comp relative cover data
+cover_df <- read.csv("CoRRE data\\community composition\\CoRRE_RelativeCoverMarch2024.csv") %>% #community comp relative cover data
   mutate(drop=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7, 1,0))%>%
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
-  subset(treatment_year <=10& treatment_year > 0) #only use treatment data and subset the number of years to be used
-#  subset(treatment_year <=5& treatment_year > 0) #only use treatment data and subset the number of years to be used
+  subset(treatment_year <=5& treatment_year > 0) #only use treatment data and subset the number of years to be used
 
+# Read in environmental data
+experimentinfo <- read.csv("CoRRE data\\community composition\\CoRRE_ExperimentInfo_March2024.csv")#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
+
+# create data frame for experiments that have at least 5 years of data
+cover_5yr_df <- cover_df %>%
+  group_by(site_code, project_name, community_type) %>%
+  mutate(exp_length = max(treatment_year)) %>%
+  ungroup() %>%
+  filter(exp_length==5) %>%
+  dplyr::select(-exp_length, -drop) %>%
+  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="::"))
+
+# identify experiements that do not have data for all 5 years
+site_proj_comm_table <- with(cover_5yr_df, table(site_proj_comm, treatment_year))  
+site_proj_comm_2_remove <- rownames(site_proj_comm_table)[apply(site_proj_comm_table == 0, 1, any)]
+
+# Remove all experiments that don't have cover data for all 5 years
+cover_5yr_df <- cover_5yr_df %>%
+  filter(!site_proj_comm %in% site_proj_comm_2_remove)
+
+## Filter to only experiments with at least 5 replicates
+repnum <- cover_5yr_df %>%
+  dplyr::select(site_code, project_name, community_type, treatment, plot_id)%>%
+  unique()%>%
+  #dplyr::mutate(present = 1)%>%
+  dplyr::group_by(site_code, project_name, community_type, treatment)%>%
+  dplyr::summarise(rep_num = length(plot_id))%>%
+  dplyr::ungroup()
+
+site_proj_comm_with_low_reps <- repnum %>%
+  mutate(site_proj_comm = paste(site_code, project_name, community_type, sep="::")) %>%
+  filter(rep_num<5) %>%
+#  dplyr::select(site_proj_comm) %>%
+  pull(site_proj_comm) %>%
+  unique()
+
+cover_5yr_with_expinfo <- cover_5yr_df %>%
+  filter(!site_proj_comm %in% site_proj_comm_with_low_reps) %>%
+  left_join(experimentinfo, by=c("site_code","project_name","community_type","calendar_year","treatment_year","treatment")) %>%
+  mutate(expgroup = paste(site_proj_comm, treatment, sep="::"))
+  
+
+###
+### Loop through experiments and treatments and calculate distance to centroid
+###
+
+expgroup_vec <- cover_5yr_with_expinfo %>%
+  pull(expgroup) %>%
+  unique()
+
+distances_master <- {}
+
+for(EXP in 1:length(expgroup_vec)) {
+  temp_df <- subset(cover_5yr_with_expinfo, expgroup == expgroup_vec[EXP])
+  
+  temp_wide <- temp_df%>%
+    pivot_wider(names_from = genus_species, values_from = relcov, values_fill = 0)
+  temp_distances <- vegdist(temp_wide[40:ncol(temp_wide)], method = "bray")
+  temp_model <- betadisper(temp_distances, group = temp_wide$treatment, type = "centroid")
+  distances_temp <- data.frame(expgroup = expgroup_vec[EXP], trt_type = temp_wide$trt_type, treatment = temp_wide$treatment, plot_mani = temp_wide$plot_mani, dist = temp_model$dist, treatment_year = temp_wide$treatment_year)
+  distances_master <- rbind(distances_master, distances_temp )
+  rm(temp_df, temp_wide, temp_distances, temp_model, distances_temp)
+}
+
+## Average distance per treatment
+SE_function<-function(x,na.rm=na.rm){
+  SD = sd(x,na.rm=TRUE)
+  denom = sqrt(length(x[!is.na(x)]))
+  SE=SD/denom
+  return(SE)
+}
+distances_master %>% filter(trt_type=="mult_nutrient")
+
+dist_exp_means <- distances_master %>%
+  group_by(expgroup, trt_type, treatment, plot_mani, treatment_year) %>%
+  summarize_at(.vars="dist", .funs=list(mean=mean, se=SE_function), na.rm=T) %>%
+  ungroup() %>%
+  separate(expgroup, c("site_code","project_name","community_type","treatment"), sep="::") %>%
+  mutate(site_proj_comm=paste(site_code, project_name,community_type,sep="::"))
+
+## Identify experiments that have different treatments so we can link control plots with trt plots in same experiment)
+n_exp_site_vec <- dist_exp_means %>%
+  filter(trt_type=="N") %>%
+  pull(site_proj_comm) %>%
+  unique()
+
+p_exp_site_vec <- dist_exp_means %>%
+  filter(trt_type=="P") %>%
+  pull(site_proj_comm) %>%
+  unique()
+
+np_exp_site_vec <- dist_exp_means %>%
+  filter(trt_type=="N*P") %>%
+  pull(site_proj_comm) %>%
+  unique()
+
+multnut_exp_site_vec <- dist_exp_means %>%
+  filter(trt_type=="mult_nutrient") %>%
+  pull(site_proj_comm) %>%
+  unique()
+
+irr_exp_site_vec <- dist_exp_means %>%
+  filter(trt_type=="irr") %>%
+  pull(site_proj_comm) %>%
+  unique()
+
+## Calculate means by different treatment type (because we want to link control plots with trt plots in same experiment)
+dist_n_trt_means <- dist_exp_means %>%
+  filter(site_proj_comm %in% n_exp_site_vec & trt_type %in% c("control","N")) %>%
+  group_by(trt_type, treatment_year) %>%
+  summarize_at(.vars="mean", .funs=list(dist_mean=mean, dist_se=SE_function), na.rm=T) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="N-C")
+
+dist_p_trt_means <- dist_exp_means %>%
+  filter(site_proj_comm %in% p_exp_site_vec & trt_type %in% c("control","P")) %>%
+  group_by(trt_type, treatment_year) %>%
+  summarize_at(.vars="mean", .funs=list(dist_mean=mean, dist_se=SE_function), na.rm=T) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="P-C")
+
+dist_irr_trt_means <- dist_exp_means %>%
+  filter(site_proj_comm %in% irr_exp_site_vec & trt_type %in% c("control","irr")) %>%
+  group_by(trt_type, treatment_year) %>%
+  summarize_at(.vars="mean", .funs=list(dist_mean=mean, dist_se=SE_function), na.rm=T) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="irr-C")
+
+dist_np_trt_means <- dist_exp_means %>%
+  filter(site_proj_comm %in% np_exp_site_vec & trt_type %in% c("control","N*P")) %>%
+  group_by(trt_type, treatment_year) %>%
+  summarize_at(.vars="mean", .funs=list(dist_mean=mean, dist_se=SE_function), na.rm=T) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="NP-C")
+
+dist_multnut_trt_means <- dist_exp_means %>%
+  filter(site_proj_comm %in% multnut_exp_site_vec & trt_type %in% c("control","mult_nutrient")) %>%
+  group_by(trt_type, treatment_year) %>%
+  summarize_at(.vars="mean", .funs=list(dist_mean=mean, dist_se=SE_function), na.rm=T) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="multnut-C")
+
+dist_trt_means_all <- dist_n_trt_means %>%
+  bind_rows(dist_p_trt_means,
+            dist_np_trt_means,
+            dist_multnut_trt_means,
+            dist_irr_trt_means)
+
+dist_trt_means_all$trt_ctrl <- factor(dist_trt_means_all$trt_ctrl, levels=c("N-C","NP-C","P-C","multnut-C","irr-C"))
+
+## Calculate the number of data sets (e.g. experiment-comm type) that go into each panel in the graph below
+num_n <- dist_exp_means %>%
+  filter(site_proj_comm %in% n_exp_site_vec & trt_type %in% c("control","N")) %>%
+  dplyr::select(site_code:trt_type) %>%
+  unique() %>%
+  group_by(trt_type) %>%
+  summarize(num_trt = length(treatment)) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="N-C")
+  
+num_p <- dist_exp_means %>%
+  filter(site_proj_comm %in% p_exp_site_vec & trt_type %in% c("control","P")) %>%
+  dplyr::select(site_code:trt_type) %>%
+  unique() %>%
+  group_by(trt_type) %>%
+  summarize(num_trt = length(treatment)) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="P-C")
+  
+num_np <- dist_exp_means %>%
+  filter(site_proj_comm %in% np_exp_site_vec & trt_type %in% c("control","N*P")) %>%
+  dplyr::select(site_code:trt_type) %>%
+  unique() %>%
+  group_by(trt_type) %>%
+  summarize(num_trt = length(treatment)) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="NP-C")
+  
+num_multnut <- dist_exp_means %>%
+  filter(site_proj_comm %in% multnut_exp_site_vec & trt_type %in% c("control","mult_nutrient")) %>%
+  dplyr::select(site_code:trt_type) %>%
+  unique() %>%
+  group_by(trt_type) %>%
+  summarize(num_trt = length(treatment)) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="multnut-C")
+
+num_irr <- dist_exp_means %>%
+  filter(site_proj_comm %in% irr_exp_site_vec & trt_type %in% c("control","irr")) %>%
+  dplyr::select(site_code:trt_type) %>%
+  unique() %>%
+  group_by(trt_type) %>%
+  summarize(num_trt = length(treatment)) %>%
+  ungroup() %>%
+  mutate(trt_ctrl="irr-C")
+
+
+num_exp_by_trt <- num_n %>% 
+  bind_rows(num_p,
+            num_np,
+            num_multnut,
+            num_irr)
+num_exp_by_trt$trt_ctrl <- factor(num_exp_by_trt$trt_ctrl,  levels=c("N-C","NP-C","P-C","multnut-C","irr-C"))
+
+     
+dist_trt_means <- dist_exp_means %>%
+  filter(trt_type %in% c("control","N","P","mult-nutrient","irr")) %>%
+  group_by(trt_type, treatment_year) %>%
+  summarize_at(.vars="mean", .funs=list(dist_mean=mean, dist_se=SE_function), na.rm=T) %>%
+  ungroup()
+  
+### Quick plot of dist through time
+ggplot(dist_trt_means_all, aes(x=treatment_year, y=dist_mean, ymin=dist_mean-dist_se, ymax=dist_mean+dist_se, col=trt_type)) +
+  geom_errorbar(width=0.1) + 
+  geom_point(size=3) + 
+#  geom_smooth(method="lm",se=F) + 
+  geom_text(inherit.aes=F, data=num_exp_by_trt, aes(x=rep(4.5,nrow(num_exp_by_trt)),y=rep(c(.4,.425),nrow(num_exp_by_trt)/2),label=num_trt, col=trt_type)) +
+  facet_wrap(~trt_ctrl) +
+  theme_few() 
+
+ggsave()
+### combining trait and cover data
 corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", keep = FALSE)
-
-experimentinfo <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/community composition/CoRRE_ExperimentInfo_March2024.csv")%>%#Information about the treatments which gets used to test how treatment magnitude explains efect sizes
-  unique()
 
 siteLocationClimate <- read.csv("C:/Users/ohler/Dropbox/CoRRE_database/Data/CompiledData/siteLocationClimate.csv") #information about sites
 
 
 #Reduce cover data to focal data using a series of merges.
 #minimum number of replicates
-repnum <- cover%>%
+repnum <- cover_5yr_df %>%
   dplyr::select(site_code, project_name, community_type, treatment, plot_id)%>%
   unique()%>%
   #dplyr::mutate(present = 1)%>%
@@ -82,23 +291,23 @@ repnum <- cover%>%
 #minimum treatment length
 #nyear <- experimentinfo[c("site_code", "project_name", "community_type", "treatment_year")] %>%
 #  unique()%>%
- # subset(treatment_year != 0)%>%
- # ddply(.(site_code, project_name, community_type),
- #       function(x)data.frame(
- #         n.trt.yrs = max(x$treatment_year)
- #       ))
+# subset(treatment_year != 0)%>%
+# ddply(.(site_code, project_name, community_type),
+#       function(x)data.frame(
+#         n.trt.yrs = max(x$treatment_year)
+#       ))
 
 #Merge all the datasets above to create columns to subset by
 crest <- cover %>%
-#  left_join(nyear,by = c("site_code", "project_name", "community_type"))%>%
- # left_join(lastyear, by = c("site_code", "project_name", "community_type"))%>%
+  #  left_join(nyear,by = c("site_code", "project_name", "community_type"))%>%
+  # left_join(lastyear, by = c("site_code", "project_name", "community_type"))%>%
   left_join( experimentinfo, by = c("site_code", "project_name", "community_type", "treatment", "calendar_year", "treatment_year"))%>%
   left_join(repnum, by = c("site_code", "project_name", "community_type", "treatment"))
 
 #number of sites for each year
 n_sites <- crest %>%
   subset( rep_num >=5)%>%
-dplyr::select(site_code, project_name, community_type, treatment_year)%>%
+  dplyr::select(site_code, project_name, community_type, treatment_year)%>%
   unique()%>%
   group_by(treatment_year)%>%
   dplyr::summarise(n_sites = n())
@@ -108,47 +317,29 @@ dplyr::select(site_code, project_name, community_type, treatment_year)%>%
 test <- crest %>%
   subset( rep_num >=5)
 
-test$trt_type <-  revalue(test$trt_type, c("N*P" = "mult_nutrient",
-                                           "CO2*temp" = "mult_GCD", 
-                                           "drought*CO2*temp" = "mult_GCD",
-                                           #"irr*CO2" = "mult_GCD",
-                                           "irr*CO2*temp" = "mult_GCD",
-                                           "N*CO2*temp" = "mult_GCD",
-                                           #"N*irr*CO2" = "mult_GCD", 
-                                           #"mult_nutrient*irr" = "mult_GCD",
-                                           "N*irr*CO2*temp" = "mult_GCD", 
-                                           #"N*CO2" = "mult_GCD",
-                                           "N*drought" = "mult_GCD",
-                                           #"N*irr" = "mult_GCD",
-                                           "N*irr*temp" = "mult_GCD",
-                                           "N*temp" = "mult_GCD",
-                                           "mult_nutrient*temp" = "mult_GCD",
-                                           "N*P*temp" = "mult_GCD",
-                                           "drought*temp" = "mult_GCD",
-                                           "irr*temp" = "mult_GCD") ) #all expect for the first term are used for mult_GCD category which is no longer being used
+test$trt_type <-  revalue(test$trt_type, c("N*P" = "mult_nutrient","CO2*temp" = "mult_GCD", "drought*CO2*temp" = "mult_GCD","irr*CO2" = "mult_GCD","irr*CO2*temp" = "mult_GCD","N*CO2*temp" = "mult_GCD","N*irr*CO2" = "mult_GCD", "mult_nutrient*irr" = "mult_GCD","N*irr*CO2*temp" = "mult_GCD", "N*CO2" = "mult_GCD","N*drought" = "mult_GCD","N*irr" = "mult_GCD","N*irr*temp" = "mult_GCD","N*temp" = "mult_GCD","mult_nutrient*temp" = "mult_GCD","N*P*temp" = "mult_GCD","drought*temp" = "mult_GCD","irr*temp" = "mult_GCD") ) #all expect for the first term are used for mult_GCD category which is no longer being used
 
 test <- test%>%
-  subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | trt_type == "irr" |# trt_type == "drought"  | trt_type == "temp"| 
-            trt_type == "mult_nutrient" #|trt_type == "mult_GCD"
-          | trt_type == "CO2" | trt_type == "irr*CO2"  |trt_type == "N*irr*CO2" | trt_type == "mult_nutrient*irr" |trt_type == "N*CO2"|trt_type == "N*irr"
-  )  #keep only the focal treatments
+  subset( trt_type == "control" | trt_type == "N" | trt_type == "P" | #trt_type == "irr" | trt_type == "drought"  | trt_type == "temp"| 
+            trt_type == "mult_nutrient" #|trt_type == "mult_GCD"| trt_type == "CO2"
+  )#%>%  #keep only the focal treatments
 
 #Set minimum treatment years. Note that criteria is relaxed for drought experiments for: reasons
-#N <-  test[test$trt_type %in% "N",]
-#P <-  test[test$trt_type %in% "P",]
+N <-  test[test$trt_type %in% "N",]
+P <-  test[test$trt_type %in% "P",]
 #irr <-  test[test$trt_type %in% "irr",]
 #CO2 <-  subset(test[test$trt_type %in% "CO2",], n.trt.yrs >= 6)
 #temp <-  test[test$trt_type %in% "temp",]
-#mult_nutrient <-  test[test$trt_type %in% "mult_nutrient",]
+mult_nutrient <-  test[test$trt_type %in% "mult_nutrient",]
 #mult_GCD <-  subset(test[test$trt_type %in% "mult_GCD",], n.trt.yrs >= 6)
 #drought <-  test[test$trt_type %in% "drought",]
-#control <-  test[test$trt_type %in% "control",]
+control <-  test[test$trt_type %in% "control",]
 
-#test <- bind_rows(N, P, #irr, temp, 
-#                  mult_nutrient, #drought, 
-#                  control
+test <- bind_rows(N, P, #irr, temp, 
+                  mult_nutrient, #drought, 
+                  control
                   #, mult_GCD, CO2
-#)
+)
 
 test <- test[c("site_code", "project_name", "community_type", "treatment_year", "plot_id", "species_matched", "relcov", "trt_type", "plot_mani", "treatment")]%>%
   unique()
@@ -180,7 +371,7 @@ sites <- test%>%
 sites <- unite(sites, temp, c("project_name", "community_type"), sep = "::", remove = FALSE)
 
 ##############################
-####CREATING AND TESTING BETA DIVERSITY RESULTS
+#### CREATING AND TESTING BETA DIVERSITY RESULTS
 
 #'test' dataframe has all the cover data but only with focal sites and treatments and such
 
@@ -211,9 +402,7 @@ for(i in 1:length(expgroup_vector)) {
 
 
 
-mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))%>%
-              separate(expgroup, into = c("site", "project", "community"), sep = "::", remove = FALSE)
-
+mean.dist.df <- ddply(distances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
 
 mean.dist.comp <- mean.dist.df
 
@@ -229,8 +418,8 @@ con.df <- subset(mean.dist.df, plot_mani == 0)%>% #control data
 #  mutate(con_minus_trt = dist.con-dist.trt)
 
 
-            
-            
+
+
 #lrr.df.conf <- lrr.df%>%
 #  ddply(.(trt_type, treatment_year), function(x)data.frame(
 #    lrr.mean = mean(x$lrr),
@@ -289,88 +478,38 @@ con.df <- subset(mean.dist.df, plot_mani == 0)%>% #control data
 sites.n <- subset(mean.dist.df,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
 sites.p <- subset(mean.dist.df,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
 sites.multnutrient <- subset(mean.dist.df,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
-sites.irr <- subset(mean.dist.df,  trt_type == "irr")%>%dplyr::select(expgroup)%>%unique()
-sites.co2 <- subset(mean.dist.df,  trt_type == "CO2")%>%dplyr::select(expgroup)%>%unique()
-sites.nirr <- subset(mean.dist.df,  trt_type == "N*irr")%>%dplyr::select(expgroup)%>%unique()
 
 #models to test results -
 #mod <- lmer(lrr~0+ trt_type + (1|expgroup)+ (1|treatment_year), data = subset(subset(lrr.df,  trt_type == "N"|trt_type =="mult_nutrient"|trt_type=="P"), treatment_year != 0))
 #summary(mod)
 
-#stats for overall (any treatment)
-mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
-))
-mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
-summary(mod)
-
-tidy_mod <- broom::tidy(mod)
-coefplot(mod, keep = c("Intercept","control", "treatment"),intercept = TRUE)
-
-mean.dist.df%>%
-  subset( treatment_year != 0)%>%
-  group_by(any.treatment)%>%
-  dplyr::summarize(mean = mean(mean_dist), sd = sd(mean_dist))%>%
-ggplot(aes(any.treatment, mean))+
-  geom_pointrange(aes(ymax = mean +sd, ymin = mean-sd))+
-  theme_base()
-
 #stats for nitrogen treatment
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 #stats for phosphorus treatment
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 #stats for multiple nutrient addition
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
-summary(mod)
-
-#stats for irrigation
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
-summary(mod)
-
-#stats for co2
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
-               subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-               mutate(trt_type = fct_relevel(trt_type, "control"))
-             )
-summary(mod)
-
-#stats for N*irr
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
-               subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-               mutate(trt_type = fct_relevel(trt_type, "control"))
-)
+mod <- feols(mean_dist~trt_type | expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
 ##dataframes and plots for figures
 n.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control")%>%
-        group_by(trt_type)%>%
-        dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
-
-p.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control")%>%
   group_by(trt_type)%>%
   dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-mult.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
+p.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control")%>%
   group_by(trt_type)%>%
   dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-irr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control")%>%
+mult.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
   group_by(trt_type)%>%
   dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-co2.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-nirr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
-
-  
 ggplot(n.df, aes(trt_type, mean, color = trt_type))+
   geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
   scale_color_manual(values = c("black", "#0099f6"))+
@@ -397,97 +536,62 @@ ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
   theme_base()+
   theme(legend.position="none")
 
-ggplot(irr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
 
-ggplot(co2.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
 
-ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
+
 
 
 
 #library(ggeffects)
 #x <- ggpredict(mod, c("trt_type"))
 #plot(x, ci=FALSE)#+
-  #ylim(0, 200)+
+#ylim(0, 200)+
 #ggplot(x , aes(x, predicted))+
 #  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
 #  geom_hline(yintercept = 0)+
 #  theme_base()
 
 ##Stats about change over time: Nitrogen
-mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
-
-subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control")%>%
-  ggplot(aes(treatment_year, mean_dist, color = trt_type))+
-  geom_point()+
-  geom_smooth()+
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#0099f6"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
-
-#x <- ggpredict(mod, c("trt_type", "treatment_year"))
-#ggplot(x , aes(x = group, y= predicted, color=x))+
-#  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
-#  scale_color_manual(values = c("black", "#0099f6"))+
-#  xlab("Treatment year")+
-#  ylab("Beta diversity")+
-#  theme_base()
 
 ##Stats about change over time: Phosphorus
-mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
-
-subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control")%>%
-  ggplot(aes(treatment_year, mean_dist, color = trt_type))+
-  geom_point()+
-  geom_smooth()+
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#00b844"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
-
-#x <- ggpredict(mod, c("trt_type", "treatment_year"))
-#ggplot(x , aes(x = group, y= predicted, color=x))+
-#  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
-#  scale_color_manual(values = c("black", "#00b844"))+
-#  xlab("Treatment year")+
-#  ylab("Beta diversity")+
-#  theme_base()
 
 ##Stats about change over time: multiple nutrient addition
-mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
-subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
-  ggplot(aes(treatment_year, mean_dist, color = trt_type))+
-  geom_point()+
-  geom_smooth()+
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#6305dc"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
   theme_base()
 
-#x <- ggpredict(mod, c("trt_type", "treatment_year"))
-#ggplot(x , aes(x = group, y= predicted, color=x))+
-#  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
-#  scale_color_manual(values = c("black", "#6305dc"))+
-#  xlab("Treatment year")+
-#  ylab("Beta diversity")+
-#  theme_base()
+
+
+
+
 
 #ggsave(
 #  "C:/Users/ohler/Documents/converge-diverge/fig1_comp.pdf",
@@ -508,42 +612,29 @@ subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), tr
 
 ###Summarize sites being used
 sites <- test%>%
-  dplyr::select(site_code, project_name, community_type, trt_type, treatment)%>%
-  tidyr::unite("expgroup", c("site_code", "project_name", "community_type"))%>%
+  dplyr::select(site_code, project_name, community_type, treatment_year, trt_type, treatment)%>%
   unique()%>%
   subset(trt_type != "control")
 
 n <- sites%>%
-  
-  ddply(.(trt_type), function(x)data.frame(n = length(x$expgroup)))
-
-#trt.by.year <- sites%>%
   #  tidyr::unite("expgroup", c("site_code", "project_name", "community_type"))%>%
-#  ddply(.( trt_type, treatment_year), function(x)data.frame(n = length(x$expgroup)))
-
+  ddply(.(trt_type), function(x)data.frame(n = length(x$site_code)))
 
 
 ######
 ###The same stuff with traits but they include categorical traits
-#CoRRE_CWMtraits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
-#CoRRE_CWMtraits_cat <- CoRRE_CWMtraits[, c(   "site_code", "project_name","community_type", "plot_id", "treatment_year", "CWM.growth_form", "CWM.photosynthetic_pathway", "CWM.lifespan", "CWM.clonal", "CWM.mycorrhizal_type", "CWM.n_fixation")]
+CoRRE_CWMtraits <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/paper 2_PD and FD responses/data/CoRRE_CWMtraits_12142022.csv") #for now I'll just use this for categorical traits
+CoRRE_CWMtraits_cat <- CoRRE_CWMtraits[, c(   "site_code", "project_name","community_type", "plot_id", "treatment_year", "CWM.growth_form", "CWM.photosynthetic_pathway", "CWM.lifespan", "CWM.clonal", "CWM.mycorrhizal_type", "CWM.n_fixation")]
 
-#CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = TRUE)
+CoRRE_CWMtraits_cat <- tidyr::unite(CoRRE_CWMtraits_cat, "rep", c("site_code", "project_name", "community_type", "plot_id"), sep = "::", remove = TRUE)
 
-#CoRRE_CWMtraits_cat$is.graminoid <- ifelse(CoRRE_CWMtraits_cat$CWM.growth_form == "graminoid", 1, 0)
-#CoRRE_CWMtraits_cat$is.C4 <- ifelse(CoRRE_CWMtraits_cat$CWM.photosynthetic_pathway == "C$", 1, 0)
-#CoRRE_CWMtraits_cat$is.perennial <- ifelse(CoRRE_CWMtraits_cat$CWM.lifespan == "perennial", 1, 0)
-#CoRRE_CWMtraits_cat$is.clonal <- ifelse(CoRRE_CWMtraits_cat$CWM.clonal == "yes", 1, 0)
-#CoRRE_CWMtraits_cat$is.AM <- ifelse(CoRRE_CWMtraits_cat$CWM.mycorrhizal_type == "arbuscular", 1, 0)
-#CoRRE_CWMtraits_cat$is.n_fixer <- ifelse(CoRRE_CWMtraits_cat$CWM.n_fixation == "yes", 1, 0)
-#CoRRE_CWMtraits_cat <- CoRRE_CWMtraits_cat[,c("rep", "treatment_year", "is.graminoid", "is.C4", "is.perennial", "is.clonal", "is.AM", "is.n_fixer")]
-
-df$growth_form <- ifelse(df$growth_form == "graminoid", 1, 0)
-df$photosynthetic_pathway <- ifelse(df$photosynthetic_pathway == "C4", 1, 0)
-df$lifespan <- ifelse(df$lifespan == "perennial", 1, 0)
-df$clonal <- ifelse(df$clonal == "yes", 1, 0)
-df$mycorrhizal_type <- ifelse(df$mycorrhizal_type == "AM", 1, 0)
-df$n_fixation_type <- ifelse(df$n_fixation_type == "rhizobial", 1, 0)
+CoRRE_CWMtraits_cat$is.graminoid <- ifelse(CoRRE_CWMtraits_cat$CWM.growth_form == "graminoid", 1, 0)
+CoRRE_CWMtraits_cat$is.C4 <- ifelse(CoRRE_CWMtraits_cat$CWM.photosynthetic_pathway == "C$", 1, 0)
+CoRRE_CWMtraits_cat$is.perennial <- ifelse(CoRRE_CWMtraits_cat$CWM.lifespan == "perennial", 1, 0)
+CoRRE_CWMtraits_cat$is.clonal <- ifelse(CoRRE_CWMtraits_cat$CWM.clonal == "yes", 1, 0)
+CoRRE_CWMtraits_cat$is.AM <- ifelse(CoRRE_CWMtraits_cat$CWM.mycorrhizal_type == "arbuscular", 1, 0)
+CoRRE_CWMtraits_cat$is.n_fixer <- ifelse(CoRRE_CWMtraits_cat$CWM.n_fixation == "yes", 1, 0)
+CoRRE_CWMtraits_cat <- CoRRE_CWMtraits_cat[,c("rep", "treatment_year", "is.graminoid", "is.C4", "is.perennial", "is.clonal", "is.AM", "is.n_fixer")]
 
 
 #the below chunk collates the raw trait data into CWMs and adds the categorical data
@@ -556,27 +647,19 @@ summarize.cwm <-
     leaf_N.cwm = weighted.mean(leaf_N, relcov),
     plant_height_vegetative.cwm = weighted.mean(plant_height_vegetative, relcov),
     seed_dry_mass.cwm = weighted.mean(seed_dry_mass, relcov),   # Actual calculation of CWMs
-    SRL.cwm = weighted.mean(SRL, relcov),
-    growth_form.cwm = weighted.mean(growth_form, relcov),
-    photosynthetic_pathway.cwm = weighted.mean(photosynthetic_pathway, relcov),
-    lifespan.cwm = weighted.mean(lifespan, relcov),
-    clonal.cwm = weighted.mean(clonal, relcov),
-    mycorrhizal_type.cwm = weighted.mean(mycorrhizal_type, relcov),
-    n_fixation_type.cwm = weighted.mean(n_fixation_type, relcov)
-    
-    
-  )#%>%
-  #left_join(CoRRE_CWMtraits_cat, by = c("rep", "treatment_year"))
+    SRL.cwm = weighted.mean(SRL, relcov)
+  )%>%
+  left_join(CoRRE_CWMtraits_cat, by = c("rep", "treatment_year"))
 
 
-#summarize.traits.continuous <- traits[,c("species_matched", "SLA", "LDMC", "leaf_N","plant_height_vegetative", "seed_dry_mass", "SRL")]
-#summarize.traits.continuous <- unique(summarize.traits.continuous)
-#summarize.traits.categorical <- traits[,c("species_matched", "growth_form", "photosynthetic_pathway", "lifespan", "clonal", "mycorrhizal_type", "n_fixation")]
-#summarize.traits.categorical <- subset(summarize.traits.categorical, photosynthetic_pathway == "C3" | photosynthetic_pathway == "C4" | photosynthetic_pathway == "CAM")
+summarize.traits.continuous <- traits[,c("species_matched", "SLA", "LDMC", "leaf_N","plant_height_vegetative", "seed_dry_mass", "SRL")]
+summarize.traits.continuous <- unique(summarize.traits.continuous)
+summarize.traits.categorical <- traits[,c("species_matched", "growth_form", "photosynthetic_pathway", "lifespan", "clonal", "mycorrhizal_type", "n_fixation")]
+summarize.traits.categorical <- subset(summarize.traits.categorical, photosynthetic_pathway == "C3" | photosynthetic_pathway == "C4" | photosynthetic_pathway == "CAM")
 
-#summarize.traits <- left_join(summarize.traits.continuous, summarize.traits.categorical, by = "species_matched")                                       
+summarize.traits <- left_join(summarize.traits.continuous, summarize.traits.categorical, by = "species_matched")                                       
 # reassigning row names
-#summarize.traits <- unique(summarize.traits)
+summarize.traits <- unique(summarize.traits)
 
 
 
@@ -588,8 +671,7 @@ tdistances_master <- {}
 
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(summarize.cwm, expgroup == expgroup_vector[i])
-  temp.gow <- gowdis(temp.df[8:ncol(temp.df)
-                             ])
+  temp.gow <- gowdis(temp.df[8:ncol(temp.df)])
   temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
   tdistances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani, treatment_year = temp.df$treatment_year)
   #  tdistances_temp <- subset(tdistances_temp, dist > 0.00000000001) #not necesssary when excluding CO2 treatment
@@ -599,8 +681,7 @@ for(i in 1:length(expgroup_vector)) {
   
 }
 
-mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))%>%
-            separate(expgroup, into = c("site", "project", "community"), sep = "::", remove = FALSE)
+mean.dist.df <- ddply(tdistances_master,.(expgroup, trt_type, treatment, plot_mani, treatment_year), function(x)data.frame( mean_dist = mean(x$dist)))
 
 mean.dist.trait <- mean.dist.df
 
@@ -619,7 +700,7 @@ con.df <- subset(mean.dist.df, plot_mani == 0)%>%
 #  ddply(.(trt_type, treatment_year), function(x)data.frame(
 #    lrr.mean = mean(x$lrr),
 #    lrr.error = qt(0.975, df=length(x$trt_type)-1)*sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)-1),
- #   lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
+#   lrr.se = sd(x$lrr, na.rm=TRUE)/sqrt(length(x$trt_type)),
 #    num_experiments = length(x$expgroup)
 #  ))
 
@@ -632,7 +713,7 @@ con.df <- subset(mean.dist.df, plot_mani == 0)%>%
 #visualize
 #lrr.df.conf$trt_type <- factor(lrr.df.conf$trt_type, levels = c(#"drought", "irr", "temp", 
 #  "N", "P", "mult_nutrient" 
-                                                                #,"mult_GCD", "CO2"
+#,"mult_GCD", "CO2"
 #))
 #ggplot(subset(subset(lrr.df.conf, treatment_year >= 1), trt_type== "N"| trt_type=="P"|trt_type == "mult_nutrient"), aes(trt_type, lrr.mean, color = trt_type))+
 #facet_wrap(~treatment_year)+
@@ -656,9 +737,6 @@ con.df <- subset(mean.dist.df, plot_mani == 0)%>%
 sites.n <- subset(mean.dist.df,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
 sites.p <- subset(mean.dist.df,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
 sites.multnutrient <- subset(mean.dist.df,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
-sites.irr <- subset(mean.dist.df,  trt_type == "irr")%>%dplyr::select(expgroup)%>%unique()
-sites.co2 <- subset(mean.dist.df,  trt_type == "CO2")%>%dplyr::select(expgroup)%>%unique()
-sites.nirr <- subset(mean.dist.df,  trt_type == "N*irr")%>%dplyr::select(expgroup)%>%unique()
 
 #models to test results
 #mod <- lmer(lrr~0+trt_type+ (1|expgroup), data = subset(subset(lrr.df_traits, trt_type == "N" | trt_type == "P"| trt_type == "mult_nutrient"), treatment_year != 0))
@@ -679,49 +757,16 @@ mult.df <-  subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$e
   group_by(trt_type)%>%
   dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
 
-
-irr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
-
-co2.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
-
-nirr.df <- subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()))
-
-
 #stats for Nitrogen effect (traits)
-mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
 #stats for phosphorus effect (traits)
-mod <- feols(mean_dist~trt_type | site+ expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 #stats for multiple nutrient addition effect (traits)
-mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
-summary(mod)
-
-
-#stats for irrigation
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
-summary(mod)
-
-#stats for co2
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
-               subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-               mutate(trt_type = fct_relevel(trt_type, "control"))
-)
-summary(mod)
-
-#stats for N*irr
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
-               subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-               mutate(trt_type = fct_relevel(trt_type, "control"))
-)
+mod <- feols(mean_dist~trt_type | expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
@@ -749,29 +794,6 @@ ggplot(mult.df, aes(trt_type, mean, color = trt_type))+
   theme_base()+
   theme(legend.position="none")
 
-ggplot(irr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
-
-ggplot(co2.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
-
-ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
-  geom_pointrange(aes(ymin = mean-se, ymax = mean+se, color = trt_type ))+
-  scale_color_manual(values = c("black", "#6305dc"))+
-  xlab("")+
-  ylab("Beta diversity")+
-  theme_base()+
-  theme(legend.position="none")
 
 
 #N
@@ -779,46 +801,46 @@ ggplot(nirr.df, aes(trt_type, mean, color = trt_type))+
 #summary(mod)
 
 #stats for Nitrogen effect over time (traits)
-mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
 
-#x <- ggpredict(mod, c("trt_type", "treatment_year"))
-#ggplot(x , aes(x = group, y= predicted, color=x))+
-#  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
-#  scale_color_manual(values = c("black", "#0099f6"))+
-#  xlab("Treatment year")+
-#  ylab("Beta diversity")+
-#  theme_base()
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#0099f6"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
+  theme_base()
 
 
 
 #stats for phosphorus effect (traits)
-mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
 
 
-#x <- ggpredict(mod, c("trt_type", "treatment_year"))
-#ggplot(x , aes(x = group, y= predicted, color=x))+
-#  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
-#  scale_color_manual(values = c("black", "#00b844"))+
-#  xlab("Treatment year")+
-#  ylab("Beta diversity")+
-#  theme_base()
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#00b844"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
+  theme_base()
 
 
 
 #stats for multiple nutrient effect over time (traits)
-mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type*treatment_year | expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
 
 
-#x <- ggpredict(mod, c("trt_type", "treatment_year"))
-#ggplot(x , aes(x = group, y= predicted, color=x))+
-#  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
-#  scale_color_manual(values = c("black", "#6305dc"))+
-#  xlab("Treatment year")+
-#  ylab("Beta diversity")+
-#  theme_base()
+x <- ggpredict(mod, c("trt_type", "treatment_year"))
+ggplot(x , aes(x = group, y= predicted, color=x))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low),position= position_dodge(width = 0.2))+
+  scale_color_manual(values = c("black", "#6305dc"))+
+  xlab("Treatment year")+
+  ylab("Beta diversity")+
+  theme_base()
 
 #ggplot(subset(lrr.df_traits, trt_type == "N" |trt_type == "P" |trt_type == "mult_nutrient" ), aes(treatment_year, lrr, color = trt_type))+
 #  geom_point()+
@@ -846,30 +868,37 @@ summary(mod)
 ###Compare species and trait responses
 
 
-mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("site", "project", "community","expgroup","trt_type", "treatment", "plot_mani","treatment_year"))%>%
-                  mutate(mean_dist.comp = mean_dist.x,mean_dist.trait = mean_dist.y)
+mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("expgroup","trt_type", "treatment", "plot_mani","treatment_year"))%>%
+  mutate(mean_dist.comp = mean_dist.x,mean_dist.trait = mean_dist.y)
 
 #some stats below but I'm not sure what they're good for
-#mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0))
-#summary(mod)
+mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0))
+summary(mod)
 
-#mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "P"|trt_type == "control"), treatment_year != 0))
-#summary(mod)
+mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "P"|trt_type == "control"), treatment_year != 0))
+summary(mod)
 
-#mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
-#summary(mod)
+mod <- feols(mean_dist.trait~mean_dist.comp+trt_type*treatment_year|expgroup , data = subset(subset(mean.dist.both, trt_type == "mult_nutrient"|trt_type == "control"), treatment_year != 0))
+summary(mod)
 
-#ggplot(data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0) , aes(x = mean_dist.comp, y= mean_dist.trait, color=trt_type))+
-#  facet_wrap(~treatment_year)+
-#  geom_point()+
-#  geom_smooth(method = "lm")+
-#  #  geom_hline(yintercept = 0)+
-#  theme_base()
+ggplot(data = subset(subset(mean.dist.both, trt_type == "N"|trt_type == "control"), treatment_year != 0) , aes(x = mean_dist.comp, y= mean_dist.trait, color=trt_type))+
+  facet_wrap(~treatment_year)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  #  geom_hline(yintercept = 0)+
+  theme_base()
+
+
+
+
+#lrr_sp.tr <- left_join(lrr.df_species, lrr.df_traits, by = c("expgroup", "trt_type", "treatment", "plot_mani", "treatment_year"), keep = FALSE)%>%
+#  dplyr::rename(c(lrr.species = lrr.x, lrr.traits = lrr.y))%>%
+#  tidyr::separate( expgroup, c("site_code", "project", "community"), sep = "::", remove = FALSE)
 
 
 #visualize
 #lrr_sp.tr$trt_type <- factor(lrr_sp.tr$trt_type, levels = c("drought", "irr", "temp", "N", "P", "mult_nutrient" 
-                                                            #,"mult_GCD", "CO2"
+#,"mult_GCD", "CO2"
 #))
 
 #library(ggpmisc)
@@ -882,10 +911,10 @@ mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("site", "pro
 #  geom_vline(xintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+
 #  ylim(-1.1, 2.4)+
 #  xlim(-1.1, 2.4)+
-  #stat_fit_glance(method = 'lm',
-  #method.args = list(formula = formula),
-  #                geom = 'text',
-  #                aes(label = paste("P-value = ", signif(..p.value.., digits = 3), sep = "")))+
+#stat_fit_glance(method = 'lm',
+#method.args = list(formula = formula),
+#                geom = 'text',
+#                aes(label = paste("P-value = ", signif(..p.value.., digits = 3), sep = "")))+
 #  xlab("LRR species composition beta diversity")+
 #  ylab("LRR trait composition beta diversity")+
 #  scale_color_manual(values = c("#df0000","#0099f6", "orange", "#00b844","#f2c300","#6305dc"))+
@@ -982,8 +1011,8 @@ CoRRE_project_summary <- CoRRE_project_summary %>% dplyr::select(-c(project_name
 #library(grf)
 
 dist.both <- mean.dist.both%>%
-  mutate(site_code = site)%>%
-  left_join(CoRRE_siteLocationClimate_Dec2021, by = "site_code")
+  tidyr::separate(expgroup, into = c("site_code", "project", "community"), sep = "::", remove = FALSE)%>%
+  left_join(CoRRE_siteLocationClimate_Dec2021, by = c("site_code"))
 
 sites.n <- subset(dist.both,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
 sites.p <- subset(dist.both,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
@@ -1009,43 +1038,43 @@ mult.df <- dist.both%>%
 #tau.forest <- causal_forest(x = matrix(n.df$MAP, n.df$MAT, n.df$rrich), y = n.df$mean_dist.comp, w = n.df$trt_type)
 
 ##NITROGEN
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site + expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = n.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site + expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = n.df)
 summary(mod)
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT| site+expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = n.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = n.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = n.df)
 summary(mod)
 
 
 #PHOSPHORUS
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = p.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = p.df)
 summary(mod)
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = p.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = p.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = p.df)
 summary(mod)
 
 #mult nutrient
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|expgroup+treatment_year, data = mult.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|expgroup+treatment_year, data = mult.df)
 summary(mod)
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|expgroup+treatment_year, data = mult.df)
 summary(mod)
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = mult.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|expgroup+treatment_year, data = mult.df)
 summary(mod)
 
 
@@ -1068,8 +1097,8 @@ sites.multnutrient <- subset(mean.dist.both,  trt_type == "mult_nutrient")%>%dpl
 
 
 n.df <- mean.dist.both%>%
-        subset(expgroup %in% sites.n$expgroup)%>%
-        subset(trt_type=="N"|trt_type=="control")%>%
+  subset(expgroup %in% sites.n$expgroup)%>%
+  subset(trt_type=="N"|trt_type=="control")%>%
   left_join( unite(data= treatment_info, expgroup, c("site_code", "project", "community"), sep = "::"), by = c("expgroup", "plot_mani", "trt_type", "treatment"))
 
 
@@ -1085,10 +1114,10 @@ mult.df <- mean.dist.both%>%
 
 ##Nitrogen gradient
 
-mod <- feols(mean_dist.comp~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
+mod <- feols(mean_dist.comp~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
 
-mod <- feols(mean_dist.trait~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
+mod <- feols(mean_dist.trait~ n | expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
 
 ggplot(n.df, aes(x=n, y=mean_dist.comp, color=trt_type))+
@@ -1123,10 +1152,10 @@ ggplot(n.df, aes(x=n, y=mean_dist.trait))+
 
 ##P gradient
 
-mod <- feols(mean_dist.comp~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
+mod <- feols(mean_dist.comp~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
 
-mod <- feols(mean_dist.trait~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
+mod <- feols(mean_dist.trait~ p | expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
 
 ggplot(p.df, aes(x=p, y=mean_dist.comp, color = trt_type))+
@@ -1145,10 +1174,10 @@ ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
 
 
 ##mult nutrient (number of nutrients)
-mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
+mod <- feols(mean_dist.comp~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
 
-mod <- feols(mean_dist.trait~ plot_mani | site+expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
+mod <- feols(mean_dist.trait~ plot_mani | expgroup+treatment_year, data = subset(mult.df, plot_mani != 0))
 summary(mod)
 
 ggplot(mult.df, aes(x=plot_mani, y=mean_dist.comp, color=trt_type))+
@@ -1166,38 +1195,6 @@ ggplot(mult.df, aes(x=plot_mani, y=mean_dist.trait, color=trt_type))+
   theme_base()
 
 
-###BIG FIGURE PUT IN ALL TOGETHER BABY PLOT MANI FOR THE WIN
-
-mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+treatment_year, data = mean.dist.both
-              # subset(mean.dist.both, plot_mani != 0)
-             )
-summary(mod)
-
-x <- ggpredict(mod, c("plot_mani"))
-ggplot(mean.dist.both, aes(x=plot_mani, y=mean_dist.comp))+
-  #facet_wrap(~treatment_year)+
-  geom_point(aes( color = trt_type), alpha = 0.1)+
-  geom_smooth(data = x, aes(x, predicted), se = FALSE)+
-  # scale_color_manual(values = c("black", "#00b844"))+
-  geom_hline(yintercept = 0)+
-  theme_base()
-
-
-mod <- feols(mean_dist.trait~ plot_mani | site+expgroup+treatment_year, data = mean.dist.both
-             # subset(mean.dist.both, plot_mani != 0)
-)
-summary(mod)
-
-
-x <- ggpredict(mod, c("plot_mani"))
-ggplot(mean.dist.both, aes(x=plot_mani, y=mean_dist.trait))+
-  #facet_wrap(~treatment_year)+
-  geom_point(aes( color = trt_type), alpha = 0.1)+
-  geom_smooth(data = x, aes(x, predicted), se = FALSE)+
-#  geom_smooth(method = "loess")+
-  # scale_color_manual(values = c("black", "#00b844"))+
-  geom_hline(yintercept = 0)+
-  theme_base()
 
 
 #scale_color_manual(values = c("black", "#0099f6"))+
@@ -1550,8 +1547,8 @@ ggsave(
 #r2
 
 #r2%>%
-  #subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
-  #mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
+#subset(term == "sub.rich" | term == "sub.eve" | term == "sub.rank" | term == "sub.sp")%>%
+#mutate(term = factor(term, levels = c("sub.sp","sub.eve",  "sub.rich", "sub.rank"))) %>%
 #  subset(term != "(Intercept)" )%>%
 #  tibble::add_column(sig = c("0","0", "0", "0"))%>%
 #  ggplot( aes(term, estimate, fill = sig))+

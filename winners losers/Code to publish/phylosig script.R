@@ -26,8 +26,8 @@ library(dplyr)
 #sCorre species response DCiDiff on the phylogeny and phylogenetic signal#
 
 #Load data
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.dec2021", sep="")) #load tree
-dd<-read.csv(paste(my.wd,"Species_DCiDiff_Nov2022.csv",sep=""), header=T)
+tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.March2024", sep="")) #load tree
+dd<-read.csv(paste(my.wd,"Species_DCiDiff_March2024.csv",sep=""), header=T)
 
 dd$species_matched<-gsub(" ", "_", dd$species_matched) #unify nomenclature
 str(dd)
@@ -75,7 +75,7 @@ for (i in 1:length(trt))
   output[i,5]<-blomb$P
 }
 
-#write.csv(output, paste(my.wd,"phylo_signal.csv",sep=""), row.names = F)
+write.csv(output, paste(my.wd,"phylo_signal_March2024.csv",sep=""), row.names = F)
 
 
 
