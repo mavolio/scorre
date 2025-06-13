@@ -76,13 +76,3 @@ rDiv <- richness %>%
 
 #save output:
 saveRDS(rDiv, file = "PhyDiv_FuncDiv/rDiv.rds")
-
-
-
-
-
-
-
-
-
-
