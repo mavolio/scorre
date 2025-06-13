@@ -1,7 +1,7 @@
 #### Emily Grman modified emily DCi trends through time.R
 #### Dec 13, 2022 sCoRRE meeting 4 at iDiv
 #### May 10, 2023 sCoRRE meeting 4.1 at UNCG
-#### June 12, 2025 sCoRRE meeting 5 at JHU
+#### June 12-13, 2025 sCoRRE meeting 5 at JHU
 
 rm(list=ls())
 
@@ -446,7 +446,7 @@ ggplot(aes(control.fischer.slope, trt.fischer.slope, color=trait), data=mean_trt
 ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer change in controls vs change in trt.pdf", sep=""), width=10, height=7)
 
 ggplot(aes(control.fischer.slope, trt.fischer.slope, color=trait), data=mean_trt_change_over_time_L) + geom_point(aes(shape=my_trt)) + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(8, 2, 16, 17, 10, 1, 5, 15)) + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer change in controls vs change in trt.pdf", sep=""), width=10, height=7)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer change in controls vs change in trt, dist and undist.pdf", sep=""), width=10, height=7)
 
 #need to do major axis regression or reduced major axis regression--they differ in some details but test deviation from 1:1 line rather than deviation from slope=0?
 #adam says orthogonal regression because assumes error in both axes and therefore tries to minimize distance from point to line in both directions and not just y
@@ -499,7 +499,8 @@ Ndep=read.csv(paste(my.wd, "CoRRE data/CoRRE data/environmental data/CoRRE_Ndepo
   summarize(Ndep_NEW=mean(N_Deposition)) %>% 
   left_join(NdepOLD) %>%
   ungroup()
-ggplot(aes(NdepOLD, NdepNEW), data=drivers) + geom_point()  
+ggplot(aes(Ndep_OLD, Ndep_NEW), data=Ndep) + geom_point()
+cor(Ndep$Ndep_OLD, Ndep$Ndep_NEW)
   
 drivers=AnnualPrecip %>%
   left_join(SummerTmax) %>%
