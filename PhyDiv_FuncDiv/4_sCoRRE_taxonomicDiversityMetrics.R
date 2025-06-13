@@ -19,47 +19,40 @@ se <- function(x, na.rm=na.rm){
 }
 
 ##### data #####
-#treatment data
-trt <- read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RawAbundanceMarch2024.csv') %>%
-  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id) %>%
-  unique() %>%
-  left_join(read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_ExperimentInfo_March2024.csv')) %>%
-  group_by(site_code, project_name, community_type) %>%
-  mutate(experiment_length=max(treatment_year)) %>%
-  ungroup() %>%
-  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp)
 
-#species relative cover data
-relCover <- read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCoverMarch2024.csv') %>%
-  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>%
-  mutate(plot_id=ifelse(project_name=='IRG', paste(block, plot_id, sep='__'), plot_id)) %>% 
-  mutate(replicate=paste(site_code, project_name, community_type, treatment, plot_id, sep='::')) #creating identifying column of each plot
+#spp names
+names <- readRDS('PhyDiv_FuncDiv/sppList.rds')
+
+#community data
+comm <- readRDS('PhyDiv_FuncDiv/PD_FD_comm.rds') %>% 
+  mutate(replicate=paste(site_code, project_name, community_type, treatment, plot_id, sep='::'))
+
+#treatment data
+trt <- readRDS('PhyDiv_FuncDiv/trt_info.rds')
 
 
 ##### calculate diversity metrics ##### 
 #getting community diversity metrics for each plot
-richness <- community_structure(relCover, time.var="calendar_year", abundance.var="relcov", replicate.var="replicate") %>%
+richness <- community_structure(comm, time.var="calendar_year", abundance.var="relcov", replicate.var="replicate") %>%
   separate(replicate, into=c("site_code", "project_name", "community_type", "treatment", "plot_id"), sep='::')
 
 #hill numbers
-sppMatrix <- relCover %>% 
+sppMatrix <- comm %>% 
   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-  select(site_proj_comm, treatment, calendar_year, plot_id, genus_species, relcov) %>% 
-  group_by(site_proj_comm, treatment, calendar_year, plot_id, genus_species) %>% 
-  summarise(relcov=mean(relcov)) %>% #average for CHY EDGE, which has multiple values per plot
-  ungroup() %>% 
-  filter(genus_species!='')
+  select(site_proj_comm, treatment, calendar_year, plot_id, species, relcov) %>% 
+  filter(species!='')
 
 label <- sppMatrix %>%
   select(site_proj_comm) %>%
   unique()
 
-hillNumbers <- data.frame(row.names=1) 
 
 #calculate richness for each site
+hillNumbers <- data.frame(row.names=1) 
+
 for(i in 1:length(label$site_proj_comm)) {
   subset <- sppMatrix[sppMatrix$site_proj_comm==as.character(label$site_proj_comm[i]),] %>% 
-            pivot_wider(names_from=genus_species, values_from=relcov, values_fill=0)
+            pivot_wider(names_from=species, values_from=relcov, values_fill=0)
   
   hill <- hill_taxa(subset[,-1:-4], q = 1, MARGIN = 1, base = exp(1))
   
