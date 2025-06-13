@@ -19,7 +19,8 @@ library(tidyverse)
 names <- readRDS('PhyDiv_FuncDiv/sppList.rds')
 
 #community data
-comm <- readRDS('PhyDiv_FuncDiv/PD_FD_commData.rds')
+comm <- readRDS('PhyDiv_FuncDiv/PD_FD_comm.rds')
+commFull <- readRDS('PhyDiv_FuncDiv/PD_FD_commFull.rds')
 
 #treatment data
 trt <- readRDS('PhyDiv_FuncDiv/trt_info.rds')
