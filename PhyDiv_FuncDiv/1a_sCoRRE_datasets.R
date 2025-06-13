@@ -134,6 +134,7 @@ comm <- comm2 %>%
   filter(!is.na(family)) %>% #remove species without continuous trait data (drops 57,888 data points, 17.3% of data)
   left_join(totCover) %>% 
   mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% #rename plot id for NSFC expt
+  mutate(plot_id=ifelse(project_name=='IRG', paste(block, plot_id, sep='_'), plot_id)) %>% 
   select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, trt_type2, block, plot_id, family, species, relcov, totcov) %>% 
   mutate(plot_id2 = paste(site_code, project_name, community_type, calendar_year, plot_id, sep = "::")) %>%  #create new plot identifier
   group_by(plot_id2) %>% 
@@ -145,7 +146,7 @@ comm <- comm2 %>%
 
 #lists
 spp <- comm %>% select(family, species) %>% unique() #1286 spp
-plots <- comm %>% select(site_code, project_name, community_type, plot_id) %>% unique() #3221 plots
+plots <- comm %>% select(site_code, project_name, community_type, plot_id) %>% unique() #3240 plots
 expt <- comm %>% select(site_code, project_name, community_type) %>% unique() #122 experiments
 sites <- unique(comm$site_code) #65 sites
 
