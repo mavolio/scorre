@@ -84,64 +84,39 @@ comm2 <- read.table("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups
   mutate(drop=ifelse(site_code=="CDR" & treatment %in% c(2, 3, 4, 5, 7),
                      1, 0)) %>% #drop some of the CDR e001 and e002 treatments to prevent over-representation
   filter(drop==0) %>%
-  filter(!(project_name %in% c('gap'))) #remove pulse light expt
-
-#total cover
-totCover <- comm2 %>% 
-  left_join(names) %>% 
-  filter(!is.na(species_matched)) %>% #remove species identified only to genus level
-  select(-genus_species) %>% 
-  rename(species=species_matched) %>%
-  full_join(traitSpecies) %>% 
-  filter(!is.na(family)) %>% #remove species without continuous trait data
-  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id) %>% 
-  summarize(totcov=sum(relcov), .groups='drop') #total cover of remaining species (8842 of plots are <0.8 totcov, will be dropped; 27.6% of plots)
-
-hist(totCover$totcov)
-
-test <- comm2 %>% 
-  left_join(names) %>% 
-  filter(is.na(species_matched))
-
-hist(test$relcov)
-
-trtUnfltered <- comm2 %>% 
-  select(site_code, project_name, community_type, treatment, trt_type2) %>% 
-  filter(trt_type2!='control') %>% 
-  unique()
-
-trtFiltered <- comm %>% 
-  select(site_code, project_name, community_type, treatment, trt_type2) %>% 
-  filter(trt_type2!='control') %>% 
-  unique()
-
-ctlUnfiltered <- comm2 %>% 
-  select(site_code, project_name, community_type, treatment, trt_type2) %>% 
-  filter(trt_type2=='control') %>% 
-  unique()
-
-ctlFiltered <- comm %>% 
-  select(site_code, project_name, community_type, treatment, trt_type2) %>% 
-  filter(trt_type2=='control') %>% 
-  unique()
-
-comm <- comm2 %>% 
+  filter(!(project_name %in% c('gap'))) %>% #remove pulse light expt
+  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% #rename plot id for NSFC expt
+  mutate(plot_id=ifelse(project_name=='IRG', paste(block, plot_id, sep='_'), plot_id)) %>% 
   left_join(names) %>% 
   filter(!is.na(species_matched)) %>% #remove species identified only to genus level (drops 22,966 data points, 6.4% of data)
   select(-genus_species) %>% 
   rename(species=species_matched) %>% 
+  group_by(site_code, project_name, community_type, calendar_year, treatment, trt_type2, plot_id, species) %>% 
+  summarise(relcov=sum(relcov), .groups='drop') #add together species that were given different names by the investigator, but are the same with cleaned names
+
+#total cover
+totCover <- comm2 %>% 
+  full_join(traitSpecies) %>% 
+  filter(!is.na(family)) %>% #remove species without continuous trait data
+  group_by(site_code, project_name, community_type, calendar_year, treatment, plot_id) %>% 
+  summarize(totcov=sum(relcov), .groups='drop') #total cover of remaining species (11,742 of plots are <0.8 totcov, will be dropped; 36.6% of plots)
+
+hist(totCover$totcov)
+
+
+commFull <- comm2 %>% 
   left_join(traitSpecies) %>% 
-  filter(!is.na(family)) %>% #remove species without continuous trait data (drops 57,888 data points, 17.3% of data)
+  filter(!is.na(family)) %>% #remove species without continuous trait data (drops 57,886 data points, 17.3% of data)
   left_join(totCover) %>% 
-  mutate(plot_id=ifelse(project_name=='NSFC', paste(plot_id, treatment, sep='__'), plot_id)) %>% #rename plot id for NSFC expt
-  mutate(plot_id=ifelse(project_name=='IRG', paste(block, plot_id, sep='_'), plot_id)) %>% 
-  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, trt_type2, block, plot_id, family, species, relcov, totcov) %>% 
+  select(site_code, project_name, community_type, calendar_year, treatment, trt_type2, plot_id, family, species, relcov, totcov) %>% 
   mutate(plot_id2 = paste(site_code, project_name, community_type, calendar_year, plot_id, sep = "::")) %>%  #create new plot identifier
   group_by(plot_id2) %>% 
   mutate(richness=length(species)) %>% 
   ungroup() %>% 
-  filter(richness>1) %>%  #remove plots with only one species (drops 970 data points, 0.1% of data)
-  filter(totcov>0.8) %>% #remove plots with less than 80% cover of species with known trait values (drops 67,366 data points, 24.3% of data points)
+  filter(richness>1) #remove plots with only one species (drops 970 data points, 0.3% of data)
+
+comm <- commFull %>% 
+  filter(totcov>0.8) %>% #remove plots with less than 80% cover of species with known trait values (drops 66,364 data points, 24.0% of data points)
   select(-totcov)
 
 #lists
@@ -154,5 +129,6 @@ sites <- unique(comm$site_code) #65 sites
 #### save data ####
 
 # saveRDS(trtAnalysis, file = "PhyDiv_FuncDiv/trt_info.rds") # saving subset of CoRRE database for analysis
-# saveRDS(comm, file = "PhyDiv_FuncDiv/PD_FD_commData.rds") # saving subset of CoRRE database for analysis
+# saveRDS(comm, file = "PhyDiv_FuncDiv/PD_FD_comm.rds") # saving subset of CoRRE database for analysis
+# saveRDS(commFull, file = "PhyDiv_FuncDiv/PD_FD_commFull.rds") # saving subset of CoRRE database for analysis
 # saveRDS(spp, file = "PhyDiv_FuncDiv/sppList.rds") # saving species list for analysis
