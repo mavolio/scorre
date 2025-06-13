@@ -81,6 +81,7 @@ trtAnalysis <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working gr
 comm2 <- read.table("C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RelativeCoverMarch2024.csv", header=T, sep=",", fill = TRUE) %>% 
   right_join(trtAnalysis) %>%
   mutate(trt_binary=ifelse(plot_mani>0, 1, 0)) %>% 
+  filter(treatment_year>0) %>% #remove pre-treatment data
   mutate(drop=ifelse(site_code=="CDR" & treatment %in% c(2, 3, 4, 5, 7),
                      1, 0)) %>% #drop some of the CDR e001 and e002 treatments to prevent over-representation
   filter(drop==0) %>%
@@ -99,29 +100,29 @@ totCover <- comm2 %>%
   full_join(traitSpecies) %>% 
   filter(!is.na(family)) %>% #remove species without continuous trait data
   group_by(site_code, project_name, community_type, calendar_year, treatment, plot_id) %>% 
-  summarize(totcov=sum(relcov), .groups='drop') #total cover of remaining species (11,742 of plots are <0.8 totcov, will be dropped; 36.6% of plots)
+  summarize(totcov=sum(relcov), .groups='drop') #total cover of remaining species (11,361 of plots are <0.8 totcov, will be dropped; 36.4% of plots)
 
 hist(totCover$totcov)
 
 
 commFull <- comm2 %>% 
   left_join(traitSpecies) %>% 
-  filter(!is.na(family)) %>% #remove species without continuous trait data (drops 57,886 data points, 17.3% of data)
+  filter(!is.na(family)) %>% #remove species without continuous trait data (drops 56,178 data points, 17.3% of data)
   left_join(totCover) %>% 
   select(site_code, project_name, community_type, calendar_year, treatment, trt_type2, plot_id, family, species, relcov, totcov) %>% 
   mutate(plot_id2 = paste(site_code, project_name, community_type, calendar_year, plot_id, sep = "::")) %>%  #create new plot identifier
   group_by(plot_id2) %>% 
   mutate(richness=length(species)) %>% 
   ungroup() %>% 
-  filter(richness>1) #remove plots with only one species (drops 970 data points, 0.3% of data)
+  filter(richness>1) #remove plots with only one species (drops 959 data points, 0.3% of data)
 
 comm <- commFull %>% 
-  filter(totcov>0.8) %>% #remove plots with less than 80% cover of species with known trait values (drops 66,364 data points, 24.0% of data points)
+  filter(totcov>0.8) %>% #remove plots with less than 80% cover of species with known trait values (drops 63,658 data points, 23.7% of data points)
   select(-totcov)
 
 #lists
-spp <- comm %>% select(family, species) %>% unique() #1286 spp
-plots <- comm %>% select(site_code, project_name, community_type, plot_id) %>% unique() #3240 plots
+spp <- comm %>% select(family, species) %>% unique() #1282 spp
+plots <- comm %>% select(site_code, project_name, community_type, plot_id) %>% unique() #3225 plots
 expt <- comm %>% select(site_code, project_name, community_type) %>% unique() #122 experiments
 sites <- unique(comm$site_code) #65 sites
 
