@@ -562,7 +562,7 @@ for(i in 1:length(spclist)) {
   winterreg.lag10year=lm(WinterTmin~lag10date, data=dat.lag10year)
   annprecip.lag10year=lm(AnnualPrecip~lag10date, data=dat.lag10year)
   
-  tempi=data.frame(row.names=i, site_project_comm=as.character(spclist[i]), change_in_SummerTmax.vegyear=summerreg.vegyear$coefficients[2], change_in_WinterTmin.vegyear=winterreg.vegyear$coefficients[2], change_in_AnnualPrecip.vegyear=annprecip.vegyear$coefficients[2], change_in_SummerTmax.lag5year=summerreg.lag5year$coefficients[2], change_in_WinterTmin.lag5year=winterreg.lag5year$coefficients[2], change_in_AnnualPrecip.lag5year=annprecip.lag5year$coefficients[2], change_in_SummerTmax.lag10year=summerreg.lag10year$coefficients[2], change_in_WinterTmin.lag10year=winterreg.lag10year$coefficients[2], change_in_AnnualPrecip.lag10year=annprecip.lag10year$coefficients[2], Ndep_2016=mean(dat.vegyear$Ndep_2016, na.rm=T))
+  tempi=data.frame(row.names=i, site_project_comm=as.character(spclist[i]), change_in_SummerTmax.vegyear=summerreg.vegyear$coefficients[2], change_in_WinterTmin.vegyear=winterreg.vegyear$coefficients[2], change_in_AnnualPrecip.vegyear=annprecip.vegyear$coefficients[2], change_in_SummerTmax.lag5year=summerreg.lag5year$coefficients[2], change_in_WinterTmin.lag5year=winterreg.lag5year$coefficients[2], change_in_AnnualPrecip.lag5year=annprecip.lag5year$coefficients[2], change_in_SummerTmax.lag10year=summerreg.lag10year$coefficients[2], change_in_WinterTmin.lag10year=winterreg.lag10year$coefficients[2], change_in_AnnualPrecip.lag10year=annprecip.lag10year$coefficients[2], Ndep_OLD=mean(dat.vegyear$Ndep_OLD, na.rm=T), Ndep_NEW=mean(dat.vegyear$Ndep_NEW, na.rm=T))
 
   global_change=rbind(global_change, tempi)
 }
@@ -577,12 +577,12 @@ global_change_in_fg <- change_over_time %>%
 # SPLITTING DISTURBED AND UNDISTURBED
 mean_global_change_in_fg <- global_change_in_fg %>% 
   group_by(site_code, disturbance, property, trait) %>% 
-  summarize(nstudies=length(DCi.slope), DCi.slope=mean(DCi.slope), relabund.slope=mean(relabund.slope), rawabund.slope=mean(rawabund.slope), fischer.slope=mean(fischer.slope), change_in_SummerTmax.vegyear=mean(change_in_SummerTmax.vegyear), change_in_WinterTmin.vegyear=mean(change_in_WinterTmin.vegyear), change_in_AnnualPrecip.vegyear=mean(change_in_AnnualPrecip.vegyear), change_in_SummerTmax.lag5year=mean(change_in_SummerTmax.lag5year), change_in_WinterTmin.lag5year=mean(change_in_WinterTmin.lag5year), change_in_AnnualPrecip.lag5year=mean(change_in_AnnualPrecip.lag5year), change_in_SummerTmax.lag10year=mean(change_in_SummerTmax.lag10year), change_in_WinterTmin.lag10year=mean(change_in_WinterTmin.lag10year), change_in_AnnualPrecip.lag10year=mean(change_in_AnnualPrecip.lag10year), Ndep_2016=mean(Ndep_2016)) %>% 
+  summarize(nstudies=length(DCi.slope), DCi.slope=mean(DCi.slope), relabund.slope=mean(relabund.slope), rawabund.slope=mean(rawabund.slope), fischer.slope=mean(fischer.slope), change_in_SummerTmax.vegyear=mean(change_in_SummerTmax.vegyear), change_in_WinterTmin.vegyear=mean(change_in_WinterTmin.vegyear), change_in_AnnualPrecip.vegyear=mean(change_in_AnnualPrecip.vegyear), change_in_SummerTmax.lag5year=mean(change_in_SummerTmax.lag5year), change_in_WinterTmin.lag5year=mean(change_in_WinterTmin.lag5year), change_in_AnnualPrecip.lag5year=mean(change_in_AnnualPrecip.lag5year), change_in_SummerTmax.lag10year=mean(change_in_SummerTmax.lag10year), change_in_WinterTmin.lag10year=mean(change_in_WinterTmin.lag10year), change_in_AnnualPrecip.lag10year=mean(change_in_AnnualPrecip.lag10year), Ndep_OLD=mean(Ndep_OLD), Ndep_NEW=mean(Ndep_NEW)) %>% 
   ungroup()
 #LUMPING  
 mean_global_change_in_fg_L <- global_change_in_fg %>% 
   group_by(site_code, property, trait) %>% 
-  summarize(nstudies=length(DCi.slope), DCi.slope=mean(DCi.slope), relabund.slope=mean(relabund.slope), rawabund.slope=mean(rawabund.slope), fischer.slope=mean(fischer.slope), change_in_SummerTmax.vegyear=mean(change_in_SummerTmax.vegyear), change_in_WinterTmin.vegyear=mean(change_in_WinterTmin.vegyear), change_in_AnnualPrecip.vegyear=mean(change_in_AnnualPrecip.vegyear), change_in_SummerTmax.lag5year=mean(change_in_SummerTmax.lag5year), change_in_WinterTmin.lag5year=mean(change_in_WinterTmin.lag5year), change_in_AnnualPrecip.lag5year=mean(change_in_AnnualPrecip.lag5year), change_in_SummerTmax.lag10year=mean(change_in_SummerTmax.lag10year), change_in_WinterTmin.lag10year=mean(change_in_WinterTmin.lag10year), change_in_AnnualPrecip.lag10year=mean(change_in_AnnualPrecip.lag10year), Ndep_2016=mean(Ndep_2016)) %>% 
+  summarize(nstudies=length(DCi.slope), DCi.slope=mean(DCi.slope), relabund.slope=mean(relabund.slope), rawabund.slope=mean(rawabund.slope), fischer.slope=mean(fischer.slope), change_in_SummerTmax.vegyear=mean(change_in_SummerTmax.vegyear), change_in_WinterTmin.vegyear=mean(change_in_WinterTmin.vegyear), change_in_AnnualPrecip.vegyear=mean(change_in_AnnualPrecip.vegyear), change_in_SummerTmax.lag5year=mean(change_in_SummerTmax.lag5year), change_in_WinterTmin.lag5year=mean(change_in_WinterTmin.lag5year), change_in_AnnualPrecip.lag5year=mean(change_in_AnnualPrecip.lag5year), change_in_SummerTmax.lag10year=mean(change_in_SummerTmax.lag10year), change_in_WinterTmin.lag10year=mean(change_in_WinterTmin.lag10year), change_in_AnnualPrecip.lag10year=mean(change_in_AnnualPrecip.lag10year), Ndep_OLD=mean(Ndep_OLD), Ndep_NEW=mean(Ndep_NEW)) %>% 
   ungroup()
 
 ###   DO FUNCTIONAL GROUPS IN THE CONTROL PLOTS RESPOND DIFFERENTLY TO THE DRIVERS OVER THE TIMESCALES OF THE EXPERIMENTS?   ###  fischer.cover only
@@ -590,9 +590,9 @@ mean_global_change_in_fg_L <- global_change_in_fg %>%
 
 #first, checking for correlations among our predictor variables:
 
-pairs(global_change_in_fg[,c("change_in_SummerTmax.vegyear", "change_in_WinterTmin.vegyear", "change_in_AnnualPrecip.vegyear", "Ndep_2016")]) 
-pairs(global_change_in_fg[,c("change_in_SummerTmax.lag5year", "change_in_WinterTmin.lag5year", "change_in_AnnualPrecip.lag5year", "Ndep_2016")])
-pairs(global_change_in_fg[,c("change_in_SummerTmax.lag10year", "change_in_WinterTmin.lag10year", "change_in_AnnualPrecip.lag10year", "Ndep_2016")])
+pairs(global_change_in_fg[,c("change_in_SummerTmax.vegyear", "change_in_WinterTmin.vegyear", "change_in_AnnualPrecip.vegyear", "Ndep_OLD", "Ndep_NEW")]) 
+pairs(global_change_in_fg[,c("change_in_SummerTmax.lag5year", "change_in_WinterTmin.lag5year", "change_in_AnnualPrecip.lag5year", "Ndep_OLD", "Ndep_NEW")])
+pairs(global_change_in_fg[,c("change_in_SummerTmax.lag10year", "change_in_WinterTmin.lag10year", "change_in_AnnualPrecip.lag10year", "Ndep_OLD", "Ndep_NEW")])
 
 #how much difference does it make to include the different lags?
 pairs(global_change_in_fg[,c("change_in_SummerTmax.vegyear", "change_in_SummerTmax.lag5year", "change_in_SummerTmax.lag10year")])
@@ -611,26 +611,26 @@ propertylist=unique(mean_global_change_in_fg_undist$property)
 fg_fischer.vegdate=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.vegyear + change_in_WinterTmin.vegyear + change_in_AnnualPrecip.vegyear + Ndep_2016 + trait:change_in_SummerTmax.vegyear + trait:change_in_WinterTmin.vegyear + trait:change_in_AnnualPrecip.vegyear + trait:Ndep_2016, data=mean_global_change_in_fg_undist[mean_global_change_in_fg_undist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.vegyear + change_in_WinterTmin.vegyear + change_in_AnnualPrecip.vegyear + Ndep_NEW + trait:change_in_SummerTmax.vegyear + trait:change_in_WinterTmin.vegyear + trait:change_in_AnnualPrecip.vegyear + trait:Ndep_NEW, data=mean_global_change_in_fg_undist[mean_global_change_in_fg_undist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
   fg_fischer.vegdate=rbind(fg_fischer.vegdate, temp)
 }
 
-#qqplots look pretty OK?
+#qqplots look pretty OK? except mycorrhizal type
 
 ggplot(aes(change_in_SummerTmax.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax no lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in SummerTmax no lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin no lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in WinterTmin no lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip no lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in AnnualPrecip no lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition no lag, site averages.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to N deposition no lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 # 5 year lag, with site averages
@@ -639,7 +639,7 @@ propertylist=unique(mean_global_change_in_fg_undist$property)
 fg_fischer.lag5date=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag5year + change_in_WinterTmin.lag5year + change_in_AnnualPrecip.lag5year + Ndep_2016 + trait:change_in_SummerTmax.lag5year + trait:change_in_WinterTmin.lag5year + trait:change_in_AnnualPrecip.lag5year + trait:Ndep_2016, data=mean_global_change_in_fg_undist[mean_global_change_in_fg_undist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag5year + change_in_WinterTmin.lag5year + change_in_AnnualPrecip.lag5year + Ndep_NEW + trait:change_in_SummerTmax.lag5year + trait:change_in_WinterTmin.lag5year + trait:change_in_AnnualPrecip.lag5year + trait:Ndep_NEW, data=mean_global_change_in_fg_undist[mean_global_change_in_fg_undist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -649,16 +649,16 @@ for(i in 1:length(propertylist)) {
 #qqplots maybe OK?
 
 ggplot(aes(change_in_SummerTmax.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 5 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in SummerTmax 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 5 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in WinterTmin 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 5 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in AnnualPrecip 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 5 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to N deposition 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 
@@ -668,7 +668,7 @@ propertylist=unique(mean_global_change_in_fg_undist$property)
 fg_fischer.lag10date=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag10year + change_in_WinterTmin.lag10year + change_in_AnnualPrecip.lag10year + Ndep_2016 + trait:change_in_SummerTmax.lag10year + trait:change_in_WinterTmin.lag10year + trait:change_in_AnnualPrecip.lag10year + trait:Ndep_2016, data=mean_global_change_in_fg_undist[mean_global_change_in_fg_undist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag10year + change_in_WinterTmin.lag10year + change_in_AnnualPrecip.lag10year + Ndep_NEW + trait:change_in_SummerTmax.lag10year + trait:change_in_WinterTmin.lag10year + trait:change_in_AnnualPrecip.lag10year + trait:Ndep_NEW, data=mean_global_change_in_fg_undist[mean_global_change_in_fg_undist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -678,16 +678,16 @@ for(i in 1:length(propertylist)) {
 #qqplots maybe OK?
 
 ggplot(aes(change_in_SummerTmax.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 10 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in SummerTmax 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 10 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in WinterTmin 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 10 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to changes in AnnualPrecip 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 10 year lag, site averages.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_undist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses to N deposition 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 #DISTURBED:
@@ -700,7 +700,7 @@ propertylist=unique(mean_global_change_in_fg_dist$property)
 fg_fischer.vegdate=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.vegyear + change_in_WinterTmin.vegyear + change_in_AnnualPrecip.vegyear + Ndep_2016 + trait:change_in_SummerTmax.vegyear + trait:change_in_WinterTmin.vegyear + trait:change_in_AnnualPrecip.vegyear + trait:Ndep_2016, data=mean_global_change_in_fg_dist[mean_global_change_in_fg_dist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.vegyear + change_in_WinterTmin.vegyear + change_in_AnnualPrecip.vegyear + Ndep_NEW + trait:change_in_SummerTmax.vegyear + trait:change_in_WinterTmin.vegyear + trait:change_in_AnnualPrecip.vegyear + trait:Ndep_NEW, data=mean_global_change_in_fg_dist[mean_global_change_in_fg_dist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -710,16 +710,16 @@ for(i in 1:length(propertylist)) {
 #qqplots look QUESTIONABLE--do we even have enough data to do this analysis?
 
 ggplot(aes(change_in_SummerTmax.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax no lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in SummerTmax no lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin no lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in WinterTmin no lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip no lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in AnnualPrecip no lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition no lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to N deposition no lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 # 5 year lag, with site averages
@@ -728,7 +728,7 @@ propertylist=unique(mean_global_change_in_fg_dist$property)
 fg_fischer.lag5date=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag5year + change_in_WinterTmin.lag5year + change_in_AnnualPrecip.lag5year + Ndep_2016 + trait:change_in_SummerTmax.lag5year + trait:change_in_WinterTmin.lag5year + trait:change_in_AnnualPrecip.lag5year + trait:Ndep_2016, data=mean_global_change_in_fg_dist[mean_global_change_in_fg_dist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag5year + change_in_WinterTmin.lag5year + change_in_AnnualPrecip.lag5year + Ndep_NEW + trait:change_in_SummerTmax.lag5year + trait:change_in_WinterTmin.lag5year + trait:change_in_AnnualPrecip.lag5year + trait:Ndep_NEW, data=mean_global_change_in_fg_dist[mean_global_change_in_fg_dist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -738,16 +738,16 @@ for(i in 1:length(propertylist)) {
 #qqplots QUESTIONABLE
 
 ggplot(aes(change_in_SummerTmax.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 5 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in SummerTmax 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 5 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in WinterTmin 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 5 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in AnnualPrecip 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 5 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to N deposition 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 
@@ -757,7 +757,7 @@ propertylist=unique(mean_global_change_in_fg_dist$property)
 fg_fischer.lag10date=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag10year + change_in_WinterTmin.lag10year + change_in_AnnualPrecip.lag10year + Ndep_2016 + trait:change_in_SummerTmax.lag10year + trait:change_in_WinterTmin.lag10year + trait:change_in_AnnualPrecip.lag10year + trait:Ndep_2016, data=mean_global_change_in_fg_dist[mean_global_change_in_fg_dist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag10year + change_in_WinterTmin.lag10year + change_in_AnnualPrecip.lag10year + Ndep_NEW + trait:change_in_SummerTmax.lag10year + trait:change_in_WinterTmin.lag10year + trait:change_in_AnnualPrecip.lag10year + trait:Ndep_NEW, data=mean_global_change_in_fg_dist[mean_global_change_in_fg_dist$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -767,16 +767,16 @@ for(i in 1:length(propertylist)) {
 #qqplots QUESTIONABLE
 
 ggplot(aes(change_in_SummerTmax.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 10 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in SummerTmax 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 10 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in WinterTmin 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 10 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to changes in AnnualPrecip 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 10 year lag, site averages DISTURBED.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_dist) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses to N deposition 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 #LUMPING:
@@ -787,7 +787,7 @@ propertylist=unique(mean_global_change_in_fg_L$property)
 fg_fischer.vegdate=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.vegyear + change_in_WinterTmin.vegyear + change_in_AnnualPrecip.vegyear + Ndep_2016 + trait:change_in_SummerTmax.vegyear + trait:change_in_WinterTmin.vegyear + trait:change_in_AnnualPrecip.vegyear + trait:Ndep_2016, data=mean_global_change_in_fg_L[mean_global_change_in_fg_L$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.vegyear + change_in_WinterTmin.vegyear + change_in_AnnualPrecip.vegyear + Ndep_NEW + trait:change_in_SummerTmax.vegyear + trait:change_in_WinterTmin.vegyear + trait:change_in_AnnualPrecip.vegyear + trait:Ndep_NEW, data=mean_global_change_in_fg_L[mean_global_change_in_fg_L$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -797,16 +797,16 @@ for(i in 1:length(propertylist)) {
 #qqplots look pretty OK?
 
 ggplot(aes(change_in_SummerTmax.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax no lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in SummerTmax no lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin no lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in WinterTmin no lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.vegyear, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip no lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in AnnualPrecip no lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition no lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to N deposition no lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 # 5 year lag, with site averages
@@ -815,7 +815,7 @@ propertylist=unique(mean_global_change_in_fg_L$property)
 fg_fischer.lag5date=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag5year + change_in_WinterTmin.lag5year + change_in_AnnualPrecip.lag5year + Ndep_2016 + trait:change_in_SummerTmax.lag5year + trait:change_in_WinterTmin.lag5year + trait:change_in_AnnualPrecip.lag5year + trait:Ndep_2016, data=mean_global_change_in_fg_L[mean_global_change_in_fg_L$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag5year + change_in_WinterTmin.lag5year + change_in_AnnualPrecip.lag5year + Ndep_NEW + trait:change_in_SummerTmax.lag5year + trait:change_in_WinterTmin.lag5year + trait:change_in_AnnualPrecip.lag5year + trait:Ndep_NEW, data=mean_global_change_in_fg_L[mean_global_change_in_fg_L$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -825,16 +825,16 @@ for(i in 1:length(propertylist)) {
 #qqplots don't look great
 
 ggplot(aes(change_in_SummerTmax.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 5 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in SummerTmax 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 5 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in WinterTmin 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.lag5year, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 5 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in AnnualPrecip 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 5 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to N deposition 5 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 
 
@@ -844,7 +844,7 @@ propertylist=unique(mean_global_change_in_fg_L$property)
 fg_fischer.lag10date=NULL
 
 for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag10year + change_in_WinterTmin.lag10year + change_in_AnnualPrecip.lag10year + Ndep_2016 + trait:change_in_SummerTmax.lag10year + trait:change_in_WinterTmin.lag10year + trait:change_in_AnnualPrecip.lag10year + trait:Ndep_2016, data=mean_global_change_in_fg_L[mean_global_change_in_fg_L$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
+  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag10year + change_in_WinterTmin.lag10year + change_in_AnnualPrecip.lag10year + Ndep_NEW + trait:change_in_SummerTmax.lag10year + trait:change_in_WinterTmin.lag10year + trait:change_in_AnnualPrecip.lag10year + trait:Ndep_NEW, data=mean_global_change_in_fg_L[mean_global_change_in_fg_L$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
   temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
   hist(resid(mod), main=as.character(propertylist[i]))
   qqPlot(resid(mod), main=as.character(propertylist[i]))
@@ -854,194 +854,15 @@ for(i in 1:length(propertylist)) {
 #qqplots not great
 
 ggplot(aes(change_in_SummerTmax.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 10 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in SummerTmax 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_WinterTmin.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 10 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in WinterTmin 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 ggplot(aes(change_in_AnnualPrecip.lag10year, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 10 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to changes in AnnualPrecip 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 10 year lag, site averages LUMPED.pdf", sep=""), width=8, height=5)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#not run: figures without site averages:
-
-# no lag, no averages
-
-propertylist=unique(global_change_in_fg$property)
-fg_fischer.vegdate=NULL
-
-for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.vegyear + change_in_WinterTmin.vegyear + change_in_AnnualPrecip.vegyear + Ndep_2016 + trait:change_in_SummerTmax.vegyear + trait:change_in_WinterTmin.vegyear + trait:change_in_AnnualPrecip.vegyear + trait:Ndep_2016, data=global_change_in_fg[global_change_in_fg$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
-  temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
-  hist(resid(mod), main=as.character(propertylist[i]))
-  qqPlot(resid(mod), main=as.character(propertylist[i]))
-  fg_fischer.vegdate=rbind(fg_fischer.vegdate, temp)
-}
-
-#qqplots look pretty bad
-
-ggplot(aes(change_in_SummerTmax.vegyear, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax no lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(change_in_WinterTmin.vegyear, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin no lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(change_in_AnnualPrecip.vegyear, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip no lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.vegdate, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition no lag.pdf", sep=""), width=8, height=5)
-
-
-# 5 year lag, no averages
-
-propertylist=unique(global_change_in_fg$property)
-fg_fischer.lag5date=NULL
-
-for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag5year + change_in_WinterTmin.lag5year + change_in_AnnualPrecip.lag5year + Ndep_2016 + trait:change_in_SummerTmax.lag5year + trait:change_in_WinterTmin.lag5year + trait:change_in_AnnualPrecip.lag5year + trait:Ndep_2016, data=global_change_in_fg[global_change_in_fg$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
-  temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
-  hist(resid(mod), main=as.character(propertylist[i]))
-  qqPlot(resid(mod), main=as.character(propertylist[i]))
-  fg_fischer.lag5date=rbind(fg_fischer.lag5date, temp)
-}
-
-#qqplots still pretty bad
-
-ggplot(aes(change_in_SummerTmax.lag5year, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 5 year lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(change_in_WinterTmin.lag5year, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 5 year lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(change_in_AnnualPrecip.lag5year, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 5 year lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag5date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 5 year lag.pdf", sep=""), width=8, height=5)
-
-
-
-# 10 year lag, no averages
-
-propertylist=unique(global_change_in_fg$property)
-fg_fischer.lag10date=NULL
-
-for(i in 1:length(propertylist)) {
-  mod=lm(fischer.slope ~ trait + change_in_SummerTmax.lag10year + change_in_WinterTmin.lag10year + change_in_AnnualPrecip.lag10year + Ndep_2016 + trait:change_in_SummerTmax.lag10year + trait:change_in_WinterTmin.lag10year + trait:change_in_AnnualPrecip.lag10year + trait:Ndep_2016, data=global_change_in_fg[global_change_in_fg$property==as.character(propertylist[i]),]); p=Anova(mod, test.statistic="F")
-  temp=data.frame(row.names=i, property=as.factor(propertylist[i]), SummerTmax.p=paste("p=", round(p$Pr[6], 3), sep=""), WinterTmin.p=paste("p=", round(p$Pr[7], 3), sep=""), AnnualPrecip.p=paste("p=", round(p$Pr[8], 3), sep=""), Ndep.p=paste("p=", round(p$Pr[9], 3), sep=""))
-  hist(resid(mod), main=as.character(propertylist[i]))
-  qqPlot(resid(mod), main=as.character(propertylist[i]))
-  fg_fischer.lag10date=rbind(fg_fischer.lag10date, temp)
-}
-
-#qqplots still pretty bad
-
-ggplot(aes(change_in_SummerTmax.lag10year, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=SummerTmax.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in SummerTmax 10 year lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(change_in_WinterTmin.lag10year, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=WinterTmin.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in WinterTmin 10 year lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(change_in_AnnualPrecip.lag10year, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=AnnualPrecip.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to changes in AnnualPrecip 10 year lag.pdf", sep=""), width=8, height=5)
-
-ggplot(aes(Ndep_2016, fischer.slope, color=trait), data=global_change_in_fg) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses to N deposition 10 year lag.pdf", sep=""), width=8, height=5)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# DOES SITE-LEVEL N DEPOSITION PREDICT HOW STRONGLY N FIXERS DECLINE OVER TIME?
-
-ndep=read.csv(paste(my.wd, "ambient change paper/CoRRE_siteLocationClimateNdep_Dec2021.csv", sep="")) %>%
-  left_join(change_over_time) %>%
-  filter(my_trt=="control" & trait %in% c("Nfixer", "nonNfixer"))
-
-qplot(ndep_2016, slope, data=ndep, alpha=log(expt_length), color=trait) + geom_smooth(method="lm") + scale_color_manual(values=c("forestgreen", "black")) + guides(alpha=FALSE) + xlab("N deposition in 2016") + ylab("Change in relative abundance\n over time in control plots")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/N deposition N fixers.pdf", sep=""), width=5, height=3)
-
-try=lmer(slope~trait*ndep_2016 + (1|site_code/site_project_comm), data=ndep)
-Anova(try) #interaction p=0.002
-tryN=lmer(slope~ndep_2016 + (1|site_code), data=ndep[ndep$trait=="Nfixer",]) #ndep p=0.096
-trynonN=lmer(slope~ndep_2016 + (1|site_code), data=ndep[ndep$trait=="nonNfixer",]) #ndep p=0.02
-
-
-
-
-
-
-
-
-
-
-#junk
-
-
-
-
-mutate(vegdate=map(data, ~seq(.x$start_year, .x$end_year, by="1 year")), lag5date=map(data, ~seq(.x$start_year_minus5, .x$end_year, by="1 year")), lag10date=map(data, ~seq(.x$start_year_minus10, .x$end_year, by="1 year"))) %>% 
-  
-  
-  
-  
-  
-  #there do not appear to be too many duplicate control plots with the same study length
-  ggplot(aes(expt_length, fill=my_trt), data=change_over_time[change_over_time$trait=="C3" & change_over_time$my_trt=="control",]) + geom_histogram() + facet_wrap(~site_code, scales="free")
-#this means it doesn't make sense to average across experiments at a site, unless we also want to somehow composite site change over time for all the experiments of different durations
-#but averaging across replicate studies with the same my_trt and same year span at a site
-mean_change_over_time <- change_over_time %>% 
-  group_by(site_code, property, trait, my_trt, expt_length, n_yrs_data, start_year, end_year, year_span, start_year_minus5, start_year_minus10) %>% 
-  summarize(n.studies=length(DCi.slope), DCi.slope=mean(DCi.slope), relabund.slope=mean(relabund.slope), rawabund.slope=mean(rawabund.slope)) %>% 
-  ungroup()
-#so where are all those points stacked up at same x value coming from?
-
-
-
-
-drivers_by_year1 <- change_over_time %>% 
-  group_by(site_code, expt_length, start_year, start_year_minus5, start_year_minus10, end_year, property, trait)
-left_join(drivers, join_by(site_code, calendar_year==Year), multiple="all") %>% 
-  filter(calendar_year<2017) #need to drop these for now because we don't have environmental data past 2016
-
+ggplot(aes(Ndep_NEW, fischer.slope, color=trait), data=mean_global_change_in_fg_L) + geom_point(shape=1) + facet_wrap(~property, scale="free") + geom_smooth(method="lm") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + geom_text(data=fg_fischer.lag10date, aes(label=Ndep.p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black")
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses to N deposition 10 year lag, site averages.pdf", sep=""), width=8, height=5)
 
 

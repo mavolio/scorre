@@ -500,13 +500,31 @@ mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P 
 ))
 mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
+mod <- lme(mean_dist~any.treatment , random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
+summary(mod) #0.133     0.010, 0.001
+
+x <- data.frame(emmeans(mod, "any.treatment"))
+
 
 mean.dist.df%>%
   subset( treatment_year != 0)%>%
   group_by(any.treatment)%>%
   dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
   ggplot(aes(any.treatment, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  #geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+  
+  geom_boxplot(data=mean.dist.df%>%
+                              subset( treatment_year != 0)%>%
+                          group_by(any.treatment, site)%>%
+                           dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96), aes(x = any.treatment, y = mean))+
+  geom_pointrange(data = x,aes(x = any.treatment, y = emmean, ymax = upper.CL, ymin = lower.CL), color = "blue", size = 1)+
+  
+  #geom_point(data=mean.dist.df%>%
+  #             subset( treatment_year != 0)%>%
+    #         group_by(any.treatment, site)%>%
+     #          dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96), aes(any.treatment,mean), alpha = 0.2)+
+  
+  
   xlab("")+
   ylab("Distance between replicates within sites")+
   theme_base()
