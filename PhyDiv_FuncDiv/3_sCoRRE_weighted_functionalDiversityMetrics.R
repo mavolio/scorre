@@ -31,8 +31,9 @@ comm <- readRDS('PhyDiv_FuncDiv/PD_FD_commData.rds')
 trt <- readRDS('PhyDiv_FuncDiv/trt_info.rds')
 
 # trait data
-correGExTraitsContinuous <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/169fc12d10ac20b0e504f8d5ca0b8ee8') %>% 
-  select(-family, -source, -imputation_error, -error_risk_overall, -error_risk_family, -error_risk_genus)
+correGExTraitsContinuous <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/169fc12d10ac20b0e504f8d5ca0b8ee8')  %>% 
+  filter(error_risk_overall<2|is.na(error_risk_overall)) %>% #drops 326 trait values
+  select(family, species, trait, trait_value) 
 
 correGExTraitsCategorical <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd') %>% 
   select(-family, -source, -error_risk_overall)
