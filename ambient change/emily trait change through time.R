@@ -43,8 +43,6 @@ trts<-read.csv(paste(my.wd, "CoRRE data/CoRRE data/community composition/CoRRE_E
 sp <-read.csv(paste(my.wd,"CoRRE data/trait data/corre2trykey_2021.csv", sep=""))%>%
   select(genus_species, species_matched)%>%
   unique
-total.sp=sp %>%
-  summarize(n.sp=length(species_matched))
 
 #reading in categorical traits, adding cleaned species names, dropping species not in our species list
 my_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd') %>% 
@@ -53,10 +51,11 @@ my_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc3
   pivot_wider(names_from=trait, values_from=trait_value) %>%
   rename(species_matched=species) %>%
   right_join(sp) %>%
+  na.omit() %>% #drops species for which we have no trait values
   select(-genus_species) 
- 
 
-###   READ IN SPECIES RAW AND RELATIVE ABUNDANCE DATA, CALCULATE MEANS AND DCI   ###
+
+###   READ IN SPECIES RAW AND RELATIVE ABUNDANCE DATA   ###
 
 
 #raw abundance data
@@ -75,22 +74,25 @@ mydat<-reldat%>%
   summarize(relcov=sum(relcov), abundance=sum(abundance)) %>% #in case there are any duplicates within a plot?
   ungroup() 
 
-# 
-#mutate(drop=ifelse(species_matched %in% c("Andreaea obovata", "Anthelia juratzkana", "Aulacomnium turgidum", "Barbilophozia hatcheri", "Barbilophozia kunzeana", "Blepharostoma trichophyllum", "Brachythecium albicans", "Bryum arcticum", "Bryum pseudotriquetrum", "Campylium stellatum", "Cyrtomnium hymenophyllum", "Dicranoweisia crispula", "Dicranum brevifolium", "Dicranum elongatum", "Dicranum fuscescens", "Dicranum groenlandicum",  "Dicranum scoparium", "Distichium capillaceum", "Ditrichum flexicaule", "Gymnomitrion concinnatum", "Hamatocaulis vernicosus", "Homalothecium pinnatifidum", "Hylocomium splendens", "Hypnum cupressiforme", "Hypnum hamulosum", "Isopterygiopsis pulchella", "Kiaeria starkei", "Leiocolea heterocolpos", "Marchantia polymorpha", "Marsupella brevissima", "Meesia uliginosa", "Myurella tenerrima", "Oncophorus virens", "Oncophorus wahlenbergii", "Pleurozium schreberi", "Pogonatum urnigerum", "Pohlia cruda", "Pohlia nutans", "Polytrichastrum alpinum", "Polytrichum juniperinum", "Polytrichum piliferum", "Polytrichum strictum", "Preissia quadrata", "Ptilidium ciliare", "Racomitrium lanuginosum", "Rhytidium rugosum", "Saelania glaucescens", "Sanionia uncinata",  "Schistidium apocarpum", "Syntrichia ruralis","Tomentypnum nitens", "Tortella tortuosa", "Tritomaria quinquedentata", "Nephroma arcticum", "Unknown NA", "Campylopus flexuosus", "Hypnum jutlandicum", "Plagiothecium undulatum", "Polytrichum commune", "Pseudoscleropodium purum", "Rhytidiadelphus loreus", "Rhytidiadelphus triquetrus", "Thuidium tamariscinum"), 1, 0)) %>% 
-#  filter(drop==0) %>% 
 
+### BASIC SUMMARY DATA ON NUMBERS OF SPECIES AND PROPORTIONS OF TRAIT VALUES ###
 
+#how many species do we have?
+total.sp=mydat %>%
+  summarize(n.sp=length(unique(species_matched)))
 
-
-
-trait.proportions <- my_cat %>% 
+#calculating proportion of our species that have each trait value
+my_cat_long <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd') %>% 
+  select(-family, -source, -error_risk_overall) %>%
+  filter(trait %in% c("growth_form", "photosynthetic_pathway", "lifespan", "clonal", "mycorrhizal_type", "n_fixation_type")) %>%
+  rename(species_matched=species) %>%
+  right_join(mydat, relationship="many-to-many") %>%
+  na.omit() %>% #drops species for which we have no trait values
   group_by(trait, trait_value) %>%
-  summarize(n.sp=length(unique(species_matched))) %>%
-  group_by(n.sp) %>%
-  mutate(prop.sp=n.sp/total.sp) 
+  summarize(prop.sp=length(unique(species_matched))/total.sp)
 
 
-
+###  CALCULATE MEANS AND DCI  ###
 
 #adding in zeros for species that were absent from a plot
 spc=unique(mydat$site_project_comm)
@@ -224,8 +226,8 @@ ggsave(paste(my.wd, "ambient change paper/figs 2025 june/fischer cover vs distur
 
 ###   DO FUNCTIONAL GROUP ABUNDANCES CHANGE THROUGH TIME?   ###   averaging across replicate studies at a site regardless of their length
 
-# SPLITTING OUT DISTURBED AND UNDISTURBED SITES # 
 
+# SPLITTING OUT DISTURBED AND UNDISTURBED SITES # 
 
 sitemean_control_change_over_time <- change_over_time %>%
   filter(my_trt=="control") %>%
@@ -256,7 +258,7 @@ for(i in 1:length(propertylist)) {
 # can still try nonparametric tests. 
 
 ggplot(aes(trait, control.fischer.slope, color=trait), data=sitemean_control_change_over_time_undist) + geom_boxplot() + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black") + ggtitle("Control plots, averaged across all experiments at a site (regardless of study duration)")
-ggsave(paste(my.wd, "ambient change paper/figs 2025 june/FG fischer responses, global controls boxplots UNDISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer responses, global controls boxplots.pdf", sep=""), width=8, height=5)
 
 global_control_change_over_time <- sitemean_control_change_over_time_undist %>%
   group_by(trait, property) %>% 
@@ -290,7 +292,7 @@ for(i in 1:length(propertylist)) {
 # can still try nonparametric tests. 
 
 ggplot(aes(trait, control.fischer.slope, color=trait), data=sitemean_control_change_over_time_dist) + geom_boxplot() + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black") + ggtitle("Control plots, averaged across all experiments at a site (regardless of study duration)")
-ggsave(paste(my.wd, "ambient change paper/figs 2025 june/FG fischer responses, global controls boxplots DISTURBED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer responses, global controls boxplots.pdf", sep=""), width=8, height=5)
 
 global_control_change_over_time <- sitemean_control_change_over_time_dist %>%
   group_by(trait, property) %>% 
@@ -337,7 +339,6 @@ ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer change in con
 
 ###   CAN WE INFER WHAT GCD MIGHT BE DRIVING CHANGE OVER TIME IN CONTROLS BY LEARNING FROM FG RESPONSES IN EXPERIMENTS?   ### (fisher cover only)
 
-
 #first averaging the matched trt-control data above across sites to get global trt responses and global controls (that match those experiments)
 global_trt_change_over_time <- mean_trt_change_over_time %>%
   group_by(my_trt, trait, property, disturbance) %>% 
@@ -354,17 +355,17 @@ toplot.control<-global_trt_change_over_time %>%
   select(my_trt, trait, property, disturbance, avg, CI, trt)
 toplot=rbind(toplot.trt, toplot.control)
 
-fig1b=ggplot(aes(my_trt, avg, color=trait), data=toplot[toplot$disturbance=="undisturbed",]) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=avg-CI, ymax=avg+CI, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black")
+fig1b=ggplot(aes(my_trt, avg, color=trait), data=toplot[toplot$disturbance=="undisturbed",]) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=avg-CI, ymax=avg+CI, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black"); fig1b
 
-fig1b.dist=ggplot(aes(my_trt, avg, color=trait), data=toplot[toplot$disturbance=="disturbed",]) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=avg-CI, ymax=avg+CI, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black")
+fig1b.dist=ggplot(aes(my_trt, avg, color=trait), data=toplot[toplot$disturbance=="disturbed",]) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=avg-CI, ymax=avg+CI, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black"); fig1b.dist
 
 
 #wow: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
 ggarrange(fig1a, fig1b, nrow=2)
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer, global controls and treatment vs control.pdf", sep=""), width=7.5, height=12)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/undisturbed plots only/FG fischer, global controls and treatment vs control.pdf", sep=""), width=7.5, height=12)
 
 ggarrange(fig1a.dist, fig1b.dist, nrow=2)
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer, global controls and treatment vs control DISTURBED.pdf", sep=""), width=7.5, height=12)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/disturbed plots only/FG fischer, global controls and treatment vs control.pdf", sep=""), width=7.5, height=12)
 
 
 # LUMPING DISTURBED AND UNDISTURBED SITES # 
@@ -397,7 +398,7 @@ for(i in 1:length(propertylist)) {
 # can still try nonparametric tests. 
 
 ggplot(aes(trait, control.fischer.slope, color=trait), data=sitemean_control_change_over_time_L) + geom_boxplot() + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1, color="black") + ggtitle("Control plots, averaged across all experiments at a site (regardless of study duration)")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer responses, global controls boxplots LUMPED.pdf", sep=""), width=8, height=5)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer responses, global controls boxplots.pdf", sep=""), width=8, height=5)
 
 global_control_change_over_time <- sitemean_control_change_over_time_L %>%
   group_by(trait, property) %>% 
@@ -406,7 +407,7 @@ global_control_change_over_time <- sitemean_control_change_over_time_L %>%
   mutate(trt=factor(trt, levels=c("control", "treatment"))) %>% 
   ungroup()
 
-fig1a.lumped=ggplot(aes(trait, globalavgC, color=trait), data=global_control_change_over_time) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=globalavgC-global95CIC, ymax=globalavgC+global95CIC, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("a) Control plots") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + scale_shape_manual(values=c(1, 16), name=NULL, drop=F) + geom_hline(yintercept=0, color="black") + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1.1, color="black") + scale_y_continuous(expand = expansion(mult=0.2))
+fig1a.lumped=ggplot(aes(trait, globalavgC, color=trait), data=global_control_change_over_time) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=globalavgC-global95CIC, ymax=globalavgC+global95CIC, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("a) Control plots") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4"), name=NULL) + scale_shape_manual(values=c(1, 16), name=NULL, drop=F) + geom_hline(yintercept=0, color="black") + geom_text(data=fg_responses, aes(label=p, x=Inf, y=Inf), vjust=1.5, hjust=1.1, color="black") + scale_y_continuous(expand = expansion(mult=0.2)); fig1a.lumped
 
 
 
@@ -442,71 +443,13 @@ mean_trt_change_over_time_L <- trt_change_over_time %>%
 #FIG 2:
 
 ggplot(aes(control.fischer.slope, trt.fischer.slope, color=trait), data=mean_trt_change_over_time) + geom_point(aes(shape=my_trt)) + facet_grid(disturbance~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(8, 2, 16, 17, 10, 1, 5, 15)) + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer change in controls vs change in trt.pdf", sep=""), width=10, height=7)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer change in controls vs change in trt.pdf", sep=""), width=10, height=7)
 
 ggplot(aes(control.fischer.slope, trt.fischer.slope, color=trait), data=mean_trt_change_over_time_L) + geom_point(aes(shape=my_trt)) + facet_wrap(~property, scales="free") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(8, 2, 16, 17, 10, 1, 5, 15)) + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1, color="black")
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer change in controls vs change in trt LUMPED.pdf", sep=""), width=10, height=7)
+ggsave(paste(my.wd, "ambient change paper/figs 2025 june/both disturbed and undisturbed plots/FG fischer change in controls vs change in trt.pdf", sep=""), width=10, height=7)
 
 #need to do major axis regression or reduced major axis regression--they differ in some details but test deviation from 1:1 line rather than deviation from slope=0?
 #adam says orthogonal regression because assumes error in both axes and therefore tries to minimize distance from point to line in both directions and not just y
-
-
-###   CAN WE INFER WHAT GCD MIGHT BE DRIVING CHANGE OVER TIME IN CONTROLS BY LEARNING FROM FG RESPONSES IN EXPERIMENTS?   ### (fisher cover only)
-
-# SEPARATING OUT DISTURBED AND UNDISTURBED SITES #
-
-#first averaging the matched trt-control data above across sites to get global trt responses and global controls (that match those experiments)
-global_trt_change_over_time <- mean_trt_change_over_time %>%
-  group_by(my_trt, trait, property, disturbance) %>% 
-  summarize(avg.relabundT=mean(trt.fischer.slope), sd.relabundT=sd(trt.fischer.slope), n=length(trt.fischer.slope), avg.relabundC=mean(control.fischer.slope), sd.relabundC=sd(control.fischer.slope)) %>% 
-  ungroup() %>% 
-  mutate(CI.relabundT=1.96*sd.relabundT/sqrt(n), CI.relabundC=1.96*sd.relabundC/sqrt(n))
-
-#rearrange for plotting:
-toplot.trt<-global_trt_change_over_time %>%
-  mutate(avg=avg.relabundT, CI=CI.relabundT, trt="treatment") %>%
-  select(my_trt, trait, property, disturbance, avg, CI, trt)
-toplot.control<-global_trt_change_over_time %>%
-  mutate(avg=avg.relabundC, CI=CI.relabundC, trt="control") %>%
-  select(my_trt, trait, property, disturbance, avg, CI, trt)
-toplot=rbind(toplot.trt, toplot.control)
-
-fig1b=ggplot(aes(my_trt, avg, color=trait), data=toplot[toplot$disturbance=="undisturbed",]) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=avg-CI, ymax=avg+CI, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black")
-
-fig1b.dist=ggplot(aes(my_trt, avg, color=trait), data=toplot[toplot$disturbance=="disturbed",]) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=avg-CI, ymax=avg+CI, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black")
-
-
-#wow: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
-ggarrange(fig1a, fig1b, nrow=2)
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer, global controls and treatment vs control.pdf", sep=""), width=7.5, height=12)
-
-ggarrange(fig1a.dist, fig1b.dist, nrow=2)
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer, global controls and treatment vs control DISTURBED.pdf", sep=""), width=7.5, height=12)
-
-
-# LUMPING DISTURBED AND UNDISTURBED SITES #
-
-#first averaging the matched trt-control data above across sites to get global trt responses and global controls (that match those experiments)
-global_trt_change_over_time_L <- mean_trt_change_over_time %>%
-  group_by(my_trt, trait, property) %>% 
-  summarize(avg.relabundT=mean(trt.fischer.slope), sd.relabundT=sd(trt.fischer.slope), n=length(trt.fischer.slope), avg.relabundC=mean(control.fischer.slope), sd.relabundC=sd(control.fischer.slope)) %>% 
-  ungroup() %>% 
-  mutate(CI.relabundT=1.96*sd.relabundT/sqrt(n), CI.relabundC=1.96*sd.relabundC/sqrt(n))
-
-#rearrange for plotting:
-toplot.trt<-global_trt_change_over_time_L %>%
-  mutate(avg=avg.relabundT, CI=CI.relabundT, trt="treatment") %>%
-  select(my_trt, trait, property, avg, CI, trt)
-toplot.control<-global_trt_change_over_time %>%
-  mutate(avg=avg.relabundC, CI=CI.relabundC, trt="control") %>%
-  select(my_trt, trait, property, avg, CI, trt)
-toplot=rbind(toplot.trt, toplot.control)
-
-fig1b.lumped=ggplot(aes(my_trt, avg, color=trait), data=toplot) + geom_point(aes(shape=trt)) + facet_wrap(~property, scales="free") + geom_errorbar(aes(ymin=avg-CI, ymax=avg+CI, width=0.1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") + xlab("") + ylab("Change in relative abundance over time (+/- 95% CI)") + ggtitle("b) Treatment plots relative to control plots in those experiments") + scale_color_manual(values=c("darksalmon", "darkred", "orange", "darkorange3", "gold", "darkgoldenrod2", "greenyellow", "green4", "dodgerblue", "dodgerblue4", "plum", "orchid4")) + scale_shape_manual(values=c(1, 16)) + geom_hline(yintercept=0, color="black")
-
-#wow: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
-ggarrange(fig1a.lumped, fig1b.lumped, nrow=2)
-ggsave(paste(my.wd, "ambient change paper/figs may 2023/FG fischer, global controls and treatment vs control LUMPED.pdf", sep=""), width=7.5, height=12)
 
 
 ###   GLOBAL CHANGE DRIVERS   ###
@@ -519,7 +462,7 @@ co2<-read.csv(paste(my.wd,"CoRRE data/CoRRE data/environmental data/monthly_in_s
   summarize(ppm.CO2=mean(ppm.CO2)) %>% 
   ungroup()
 
-ggplot(aes(Year, ppm.CO2), data=co2[co2$Year>1980,]) + geom_point() + geom_smooth(method="lm"); ggsave(paste(my.wd, "ambient change paper/figs may 2023/global CO2 over our years.pdf", sep=""), width=8, height=10)
+ggplot(aes(Year, ppm.CO2), data=co2[co2$Year>1980,]) + geom_point() + geom_smooth(method="lm"); ggsave(paste(my.wd, "ambient change paper/figs 2025 june/global CO2 over our years.pdf", sep=""), width=8, height=10)
 
 #read in data from Adam's GIS person and calculate the summary variables we want (SummerTmax, WinterTmin, AnnualPrecip, Ndep in 2016)
 
@@ -546,11 +489,18 @@ AnnualPrecip=read.csv(paste(my.wd, "CoRRE data/CoRRE data/environmental data/ter
   summarize(AnnualPrecip=sum(precip_mm)) %>% 
   ungroup()
 
-Ndep=read.csv(paste(my.wd, "CoRRE data/CoRRE data/environmental data/ScorreSitesTmaxTminPrecip 1901-2016.csv", sep="")) %>% 
-  group_by(site_code, Year) %>% 
-  summarize(Ndep_2016=mean(Ndep_2016)) %>% 
+NdepOLD=read.csv(paste(my.wd, "CoRRE data/CoRRE data/environmental data/ScorreSitesTmaxTminPrecip 1901-2016.csv", sep="")) %>% 
+  group_by(site_code) %>% 
+  summarize(Ndep_OLD=mean(Ndep_2016)) %>% 
   ungroup()
 
+Ndep=read.csv(paste(my.wd, "CoRRE data/CoRRE data/environmental data/CoRRE_Ndeposition.csv", sep="")) %>% 
+  group_by(site_code) %>% 
+  summarize(Ndep_NEW=mean(N_Deposition)) %>% 
+  left_join(NdepOLD) %>%
+  ungroup()
+ggplot(aes(NdepOLD, NdepNEW), data=drivers) + geom_point()  
+  
 drivers=AnnualPrecip %>%
   left_join(SummerTmax) %>%
   left_join(WinterTmin) %>% 

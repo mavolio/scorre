@@ -205,46 +205,46 @@ ggplot(data=CT_diff, aes(x=diff))+
 #dataset of treatment responses, ave, se, and how often species is found for phylogenetic analyses. and calculating number of sites and experiments at treatment is at.
 
 ##Temperature
-temp_sites<-CT_diff%>%
-  filter(temp==1)%>%
-  select(site_code)%>%
-  unique()
-
-temp_experimenets<-CT_diff%>%
-  filter(temp==1)%>%
-  select(site_code, project_name, community_type)%>%
-  unique()
-
-temp_mean<-CT_diff%>%
-  filter(temp==1)%>%
-  group_by(species_matched)%>%
-  summarize(ave_diff=mean(diff),
-            nobs=length(diff),
-            sd=sd(diff)) %>% 
-  mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="temp")%>%
-  select(-sd)
-
-##CO2
-co2_sites<-CT_diff%>%
-  filter(CO2==1)%>%
-  select(site_code)%>%
-  unique()
-
-co2_experimenets<-CT_diff%>%
-  filter(CO2==1)%>%
-  select(site_code, project_name, community_type)%>%
-  unique()
-
-co2_mean<-CT_diff%>%
-  filter(CO2==1)%>%
-  group_by(species_matched)%>%
-  summarize(ave_diff=mean(diff),
-            nobs=length(diff),
-            sd=sd(diff)) %>% 
-  mutate(se=sd/sqrt(nobs))%>%
-  mutate(trt_type2="CO2")%>%
-  select(-sd)
+# temp_sites<-CT_diff%>%
+#   filter(temp==1)%>%
+#   select(site_code)%>%
+#   unique()
+# 
+# temp_experimenets<-CT_diff%>%
+#   filter(temp==1)%>%
+#   select(site_code, project_name, community_type)%>%
+#   unique()
+# 
+# temp_mean<-CT_diff%>%
+#   filter(temp==1)%>%
+#   group_by(species_matched)%>%
+#   summarize(ave_diff=mean(diff),
+#             nobs=length(diff),
+#             sd=sd(diff)) %>% 
+#   mutate(se=sd/sqrt(nobs))%>%
+#   mutate(trt_type2="temp")%>%
+#   select(-sd)
+# 
+# ##CO2
+# co2_sites<-CT_diff%>%
+#   filter(CO2==1)%>%
+#   select(site_code)%>%
+#   unique()
+# 
+# co2_experimenets<-CT_diff%>%
+#   filter(CO2==1)%>%
+#   select(site_code, project_name, community_type)%>%
+#   unique()
+# 
+# co2_mean<-CT_diff%>%
+#   filter(CO2==1)%>%
+#   group_by(species_matched)%>%
+#   summarize(ave_diff=mean(diff),
+#             nobs=length(diff),
+#             sd=sd(diff)) %>% 
+#   mutate(se=sd/sqrt(nobs))%>%
+#   mutate(trt_type2="CO2")%>%
+#   select(-sd)
 
 
 ##Irrigation
@@ -264,6 +264,7 @@ irg_mean<-CT_diff%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
             sd=sd(diff)) %>% 
+  filter(nobs>4) %>% 
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="irg")%>%
   select(-sd)
@@ -425,6 +426,7 @@ allnut_mean<-CT_diff%>%
   summarize(ave_diff=mean(diff),
             nobs=length(diff),
             sd=sd(diff))%>%
+  filter(nobs>4) %>% 
   mutate(se=sd/sqrt(nobs))%>%
   mutate(trt_type2="all nuts")%>%
   select(-sd)
@@ -454,6 +456,8 @@ Fulldataset<-allmult_mean%>%
   bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 
 write.csv(Fulldataset, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper/data/Species_DCiDiff_March2024.csv", row.names=F)
+
+write.csv(allnut_mean, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper/data/Species_DCiDiff_MultNuts5reps.csv", row.names=F)
 
 toplot<-Fulldataset %>% 
   mutate(trt_type3=factor(trt_type2, levels=c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'all nuts', 'all mult')))
