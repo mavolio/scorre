@@ -5,6 +5,8 @@
 ##  Date created: April 7, 2021
 ################################################################################
 
+rm(list = ls())
+
 library(cluster)
 library(fundiversity)
 library(car)

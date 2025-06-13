@@ -5,6 +5,8 @@
 ##  Date created: December 16, 2022
 ################################################################################
 
+rm(list = ls())
+
 library(data.table)
 library(codyn)
 library(hillR)

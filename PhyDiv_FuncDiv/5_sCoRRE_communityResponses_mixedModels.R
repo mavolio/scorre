@@ -19,7 +19,6 @@ library(interactions)
 library(tidyverse)
 
 
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared')  #kim's computer
 
 ##### functions and themes #####
 ###standard error function
@@ -87,27 +86,20 @@ select(site_code, project_name, community_type, treatment_year, calendar_year, t
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, trt_type, experiment_length, plot_mani, n, p, CO2, precip, temp)
 
 #phylogenetic diversity data
-pDiv <- read.csv('paper 2_PD and FD responses\\data\\CoRRE_pd_metrics_non_weighted.csv') %>%
-  separate(identifier, into=c("site_code", "project_name", "community_type", "treatment_year", "plot_id"), sep="::") %>%
-  mutate(treatment_year=as.integer(treatment_year)) %>% 
-  mutate(plot_id=ifelse(project_name=='gap', gsub('01__','1__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('02__','2__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('03__','3__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('04__','4__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('05__','5__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('06__','6__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('07__','7__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('08__','8__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('09__','9__', plot_id), plot_id),
-         plot_id=ifelse(project_name=='gap', gsub('p','', plot_id), plot_id))
+pDiv <- readRDS('PhyDiv_FuncDiv/phylogeneticDiversityMetrics.rds') %>%
+  separate(plot_id2, into=c("site_code", "project_name", "community_type", "drop", "plot_id"), sep="::") %>%
+  select(-drop, -site_proj_comm)
 
 #functional diversity data
-fDiv <- read.csv('paper 2_PD and FD responses\\data\\CoRRE_functionalDiversity_2023-03-30.csv') %>% 
-  select(-site_proj_comm)
+fDiv <- readRDS('PhyDiv_FuncDiv/functionalDiversityMetrics.rds') %>% 
+  select(site_code, project_name, community_type, 
+         calendar_year, plot_id, Q, RaoQ_ses) %>% 
+  rename(RaoQ=Q)
 
 #taxonomic diversity data
-rDiv <- read.csv('paper 2_PD and FD responses\\data\\CoRRE_taxonomicDiversity_2023-03-30.csv') %>% 
+rDiv <- readRDS('PhyDiv_FuncDiv/rDiv.rds') %>% 
   select(-treatment)
+  
 
 #merge all data on diversity metrics (phylogenetic, functional, species), experimental treatments, and site characteristics
 allDiv <- pDiv %>% #phylogenetic metrics
