@@ -979,17 +979,27 @@ ggsave(
 #trait stats
 mod <- feols(mean_dist.trait~ plot_mani |site+expgroup+treatment_year, data = mean.dist.both)
 summary(mod)
-#mod <- lme(mean_dist.trait~ plot_mani, random = list(expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
-#summary(mod)
+mod <- lme(mean_dist.trait~ plot_mani, random = list(expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
+summary(mod)
+x <- data.frame(emmeans(mod, c("plot_mani")))
 
 #local trait figure
 x <- ggpredict(mod, "plot_mani")
+#mean.dist.both%>%
+#  group_by(plot_mani)%>%
+#  dplyr::summarize(mean = mean(mean_dist.trait), se = sd(mean_dist.trait)/sqrt(n()), sd = sd(mean_dist.trait), conf = se*1.96)%>%
+#mean.dist.both%>%
+#  group_by(plot_mani, site)%>%
+#  dplyr::summarize(mean = mean(mean_dist.trait))%>%
+#  group_by(plot_mani)%>%
+#  dplyr::summarize(mean = mean(mean), se = sd(mean)/sqrt(n()), sd = sd(mean), conf = se*1.96)%>%
 mean.dist.both%>%
-  group_by(plot_mani)%>%
-  dplyr::summarize(mean = mean(mean_dist.trait), se = sd(mean_dist.trait)/sqrt(n()), sd = sd(mean_dist.trait), conf = se*1.96)%>%
+  group_by(plot_mani, site)%>%
+  dplyr::summarize(mean = mean(mean_dist.trait))%>%
   ggplot( aes(plot_mani, mean))+
-  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
-  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
+  geom_smooth(aes(group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
+  #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
   xlab("Number of manipulations")+
   ylab("Distance between replciates within sites")+
   #ylim(0,0.17)+
