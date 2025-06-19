@@ -49,7 +49,7 @@ cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE da
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
   subset(treatment_year <=10& treatment_year > 0) #only use treatment data and subset the number of years to be used
 
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names among trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", keep = FALSE)
@@ -189,16 +189,25 @@ mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P 
 ))
 mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
+mod <- lme(mean_dist~any.treatment, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
+summary(mod)
 
-mean.dist.df%>%
-  subset( treatment_year != 0)%>%
-  group_by(any.treatment)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(any.treatment, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-  xlab("")+
-  ylab("Distance between replicates within sites")+
-  theme_base()
+x <- ggpredict(mod, "any.treatment")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+    xlab("")+
+    ylab("Distance among replicates within sites")+
+    theme_base()
+  
+#mean.dist.df%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(any.treatment)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(any.treatment, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_comp.pdf",
@@ -218,18 +227,28 @@ ggsave(
 #stats for nitrogen treatment
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.n$expgroup)%>%
-  subset(trt_type == "N"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.n$expgroup)%>%
+#  subset(trt_type == "N"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_comp.pdf",
@@ -248,18 +267,28 @@ ggsave(
 #stats for phosphorus treatment
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.p$expgroup)%>%
-  subset(trt_type == "P"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.p$expgroup)%>%
+#  subset(trt_type == "P"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_comp.pdf",
@@ -277,18 +306,27 @@ ggsave(
 #stats for multiple nutrient addition
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.multnutrient$expgroup)%>%
-  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.multnutrient$expgroup)%>%
+#  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_comp.pdf",
@@ -306,18 +344,27 @@ ggsave(
 #stats for irrigation
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.irr$expgroup)%>%
-  subset(trt_type == "irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.irr$expgroup)%>%
+#  subset(trt_type == "irr"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_comp.pdf",
@@ -334,24 +381,33 @@ ggsave(
 
 
 #stats for co2
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
-               subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
+mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.co2$expgroup)%>%
-  subset(trt_type == "CO2"|trt_type=="control")%>%
-  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.co2$expgroup)%>%
+#  subset(trt_type == "CO2"|trt_type=="control")%>%
+#  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_comp.pdf",
@@ -373,18 +429,28 @@ mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data =
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.nirr$expgroup)%>%
-  subset(trt_type == "N*irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.nirr$expgroup)%>%
+#  subset(trt_type == "N*irr"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_nirr_comp.pdf",
@@ -503,31 +569,36 @@ summary(mod)
 mod <- lme(mean_dist~any.treatment , random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod) #0.133     0.010, 0.001
 
-x <- data.frame(emmeans(mod, "any.treatment"))
+
+x <- ggpredict(mod, "any.treatment")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  xlab("")+
+  ylab("Distance among replicates within sites")+
+  theme_base()
 
 
-mean.dist.df%>%
-  subset( treatment_year != 0)%>%
-  group_by(any.treatment)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(any.treatment, mean))+
+
+#mean.dist.df%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(any.treatment)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(any.treatment, mean))+
   #geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
   
-  geom_boxplot(data=mean.dist.df%>%
-                              subset( treatment_year != 0)%>%
-                          group_by(any.treatment, site)%>%
-                           dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96), aes(x = any.treatment, y = mean))+
-  geom_pointrange(data = x,aes(x = any.treatment, y = emmean, ymax = upper.CL, ymin = lower.CL), color = "blue", size = 1)+
+#  geom_boxplot(data=mean.dist.df%>%
+#                              subset( treatment_year != 0)%>%
+#                          group_by(any.treatment, site)%>%
+#                           dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96), aes(x = any.treatment, y = mean))+
+#  geom_pointrange(data = x,aes(x = any.treatment, y = emmean, ymax = upper.CL, ymin = lower.CL), color = "blue", size = 1)+
   
   #geom_point(data=mean.dist.df%>%
   #             subset( treatment_year != 0)%>%
     #         group_by(any.treatment, site)%>%
      #          dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96), aes(any.treatment,mean), alpha = 0.2)+
-  
-  
-  xlab("")+
-  ylab("Distance between replicates within sites")+
-  theme_base()
+#   xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_trait.pdf",
@@ -545,18 +616,28 @@ ggsave(
 #stats for Nitrogen effect (traits)
 mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.n$expgroup)%>%
-  subset(trt_type == "N"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.n$expgroup)%>%
+#  subset(trt_type == "N"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_trait.pdf",
@@ -574,18 +655,27 @@ ggsave(
 #stats for phosphorus effect (traits)
 mod <- feols(mean_dist~trt_type | site+ expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.p$expgroup)%>%
-  subset(trt_type == "P"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.p$expgroup)%>%
+#  subset(trt_type == "P"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_trait.pdf",
@@ -603,18 +693,28 @@ ggsave(
 #stats for multiple nutrient addition effect (traits)
 mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.multnutrient$expgroup)%>%
-  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.multnutrient$expgroup)%>%
+#  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_trait.pdf",
@@ -632,18 +732,27 @@ ggsave(
 #stats for irrigation
 mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.irr$expgroup)%>%
-  subset(trt_type == "irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.irr$expgroup)%>%
+#  subset(trt_type == "irr"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_trait.pdf",
@@ -664,19 +773,29 @@ mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data =
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.co2$expgroup)%>%
-  subset(trt_type == "CO2"|trt_type=="control")%>%
-  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.co2$expgroup)%>%
+#  subset(trt_type == "CO2"|trt_type=="control")%>%
+#  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_trait.pdf",
@@ -698,18 +817,28 @@ mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data =
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
+summary(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.nirr$expgroup)%>%
-  subset(trt_type == "N*irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+#mean.dist.df%>%
+#  subset( expgroup%in%sites.nirr$expgroup)%>%
+#  subset(trt_type == "N*irr"|trt_type=="control")%>%
+#  subset( treatment_year != 0)%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among replicates within sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_Nirr_trait.pdf",
@@ -958,7 +1087,7 @@ mean.dist.both%>%
   geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
   xlab("Number of manipulations")+
-  ylab("Distance between replciates within sites")+
+  ylab("Distance among replciates within sites")+
   ylim(0,0.5)+
   theme_base()
 
@@ -1001,7 +1130,7 @@ mean.dist.both%>%
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
   xlab("Number of manipulations")+
-  ylab("Distance between replciates within sites")+
+  ylab("Distance among replciates within sites")+
   #ylim(0,0.17)+
   theme_base()
 
@@ -1051,7 +1180,7 @@ mean.dist.both%>%
   geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(method = "loess")+
   xlab("Treatment year")+
-  ylab("Distance between replciates within sites")+
+  ylab("Distance among replciates within sites")+
   #ylim(0,0.5)+
   theme_base()
 
@@ -1065,6 +1194,6 @@ mean.dist.both%>%
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(method = "lm", se = FALSE)+
   xlab("Treatment year")+
-  ylab("Distance between replciates within sites")+
+  ylab("Distance among replciates within sites")+
   #ylim(0,0.5)+
   theme_base()
