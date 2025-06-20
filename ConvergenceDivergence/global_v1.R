@@ -417,7 +417,8 @@ mod <- feols(dist~plot_mani | site + expgroup + treatment_year, data = tdistance
 summary(mod)
 mod <- lme(dist~plot_mani , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
 summary(mod)
-
+#mod2 <- lme(dist~plot_mani+poly(plot_mani,2) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
+#summary(mod2)
 
 x <- ggpredict(mod, "plot_mani")
 tdistances_temp%>%
