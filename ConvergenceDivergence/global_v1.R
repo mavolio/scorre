@@ -190,15 +190,23 @@ assign(paste0("df", trt_vector[i]),tdistances_temp)
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfN)
 summary(mod)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN)
+summary(mod)
 
-dfN%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  ylab("Distance among sites")+
   xlab("")+
-  ylab("Distance between sites")+
   theme_base()
+#dfN%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance between sites")+
+#  theme_base()
 
 
 ggsave(
@@ -217,15 +225,24 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfP)
 summary(mod)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfP)
+summary(mod)
 
-dfP%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  ylab("Distance among sites")+
   xlab("")+
-  ylab("Distance between sites")+
   theme_base()
+
+#dfP%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance between sites")+
+#  theme_base()
 
 
 ggsave(
@@ -243,15 +260,24 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfmult_nutrient)
 summary(mod)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfmult_nutrient)
+summary(mod)
 
-dfmult_nutrient%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  ylab("Distance among sites")+
   xlab("")+
-  ylab("Distance between sites")+
   theme_base()
+
+#dfmult_nutrient%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance between sites")+
+#  theme_base()
 
 
 ggsave(
@@ -269,15 +295,24 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfirr)
 summary(mod)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfirr)
+summary(mod)
 
-dfirr%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  ylab("Distance among sites")+
   xlab("")+
-  ylab("Distance between sites")+
   theme_base()
+
+#dfirr%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance between sites")+
+#  theme_base()
 
 
 ggsave(
@@ -296,15 +331,25 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfCO2)
 summary(mod)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfCO2%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
+summary(mod)
 
-dfCO2%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  ylab("Distance among sites")+
   xlab("")+
-  ylab("Distance between sites")+
   theme_base()
+
+#dfCO2%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance between sites")+
+#  theme_base()
 
 
 ggsave(
@@ -322,15 +367,26 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = `dfN*irr`)
 summary(mod)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = `dfN*irr`%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
+summary(mod)
 
-`dfN*irr`%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  ylab("Distance among sites")+
   xlab("")+
-  ylab("Distance between sites")+
   theme_base()
+
+
+#`dfN*irr`%>%
+#  group_by(trt_type)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+#  ggplot(aes(trt_type, mean))+
+#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance between sites")+
+#  theme_base()
 
 
 ggsave(
@@ -359,15 +415,18 @@ tdistances_temp <- data.frame(site = separate(summarize.cwm,expgroup, into = c("
 
 mod <- feols(dist~plot_mani | site + expgroup + treatment_year, data = tdistances_temp)
 summary(mod)
+mod <- lme(dist~plot_mani , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
+summary(mod)
+
 
 x <- ggpredict(mod, "plot_mani")
 tdistances_temp%>%
   group_by(plot_mani)%>%
   dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), sd = sd(dist), conf = se*1.96)%>%
 ggplot( aes(plot_mani, mean))+
-  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
-#  geom_smooth(data=x, aes(x=x, y=predicted+std.error), se = FALSE, linetype = "dashed")+
+  geom_smooth(data=tdistances_temp, aes(y = dist,group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
 #  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
   xlab("Number of manipulations")+
