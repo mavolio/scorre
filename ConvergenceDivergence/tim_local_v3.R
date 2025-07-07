@@ -194,7 +194,7 @@ summary(mod)
 
 x <- ggpredict(mod, "any.treatment")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
     xlab("")+
     ylab("Distance among replicates within sites")+
     theme_base()
@@ -232,7 +232,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -272,7 +272,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -311,7 +311,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -349,7 +349,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -391,7 +391,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -435,7 +435,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -572,7 +572,7 @@ summary(mod) #0.133     0.010, 0.001
 
 x <- ggpredict(mod, "any.treatment")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -621,7 +621,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -660,7 +660,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -698,7 +698,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -737,7 +737,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -779,7 +779,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -823,7 +823,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = conf.high, ymin = conf.low))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
@@ -1009,20 +1009,25 @@ nirr.df <- mean.dist.both%>%
 
 mod <- feols(mean_dist.comp~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
+mod <- lme(mean_dist.comp~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
+summary(mod)
 
 mod <- feols(mean_dist.trait~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
 summary(mod)
+mod <- lme(mean_dist.trait~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
+summary(mod)
 
 ggplot(n.df, aes(x=n, y=mean_dist.comp, color=trt_type))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
   scale_color_manual(values = c("black", "#0099f6"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
 ggplot(n.df, aes(x=n, y=mean_dist.trait))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
+  geom_smooth(method="lm", se = FALSE)+
   scale_color_manual(values = c("black", "#0099f6"))+
   geom_hline(yintercept = 0)+
   theme_base()
@@ -1032,19 +1037,24 @@ ggplot(n.df, aes(x=n, y=mean_dist.trait))+
 
 mod <- feols(mean_dist.comp~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
+mod <- lme(mean_dist.comp~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
+summary(mod)
 
 mod <- feols(mean_dist.trait~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
 summary(mod)
+mod <- lme(mean_dist.trait~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
+summary(mod)
 
 ggplot(p.df, aes(x=p, y=mean_dist.comp, color = trt_type))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
+  geom_smooth(method="lm", se = FALSE)+
   scale_color_manual(values = c("black", "#00b844"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
 ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
   scale_color_manual(values = c("black", "#00b844"))+
   geom_hline(yintercept = 0)+
@@ -1054,6 +1064,8 @@ ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
 ##irr 
 mod <- feols(mean_dist.comp~ precip | site+expgroup+treatment_year, data = subset(irr.df, plot_mani != 0))
 summary(mod)
+#mod <- lme(mean_dist.comp~ precip, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(irr.df, plot_mani != 0))
+#summary(mod)
 
 mod <- feols(mean_dist.trait~ precip | site+expgroup+treatment_year, data = subset(irr.df, plot_mani != 0))
 summary(mod)
@@ -1077,18 +1089,23 @@ ggplot(irr.df, aes(x=precip, y=mean_dist.trait, color=trt_type))+
 #comp stats
 mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+treatment_year, data = mean.dist.both)
 summary(mod)
+mod <- lme(mean_dist.comp~ plot_mani, random = list(site=~1,expgroup=~1,treatment_year=~1), data = mean.dist.both)
+summary(mod)
+#mod2 <- lme(mean_dist.comp~ plot_mani+poly(plot_mani,2), random = list(site=~1,expgroup=~1,treatment_year=~1), data = mean.dist.both)
+#summary(mod2)
 
 #local comp figure
 x <- ggpredict(mod, "plot_mani")
 mean.dist.both%>%
-  group_by(plot_mani)%>%
-  dplyr::summarize(mean = mean(mean_dist.comp), se = sd(mean_dist.comp)/sqrt(n()), sd = sd(mean_dist.comp), conf = se*1.96)%>%
+  group_by(plot_mani, site)%>%
+  dplyr::summarize(mean = mean(mean_dist.comp))%>%
   ggplot( aes(plot_mani, mean))+
-  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
-  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
+  geom_smooth(aes(group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
+  #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
   xlab("Number of manipulations")+
-  ylab("Distance among replciates within sites")+
-  ylim(0,0.5)+
+  ylab("Distance among replicates within sites")+
+  #ylim(0,0.17)+
   theme_base()
 
 ggsave(
@@ -1108,9 +1125,11 @@ ggsave(
 #trait stats
 mod <- feols(mean_dist.trait~ plot_mani |site+expgroup+treatment_year, data = mean.dist.both)
 summary(mod)
-mod <- lme(mean_dist.trait~ plot_mani, random = list(expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
+mod <- lme(mean_dist.trait~ plot_mani, random = list(site =~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
 summary(mod)
-x <- data.frame(emmeans(mod, c("plot_mani")))
+#mod2 <- lme(mean_dist.trait~ plot_mani+poly(plot_mani,2), random = list(site=~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
+#summary(mod2)
+
 
 #local trait figure
 x <- ggpredict(mod, "plot_mani")
@@ -1130,7 +1149,7 @@ mean.dist.both%>%
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
   xlab("Number of manipulations")+
-  ylab("Distance among replciates within sites")+
+  ylab("Distance among replicates within sites")+
   #ylim(0,0.17)+
   theme_base()
 

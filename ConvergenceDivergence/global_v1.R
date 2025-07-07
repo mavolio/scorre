@@ -190,12 +190,13 @@ assign(paste0("df", trt_vector[i]),tdistances_temp)
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfN)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
 summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
   ylab("Distance among sites")+
   xlab("")+
   theme_base()
@@ -205,7 +206,7 @@ ggplot(x, aes(x, predicted))+
 #  ggplot(aes(trt_type, mean))+
 #  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
 #  xlab("")+
-#  ylab("Distance between sites")+
+#  ylab("Distance among sites")+
 #  theme_base()
 
 
@@ -225,12 +226,13 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfP)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfP)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfP%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
 summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
   ylab("Distance among sites")+
   xlab("")+
   theme_base()
@@ -241,7 +243,7 @@ ggplot(x, aes(x, predicted))+
 #  ggplot(aes(trt_type, mean))+
 #  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
 #  xlab("")+
-#  ylab("Distance between sites")+
+#  ylab("Distance among sites")+
 #  theme_base()
 
 
@@ -260,12 +262,13 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfmult_nutrient)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfmult_nutrient)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfmult_nutrient%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
 summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
   ylab("Distance among sites")+
   xlab("")+
   theme_base()
@@ -276,7 +279,7 @@ ggplot(x, aes(x, predicted))+
 #  ggplot(aes(trt_type, mean))+
 #  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
 #  xlab("")+
-#  ylab("Distance between sites")+
+#  ylab("Distance among sites")+
 #  theme_base()
 
 
@@ -295,12 +298,13 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfirr)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfirr)
+mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfirr%>%
+             mutate(trt_type = fct_relevel(trt_type, "control")))
 summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
   ylab("Distance among sites")+
   xlab("")+
   theme_base()
@@ -311,7 +315,7 @@ ggplot(x, aes(x, predicted))+
 #  ggplot(aes(trt_type, mean))+
 #  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
 #  xlab("")+
-#  ylab("Distance between sites")+
+#  ylab("Distance among sites")+
 #  theme_base()
 
 
@@ -337,7 +341,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
   ylab("Distance among sites")+
   xlab("")+
   theme_base()
@@ -348,7 +352,7 @@ ggplot(x, aes(x, predicted))+
 #  ggplot(aes(trt_type, mean))+
 #  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
 #  xlab("")+
-#  ylab("Distance between sites")+
+#  ylab("Distance among sites")+
 #  theme_base()
 
 
@@ -373,7 +377,7 @@ summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
   ylab("Distance among sites")+
   xlab("")+
   theme_base()
@@ -385,7 +389,7 @@ ggplot(x, aes(x, predicted))+
 #  ggplot(aes(trt_type, mean))+
 #  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
 #  xlab("")+
-#  ylab("Distance between sites")+
+#  ylab("Distance among sites")+
 #  theme_base()
 
 
@@ -431,7 +435,7 @@ ggplot( aes(plot_mani, mean))+
 #  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
   xlab("Number of manipulations")+
-  ylab("Distance between sites")+
+  ylab("Distance among sites")+
   theme_base()
 
 
@@ -476,7 +480,7 @@ tdistances_temp%>%
 ggplot(aes(any.treatment, mean))+
   geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
   xlab("")+
-  ylab("Distance between sites")+
+  ylab("Distance among sites")+
   theme_base()
 
 ggsave(
