@@ -128,7 +128,17 @@ sites <- test%>%
   unique()%>%
   subset(trt_type != "control")
 
-sites <- unite(sites, temp, c("project_name", "community_type"), sep = "::", remove = FALSE)
+length(unique(sites$site_code))
+
+sites <- unite(sites, temp, c("site_code", "project_name", "community_type"), sep = "::", remove = FALSE)
+
+length(unique(sites$temp))
+
+sites <- unite(sites, temp, c("site_code", "project_name", "community_type", "trt_type", "treatment"), sep = "::", remove = FALSE)
+
+length(unique(sites$temp))
+
+length(unique(test$species_matched))
 
 ###Summarize sites being used
 sites <- test%>%
