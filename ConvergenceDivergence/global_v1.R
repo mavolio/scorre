@@ -190,9 +190,11 @@ assign(paste0("df", trt_vector[i]),tdistances_temp)
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfN)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -226,9 +228,11 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfP)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfP%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfP%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -262,9 +266,11 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfmult_nutrient)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfmult_nutrient%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfmult_nutrient%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -298,9 +304,11 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfirr)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfirr%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfirr%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -336,9 +344,11 @@ ggsave(
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfCO2%>%
                mutate(trt_type = fct_relevel(trt_type, "control")))
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfCO2%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfCO2%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -372,9 +382,11 @@ ggsave(
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = `dfN*irr`)
 summary(mod)
-mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = `dfN*irr`%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = `dfN*irr`%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -420,8 +432,10 @@ tdistances_temp <- data.frame(site = separate(summarize.cwm,expgroup, into = c("
 
 mod <- feols(dist~plot_mani | site + expgroup + as.character(treatment_year), data = tdistances_temp)
 summary(mod)
-mod <- lme(dist~plot_mani , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(dist~plot_mani , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
+#summary(mod)
 #mod2 <- lme(dist~plot_mani+poly(plot_mani,2) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
 #summary(mod2)
 
@@ -457,7 +471,8 @@ ggsave(
 
 mod <- feols(dist~plot_mani*treatment_year | site + expgroup , data = tdistances_temp)
 summary(mod)
-
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 #x <- ggpredict(mod, c("plot_mani", "treatment_year"))
 #tdistances_temp%>%
 #  group_by(plot_mani)%>%
@@ -474,6 +489,8 @@ tdistances_temp$any.treatment <-revalue(tdistances_temp$trt_type, c(N = "treatme
 ))
 mod <- feols(dist~any.treatment | site + expgroup + as.character(treatment_year), data = tdistances_temp)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 tdistances_temp%>%
   group_by(any.treatment)%>%

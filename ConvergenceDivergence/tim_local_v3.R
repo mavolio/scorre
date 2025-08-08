@@ -17,6 +17,8 @@ library(codyn)
 library(emmeans)
 library(fixest)
 library(nlme)
+library(RcmdrMisc)
+library(lmtest)
 
 #Read in trait data
 traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd')%>%
@@ -199,8 +201,11 @@ mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P 
 ))
 mod <- feols(mean_dist~any.treatment | site + expgroup +as.character(treatment_year)  ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
-mod <- lme(mean_dist~any.treatment, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+#mod <- lme(mean_dist~any.treatment, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
+#summary(mod)
 
 x <- ggpredict(mod, "any.treatment")
 ggplot(x, aes(x, predicted))+
@@ -237,8 +242,10 @@ ggsave(
 #stats for nitrogen treatment
 mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year)  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -277,8 +284,10 @@ ggsave(
 #stats for phosphorus treatment
 mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year)  , data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -316,8 +325,10 @@ ggsave(
 #stats for multiple nutrient addition
 mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -354,8 +365,10 @@ ggsave(
 #stats for irrigation
 mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -395,9 +408,11 @@ mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -439,9 +454,11 @@ mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -497,7 +514,8 @@ subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_yea
 ##Stats about change over time: multiple nutrient addition
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
-
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
   ggplot(aes(treatment_year, mean_dist, color = trt_type))+
@@ -576,8 +594,10 @@ mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P 
 ))
 mod <- feols(mean_dist~any.treatment | site + expgroup +as.character(treatment_year) ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
-mod <- lme(mean_dist~any.treatment , random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
-summary(mod) #0.133     0.010, 0.001
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~any.treatment , random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
+#summary(mod) #0.133     0.010, 0.001
 
 
 x <- ggpredict(mod, "any.treatment")
@@ -626,8 +646,10 @@ ggsave(
 #stats for Nitrogen effect (traits)
 mod <- feols(mean_dist~trt_type | site + expgroup+as.character(treatment_year) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -665,8 +687,10 @@ ggsave(
 #stats for phosphorus effect (traits)
 mod <- feols(mean_dist~trt_type | site+ expgroup+as.character(treatment_year) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -703,8 +727,10 @@ ggsave(
 #stats for multiple nutrient addition effect (traits)
 mod <- feols(mean_dist~trt_type | site + expgroup+as.character(treatment_year) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -742,8 +768,10 @@ ggsave(
 #stats for irrigation
 mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -783,9 +811,11 @@ mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -827,9 +857,11 @@ mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
-mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-             mutate(trt_type = fct_relevel(trt_type, "control")))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
+#             mutate(trt_type = fct_relevel(trt_type, "control")))
+#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 ggplot(x, aes(x, predicted))+
@@ -867,17 +899,21 @@ ggsave(
 #stats for Nitrogen effect over time (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 
 #stats for phosphorus effect (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
-
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 #stats for multiple nutrient effect over time (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
-
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 #####################
 ###Compare species and trait responses
@@ -924,42 +960,66 @@ mult.df <- dist.both%>%
 ##NITROGEN
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site + expgroup+as.character(treatment_year), data = n.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site + expgroup+as.character(treatment_year), data = n.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAT| site+expgroup+as.character(treatment_year), data = n.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = n.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 
 #PHOSPHORUS
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = p.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = p.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 #mult nutrient
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = mult.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = mult.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = mult.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = mult.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 ####could do the same as above for irr, CO2, N*irr ^^^
 
 
@@ -1019,13 +1079,17 @@ nirr.df <- mean.dist.both%>%
 
 mod <- feols(mean_dist.comp~ n | site+expgroup+as.character(treatment_year), data = subset(n.df, n != 0))
 summary(mod)
-mod <- lme(mean_dist.comp~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.comp~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
+#summary(mod)
 
 mod <- feols(mean_dist.trait~ n | site+expgroup+as.character(treatment_year), data = subset(n.df, n != 0))
 summary(mod)
-mod <- lme(mean_dist.trait~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.trait~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
+#summary(mod)
 
 ggplot(n.df, aes(x=n, y=mean_dist.comp, color=trt_type))+
   #facet_wrap(~treatment_year)+
@@ -1047,13 +1111,17 @@ ggplot(n.df, aes(x=n, y=mean_dist.trait))+
 
 mod <- feols(mean_dist.comp~ p | site+expgroup+as.character(treatment_year), data = subset(p.df, p != 0))
 summary(mod)
-mod <- lme(mean_dist.comp~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.comp~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
+#summary(mod)
 
 mod <- feols(mean_dist.trait~ p | site+expgroup+as.character(treatment_year), data = subset(p.df, p != 0))
 summary(mod)
-mod <- lme(mean_dist.trait~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.trait~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
+#summary(mod)
 
 ggplot(p.df, aes(x=p, y=mean_dist.comp, color = trt_type))+
   #facet_wrap(~treatment_year)+
@@ -1074,11 +1142,15 @@ ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
 ##irr 
 mod <- feols(mean_dist.comp~ precip | site+expgroup+as.character(treatment_year), data = subset(irr.df, plot_mani != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 #mod <- lme(mean_dist.comp~ precip, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(irr.df, plot_mani != 0))
 #summary(mod)
 
 mod <- feols(mean_dist.trait~ precip | site+expgroup+as.character(treatment_year), data = subset(irr.df, plot_mani != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 ggplot(irr.df, aes(x=precip, y=mean_dist.comp, color=trt_type))+
   facet_wrap(~treatment_year)+
@@ -1099,8 +1171,10 @@ ggplot(irr.df, aes(x=precip, y=mean_dist.trait, color=trt_type))+
 #comp stats
 mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+as.character(treatment_year), data = mean.dist.both)
 summary(mod)
-mod <- lme(mean_dist.comp~ plot_mani, random = list(site=~1,expgroup=~1,treatment_year=~1), data = mean.dist.both)
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.comp~ plot_mani, random = list(site=~1,expgroup=~1,treatment_year=~1), data = mean.dist.both)
+#summary(mod)
 #mod2 <- lme(mean_dist.comp~ plot_mani+poly(plot_mani,2), random = list(site=~1,expgroup=~1,treatment_year=~1), data = mean.dist.both)
 #summary(mod2)
 
@@ -1135,8 +1209,10 @@ ggsave(
 #trait stats
 mod <- feols(mean_dist.trait~ plot_mani |site+expgroup+as.character(treatment_year), data = mean.dist.both)
 summary(mod)
-mod <- lme(mean_dist.trait~ plot_mani, random = list(site =~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
-summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.trait~ plot_mani, random = list(site =~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
+#summary(mod)
 #mod2 <- lme(mean_dist.trait~ plot_mani+poly(plot_mani,2), random = list(site=~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
 #summary(mod2)
 
