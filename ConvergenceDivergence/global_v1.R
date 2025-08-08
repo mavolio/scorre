@@ -188,7 +188,7 @@ assign(paste0("df", trt_vector[i]),tdistances_temp)
 }
 
 
-mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfN)
+mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfN)
 summary(mod)
 mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
              mutate(trt_type = fct_relevel(trt_type, "control")))
@@ -224,7 +224,7 @@ ggsave(
 )
 
 
-mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfP)
+mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfP)
 summary(mod)
 mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfP%>%
              mutate(trt_type = fct_relevel(trt_type, "control")))
@@ -260,7 +260,7 @@ ggsave(
   limitsize = TRUE
 )
 
-mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfmult_nutrient)
+mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfmult_nutrient)
 summary(mod)
 mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfmult_nutrient%>%
              mutate(trt_type = fct_relevel(trt_type, "control")))
@@ -296,7 +296,7 @@ ggsave(
   limitsize = TRUE
 )
 
-mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfirr)
+mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfirr)
 summary(mod)
 mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfirr%>%
              mutate(trt_type = fct_relevel(trt_type, "control")))
@@ -333,7 +333,8 @@ ggsave(
 )
 
 
-mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = dfCO2)
+mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfCO2%>%
+               mutate(trt_type = fct_relevel(trt_type, "control")))
 summary(mod)
 mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfCO2%>%
              mutate(trt_type = fct_relevel(trt_type, "control")))
@@ -369,7 +370,7 @@ ggsave(
   limitsize = TRUE
 )
 
-mod <- feols(dist~trt_type | site+expgroup +treatment_year, data = `dfN*irr`)
+mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = `dfN*irr`)
 summary(mod)
 mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = `dfN*irr`%>%
              mutate(trt_type = fct_relevel(trt_type, "control")))
@@ -417,7 +418,7 @@ tdistances_temp <- data.frame(site = separate(summarize.cwm,expgroup, into = c("
 
 
 
-mod <- feols(dist~plot_mani | site + expgroup + treatment_year, data = tdistances_temp)
+mod <- feols(dist~plot_mani | site + expgroup + as.character(treatment_year), data = tdistances_temp)
 summary(mod)
 mod <- lme(dist~plot_mani , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
 summary(mod)
@@ -471,7 +472,7 @@ summary(mod)
 
 tdistances_temp$any.treatment <-revalue(tdistances_temp$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
 ))
-mod <- feols(dist~any.treatment | site + expgroup + treatment_year, data = tdistances_temp)
+mod <- feols(dist~any.treatment | site + expgroup + as.character(treatment_year), data = tdistances_temp)
 summary(mod)
 
 tdistances_temp%>%
