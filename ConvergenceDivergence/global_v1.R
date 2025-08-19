@@ -490,16 +490,25 @@ tdistances_temp$any.treatment <-revalue(tdistances_temp$trt_type, c(N = "treatme
 mod <- feols(dist~any.treatment | site + expgroup + as.character(treatment_year), data = tdistances_temp)
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
-coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+coeftest(mod, vcov = NeweyWest(mod))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 
-tdistances_temp%>%
-  group_by(any.treatment)%>%
-  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-ggplot(aes(any.treatment, mean))+
-  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+x <- ggpredict(mod, "any.treatment")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among sites")+
   theme_base()
+
+#tdistances_temp%>%
+#  group_by(any.treatment)%>%
+#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
+#ggplot(aes(any.treatment, mean))+
+#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
+#  xlab("")+
+#  ylab("Distance among sites")+
+#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_overall.pdf",

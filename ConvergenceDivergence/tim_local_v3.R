@@ -202,12 +202,15 @@ mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P 
 mod <- feols(mean_dist~any.treatment | site + expgroup +as.character(treatment_year)  ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
-coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+coeftest(mod, vcov = NeweyWest(mod))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+#local_comp_all <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1:4]
 
 #mod <- lme(mean_dist~any.treatment, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
 #summary(mod)
 
 x <- ggpredict(mod, "any.treatment")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
     xlab("")+
@@ -595,17 +598,24 @@ mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P 
 mod <- feols(mean_dist~any.treatment | site + expgroup +as.character(treatment_year) ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
-coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-#mod <- lme(mean_dist~any.treatment , random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
-#summary(mod) #0.133     0.010, 0.001
+coeftest(mod, vcov = NeweyWest(mod))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 
 
 x <- ggpredict(mod, "any.treatment")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
+
+#local_trait_all <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1:4]
+#mod <- lme(mean_dist~any.treatment , random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
+#summary(mod) #0.133     0.010, 0.001
+
+
+
 
 
 
