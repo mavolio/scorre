@@ -190,18 +190,26 @@ assign(paste0("df", trt_vector[i]),tdistances_temp)
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfN)
 summary(mod)
-coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+
 #mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
 #             mutate(trt_type = fct_relevel(trt_type, "control")))
 #summary(mod)
 
 x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
-  ylab("Distance among sites")+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
+  ylab("Distance among replicates within sites")+
   theme_base()
+
+
+
+
 #dfN%>%
 #  group_by(trt_type)%>%
 #  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
@@ -230,17 +238,17 @@ mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data =
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfP%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
+treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+
 
 x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
-  ylab("Distance among sites")+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
+  ylab("Distance among replicates within sites")+
   theme_base()
-
 #dfP%>%
 #  group_by(trt_type)%>%
 #  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
@@ -268,17 +276,18 @@ mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data =
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfmult_nutrient%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
+treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+
+
 
 x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
-  ylab("Distance among sites")+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
+  ylab("Distance among replicates within sites")+
   theme_base()
-
 #dfmult_nutrient%>%
 #  group_by(trt_type)%>%
 #  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
@@ -306,17 +315,20 @@ mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data =
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfirr%>%
+treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+
+#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
 #             mutate(trt_type = fct_relevel(trt_type, "control")))
 #summary(mod)
 
 x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
-  ylab("Distance among sites")+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
+  ylab("Distance among replicates within sites")+
   theme_base()
-
 #dfirr%>%
 #  group_by(trt_type)%>%
 #  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
@@ -346,17 +358,18 @@ mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data =
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfCO2%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
+treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+
+
 
 x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
-  ylab("Distance among sites")+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
+  ylab("Distance among replicates within sites")+
   theme_base()
-
 #dfCO2%>%
 #  group_by(trt_type)%>%
 #  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
@@ -384,15 +397,18 @@ mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data =
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = `dfN*irr`%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
+treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+
+
+
 
 x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymin = predicted-std.error, ymax = predicted+std.error))+
-  ylab("Distance among sites")+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
+  ylab("Distance among replicates within sites")+
   theme_base()
 
 
@@ -434,10 +450,9 @@ mod <- feols(dist~plot_mani | site + expgroup + as.character(treatment_year), da
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-#mod <- lme(dist~plot_mani , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
-#summary(mod)
-#mod2 <- lme(dist~plot_mani+poly(plot_mani,2) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = tdistances_temp)
-#summary(mod2)
+treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+
 
 x <- ggpredict(mod, "plot_mani")
 tdistances_temp%>%
