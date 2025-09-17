@@ -448,12 +448,28 @@ comp_stats <- rbind(n_comp_stats, p_comp_stats)%>%
 
 comp_stats%>%
    dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "Nxirr", "co2")))%>%
+  dplyr::mutate(x = fct_relevel(x, "control"))%>%
 ggplot( aes(set2, predicted, color = x))+
-  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error))+
-  theme_base()
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.3))+
+  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  xlab("")+
+  ylab("Distance among replicates within sites")+
+  theme_base()+
+  theme(legend.position = "None")
 
 
-
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_comp_alltreats.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 
 
@@ -571,35 +587,6 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#local_trait_all <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1:4]
-#mod <- lme(mean_dist~any.treatment , random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
-#summary(mod) #0.133     0.010, 0.001
-
-
-
-
-
-
-#mean.dist.df%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(any.treatment)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(any.treatment, mean))+
-  #geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-  
-#  geom_boxplot(data=mean.dist.df%>%
-#                              subset( treatment_year != 0)%>%
-#                          group_by(any.treatment, site)%>%
-#                           dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96), aes(x = any.treatment, y = mean))+
-#  geom_pointrange(data = x,aes(x = any.treatment, y = emmean, ymax = upper.CL, ymin = lower.CL), color = "blue", size = 1)+
-  
-  #geom_point(data=mean.dist.df%>%
-  #             subset( treatment_year != 0)%>%
-    #         group_by(any.treatment, site)%>%
-     #          dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96), aes(any.treatment,mean), alpha = 0.2)+
-#   xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_trait.pdf",
@@ -811,6 +798,45 @@ ggsave(
   dpi = 600,
   limitsize = TRUE
 )
+
+
+
+#figure of all local traits
+trait_stats <- rbind(n_trait_stats, p_trait_stats)%>%
+  rbind(mult_trait_stats)%>%
+  rbind(nxirr_trait_stats)%>%
+  rbind(irr_trait_stats)%>%
+  rbind(co2_trait_stats)%>%
+  as.matrix()%>%
+  as.data.frame()%>%
+  mutate(predicted = as.numeric(predicted), std.error = as.numeric(std.error))
+
+trait_stats%>%
+  dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "nxirr", "co2")))%>%
+  dplyr::mutate(x = fct_relevel(x, "control"))%>%
+  ggplot( aes(set2, predicted, color = x))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.3))+
+  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  xlab("")+
+  ylab("Distance among replicates within sites")+
+  theme_base()+
+  theme(legend.position = "None")
+
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_trait_alltreats.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
 
 
 #stats for Nitrogen effect over time (traits)
