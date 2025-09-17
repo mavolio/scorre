@@ -195,30 +195,17 @@ coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 
-#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance among replicates within sites")+
+  ylab("Distance among sites")+
   theme_base()
 
-
-
-
-#dfN%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among sites")+
-#  theme_base()
-
+n_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
+n_stats$set <- "N"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_N.pdf",
@@ -247,16 +234,11 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance among replicates within sites")+
+  ylab("Distance among sites")+
   theme_base()
-#dfP%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among sites")+
-#  theme_base()
+
+p_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
+p_stats$set <- "P"
 
 
 ggsave(
@@ -286,16 +268,11 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance among replicates within sites")+
+  ylab("Distance among sites")+
   theme_base()
-#dfmult_nutrient%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among sites")+
-#  theme_base()
+
+mult_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
+mult_stats$set <- "mult"
 
 
 ggsave(
@@ -318,25 +295,18 @@ coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 
-#mod <- lme(dist~as.factor(trt_type) , random = list(site = ~1,expgroup=~1, treatment_year=~1), data = dfN%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
+
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance among replicates within sites")+
+  ylab("Distance among sites")+
   theme_base()
-#dfirr%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among sites")+
-#  theme_base()
+
+irr_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
+irr_stats$set <- "irr"
 
 
 ggsave(
@@ -362,23 +332,16 @@ treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 
 
-
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance among replicates within sites")+
+  ylab("Distance among sites")+
   theme_base()
-#dfCO2%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among sites")+
-#  theme_base()
 
+co2_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
+co2_stats$set <- "co2"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_co2.pdf",
@@ -408,18 +371,11 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance among replicates within sites")+
+  ylab("Distance among sites")+
   theme_base()
 
-
-#`dfN*irr`%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean+conf,ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among sites")+
-#  theme_base()
+nxirr_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
+nxirr_stats$set <- "nxirr"
 
 
 ggsave(
@@ -434,6 +390,44 @@ ggsave(
   dpi = 600,
   limitsize = TRUE
 )
+
+####Make a big figure with all the treatments represented
+#figure of all global traits
+trait_stats <- rbind(n_stats, p_stats)%>%
+  rbind(mult_stats)%>%
+  rbind(nxirr_stats)%>%
+  rbind(irr_stats)%>%
+  rbind(co2_stats)%>%
+  as.matrix()%>%
+  as.data.frame()%>%
+  mutate(predicted = as.numeric(predicted), std.error = as.numeric(std.error))
+
+trait_stats%>%
+  dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "nxirr", "co2")))%>%
+  dplyr::mutate(x = fct_relevel(x, "control"))%>%
+  ggplot( aes(set2, predicted, color = x))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.3))+
+  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  xlab("")+
+  ylab("Distance among sites")+
+  theme_base()+
+  theme(legend.position = "None")
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_trait_alltreats.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
 
 
 
