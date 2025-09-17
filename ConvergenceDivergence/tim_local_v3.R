@@ -204,10 +204,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#local_comp_all <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1:4]
 
-#mod <- lme(mean_dist~any.treatment, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(mean.dist.df, treatment_year != 0))
-#summary(mod)
 
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -216,16 +213,8 @@ ggplot(x, aes(x, predicted))+
     xlab("")+
     ylab("Distance among replicates within sites")+
     theme_base()
-  
-#mean.dist.df%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(any.treatment)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(any.treatment, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_comp.pdf",
@@ -248,8 +237,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
-#summary(mod)
+
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -259,17 +247,9 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.n$expgroup)%>%
-#  subset(trt_type == "N"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+n_comp_stats <- x
+n_comp_stats$set <- "N"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_comp.pdf",
@@ -291,8 +271,6 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -302,17 +280,8 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.p$expgroup)%>%
-#  subset(trt_type == "P"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+p_comp_stats <- x
+p_comp_stats$set <- "P"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_comp.pdf",
@@ -333,8 +302,6 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -344,17 +311,9 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.multnutrient$expgroup)%>%
-#  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+mult_comp_stats <- x
+mult_comp_stats$set <- "mult"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_comp.pdf",
@@ -375,8 +334,6 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -386,17 +343,9 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.irr$expgroup)%>%
-#  subset(trt_type == "irr"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+irr_comp_stats <- x
+irr_comp_stats$set <- "irr"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_comp.pdf",
@@ -420,9 +369,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
+
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -432,18 +379,10 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.co2$expgroup)%>%
-#  subset(trt_type == "CO2"|trt_type=="control")%>%
-#  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+co2_comp_stats <- x
+co2_comp_stats$set <- "co2"
+
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_comp.pdf",
@@ -468,9 +407,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
+
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -480,17 +417,9 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.nirr$expgroup)%>%
-#  subset(trt_type == "N*irr"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+nxirr_comp_stats <- x
+nxirr_comp_stats$set <- "Nxirr"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_nirr_comp.pdf",
@@ -504,6 +433,28 @@ ggsave(
   dpi = 600,
   limitsize = TRUE
 )
+
+
+##combined figure for local composition
+
+comp_stats <- rbind(n_comp_stats, p_comp_stats)%>%
+  rbind(mult_comp_stats)%>%
+  rbind(nxirr_comp_stats)%>%
+  rbind(irr_comp_stats)%>%
+  rbind(co2_comp_stats)%>%
+  as.matrix()%>%
+  as.data.frame()%>%
+  mutate(predicted = as.numeric(predicted), std.error = as.numeric(std.error))
+
+comp_stats%>%
+   dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "Nxirr", "co2")))%>%
+ggplot( aes(set2, predicted, color = x))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error))+
+  theme_base()
+
+
+
+
 
 
 
@@ -669,8 +620,6 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -680,17 +629,9 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.n$expgroup)%>%
-#  subset(trt_type == "N"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+n_trait_stats <- x
+n_trait_stats$set <- "N"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_trait.pdf",
@@ -711,8 +652,6 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -721,17 +660,10 @@ ggplot(x, aes(x, predicted))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.p$expgroup)%>%
-#  subset(trt_type == "P"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+
+p_trait_stats <- x
+p_trait_stats$set <- "P"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_trait.pdf",
@@ -752,8 +684,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
-#summary(mod)
+
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -763,18 +694,9 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
+mult_trait_stats <- x
+mult_trait_stats$set <- "mult"
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.multnutrient$expgroup)%>%
-#  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_trait.pdf",
@@ -795,8 +717,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
-#summary(mod)
+
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -806,17 +727,8 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.irr$expgroup)%>%
-#  subset(trt_type == "irr"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+irr_trait_stats <- x
+irr_trait_stats$set <- "irr"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_trait.pdf",
@@ -840,9 +752,6 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -852,18 +761,8 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.co2$expgroup)%>%
-#  subset(trt_type == "CO2"|trt_type=="control")%>%
-#  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+co2_trait_stats <- x
+co2_trait_stats$set <- "co2"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_trait.pdf",
@@ -888,9 +787,6 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-#mod <- lme(mean_dist~trt_type, random = list(site = ~1,expgroup=~1, treatment_year=~1) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
-#             mutate(trt_type = fct_relevel(trt_type, "control")))
-#summary(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -900,17 +796,8 @@ ggplot(x, aes(x, predicted))+
   ylab("Distance among replicates within sites")+
   theme_base()
 
-#mean.dist.df%>%
-#  subset( expgroup%in%sites.nirr$expgroup)%>%
-#  subset(trt_type == "N*irr"|trt_type=="control")%>%
-#  subset( treatment_year != 0)%>%
-#  group_by(trt_type)%>%
-#  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-#  ggplot(aes(trt_type, mean))+
-#  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-#  xlab("")+
-#  ylab("Distance among replicates within sites")+
-#  theme_base()
+nxirr_trait_stats <- x
+nxirr_trait_stats$set <- "nxirr"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_Nirr_trait.pdf",
