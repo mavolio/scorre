@@ -472,6 +472,39 @@ ggsave(
 )
 
 
+comp_stats%>%
+  mutate(treatment = ifelse(x == "control", "control", "treatment"))%>%
+  dplyr::select(predicted, std.error, set, treatment)%>%
+  pivot_wider(names_from = "treatment", values_from = c("predicted", "std.error"))%>%
+  mutate(treatment_minus_control = predicted_treatment-predicted_control)%>%
+  dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "Nxirr", "co2")))%>%
+ggplot(aes(x = set2, y = treatment_minus_control, color = set2))+
+  geom_hline(yintercept = 0, linetype = "dashed")+
+  geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
+  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  xlab("")+
+  ylab("Distance among replicates within sites (treatment-control)")+
+  theme_base()+
+  theme(legend.position = "None")
+
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_comp_alltreats_trtminuscon.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
+
 
 
 ##Stats about change over time: Nitrogen
@@ -826,6 +859,35 @@ trait_stats%>%
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_trait_alltreats.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+trait_stats%>%
+  mutate(treatment = ifelse(x == "control", "control", "treatment"))%>%
+  dplyr::select(predicted, std.error, set, treatment)%>%
+  pivot_wider(names_from = "treatment", values_from = c("predicted", "std.error"))%>%
+  mutate(treatment_minus_control = predicted_treatment-predicted_control)%>%
+  dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "nxirr", "co2")))%>%
+  ggplot(aes(x = set2, y = treatment_minus_control, color = set2))+
+  geom_hline(yintercept = 0, linetype = "dashed")+
+  geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
+  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  xlab("")+
+  ylab("Distance among replicates within sites (treatment-control)")+
+  theme_base()+
+  theme(legend.position = "None")
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_trait_alltreats_trtminuscon.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
