@@ -406,8 +406,9 @@ trait_stats%>%
   dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "nxirr", "co2")))%>%
   dplyr::mutate(x = fct_relevel(x, "control"))%>%
   ggplot( aes(set2, predicted, color = x))+
-  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.3))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error, shape = x), position = position_dodge(0.3))+
   scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  scale_shape_manual(values = c(1,16,16,16,16,16,16))+
   xlab("")+
   ylab("Distance among sites")+
   theme_base()+
@@ -505,7 +506,8 @@ control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error,shape = x))+
+  scale_shape_manual(values = c(1,16))+
   xlab("")+
   ylab("Distance among sites")+
   theme_base()

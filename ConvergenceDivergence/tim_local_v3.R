@@ -209,7 +209,8 @@ control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x))+
+  scale_shape_manual(values = c(2,17))+
     xlab("")+
     ylab("Distance among replicates within sites")+
     theme_base()
@@ -616,7 +617,8 @@ control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x))+
+  scale_shape_manual(values = c(2,17))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()
