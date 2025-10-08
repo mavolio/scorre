@@ -450,8 +450,9 @@ comp_stats%>%
    dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "Nxirr", "co2")))%>%
   dplyr::mutate(x = fct_relevel(x, "control"))%>%
 ggplot( aes(set2, predicted, color = x))+
-  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.3))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error, shape = x), position = position_dodge(0.3))+
   scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  scale_shape_manual(values = c(2,17,17,17,17,17,17))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()+
@@ -848,8 +849,9 @@ trait_stats%>%
   dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "nxirr", "co2")))%>%
   dplyr::mutate(x = fct_relevel(x, "control"))%>%
   ggplot( aes(set2, predicted, color = x))+
-  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.3))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error, shape = x), position = position_dodge(0.3))+
   scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  scale_shape_manual(values = c(2,17,17,17,17,17,17))+
   xlab("")+
   ylab("Distance among replicates within sites")+
   theme_base()+
