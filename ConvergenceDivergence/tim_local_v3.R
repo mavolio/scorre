@@ -209,11 +209,14 @@ control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
+  #geom_violin(data = subset(mean.dist.df, treatment_year != 0), aes(any.treatment,mean_dist))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x))+
   scale_shape_manual(values = c(2,17))+
+  
     xlab("")+
     ylab("Distance among replicates within sites")+
-    theme_base()
+    theme_base()+
+    theme(legend.position = "none")
 
 
 
@@ -452,7 +455,7 @@ comp_stats%>%
   dplyr::mutate(x = fct_relevel(x, "control"))%>%
 ggplot( aes(set2, predicted, color = x))+
   geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error, shape = x), position = position_dodge(0.3))+
-  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  scale_color_manual(values = c("black", "#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   scale_shape_manual(values = c(2,17,17,17,17,17,17))+
   xlab("")+
   ylab("Distance among replicates within sites")+
@@ -483,7 +486,7 @@ comp_stats%>%
 ggplot(aes(x = set2, y = treatment_minus_control, color = set2))+
   geom_hline(yintercept = 0, linetype = "dashed")+
   geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
-  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
   ylab("Distance among replicates within sites (treatment-control)")+
   theme_base()+
@@ -621,7 +624,8 @@ ggplot(x, aes(x, predicted))+
   scale_shape_manual(values = c(2,17))+
   xlab("")+
   ylab("Distance among replicates within sites")+
-  theme_base()
+  theme_base()+
+  theme(legend.position = "none")
 
 
 ggsave(
@@ -884,7 +888,7 @@ trait_stats%>%
   ggplot(aes(x = set2, y = treatment_minus_control, color = set2))+
   geom_hline(yintercept = 0, linetype = "dashed")+
   geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
-  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
   ylab("Distance among replicates within sites (treatment-control)")+
   theme_base()+
