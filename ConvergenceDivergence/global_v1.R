@@ -127,6 +127,7 @@ test1 <- test%>%
 
 
 
+
 df <- left_join(test1, traits, by = "species_matched", keep = FALSE)
 
 df <- unite(df, expgroup, c("site_code", "project_name", "community_type"), sep = "::")
@@ -136,6 +137,7 @@ df$ok <- complete.cases(df[,c("SLA", "LDMC", "leaf_N", "plant_height_vegetative"
 )])
 df <- subset(df, ok == TRUE)
 
+#write.csv(df%>%ungroup%>%separate(expgroup, into = c("site", "project", "community"), sep = "::")%>% dplyr::select( site,project)%>%unique(), "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/sites_table_global.csv")
 
 ######
 ###The same stuff with traits but they include categorical traits
@@ -167,6 +169,7 @@ summarize.cwm <-
     
     
   )
+
 
 
 #loop

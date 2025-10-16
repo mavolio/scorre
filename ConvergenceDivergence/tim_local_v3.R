@@ -129,7 +129,6 @@ sites <- test%>%
   dplyr::select(site_code, project_name, community_type, treatment_year, trt_type, treatment)%>%
   unique()%>%
   subset(trt_type != "control")
-
 length(unique(sites$site_code))
 
 sites <- unite(sites, temp, c("site_code", "project_name", "community_type"), sep = "::", remove = FALSE)
@@ -137,6 +136,8 @@ sites <- unite(sites, temp, c("site_code", "project_name", "community_type"), se
 length(unique(sites$temp))
 
 sites <- unite(sites, temp, c("site_code", "project_name", "community_type", "trt_type", "treatment"), sep = "::", remove = FALSE)
+
+#write.csv(dplyr::select(sites, site_code,project_name)%>%unique(), "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/sites_table_local.csv")
 
 length(unique(sites$temp))
 
@@ -151,6 +152,9 @@ sites <- test%>%
 
 n <- sites%>%
   ddply(.(trt_type), function(x)data.frame(n = length(x$expgroup)))
+
+
+
 
 ##############################
 ####CREATING AND TESTING BETA DIVERSITY RESULTS
