@@ -15,6 +15,8 @@ library(codyn)
 library(emmeans)
 library(fixest)
 library(nlme)
+library(lmtest)
+library(RcmdrMisc)
 
 #Read in trait data
 traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd')%>%
@@ -137,7 +139,7 @@ df$ok <- complete.cases(df[,c("SLA", "LDMC", "leaf_N", "plant_height_vegetative"
 )])
 df <- subset(df, ok == TRUE)
 
-#write.csv(df%>%ungroup%>%separate(expgroup, into = c("site", "project", "community"), sep = "::")%>% dplyr::select( site,project)%>%unique(), "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/sites_table_global.csv")
+
 
 ######
 ###The same stuff with traits but they include categorical traits
@@ -566,3 +568,7 @@ ggsave(
   limitsize = TRUE
 )
 
+
+forsites <- rbind(dfN,dfP,dfmult_nutrient,`dfmult_nutrient*irr`,dfCO2, dfirr, `dfirr*CO2`, `dfN*CO2`,`dfN*irr`,`dfN*irr*CO2`)
+
+#write.csv(forsites%>%ungroup%>%separate(expgroup, into = c("site1", "project", "community"), sep = "::")%>% dplyr::select( site,project)%>%unique(), "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/sites_table_global.csv")
