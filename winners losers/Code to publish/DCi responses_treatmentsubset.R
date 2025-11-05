@@ -51,6 +51,32 @@ trt_analysis<-trts%>%
          multtrts=ifelse(trt_type %in% c("CO2*temp", "drought*CO2*temp","irr*CO2","irr*CO2*temp","N*CO2*temp","N*irr*CO2", "mult_nutrient*irr","N*irr*CO2*temp", "N*CO2","N*drought","N*irr","N*irr*temp","N*temp","mult_nutrient*temp","N*P*temp","drought*temp","irr*temp"),1,0))
 
 
+###how many obs went into this?
+numobs_trt<-dat_cleansp %>% 
+  right_join(trt_analysis) 
+
+expmets<-numobs_trt %>% 
+  ungroup() %>% 
+  select(site_code, project_name, community_type) %>% 
+  unique()
+
+
+numobs_cont<-dat_cleansp %>% 
+  left_join(trts) %>% 
+  filter(plot_mani==0) %>% 
+  right_join(expmets)
+#total obs 217244+78892
+
+##how many replicates per experiment
+numreps<-numobs_trt %>% 
+  ungroup() %>% 
+  select(site_code, project_name, community_type, treatment, plot_id) %>% 
+  unique() %>% 
+  group_by(site_code, project_name, community_type, treatment) %>% 
+  summarise(n=length(plot_id))
+
+
+
 ##Getting DCI
 
 #combine relative abundance data with treatment na.omit removes unidentified species 
@@ -311,15 +337,15 @@ p_mean<-CT_diff%>%
 # ##multiple treatments only use species that are found in 3 or more experiments
 ## deciding to no longer do this b/c we are changing the mult trt
 # 
-# allmult_subset<-CT_diff%>%
-#   filter(multtrts==1)%>%
-#   ungroup()%>%
-#   select(species_matched, trt_type)%>%
-#   unique()%>%
-#   group_by(species_matched)%>%
-#   summarize(n=length(trt_type))%>%
-#   filter(n>2)%>%
-#   select(-n)
+allmult_subset<-CT_diff%>%
+  filter(multtrts==1)%>%
+  ungroup()%>%
+  select(species_matched, trt_type)%>%
+  unique()%>%
+  group_by(species_matched)%>%
+  summarize(n=length(trt_type))%>%
+  filter(n>2)%>%
+  select(-n)
 
 allmult_sites<-CT_diff%>%
   filter(multtrts==1)%>%
@@ -403,7 +429,27 @@ allnut_mean<-CT_diff%>%
   mutate(trt_type2="all nuts")%>%
   select(-sd)
 
+###how variable is a species' response?
+# ## a species response is pretty varaible, but we are looking at averages and this is the best approach for now. There is a lot more to explore going forwards
+# allnut_n<-CT_diff%>%
+#   filter(multnuts==1) %>% 
+#   group_by(species_matched) %>% 
+#   summarise(n=length(diff)) %>% 
+#   filter(n>20) 
+# 
+# allnut_common<-CT_diff%>%
+#   filter(multnuts==1) %>% 
+#   select(-n) %>% 
+#   right_join(allnut_n) %>% 
+#   mutate(sp=paste(n, species_matched, sep="_"))
+# 
+# ggplot(data=allnut_common, aes(x=sp, y=diff))+
+#   geom_boxplot()+
+#   theme(axis.text.x  = element_text(angle=90, vjust=0.5))+
+#   geom_hline(yintercept = 0)
 
+
+#combine to full dataset
 Fulldataset<-allmult_mean%>%
   bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 

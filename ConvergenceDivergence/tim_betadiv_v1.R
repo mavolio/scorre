@@ -105,6 +105,7 @@ test <- crest %>%
   subset(last_trt_yr == calendar_year)%>%
   subset(treatment_year == n.trt.yrs)
 
+
 test$trt_type <-  revalue(test$trt_type, c("N*P" = "mult_nutrient","CO2*temp" = "mult_GCD", "drought*CO2*temp" = "mult_GCD","irr*CO2" = "mult_GCD","irr*CO2*temp" = "mult_GCD","N*CO2*temp" = "mult_GCD","N*irr*CO2" = "mult_GCD", "mult_nutrient*irr" = "mult_GCD","N*irr*CO2*temp" = "mult_GCD", "N*CO2" = "mult_GCD","N*drought" = "mult_GCD","N*irr" = "mult_GCD","N*irr*temp" = "mult_GCD","N*temp" = "mult_GCD","mult_nutrient*temp" = "mult_GCD","N*P*temp" = "mult_GCD","drought*temp" = "mult_GCD","irr*temp" = "mult_GCD") ) #all expect for the first term are used for mult_GCD category which is no longer being used
 
 test <- test%>%
@@ -403,7 +404,7 @@ tdistances_master <- {}
 
 for(i in 1:length(expgroup_vector)) {
   temp.df <- subset(summarize.cwm, expgroup == expgroup_vector[i])
-  temp.gow <- gowdis(temp.df[7:ncol(temp.df)])
+  temp.gow <- gowdis(temp.df[8:ncol(temp.df)])
   temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
   tdistances_temp <- data.frame(expgroup = expgroup_vector[i], trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani)
 #  tdistances_temp <- subset(tdistances_temp, dist > 0.00000000001) #not necesssary when excluding CO2 treatment
@@ -827,7 +828,7 @@ ggsave(
 
 ##Nitrogen gradient
 temp <- subset(lrr_treat_species, trt_type == "N")
-mod <- lmer(lrr~n + (1|expgroup) ,data = temp)
+mod <- lmer(lrr~n + (1|site_code/expgroup) ,data = temp)
 summary(mod)
 ggplot(temp, aes(n, lrr))+
   geom_hline(yintercept = 0, size = 1, linetype = "dashed", alpha = 0.5)+

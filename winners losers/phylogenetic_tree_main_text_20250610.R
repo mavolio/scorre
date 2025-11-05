@@ -15,11 +15,11 @@ library(grid)
 
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
-
-my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+#my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+#my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 
 # Load the tree:
-tree<-read.tree(paste(my.wd, "scorre.tree.win.los.tre.March2024", sep="")) #why not using the original tree? I detected that some species are missing from the other.
+tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep="")) #why not using the original tree? I detected that some species are missing from the other.
 
 # Load list of species with their families:
 fam<-read.table(paste(my.wd, "species_families_trees_2021.csv", sep=""), header=T, sep=",", fill = TRUE)
@@ -286,12 +286,19 @@ colactive[labellistast==""]="darkgray"
 colactive[labellistast=="  "]=NA
 ast2<-as.grob(~pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
-#for Lamiacea and Orobanaceae and Polimoniaceae
+#for Lamiacea and Orobanaceae
 labellistLO<-c("  ", "","","", "-","","","")
 colactive<-collst
 colactive[labellistLO==""]="darkgray"
 colactive[labellistLO=="  "]=NA
 lop<-as.grob(~pie2(pie$value, labels=labellistLO, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
+
+#for Polimoniaceae
+labellistLO<-c("  ", "","","  ", "-","","","")
+colactive<-collst
+colactive[labellistLO==""]="darkgray"
+colactive[labellistLO=="  "]=NA
+lop2<-as.grob(~pie2(pie$value, labels=labellistLO, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Plantaginaceae
 labellistpla<-c("", "","","", "","","","-")
@@ -337,7 +344,7 @@ p2<- h + draw_grob(lg, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)
          draw_grob(fab, x=.24, y=.50, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(fab1, x=.20, y=.44, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(ama, x=.27, y=.315, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(lop, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+         draw_grob(lop2, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(sol, x=.372, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(gen, x=.428, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
          draw_grob(plt, x=.494, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
@@ -357,4 +364,3 @@ dev.off()
 
 #clean-up:
 rm(list = ls())
-
