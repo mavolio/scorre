@@ -78,7 +78,7 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
 
 ##### data #####
 #treatment data
-trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundanceMarch2024.csv') %>%
+trt <- read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundanceMarch2024.csv') %>%
 select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, block, plot_id) %>%
   unique() %>%
   mutate(plot_id=ifelse(project_name=='IRG', paste(block, plot_id, sep='_'), plot_id)) %>% 
@@ -111,8 +111,8 @@ allDivTrt <- pDiv %>% #phylogenetic metrics
   full_join(rDiv) %>% #species metrics
   left_join(trt) %>% #treatments
   filter(treatment_year>0) %>% 
-  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>% #site anpp and regional richness
-  full_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
+  full_join(read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>% #site anpp and regional richness
+  full_join(read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>% #site MAP and MAT
   mutate(site_proj_comm=paste(site_code,  project_name, community_type, sep='::')) %>%
   mutate(site_proj_comm_trt=paste(site_proj_comm, treatment, sep='::')) %>% 
   na.omit() 
@@ -129,110 +129,115 @@ hist(allDivTrt$Evar)
 # write.csv(allDivTrt, 'paper 2_PD and FD responses\\data\\CoRRE_allDiversityMetrics_phyFunAnalysis.csv', row.names=F)
 
 
-# ##### calculating response ratios #####
-# #filter control plots
-# control <- allDivTrt %>% 
-#   filter(trt_type2=='control') %>%
-#   rename(mpd.raw_ctl=mpd.raw, 
-#          mpd.ses_ctl=mpd.ses,
-#          mntd.raw_ctl=mntd.raw, 
-#          mntd.ses_ctl=mntd.ses, 
-#          MPD_traits_raw_ctl=MPD_traits_raw,
-#          MPD_traits_ses_ctl=MPD_traits_ses,
-#          MNTD_traits_raw_ctl=MNTD_traits_raw,
-#          MNTD_traits_ses_ctl=MNTD_traits_ses,
-#          FDis_ctl=FDis, 
-#          RaoQ_ctl=RaoQ, 
-#          richness_ctl=richness) %>%
-#   group_by(site_code, project_name, community_type, treatment_year) %>%
-#   summarize_at(vars(mpd.raw_ctl, 
-#                     mpd.ses_ctl,
-#                     mntd.raw_ctl, 
-#                     mntd.ses_ctl, 
-#                     MPD_traits_raw_ctl,
-#                     MPD_traits_ses_ctl,
-#                     MNTD_traits_raw_ctl,
-#                     MNTD_traits_ses_ctl,
-#                     FDis_ctl, 
-#                     RaoQ_ctl, 
-#                     richness_ctl),
-#                list(mean=mean), na.rm=T) %>% #average across plots and years
-#   ungroup()
-# 
-# #merge on site characteristics
-# controlEnv <- control %>%
-#   group_by(site_code, project_name, community_type) %>%
-#   summarize_at(vars(mpd.raw_ctl_mean, 
-#                     mpd.ses_ctl_mean,
-#                     mntd.raw_ctl_mean, 
-#                     mntd.ses_ctl_mean, 
-#                     MPD_traits_raw_ctl_mean,
-#                     MPD_traits_ses_ctl_mean,
-#                     MNTD_traits_raw_ctl_mean,
-#                     MNTD_traits_ses_ctl_mean,
-#                     FDis_ctl_mean, 
-#                     RaoQ_ctl_mean, 
-#                     richness_ctl_mean), 
-#                list(mean=mean), na.rm=T) %>% #average across plots and years
-#   ungroup() %>%
-#   left_join(read.csv('CoRRE data\\CoRRE data\\environmental data\\CoRRE_siteBiotic_Dec2021.csv')) %>%
-#   left_join(read.csv('CoRRE data\\CoRRE data\\environmental data\\CoRRE_siteLocationClimate_July2022.csv')) %>%
-#   gather(key='env_variable', value='env_value', rrich, anpp, MAP, MAT, aridityValues)
-# 
-# #can remove these calculations for functional diversity (calculated in script 3)
-# 
-# allDivRR <- allDivTrt %>%
-#   filter(trt_type2!='control') %>%
-#   left_join(control) %>%
-#   filter(!is.na(RaoQ_ctl_mean)) %>%  #remove lines where there was no control to compare to due to lack of spp cover for traits; lose 116 data points
-#   mutate(P_mpd_raw_RR=log(mpd.raw/mpd.raw_ctl_mean), 
-#          P_mpd_ses_RR=(mpd.ses-mpd.ses_ctl_mean/mpd.ses_ctl_mean), #percent difference for ses due to neg values
-#          P_mntd_raw_RR=log(mntd.raw/mntd.raw_ctl_mean), 
-#          P_mntd_ses_RR=(mntd.ses-mntd.ses_ctl_mean/mntd.ses_ctl_mean), #percent difference for ses due to neg values
-#          F_mpd_raw_RR=log(MPD_traits_raw/MPD_traits_raw_ctl_mean), 
-#          F_mpd_ses_RR=(MPD_traits_ses-MPD_traits_ses_ctl_mean/MPD_traits_ses_ctl_mean), #percent difference for ses due to neg values
-#          F_mntd_raw_RR=log(MNTD_traits_raw/MNTD_traits_raw_ctl_mean), 
-#          F_mntd_ses_RR=(MNTD_traits_ses-MNTD_traits_ses_ctl_mean/MNTD_traits_ses_ctl_mean), #percent difference for ses due to neg values
-#          FDis_RR=log(FDis/FDis_ctl_mean), 
-#          RaoQ_RR=log(RaoQ/RaoQ_ctl_mean), 
-#          richness_RR=log(richness/richness_ctl_mean)) %>% 
-#   mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>% 
-#   select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, trt_type2, plot_mani, plot_id, rrich, anpp, MAP, MAT, aridityValues, P_mpd_raw_RR:richness_RR) %>% 
-#   filter(P_mpd_raw_RR<1.9) #filter outliers, removes 3 points
-# 
-# allDivRRmean <- allDivRR %>% 
-#   group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
-#   summarise_at(vars(P_mpd_raw_RR, 
-#                     P_mpd_ses_RR, 
-#                     P_mntd_raw_RR, 
-#                     P_mntd_ses_RR, 
-#                     F_mpd_raw_RR, 
-#                     F_mpd_ses_RR, 
-#                     F_mntd_raw_RR, 
-#                     F_mntd_ses_RR,
-#                     FDis_RR, 
-#                     RaoQ_RR, 
-#                     richness_RR), 
-#                list(mean=mean), na.rm=T) %>%
-#   ungroup()
-# 
-# hist(allDivRR$P_mpd_raw_RR)
-# hist(allDivRR$P_mpd_ses_RR)
+##### calculating response ratios #####
+#filter control plots
+control <- allDivTrt %>%
+  filter(trt_type2=='control') %>%
+  rename(mpd.raw_ctl=MPD_phylo,
+         mpd.ses_ctl=MPD_phylo_ses,
+         # mntd.raw_ctl=mntd.raw,
+         # mntd.ses_ctl=mntd.ses,
+         RaoQ_raw_ctl=RaoQ,
+         RaoQ_ses_ctl=RaoQ_ses,
+         # MNTD_traits_raw_ctl=MNTD_traits_raw,
+         # MNTD_traits_ses_ctl=MNTD_traits_ses,
+         # FDis_ctl=FDis,
+         # RaoQ_ctl=RaoQ,
+         richness_ctl=richness,
+         hill_ctl=hill) %>%
+  group_by(site_code, project_name, community_type, treatment_year) %>%
+  summarize_at(vars(mpd.raw_ctl,
+                    mpd.ses_ctl,
+                    # mntd.raw_ctl,
+                    # mntd.ses_ctl,
+                    RaoQ_raw_ctl,
+                    RaoQ_ses_ctl,
+                    # MNTD_traits_raw_ctl,
+                    # MNTD_traits_ses_ctl,
+                    # FDis_ctl,
+                    # RaoQ_ctl,
+                    richness_ctl,
+                    hill_ctl),
+               list(mean=mean), na.rm=T) %>% #average across plots and years
+  ungroup()
+
+#merge on site characteristics
+controlEnv <- control %>%
+  group_by(site_code, project_name, community_type) %>%
+  summarize_at(vars(mpd.raw_ctl_mean,
+                    mpd.ses_ctl_mean,
+                    # mntd.raw_ctl_mean,
+                    # mntd.ses_ctl_mean,
+                    RaoQ_raw_ctl_mean,
+                    RaoQ_ses_ctl_mean,
+                    # MNTD_traits_raw_ctl_mean,
+                    # MNTD_traits_ses_ctl_mean,
+                    # FDis_ctl_mean,
+                    # RaoQ_ctl_mean,
+                    richness_ctl_mean,
+                    hill_ctl_mean),
+               list(mean=mean), na.rm=T) %>% #average across plots and years
+  ungroup() %>%
+  left_join(read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteBiotic.csv')) %>%
+  left_join(read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\siteLocationClimate.csv')) %>%
+  gather(key='env_variable', value='env_value', rrich, anpp, MAP, MAT, aridityValues)
+
+
+allDivRR <- allDivTrt %>%
+  filter(trt_type2!='control') %>%
+  left_join(control) %>%
+  filter(!is.na(RaoQ_raw_ctl_mean)) %>%  #remove lines where there was no control to compare to due to lack of spp cover for traits; lose 3586 data points __ CHECK THIS!!
+  mutate(P_mpd_raw_RR=log(MPD_phylo/mpd.raw_ctl_mean),
+         P_mpd_ses_RR=(MPD_phylo-mpd.ses_ctl_mean/mpd.ses_ctl_mean), #percent difference for ses due to neg values
+         # P_mntd_raw_RR=log(mntd.raw/mntd.raw_ctl_mean),
+         # P_mntd_ses_RR=(mntd.ses-mntd.ses_ctl_mean/mntd.ses_ctl_mean), #percent difference for ses due to neg values
+         F_mpd_raw_RR=log(RaoQ/RaoQ_raw_ctl_mean),
+         F_mpd_ses_RR=(RaoQ_ses-RaoQ_ses_ctl_mean/RaoQ_ses_ctl_mean), #percent difference for ses due to neg values
+         # F_mntd_raw_RR=log(MNTD_traits_raw/MNTD_traits_raw_ctl_mean),
+         # F_mntd_ses_RR=(MNTD_traits_ses-MNTD_traits_ses_ctl_mean/MNTD_traits_ses_ctl_mean), #percent difference for ses due to neg values
+         # FDis_RR=log(FDis/FDis_ctl_mean),
+         # RaoQ_RR=log(RaoQ/RaoQ_ctl_mean),
+         richness_RR=log(richness/richness_ctl_mean),
+         hill_RR=log(hill/hill_ctl_mean)) %>%
+  mutate(site_proj_comm=paste(site_code, project_name, community_type, sep='::')) %>%
+  select(site_proj_comm, site_code, project_name, community_type, treatment_year, calendar_year, treatment, trt_type2, plot_mani, plot_id, rrich, anpp, MAP, MAT, aridityValues, P_mpd_raw_RR:hill_RR) #%>%
+  # filter(P_mpd_raw_RR<1.9) #filter outliers, removes 3 points
+
+allDivRRmean <- allDivRR %>%
+  group_by(site_proj_comm, site_code, project_name, community_type, treatment, trt_type2, plot_id) %>%
+  summarise_at(vars(P_mpd_raw_RR,
+                    P_mpd_ses_RR,
+                    # P_mntd_raw_RR,
+                    # P_mntd_ses_RR,
+                    F_mpd_raw_RR,
+                    F_mpd_ses_RR,
+                    # F_mntd_raw_RR,
+                    # F_mntd_ses_RR,
+                    # FDis_RR,
+                    # RaoQ_RR,
+                    richness_RR,
+                    hill_RR),
+               list(mean=mean), na.rm=T) %>%
+  ungroup()
+
+hist(allDivRR$P_mpd_raw_RR)
+hist(allDivRR$P_mpd_ses_RR)
 # hist(allDivRR$P_mntd_raw_RR)
 # hist(allDivRR$P_mntd_ses_RR)
-# hist(allDivRR$F_mpd_raw_RR)
-# hist(allDivRR$F_mpd_ses_RR)
+hist(allDivRR$F_mpd_raw_RR)
+hist(allDivRR$F_mpd_ses_RR)
 # hist(allDivRR$F_mntd_raw_RR)
 # hist(allDivRR$F_mntd_ses_RR)
 # hist(allDivRR$FDis_RR)
 # hist(allDivRR$RaoQ_RR)
-# hist(allDivRR$richness_RR)
+hist(allDivRR$richness_RR)
+hist(allDivRR$hill_RR)
 
 ##### check if richness difference is correlated with other diversity metrics #####
 
 chart.Correlation(allDivTrt[c(6:12)]) #raw values
 
-# chart.Correlation(allDivRR[16:26]) #response ratios
+chart.Correlation(allDivRR[16:21]) #response ratios
 
 chart.Correlation(allDivRRmean[8:18]) #mean response ratios over all years
 
@@ -242,8 +247,8 @@ chart.Correlation(allDivRRmean[8:18]) #mean response ratios over all years
 
 options(contrasts=c('contr.sum','contr.poly')) 
 
-summary(richModel <- lme(richness ~ as.factor(trt_type2),
-                         data=na.omit(subset(allDivTrt)),
+summary(richModel <- lme(richness_RR_mean ~ as.factor(trt_type2),
+                         data=na.omit(subset(allDivRRmean)),
                          random=~1|site_proj_comm))
 anova.lme(richModel, type='sequential') #significant effect of trt
 meansRichModel <- emmeans(richModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -256,15 +261,15 @@ ggplot(data=meansRichModelOutput, aes(x=trt_type2, y=emmean, color=trt_type2)) +
   geom_hline(yintercept=0) +
   coord_flip() +
   ylab('Species Richness') + xlab('') +
-  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen', 'Control')) + 
-  scale_color_manual(values=c('blue', 'darkgrey', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
+  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen')) + 
+  scale_color_manual(values=c('blue', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
   theme(legend.position='none')
 
 
-summary(HillModel <- lme(hill ~ as.factor(trt_type2),
-                         data=na.omit(subset(allDivTrt)),
+summary(HillModel <- lme(hill_RR_mean ~ as.factor(trt_type2),
+                         data=na.omit(subset(allDivRRmean)),
                          random=~1|site_proj_comm))
 anova.lme(HillModel, type='sequential') #significant trt effect
 meansHillModel <- emmeans(HillModel, pairwise~as.factor(trt_type2), adjust="tukey")
@@ -278,16 +283,16 @@ hillFig <- ggplot(data=meansHillModelOutput, aes(x=trt_type2, y=emmean, color=tr
   coord_flip() +
   ylab('Hill Number\nEffect Size') + xlab('') +
   scale_x_discrete(limits=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), breaks=c('multiple trts', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), labels=c('Multiple Trts', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'P', 'N')) +
-  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen', 'Control')) + 
-  scale_color_manual(values=c('blue', 'darkgrey', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
+  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen')) + 
+  scale_color_manual(values=c('blue', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
   theme(legend.position='none')
 
 
-summary(PmpdModel <- lme(MPD_phylo ~ as.factor(trt_type2),
-                         data=allDivTrt,
-                         random=~1|site_code/richness))
+summary(PmpdModel <- lme(P_mpd_raw_RR_mean ~ as.factor(trt_type2),
+                         data=allDivRRmean,
+                         random=~1|site_code/richness_RR_mean))
 anova.lme(PmpdModel, type='sequential') #sig diff among trts
 meansPMPDModel <- emmeans(PmpdModel, ~as.factor(trt_type2), adjust="tukey")
 meansPMPDModelOutput <- as.data.frame(meansPMPDModel)
@@ -298,17 +303,17 @@ mpdFig <- ggplot(data=meansPMPDModelOutput, aes(x=trt_type2, y=emmean, color=trt
   geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0, size=3) +
   geom_hline(yintercept=0) +
   coord_flip() +
-  ylab('Phylogenetic MPD') + xlab('') +
-  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen', 'Control')) + 
-  scale_color_manual(values=c('blue', 'darkgrey', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
+  ylab('Phylogenetic MPD\nEffect Size') + xlab('') +
+  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen')) + 
+  scale_color_manual(values=c('blue', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
   theme(legend.position='none')
 
 
-summary(RaoQModel <- lme(RaoQ_ses ~ as.factor(trt_type2),
-                         data=allDivTrt,
-                         random=~1|site_code/richness))
+summary(RaoQModel <- lme(F_mpd_raw_RR_mean ~ as.factor(trt_type2),
+                         data=allDivRRmean,
+                         random=~1|site_code/richness_RR_mean))
 anova.lme(RaoQModel, type='sequential') #significant effect of trt
 meansRaoQModel <- emmeans(RaoQModel, pairwise~as.factor(trt_type2), adjust="tukey")
 meansRaoQModelOutput <- as.data.frame(meansRaoQModel$emmeans)
@@ -319,19 +324,19 @@ RaoQFig <- ggplot(data=meansRaoQModelOutput, aes(x=trt_type2, y=emmean, color=tr
   geom_errorbar(aes(ymin=emmean-SE, ymax=emmean+SE), width=0, size=3) +
   geom_hline(yintercept=0) +
   coord_flip() +
-  ylab('Rao Q') + xlab('') +
-  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N', 'control'), 
-                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen', 'Control')) + 
-  scale_color_manual(values=c('blue', 'darkgrey', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
+  ylab('Functional Rao Q\nEffect Size') + xlab('') +
+  scale_x_discrete(limits=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   breaks=c('multiple trts', 'herb_removal', 'disturbance', 'temp', 'drought', 'CO2', 'irr', 'P', 'N'), 
+                   labels=c('Multiple Trts', 'Herbivore Rem.', 'Disturbance', 'Temperature', 'Drought', 'CO2','Irrigation', 'Phosphorus', 'Nitrogen')) + 
+  scale_color_manual(values=c('blue', 'orange', 'orange', 'orange', 'blue', 'orange', 'blue', 'blue', 'orange')) +
   theme(legend.position='none')
 
 
 pushViewport(viewport(layout=grid.layout(1,3)))
 print(hillFig, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(mpdFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-print(RaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=3))
-#export at 1000x1000
+print(mpdFig, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+print(RaoQFig, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+#export at 2000x1000
 
 
 
