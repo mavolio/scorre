@@ -16,7 +16,7 @@ library(ggord)
 library(ggfortify)
 library(tidyverse)
 
-setwd('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\paper 2_PD and FD responses\\data\\')  #kim's laptop
+# setwd('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\')  #kim's laptop
 
 ##### functions and themes #####
 ###standard error function
@@ -53,14 +53,14 @@ theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=elemen
              legend.title=element_blank(), legend.text=element_text(size=20))
 
 ##### data #####
-sppNames <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\corre2trykey_2021.csv')%>%
+sppNames <- read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\corre2trykey_2021.csv')%>%
   select(genus_species, species_matched)%>%
   unique()
 
-trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundance.csv')%>%
+trt <- read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RawAbundance.csv')%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id)%>%
   unique()%>%
-  left_join(read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\ExperimentInfo.csv'))%>%
+  left_join(read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\ExperimentInfo.csv'))%>%
   group_by(site_code, project_name, community_type)%>%
   mutate(experiment_length=max(treatment_year))%>%
   ungroup()%>%
@@ -82,30 +82,33 @@ trt <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\Co
   select(rep, n, p, CO2, precip, temp, dist, multtrts, trt_type2)%>%
   unique()
 
-contTraits <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\Final TRY Traits\\Imputed Continuous_Traits\\data to play with\\imputed_continuous_20220620.csv')%>%
-  select(-X.1, -X, -family, -genus, -observation)%>%
-  group_by(species_matched)%>%
-  summarise_all(funs(mean))%>%
-  ungroup()
+correGExTraitsContinuous <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/169fc12d10ac20b0e504f8d5ca0b8ee8')  %>% 
+  filter(error_risk_overall<2|is.na(error_risk_overall)) %>% #drops 326 trait values
+  select(family, species, trait, trait_value) 
 
-traits_all <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\sCoRRE categorical trait data_11302021.csv')%>%
-  full_join(contTraits) %>%
-  drop_na()
+correGExTraitsCategorical <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd') %>% 
+  select(-source, -error_risk_overall)
 
-traitsOutliersRemoved <- traits_all %>%
-  filter(!leaf_type %in% c("microphyll","frond")) %>%
-  filter(!species_matched %in% c("Centrolepis aristata", "Centrolepis strigosa", "Acorus calamus"))
+traits <- rbind(correGExTraitsCategorical, correGExTraitsContinuous) %>% 
+  pivot_wider(names_from=trait, values_from=trait_value) %>% 
+  select(-leaf_area, -leaf_dry_mass, -leaf_type, -leaf_compoundness, -stem_support) %>% 
+  mutate(across(c(growth_form, photosynthetic_pathway, lifespan, clonal, 
+                  mycorrhizal_type, n_fixation_type), 
+                as.factor),
+         across(c(LDMC, SLA, SRL, leaf_N, plant_height_vegetative, seed_dry_mass), 
+                as.numeric)) %>% 
+  na.omit() #only keep trait data that is complete for all traits (drops 1157 species with only categorical trait data, 28.4% of species)
 
-traitsScaled <- traitsOutliersRemoved %>% ## only scales continuous traits
-  mutate_at(vars(seed_dry_mass:seed_number), scale)%>%
-  select(species_matched, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal, n_fixation, seed_dry_mass, leaf_N, LDMC, SLA, plant_height_vegetative, rooting_depth, seed_number)%>%
-  rename(genus_species=species_matched)%>%
+traitsScaled <- traits %>% ## only scales continuous traits
+  mutate_at(vars(LDMC:seed_dry_mass), scale)%>%
+  select(species, growth_form, photosynthetic_pathway, lifespan, clonal, mycorrhizal_type, n_fixation_type, LDMC, SLA, SRL, leaf_N, plant_height_vegetative, seed_dry_mass)%>%
+  rename(genus_species=species)%>%
   arrange(genus_species)%>%
-  mutate(keep=ifelse(growth_form=='CHECK' | growth_form=='' | photosynthetic_pathway=='CHECK' | photosynthetic_pathway=='' | lifespan=='CHECK' | lifespan=='' | clonal=='CHECK' | clonal=='' | mycorrhizal=='CHECK' | mycorrhizal=='' | n_fixation=='CHECK' | n_fixation=='', 0, 1))%>%
+  mutate(keep=ifelse(growth_form=='CHECK' | growth_form=='' | photosynthetic_pathway=='CHECK' | photosynthetic_pathway=='' | lifespan=='CHECK' | lifespan=='' | clonal=='CHECK' | clonal=='' | mycorrhizal_type=='CHECK' | mycorrhizal_type=='' | n_fixation_type=='CHECK' | n_fixation_type=='', 0, 1))%>%
   filter(keep==1)%>%
   select(-keep)
 
-spp <- read.csv('C:\\Users\\kjkomatsu\\Dropbox (Smithsonian)\\working groups\\CoRRE\\sDiv\\sDiv_sCoRRE_shared\\CoRRE data\\CoRRE data\\community composition\\CoRRE_RelativeCover_Dec2021.csv')%>%
+spp <- read.csv('C:\\Users\\kjkomatsu\\Smithsonian Dropbox\\Kimberly Komatsu\\working groups\\CoRRE\\CoRRE_database\\Data\\CompiledData\\RelativeCover.csv')%>%
   left_join(sppNames)%>%
   filter(!is.na(species_matched))%>%
   select(-genus_species)%>%
@@ -132,8 +135,8 @@ sppTraits <- spp%>%
          photosynthetic_pathway_ordinal=ifelse(photosynthetic_pathway=='C3', 1, 2),
          lifespan_ordinal=ifelse(lifespan=='perennial', 2, 1),
          clonal_ordinal=ifelse(clonal=='yes', 2, 1),
-         mycorrhizal_ordinal=ifelse(mycorrhizal=='yes', 2, 1),
-         n_fixation_ordinal=ifelse(n_fixation=='yes', 2, 1))
+         mycorrhizal_ordinal=ifelse(mycorrhizal_type=='yes', 2, 1),
+         n_fixation_ordinal=ifelse(n_fixation_type=='yes', 2, 1))
 
 ##### case study examples #####
 
@@ -141,36 +144,82 @@ sppTraits <- spp%>%
 sppTraitsKUFS <- sppTraits%>%
   filter(rep %in% c('KUFS::E2::0::N1S0H0', 'KUFS::E2::0::N0S0H0'))
 
-PCAmodel <- prcomp(data.matrix(sppTraitsKUFS[,10:22]))
+PCAmodel <- prcomp(data.matrix(sppTraitsKUFS[,4:21]))
 autoplot(PCAmodel, data=sppTraitsKUFS, colour='rep', size='cover', 
          loadings=TRUE, loadings.colour='dark grey',
          loadings.label=F) +
-  scale_color_manual(values=c('#595959', '#0000FF')) +
-  coord_cartesian(xlim=c(-0.35,0.2)) +
+  scale_color_manual(values=c('#00dbff', '#0000FF')) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
   theme(legend.position='none')
 
-### irrigation
-sppTraitsDL <- sppTraits%>%
-  filter(rep %in% c('DL::GCME2::0::P', 'DL::GCME2::0::C'))
+# ### irrigation
+# sppTraitsDL <- sppTraits%>%
+#   filter(rep %in% c('DL::GCME2::0::P', 'DL::GCME2::0::C'))
+# 
+# PCAmodel <- prcomp(data.matrix(sppTraitsDL[,10:22]))
+# autoplot(PCAmodel, data=sppTraitsDL, colour='rep', size='cover', 
+#          loadings=T, loadings.colour='dark grey',
+#          loadings.label=F) +
+#   scale_color_manual(values=c('#595959', '#0000FF')) + 
+#   theme(legend.position='none')
+# 
+# ### drought
+# sppTraitsKAEFS <- sppTraits%>%http://127.0.0.1:35413/graphics/plot_zoom_png?width=1572&height=798
+#   filter(rep %in% c('KAEFS::WAPAClip::0::U CC', 'KAEFS::WAPAClip::0::U CH'))
+# 
+# PCAmodel <- prcomp(data.matrix(sppTraitsKAEFS[,10:22]))
+# autoplot(PCAmodel, data=sppTraitsKAEFS, colour='rep', size='cover', 
+#          loadings=T, loadings.colour='dark grey',
+#          loadings.label=T) +
+#   scale_color_manual(values=c('#FFA300', '#595959')) + 
+#   theme(legend.position='none')
 
-PCAmodel <- prcomp(data.matrix(sppTraitsDL[,10:22]))
-autoplot(PCAmodel, data=sppTraitsDL, colour='rep', size='cover', 
-         loadings=T, loadings.colour='dark grey',
+
+### disturbance
+sppTraitsMaercburn <- sppTraits%>%
+  filter(rep %in% c('maerc::fireplots::0::wuug', 'maerc::fireplots::0::uuuu'))
+
+PCAmodel <- prcomp(data.matrix(sppTraitsMaercburn[,4:21]))
+autoplot(PCAmodel, data=sppTraitsMaercburn, colour='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
          loadings.label=F) +
-  scale_color_manual(values=c('#595959', '#0000FF')) + 
+  scale_color_manual(values=c('#0000FF', '#00dbff')) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
   theme(legend.position='none')
 
-### drought
-sppTraitsKAEFS <- sppTraits%>%
-  filter(rep %in% c('KAEFS::WAPAClip::0::U CC', 'KAEFS::WAPAClip::0::U CH'))
+sppTraitsCUL <- sppTraits%>%
+  filter(rep %in% c('CUL::Culardoch::0::burn', 'CUL::Culardoch::0::control'))
 
-PCAmodel <- prcomp(data.matrix(sppTraitsKAEFS[,10:22]))
-autoplot(PCAmodel, data=sppTraitsKAEFS, colour='rep', size='cover', 
-         loadings=T, loadings.colour='dark grey',
-         loadings.label=T) +
-  scale_color_manual(values=c('#FFA300', '#595959')) + 
+PCAmodel <- prcomp(data.matrix(sppTraitsCUL[,4:21]))
+autoplot(PCAmodel, data=sppTraitsCUL, colour='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
+         loadings.label=F) +
+  scale_color_manual(values=c('#FFA300', '#00dbff')) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
   theme(legend.position='none')
 
+sppTraitsTER <- sppTraits%>%
+  filter(rep %in% c('KNP::GFP::0::Open_Grazed', 'KNP::GFP::0::Open_Ungrazed'))
+
+PCAmodel <- prcomp(data.matrix(sppTraitsTER[,4:21]))
+autoplot(PCAmodel, data=sppTraitsTER, colour='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
+         loadings.label=F) +
+  scale_color_manual(values=c('#FFA300', '#00dbff')) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
+  theme(legend.position='none')
+
+### mult trt
+sppTraitsMaerc <- sppTraits%>%
+  filter(rep %in% c('maerc::fireplots::0::snpu', 'maerc::fireplots::0::uuuu'))
+
+PCAmodel <- prcomp(data.matrix(sppTraitsMaerc[,4:21]))
+autoplot(PCAmodel, data=sppTraitsMaerc, colour='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
+         loadings.label=F) +
+  scale_color_manual(values=c('#00dbff', '#0000FF')) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
+  theme(legend.position='none')
 
 
 ##### community weighted means #####
