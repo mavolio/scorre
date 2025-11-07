@@ -173,6 +173,8 @@ summarize.cwm <-
   )
 
 
+cor(summarize.cwm%>%ungroup%>%dplyr::select(SLA.cwm,LDMC.cwm,leaf_N.cwm,plant_height_vegetative.cwm,seed_dry_mass.cwm,SRL.cwm#,growth_form.cwm,photosynthetic_pathway.cwm,lifespan.cwm,clonal.cwm,mycorrhizal_type.cwm,n_fixation_type.cwm
+                                            ), method = "pearson", use = "complete.obs")
 
 #loop
 trt_vector <- unique(summarize.cwm$trt_type)
