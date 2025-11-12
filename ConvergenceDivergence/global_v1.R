@@ -173,6 +173,8 @@ summarize.cwm <-
   )
 
 
+cor(summarize.cwm%>%ungroup%>%dplyr::select(SLA.cwm,LDMC.cwm,leaf_N.cwm,plant_height_vegetative.cwm,seed_dry_mass.cwm,SRL.cwm#,growth_form.cwm,photosynthetic_pathway.cwm,lifespan.cwm,clonal.cwm,mycorrhizal_type.cwm,n_fixation_type.cwm
+                                            ), method = "pearson", use = "complete.obs")
 
 #loop
 trt_vector <- unique(summarize.cwm$trt_type)
@@ -206,7 +208,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()
 
 n_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
@@ -239,7 +241,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()
 
 p_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
@@ -273,7 +275,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()
 
 mult_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
@@ -307,7 +309,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()
 
 irr_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
@@ -342,7 +344,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()
 
 co2_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
@@ -376,7 +378,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()
 
 nxirr_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
@@ -415,7 +417,7 @@ trait_stats%>%
   scale_color_manual(values = c("black","#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   scale_shape_manual(values = c(1,16,16,16,16,16,16))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()+
   theme(legend.position = "None")
 
@@ -447,7 +449,7 @@ trait_stats%>%
   geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
   scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
-  ylab("Trait distance among sites (trt-ctrl)")+
+  ylab("Functional dispersion across sites (trt-ctrl)")+
   theme_base()+
   theme(legend.position = "None")
 
@@ -493,7 +495,7 @@ ggplot( aes(plot_mani, mean))+
 #  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
   xlab("Number of manipulations")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()
 
 
@@ -542,7 +544,7 @@ ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error,shape = x))+
   scale_shape_manual(values = c(1,16))+
   xlab("")+
-  ylab("Trait distance among sites")+
+  ylab("Functional dispersion across sites")+
   theme_base()+
   theme(legend.position = "none")
 

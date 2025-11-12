@@ -218,7 +218,7 @@ ggplot(x, aes(x, predicted))+
   scale_shape_manual(values = c(2,17))+
   
     xlab("")+
-    ylab("Taxonomic distance within sites")+
+    ylab("Taxonomic disperion within sites")+
     theme_base()+
     theme(legend.position = "none")
 
@@ -252,7 +252,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Taxonomic distance within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
 
 n_comp_stats <- x
@@ -285,7 +285,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Taxonomic distance within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
 
 p_comp_stats <- x
@@ -316,7 +316,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Taxonomic distance within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
 
 mult_comp_stats <- x
@@ -348,7 +348,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Taxonomic distance within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
 
 irr_comp_stats <- x
@@ -384,7 +384,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Taxonomic distance within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
 
 co2_comp_stats <- x
@@ -422,7 +422,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Taxonomic distance within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
 
 nxirr_comp_stats <- x
@@ -462,7 +462,7 @@ ggplot( aes(set2, predicted, color = x))+
   scale_color_manual(values = c("black", "#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   scale_shape_manual(values = c(2,17,17,17,17,17,17))+
   xlab("")+
-  ylab("Taxonomic distance within sites (trt-ctrl)")+
+  ylab("Taxonomic dispersion within sites (trt-ctrl)")+
   theme_base()+
   theme(legend.position = "None")
 
@@ -492,7 +492,7 @@ ggplot(aes(x = set2, y = treatment_minus_control, color = set2))+
   geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
   scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
-  ylab("Taxonomic distance within sites (trt-ctrl)")+
+  ylab("Taxonomic dispersion within sites (trt-ctrl)")+
   theme_base()+
   theme(legend.position = "None")
 
@@ -627,7 +627,7 @@ ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x))+
   scale_shape_manual(values = c(2,17))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()+
   theme(legend.position = "none")
 
@@ -657,7 +657,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
 
 n_trait_stats <- x
@@ -689,7 +689,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
 
 p_trait_stats <- x
@@ -722,7 +722,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
 
 mult_trait_stats <- x
@@ -755,7 +755,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
 
 irr_trait_stats <- x
@@ -789,7 +789,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
 
 co2_trait_stats <- x
@@ -824,7 +824,7 @@ x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
 
 nxirr_trait_stats <- x
@@ -863,7 +863,7 @@ trait_stats%>%
   scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
   scale_shape_manual(values = c(2,17,17,17,17,17,17))+
   xlab("")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()+
   theme(legend.position = "None")
 
@@ -894,7 +894,7 @@ trait_stats%>%
   geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
   scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
-  ylab("Trait distance within sites (trt-ctrl)")+
+  ylab("Functional dispersion within sites (trt-ctrl)")+
   theme_base()+
   theme(legend.position = "None")
 
@@ -1205,7 +1205,7 @@ mean.dist.both%>%
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
   xlab("Number of manipulations")+
-  ylab("Taxonomic distance within sites")+
+  ylab("Taxonomic dispersion within sites")+
   #ylim(0,0.17)+
   theme_base()
 
@@ -1252,7 +1252,7 @@ mean.dist.both%>%
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
   xlab("Number of manipulations")+
-  ylab("Trait distance within sites")+
+  ylab("Functional dispersion within sites")+
   #ylim(0,0.17)+
   theme_base()
 
