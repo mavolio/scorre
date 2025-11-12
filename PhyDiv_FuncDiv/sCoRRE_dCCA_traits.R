@@ -152,6 +152,46 @@ autoplot(PCAmodel, data=sppTraitsKUFS, colour='rep', size='cover',
   # coord_cartesian(xlim=c(-0.35,0.2)) +
   theme(legend.position='none')
 
+sppTraitsCUL <- sppTraits%>%
+  filter(rep %in% c('CUL::Culardoch::0::N50', 'CUL::Culardoch::0::control'))
+
+PCAmodel <- prcomp(data.matrix(sppTraitsCUL[,4:21]))
+autoplot(PCAmodel, data=sppTraitsCUL, colour='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
+         loadings.label=F) +
+  scale_color_manual(values=c('#00dbff', '#0000FF')) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
+  theme(legend.position='none')
+
+sppTraitsJRN <- sppTraits%>%
+  filter(rep %in% c('JRN::study 119::Peidmont::T', 'JRN::study 119::Peidmont::C'))
+
+PCAmodel <- prcomp(data.matrix(sppTraitsJRN[,4:21]))
+autoplot(PCAmodel, data=sppTraitsJRN, colour='rep', shape='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
+         loadings.label=F) +
+  scale_color_manual(values=c('#00dbff','#0000FF')) +
+  scale_shape_manual(values=c(17,7)) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
+  theme(legend.position='none')
+
+sppTraitsKNZchange <- sppTraits%>%
+  filter(rep %in% c('KNZ::change::0::7.5', 'KNZ::change::0::0'))
+
+PCAmodel <- prcomp(data.matrix(sppTraitsKNZchange[,4:15]))
+p <- autoplot(PCAmodel, data=sppTraitsKNZchange, colour='rep', shape='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
+         loadings.label=F,
+         position = position_jitter(width = 0.02, height = 0.02) ) +
+  scale_color_manual(values=c('#00dbff', '#0000FF')) +
+  # scale_shape_manual(values=c(17,7)) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
+  theme(legend.position='none')
+
+p$layers[[1]]$position <- position_jitter(width = 0.003, height = 0.003)
+p
+
+
 # ### irrigation
 # sppTraitsDL <- sppTraits%>%
 #   filter(rep %in% c('DL::GCME2::0::P', 'DL::GCME2::0::C'))
@@ -215,6 +255,17 @@ sppTraitsMaerc <- sppTraits%>%
 
 PCAmodel <- prcomp(data.matrix(sppTraitsMaerc[,4:21]))
 autoplot(PCAmodel, data=sppTraitsMaerc, colour='rep', size='cover', 
+         loadings=TRUE, loadings.colour='dark grey',
+         loadings.label=F) +
+  scale_color_manual(values=c('#00dbff', '#0000FF')) +
+  # coord_cartesian(xlim=c(-0.35,0.2)) +
+  theme(legend.position='none')
+
+sppTraitsSERC <- sppTraits%>%
+  filter(rep %in% c('SERC::CXN::0::t4', 'SERC::CXN::0::t1'))
+
+PCAmodel <- prcomp(data.matrix(sppTraitsSERC[,4:21]))
+autoplot(PCAmodel, data=sppTraitsSERC, colour='rep', size='cover', 
          loadings=TRUE, loadings.colour='dark grey',
          loadings.label=F) +
   scale_color_manual(values=c('#00dbff', '#0000FF')) +
