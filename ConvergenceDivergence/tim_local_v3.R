@@ -214,9 +214,8 @@ x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
   #geom_violin(data = subset(mean.dist.df, treatment_year != 0), aes(any.treatment,mean_dist))+
-  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x), size = 1.5)+
   scale_shape_manual(values = c(2,17))+
-  
     xlab("")+
     ylab("Taxonomic disperion within sites")+
     theme_base()+
@@ -624,7 +623,7 @@ control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
 ggplot(x, aes(x, predicted))+
-  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x), size = 1.5)+
   scale_shape_manual(values = c(2,17))+
   xlab("")+
   ylab("Functional dispersion within sites")+
