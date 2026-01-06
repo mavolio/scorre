@@ -450,6 +450,7 @@ trait_stats%>%
   scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
   ylab("Functional dispersion across sites (trt-ctrl)")+
+  ylim(-0.025,0.03)+
   theme_base()+
   theme(legend.position = "None")
 
@@ -494,6 +495,7 @@ ggplot( aes(plot_mani, mean))+
   geom_smooth(data=tdistances_temp, aes(y = dist,group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
 #  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
+  ylim(0,0.2)+
   xlab("Number of manipulations")+
   ylab("Functional dispersion across sites")+
   theme_base()
@@ -545,6 +547,7 @@ ggplot(x, aes(x, predicted))+
   scale_shape_manual(values = c(1,16))+
   xlab("")+
   ylab("Functional dispersion across sites")+
+  ylim(0.1,0.16)+
   theme_base()+
   theme(legend.position = "none")
 

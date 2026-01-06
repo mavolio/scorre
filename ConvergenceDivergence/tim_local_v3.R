@@ -627,6 +627,7 @@ ggplot(x, aes(x, predicted))+
   scale_shape_manual(values = c(2,17))+
   xlab("")+
   ylab("Functional dispersion within sites")+
+  ylim(0.1,0.16)+
   theme_base()+
   theme(legend.position = "none")
 
@@ -894,6 +895,7 @@ trait_stats%>%
   scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
   ylab("Functional dispersion within sites (trt-ctrl)")+
+  ylim(-0.025,0.03)+
   theme_base()+
   theme(legend.position = "None")
 
@@ -994,6 +996,11 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
+#try with both mat and map? I mean, I guess that works?
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = n.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 #PHOSPHORUS
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
@@ -1252,7 +1259,7 @@ mean.dist.both%>%
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
   xlab("Number of manipulations")+
   ylab("Functional dispersion within sites")+
-  #ylim(0,0.17)+
+  ylim(0,0.2)+
   theme_base()
 
 ggsave(
