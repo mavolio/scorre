@@ -577,3 +577,19 @@ ggsave(
 forsites <- rbind(dfN,dfP,dfmult_nutrient,`dfmult_nutrient*irr`,dfCO2, dfirr, `dfirr*CO2`, `dfN*CO2`,`dfN*irr`,`dfN*irr*CO2`)
 
 #write.csv(forsites%>%ungroup%>%separate(expgroup, into = c("site1", "project", "community"), sep = "::")%>% dplyr::select( site,project)%>%unique(), "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/sites_table_global.csv")
+
+#treatment duration
+mod <- feols(dist~trt_type+trt_type*treatment_year | site+expgroup, data = dfN)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(dist~trt_type+trt_type*treatment_year | site+expgroup, data = dfP)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(dist~trt_type+trt_type*treatment_year | site+expgroup, data = dfmult_nutrient)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
