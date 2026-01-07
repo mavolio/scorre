@@ -1002,6 +1002,18 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
+##treatment duration
+mod <- feols(mean_dist.comp~trt_type+trt_type*treatment_year|site+expgroup, data = n.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean.dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = n.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+
 #PHOSPHORUS
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
 summary(mod)
@@ -1023,6 +1035,18 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
+##treatment duration
+mod <- feols(mean_dist.comp~trt_type+trt_type*treatment_year|site+expgroup, data = p.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean.dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = p.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+
 #mult nutrient
 mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = mult.df)
 summary(mod)
@@ -1043,7 +1067,21 @@ mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+as.character(tr
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-####could do the same as above for irr, CO2, N*irr ^^^
+
+
+##treatment duration
+mod <- feols(mean_dist.comp~trt_type+trt_type*treatment_year|site+expgroup, data = mult.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean.dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = mult.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+
+####could do the same as above for irr, CO2, N*irr ^^^ but those don't have main effects
 
 
 ##with treatment information
@@ -1188,6 +1226,10 @@ ggplot(irr.df, aes(x=precip, y=mean_dist.trait, color=trt_type))+
   scale_color_manual(values = c("black", "#6305dc"))+
   geom_hline(yintercept = 0)+
   theme_base()
+
+
+
+
 
 
 ###BIG FIGURE PUT IN ALL TOGETHER BABY PLOT MANI FOR THE WIN
