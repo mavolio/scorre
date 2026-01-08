@@ -997,6 +997,11 @@ coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 #try with both mat and map? I mean, I guess that works?
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = n.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
 mod <- feols(mean_dist.trait~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = n.df)
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
@@ -1008,7 +1013,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean.dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = n.df)
+mod <- feols(mean_dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = n.df)
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
