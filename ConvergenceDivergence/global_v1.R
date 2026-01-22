@@ -593,3 +593,22 @@ mod <- feols(dist~trt_type+trt_type*treatment_year | site+expgroup, data = dfmul
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
