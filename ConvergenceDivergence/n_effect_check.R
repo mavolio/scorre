@@ -240,13 +240,37 @@ comb2 <- rbind(mult_full, mult_n_only)%>%
 #check with numbers
 mod <- feols(mean_dist ~ set | site+expgroup+as.character(treatment_year), data = comb2)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+control_se <- sd(fixef(mod)$site)/sqrt(length(fixef(mod)$site))
+
 
 x <- ggpredict(mod, "set")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+x$std.error <- ifelse(x$x == "full", coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+, x$std.error)
+x$x <- factor(
+  x$x,
+  levels = c("control", "n_only", "no_n", "n_and_friends", "full")
+)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
-  ylim(0.3,0.5)+
+  ylim(0.36,0.46)+
   ylab("Taxonomic dispersion within sites")+
+  xlab("")+
   theme_base()
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_ncheck_comp.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 
 ###########
@@ -362,17 +386,37 @@ comb2 <- rbind(mult_full, mult_n_only)%>%
 #check with numbers
 mod <- feols(mean_dist ~ set | site+expgroup+as.character(treatment_year), data = comb2)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+control_se <- sd(fixef(mod)$site)/sqrt(length(fixef(mod)$site))
+
 
 x <- ggpredict(mod, "set")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+x$std.error <- ifelse(x$x == "full", coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+                      , x$std.error)
+x$x <- factor(
+  x$x,
+  levels = c("control", "n_only", "no_n", "n_and_friends", "full")
+)
 ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
-  ylim(0.15,0.2)+
+  ylim(0.14,0.2)+
   ylab("Functional dispersion within sites")+
   theme_base()
 
 
 
-
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_ncheck_trait.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 3.5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
 
 #
 #
