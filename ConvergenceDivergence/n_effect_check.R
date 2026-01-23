@@ -401,6 +401,7 @@ ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   ylim(0.14,0.2)+
   ylab("Functional dispersion within sites")+
+  xlab("")+
   theme_base()
 
 
