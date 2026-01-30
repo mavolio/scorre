@@ -954,6 +954,15 @@ dist.both <- mean.dist.both%>%
   mutate(site_code = site)%>%
   left_join(CoRRE_siteLocationClimate_Dec2021, by = "site_code")
 
+
+site_info <- dist.both%>%
+  subset(trt_type != "control")%>%
+  dplyr::select(Location, Continent, MAP, MAT, trt_type)%>%
+  unique()
+write.csv(site_info, "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/site_info.csv")
+
+
+
 sites.n <- subset(dist.both,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
 sites.p <- subset(dist.both,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
 sites.multnutrient <- subset(dist.both,  trt_type == "mult_nutrient")%>%dplyr::select(expgroup)%>%unique()
