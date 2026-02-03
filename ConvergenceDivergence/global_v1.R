@@ -491,7 +491,7 @@ tdistances_temp%>%
   dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), sd = sd(dist), conf = se*1.96)%>%
 ggplot( aes(plot_mani, mean))+
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
-  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black",size = 1.5)+
   geom_smooth(data=tdistances_temp, aes(y = dist,group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
 #  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
