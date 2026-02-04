@@ -1287,7 +1287,7 @@ mean.dist.both%>%
   geom_smooth(aes(group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
-  xlab("Number of manipulations")+
+  xlab("Number of unique resource additions")+
   ylab("Taxonomic dispersion within sites")+
   #ylim(0,0.17)+
   theme_base()
@@ -1334,7 +1334,7 @@ mean.dist.both%>%
   geom_smooth(aes(group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
-  xlab("Number of manipulations")+
+  xlab("Number of unique resource additions")+
   ylab("Functional dispersion within sites")+
   ylim(0,0.2)+
   theme_base()

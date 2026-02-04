@@ -496,7 +496,7 @@ ggplot( aes(plot_mani, mean))+
 #  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
   ylim(0,0.2)+
-  xlab("Number of manipulations")+
+  xlab("Number of unique resource additions")+
   ylab("Functional dispersion across sites")+
   theme_base()
 
