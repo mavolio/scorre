@@ -217,7 +217,7 @@ ggplot(x, aes(x, predicted))+
   geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x), size = 1.5)+
   scale_shape_manual(values = c(2,17))+
     xlab("")+
-    ylab("Taxonomic disperion within sites")+
+    ylab("Taxonomic dispersion within sites")+
     theme_base()+
     theme(legend.position = "none")
 
