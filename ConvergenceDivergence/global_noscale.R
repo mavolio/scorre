@@ -199,11 +199,11 @@ for(i in 1:length(trt_vector)) {
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfN)
 summary(mod)
-coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
@@ -236,7 +236,7 @@ coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
@@ -269,7 +269,7 @@ coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 
 x <- ggpredict(mod, "trt_type")
@@ -303,7 +303,7 @@ coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 
 x <- ggpredict(mod, "trt_type")
@@ -339,7 +339,7 @@ coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], treatment_se[1])
@@ -371,7 +371,7 @@ coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 
 
@@ -484,7 +484,7 @@ coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "plot_mani")
 tdistances_temp%>%
@@ -520,6 +520,7 @@ mod <- feols(dist~plot_mani*treatment_year | site + expgroup , data = tdistances
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+df.residual(mod)
 #x <- ggpredict(mod, c("plot_mani", "treatment_year"))
 #tdistances_temp%>%
 #  group_by(plot_mani)%>%
@@ -539,6 +540,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)

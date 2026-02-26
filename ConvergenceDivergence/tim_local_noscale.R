@@ -233,7 +233,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "any.treatment")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -265,6 +265,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -297,6 +298,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -329,7 +331,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -362,7 +364,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -397,6 +399,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -432,6 +435,7 @@ summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
 x <- ggpredict(mod, "trt_type")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -606,6 +610,7 @@ mod <- feols(mean_dist.trait~ plot_mani |site+expgroup+as.character(treatment_ye
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+df.residual(mod)
 #mod <- lme(mean_dist.trait~ plot_mani, random = list(site =~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
 #summary(mod)
 #mod2 <- lme(mean_dist.trait~ plot_mani+poly(plot_mani,2), random = list(site=~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
