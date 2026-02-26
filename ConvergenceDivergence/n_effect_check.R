@@ -241,7 +241,7 @@ comb2 <- rbind(mult_full, mult_n_only)%>%
 mod <- feols(mean_dist ~ set | site+expgroup+as.character(treatment_year), data = comb2)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 control_se <- sd(fixef(mod)$site)/sqrt(length(fixef(mod)$site))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "set")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
@@ -387,7 +387,7 @@ comb2 <- rbind(mult_full, mult_n_only)%>%
 mod <- feols(mean_dist ~ set | site+expgroup+as.character(treatment_year), data = comb2)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 control_se <- sd(fixef(mod)$site)/sqrt(length(fixef(mod)$site))
-
+df.residual(mod)
 
 x <- ggpredict(mod, "set")
 x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
