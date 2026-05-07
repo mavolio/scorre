@@ -31,12 +31,12 @@ loc2<-read.csv("siteLocationClimate.csv")%>%
 labels<-c(
   'all mult'='Interact.',
   'co2'='CO2',
-  'drought'='Drt',
-  'irrigation'='Irg.', 
+  'drought'='Drought',
+  'irrigation'='Irrigation', 
   'multnuts'='Mult. Nut.',
   'n'='N',
   'p'='P',
-  'temp'='Temp.')
+  'temp'='Temperature')
 
 
 site_byTreat<-ggplot(data=loc, aes(x=MAP, y=MAT, color=rrich, size=anpp))+
@@ -115,11 +115,20 @@ familydatTrt<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLose
   left_join(loc2, by='site_code') %>% 
   left_join(trtinfo) %>% 
   select(site_code, family, MAP, MAT, n, p, precip, temp) %>% 
-  pivot_longer(n:temp, names_to = 'treatment', values_to = 'amount')
+  pivot_longer(n:temp, names_to = 'treatment', values_to = 'amount') %>% 
+  filter(amount!=0)
 
-site_byFamTrt<-ggplot(data=familydatTrt, aes(x=amount, y=MAT))+
+site_byFamTrt<-ggplot(data=familydatTrt, aes(x=MAP, y=MAT))+
   geom_point(size=2, color='gray')+
   labs(x="MAP (mm)", y='MAT (\u00B0C)')+
-  facet_grid(trt~family, ncol=4)+
+  facet_grid(family~treatment)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='gray'), strip.text.x = element_text(face='bold'))
-site_byFam
+site_byFamTrt
+
+Family_byTrt<-ggplot(data=familydatTrt, aes(x=MAP, y=amount, color=family))+
+  geom_point(size=2)+
+  #labs(x="MAP (mm)", y='MAT (\u00B0C)')+
+  facet_wrap(~treatment, scales='free')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='gray'), strip.text.x = element_text(face='bold'))
+Family_byTrt
+
