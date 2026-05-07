@@ -202,6 +202,70 @@ ggplot(data=CT_diff, aes(x=diff))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 0)
 
+
+CT_diff2<-CT_diff %>% 
+  mutate(trt_type2=case_when(
+    temp==1 ~ 'temp',
+    CO2==1 ~ 'CO2',
+    irg==1 ~ 'irg',
+    drought==1 ~ 'drt',
+    n==1 ~ 'n',
+    p==1 ~ 'p',
+    multtrts==1 ~ 'allmults',
+    multnuts==1 ~ 'multnuts',
+    .default = 'mistake'
+  ),
+  trt_type2=factor(trt_type2, levels = c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'multnuts', 'allmults')))
+
+labels<-c(
+  'allmults'='Interact.',
+  'CO2'='CO2',
+  'drt'='Drought',
+  'irg'='Irrigation', 
+  'multnuts'='Mult. Nut.',
+  'n'='N',
+  'p'='P',
+  'temp'='Temperature')
+  
+#Boxplots:
+  
+box<-ggplot(data=CT_diff2, aes(x=diff))+
+  geom_histogram(binwidth = .08, aes(fill=trt_type2))+
+  scale_fill_manual(values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+                         "#0072B2", "#D55E00", "#CC79A7", "#999999"))+
+  xlab("DCi Difference")+
+  #ylab("Count")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = 'none', strip.background = element_rect(fill='white'))+
+  geom_vline(xintercept = 0)+
+  facet_wrap(~trt_type2, labeller=labeller(trt_type2=labels), scales='free_y', ncol=1, strip.position='left')
+
+
+
+overall<-lmer(diff ~ -1 + trt_type2 + (1|species_matched) + (1|site_code), data=CT_diff2)
+summary(overall)
+
+plot.overall<-as.data.frame(emmeans(overall, ~ trt_type2)) %>% 
+  mutate(trait='overall') %>% 
+  left_join(ct_diff_means) %>% 
+  mutate(trt_type2=factor(trt_type2, levels = c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'multnuts', 'allmults')))
+
+meansplot<-ggplot(data=plot.overall, aes(y=emmean, x=1))+
+  geom_point(aes(color=trt_type2, size = 2))+
+  scale_color_manual(values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+                             "#0072B2", "#D55E00", "#CC79A7", "#999999"))+
+  geom_errorbar(aes(min=emmean-1.96*CI, ymax=emmean+1.96*CI, colour = trt_type2), width=0.25, size=1)+
+  coord_flip()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank(), legend.position = 'none',strip.background = element_blank(),
+        strip.text= element_blank())+
+  ylab("DCi Difference")+
+  xlab("")+
+  scale_x_continuous(limits=c(0, 2))+
+  geom_hline(yintercept=0, linetype="dashed")+
+  facet_wrap(~trt_type2, ncol=1, labeller=labeller(trt_type2=labels), strip.position='left')
+
+grid.arrange(box, meansplot, ncol=2)
+
+
 #dataset of treatment responses, ave, se, and how often species is found for phylogenetic analyses. and calculating number of sites and experiments at treatment is at.
 
 ##Temperature
