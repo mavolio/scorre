@@ -17,6 +17,8 @@ library(codyn)
 library(emmeans)
 library(fixest)
 library(nlme)
+library(RcmdrMisc)
+library(lmtest)
 
 #Read in trait data
 traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd')%>%
@@ -49,7 +51,7 @@ cover <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE da
   filter(drop==0)%>% #remove some Cedar Creek treatments since that site is somewhat overrepresented
   subset(treatment_year <=10& treatment_year > 0) #only use treatment data and subset the number of years to be used
 
-corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names between trait data and relative cover data
+corre2trykey <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/trait data/corre2trykey_2021.csv") #matched species names among trait data and relative cover data
 corre2trykey <- corre2trykey[,c("genus_species","species_matched")]
 corre2trykey <- unique(corre2trykey)
 cover <- left_join(cover, corre2trykey, by = "genus_species", keep = FALSE)
@@ -127,8 +129,19 @@ sites <- test%>%
   dplyr::select(site_code, project_name, community_type, treatment_year, trt_type, treatment)%>%
   unique()%>%
   subset(trt_type != "control")
+length(unique(sites$site_code))
 
-sites <- unite(sites, temp, c("project_name", "community_type"), sep = "::", remove = FALSE)
+sites <- unite(sites, temp, c("site_code", "project_name", "community_type"), sep = "::", remove = FALSE)
+
+length(unique(sites$temp))
+
+sites <- unite(sites, temp, c("site_code", "project_name", "community_type", "trt_type", "treatment"), sep = "::", remove = FALSE)
+
+#write.csv(dplyr::select(sites, site_code,project_name)%>%unique(), "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/sites_table_local.csv")
+
+length(unique(sites$temp))
+
+length(unique(test$species_matched))
 
 ###Summarize sites being used
 sites <- test%>%
@@ -139,6 +152,9 @@ sites <- test%>%
 
 n <- sites%>%
   ddply(.(trt_type), function(x)data.frame(n = length(x$expgroup)))
+
+
+
 
 ##############################
 ####CREATING AND TESTING BETA DIVERSITY RESULTS
@@ -187,18 +203,28 @@ sites.nirr <- subset(mean.dist.df,  trt_type == "N*irr")%>%dplyr::select(expgrou
 #stats for overall (any treatment)
 mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
 ))
-mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
+mod <- feols(mean_dist~any.treatment | site + expgroup +as.character(treatment_year)  ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+attr(coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett")), "df")
+treated_mean  <- mean(predict(mod))
+control_mean  <- treated_mean - coef(mod)["any.treatmenttreatment"]
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( treatment_year != 0)%>%
-  group_by(any.treatment)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(any.treatment, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
-  xlab("")+
-  ylab("Distance between replicates within sites")+
-  theme_base()
+
+x <- ggpredict(mod, "any.treatment")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  #geom_violin(data = subset(mean.dist.df, treatment_year != 0), aes(any.treatment,mean_dist))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x), size = 1.5)+
+  scale_shape_manual(values = c(2,17))+
+    xlab("")+
+    ylab("Taxonomic dispersion within sites")+
+    theme_base()+
+    theme(legend.position = "none")
+
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_comp.pdf",
@@ -216,20 +242,25 @@ ggsave(
 
 
 #stats for nitrogen treatment
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year)  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.n$expgroup)%>%
-  subset(trt_type == "N"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
+
+n_comp_stats <- x
+n_comp_stats$set <- "N"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_comp.pdf",
@@ -246,20 +277,23 @@ ggsave(
 
 
 #stats for phosphorus treatment
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year)  , data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.p$expgroup)%>%
-  subset(trt_type == "P"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
+
+p_comp_stats <- x
+p_comp_stats$set <- "P"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_comp.pdf",
@@ -275,20 +309,24 @@ ggsave(
 )
 
 #stats for multiple nutrient addition
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.multnutrient$expgroup)%>%
-  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
+
+mult_comp_stats <- x
+mult_comp_stats$set <- "mult"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_comp.pdf",
@@ -304,20 +342,24 @@ ggsave(
 )
 
 #stats for irrigation
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.irr$expgroup)%>%
-  subset(trt_type == "irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
+
+irr_comp_stats <- x
+irr_comp_stats$set <- "irr"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_comp.pdf",
@@ -334,24 +376,27 @@ ggsave(
 
 
 #stats for co2
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
-               subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.co2$expgroup)%>%
-  subset(trt_type == "CO2"|trt_type=="control")%>%
-  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
+
+co2_comp_stats <- x
+co2_comp_stats$set <- "co2"
+
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_comp.pdf",
@@ -368,23 +413,27 @@ ggsave(
 
 
 #stats for N*irr
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = 
                subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.nirr$expgroup)%>%
-  subset(trt_type == "N*irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Taxonomic dispersion within sites")+
   theme_base()
+
+nxirr_comp_stats <- x
+nxirr_comp_stats$set <- "Nxirr"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_nirr_comp.pdf",
@@ -398,6 +447,78 @@ ggsave(
   dpi = 600,
   limitsize = TRUE
 )
+
+
+##combined figure for local composition
+
+comp_stats <- rbind(n_comp_stats, p_comp_stats)%>%
+  rbind(mult_comp_stats)%>%
+  rbind(nxirr_comp_stats)%>%
+  rbind(irr_comp_stats)%>%
+  rbind(co2_comp_stats)%>%
+  as.matrix()%>%
+  as.data.frame()%>%
+  mutate(predicted = as.numeric(predicted), std.error = as.numeric(std.error))
+
+comp_stats%>%
+   dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "Nxirr", "co2")))%>%
+  dplyr::mutate(x = fct_relevel(x, "control"))%>%
+ggplot( aes(set2, predicted, color = x))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error, shape = x), position = position_dodge(0.3))+
+  scale_color_manual(values = c("black", "#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
+  scale_shape_manual(values = c(2,17,17,17,17,17,17))+
+  xlab("")+
+  ylab("Taxonomic dispersion within sites (trt-ctrl)")+
+  theme_base()+
+  theme(legend.position = "None")
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_comp_alltreats.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+comp_stats%>%
+  mutate(treatment = ifelse(x == "control", "control", "treatment"))%>%
+  dplyr::select(predicted, std.error, set, treatment)%>%
+  pivot_wider(names_from = "treatment", values_from = c("predicted", "std.error"))%>%
+  mutate(treatment_minus_control = predicted_treatment-predicted_control)%>%
+  dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "Nxirr", "co2")))%>%
+ggplot(aes(x = set2, y = treatment_minus_control, color = set2))+
+  geom_hline(yintercept = 0, linetype = "dashed")+
+  geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
+  scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
+  xlab("")+
+  ylab("Taxonomic dispersion within sites (trt-ctrl)")+
+  theme_base()+
+  theme(legend.position = "None")
+
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_comp_alltreats_trtminuscon.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
 
 
 
@@ -421,7 +542,8 @@ subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_yea
 ##Stats about change over time: multiple nutrient addition
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
-
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control")%>%
   ggplot(aes(treatment_year, mean_dist, color = trt_type))+
@@ -498,18 +620,24 @@ sites.nirr <- subset(mean.dist.df,  trt_type == "N*irr")%>%dplyr::select(expgrou
 #stats for overall (any treatment)
 mean.dist.df$any.treatment <-revalue(mean.dist.df$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
 ))
-mod <- feols(mean_dist~any.treatment | site + expgroup +treatment_year  ,data = subset(mean.dist.df, treatment_year != 0))
+mod <- feols(mean_dist~any.treatment | site + expgroup +as.character(treatment_year) ,data = subset(mean.dist.df, treatment_year != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( treatment_year != 0)%>%
-  group_by(any.treatment)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(any.treatment, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "any.treatment")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error, shape = x), size = 1.5)+
+  scale_shape_manual(values = c(2,17))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
-  theme_base()
+  ylab("Functional dispersion within sites")+
+  ylim(0.1,0.16)+
+  theme_base()+
+  theme(legend.position = "none")
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_overall_trait.pdf",
@@ -525,20 +653,24 @@ ggsave(
 )
 
 #stats for Nitrogen effect (traits)
-mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup+as.character(treatment_year) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.n$expgroup)%>%
-  subset(trt_type == "N"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
+
+n_trait_stats <- x
+n_trait_stats$set <- "N"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_N_trait.pdf",
@@ -554,20 +686,24 @@ ggsave(
 )
 
 #stats for phosphorus effect (traits)
-mod <- feols(mean_dist~trt_type | site+ expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site+ expgroup+as.character(treatment_year) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.p$expgroup)%>%
-  subset(trt_type == "P"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
+
+p_trait_stats <- x
+p_trait_stats$set <- "P"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_P_trait.pdf",
@@ -583,20 +719,24 @@ ggsave(
 )
 
 #stats for multiple nutrient addition effect (traits)
-mod <- feols(mean_dist~trt_type | site + expgroup+treatment_year ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup+as.character(treatment_year) ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.multnutrient$expgroup)%>%
-  subset(trt_type == "mult_nutrient"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
+
+mult_trait_stats <- x
+mult_trait_stats$set <- "mult"
+
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_mult_trait.pdf",
@@ -612,20 +752,23 @@ ggsave(
 )
 
 #stats for irrigation
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.irr$expgroup), treatment_year != 0), trt_type == "irr"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.irr$expgroup)%>%
-  subset(trt_type == "irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
+
+irr_trait_stats <- x
+irr_trait_stats$set <- "irr"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_irr_trait.pdf",
@@ -641,24 +784,26 @@ ggsave(
 )
 
 #stats for co2
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = 
                subset(subset(subset(mean.dist.df,  expgroup%in%sites.co2$expgroup), treatment_year != 0), trt_type == "CO2"|trt_type=="control")%>%
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.co2$expgroup)%>%
-  subset(trt_type == "CO2"|trt_type=="control")%>%
-  mutate(trt_type = fct_relevel(trt_type, "control"))%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
+
+co2_trait_stats <- x
+co2_trait_stats$set <- "co2"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_co2_trait.pdf",
@@ -675,23 +820,26 @@ ggsave(
 
 
 #stats for N*irr
-mod <- feols(mean_dist~trt_type | site + expgroup +treatment_year  ,data = 
+mod <- feols(mean_dist~trt_type | site + expgroup +as.character(treatment_year),data = 
                subset(subset(subset(mean.dist.df,  expgroup%in%sites.nirr$expgroup), treatment_year != 0), trt_type == "N*irr"|trt_type=="control")%>%
                mutate(trt_type = fct_relevel(trt_type, "control"))
 )
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+control_se <- sd(fixef(mod)$expgroup)/sqrt(length(fixef(mod)$expgroup))
+df.residual(mod)
 
-mean.dist.df%>%
-  subset( expgroup%in%sites.nirr$expgroup)%>%
-  subset(trt_type == "N*irr"|trt_type=="control")%>%
-  subset( treatment_year != 0)%>%
-  group_by(trt_type)%>%
-  dplyr::summarize(mean = mean(mean_dist), se = sd(mean_dist)/sqrt(n()), conf = se*1.96)%>%
-  ggplot(aes(trt_type, mean))+
-  geom_pointrange(aes(ymax = mean +conf, ymin = mean-conf))+
+x <- ggpredict(mod, "trt_type")
+x$std.error <- ifelse(x$x == "control", control_se[1], x$std.error)
+ggplot(x, aes(x, predicted))+
+  geom_pointrange(aes(ymax = predicted+std.error, ymin = predicted-std.error))+
   xlab("")+
-  ylab("Distance between replicates within sites")+
+  ylab("Functional dispersion within sites")+
   theme_base()
+
+nxirr_trait_stats <- x
+nxirr_trait_stats$set <- "nxirr"
 
 ggsave(
   "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_Nirr_trait.pdf",
@@ -707,20 +855,94 @@ ggsave(
 )
 
 
+
+#figure of all local traits
+trait_stats <- rbind(n_trait_stats, p_trait_stats)%>%
+  rbind(mult_trait_stats)%>%
+  rbind(nxirr_trait_stats)%>%
+  rbind(irr_trait_stats)%>%
+  rbind(co2_trait_stats)%>%
+  as.matrix()%>%
+  as.data.frame()%>%
+  mutate(predicted = as.numeric(predicted), std.error = as.numeric(std.error))
+
+trait_stats%>%
+  dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "nxirr", "co2")))%>%
+  dplyr::mutate(x = fct_relevel(x, "control"))%>%
+  ggplot( aes(set2, predicted, color = x))+
+  geom_pointrange(aes(ymin = predicted - std.error, ymax = predicted+std.error, shape = x), position = position_dodge(0.3))+
+  scale_color_manual(values = c("black","gold",  "blue", "pink", "purple", "green", "orange"))+
+  scale_shape_manual(values = c(2,17,17,17,17,17,17))+
+  xlab("")+
+  ylab("Functional dispersion within sites")+
+  theme_base()+
+  theme(legend.position = "None")
+
+
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_trait_alltreats.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+trait_stats%>%
+  mutate(treatment = ifelse(x == "control", "control", "treatment"))%>%
+  dplyr::select(predicted, std.error, set, treatment)%>%
+  pivot_wider(names_from = "treatment", values_from = c("predicted", "std.error"))%>%
+  mutate(treatment_minus_control = predicted_treatment-predicted_control)%>%
+  dplyr::mutate(set2 = factor(set, levels = c("N", "P", "mult", "irr", "nxirr", "co2")))%>%
+  ggplot(aes(x = set2, y = treatment_minus_control, color = set2))+
+  geom_hline(yintercept = 0, linetype = "dashed")+
+  geom_pointrange(aes(ymin = treatment_minus_control - std.error_treatment, ymax = treatment_minus_control+std.error_treatment), position = position_dodge(0.3))+
+  scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
+  xlab("")+
+  ylab("Functional dispersion within sites (trt-ctrl)")+
+  ylim(-0.025,0.03)+
+  theme_base()+
+  theme(legend.position = "None")
+
+ggsave(
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/local_trait_alltreats_trtminuscon.pdf",
+  plot = last_plot(),
+  device = "pdf",
+  path = NULL,
+  scale = 1,
+  width = 5,
+  height = 3.5,
+  units = c("in"),
+  dpi = 600,
+  limitsize = TRUE
+)
+
+
+
 #stats for Nitrogen effect over time (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.n$expgroup), treatment_year != 0), trt_type == "N"|trt_type=="control"))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 
 #stats for phosphorus effect (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.p$expgroup), treatment_year != 0), trt_type == "P"|trt_type=="control"))
 summary(mod)
-
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 #stats for multiple nutrient effect over time (traits)
 mod <- feols(mean_dist~trt_type*treatment_year | site + expgroup ,data = subset(subset(subset(mean.dist.df,  expgroup%in%sites.multnutrient$expgroup), treatment_year != 0), trt_type == "mult_nutrient"|trt_type=="control"))
 summary(mod)
-
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 #####################
 ###Compare species and trait responses
@@ -742,6 +964,15 @@ CoRRE_project_summary <- CoRRE_project_summary %>% dplyr::select(-c(project_name
 dist.both <- mean.dist.both%>%
   mutate(site_code = site)%>%
   left_join(CoRRE_siteLocationClimate_Dec2021, by = "site_code")
+
+
+site_info <- dist.both%>%
+  subset(trt_type != "control")%>%
+  dplyr::select(Location, Continent, MAP, MAT, trt_type)%>%
+  unique()
+write.csv(site_info, "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/site_info.csv")
+
+
 
 sites.n <- subset(dist.both,  trt_type == "N")%>%dplyr::select(expgroup)%>%unique()
 sites.p <- subset(dist.both,  trt_type == "P")%>%dplyr::select(expgroup)%>%unique()
@@ -765,45 +996,138 @@ mult.df <- dist.both%>%
 #NITROGEN
 
 ##NITROGEN
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site + expgroup+treatment_year, data = n.df)
-summary(mod)
+#mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site + expgroup+as.character(treatment_year), data = n.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site + expgroup+treatment_year, data = n.df)
-summary(mod)
+#mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site + expgroup+as.character(treatment_year), data = n.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT| site+expgroup+treatment_year, data = n.df)
-summary(mod)
+#mod <- feols(mean_dist.comp~trt_type+trt_type*MAT| site+expgroup+as.character(treatment_year), data = n.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = n.df)
+#mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = n.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+#try with both mat and map? I mean, I guess that works?
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = n.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = n.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+##treatment duration
+mod <- feols(mean_dist.comp~trt_type+trt_type*treatment_year|site+expgroup, data = n.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = n.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 
 #PHOSPHORUS
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = p.df)
-summary(mod)
+#mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = p.df)
-summary(mod)
+#mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = p.df)
-summary(mod)
+#mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = p.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = p.df)
+#mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = p.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+#try with both mat and map? I mean, I guess that works?
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = p.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+##treatment duration
+mod <- feols(mean_dist.comp~trt_type+trt_type*treatment_year|site+expgroup, data = p.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean.dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = p.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
 
 #mult nutrient
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = mult.df)
-summary(mod)
+#mod <- feols(mean_dist.comp~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = mult.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+treatment_year, data = mult.df)
-summary(mod)
+#mod <- feols(mean_dist.trait~trt_type+trt_type*MAP|site+expgroup+as.character(treatment_year), data = mult.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = mult.df)
-summary(mod)
+#mod <- feols(mean_dist.comp~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = mult.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
-mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+treatment_year, data = mult.df)
+#mod <- feols(mean_dist.trait~trt_type+trt_type*MAT|site+expgroup+as.character(treatment_year), data = mult.df)
+#summary(mod)
+#coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+#coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+#try with both mat and map? I mean, I guess that works?
+mod <- feols(mean_dist.comp~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = mult.df)
 summary(mod)
-####could do the same as above for irr, CO2, N*irr ^^^
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*MAT+trt_type*MAP|site+expgroup+as.character(treatment_year), data = mult.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+##treatment duration
+mod <- feols(mean_dist.comp~trt_type+trt_type*treatment_year|site+expgroup, data = mult.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+mod <- feols(mean_dist.trait~trt_type+trt_type*treatment_year|site+expgroup, data = mult.df)
+summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+
+
+####could do the same as above for irr, CO2, N*irr ^^^ but those don't have main effects
 
 
 ##with treatment information
@@ -860,22 +1184,31 @@ nirr.df <- mean.dist.both%>%
 
 ##Nitrogen gradient
 
-mod <- feols(mean_dist.comp~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
+mod <- feols(mean_dist.comp~ n | site+expgroup+as.character(treatment_year), data = subset(n.df, n != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.comp~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
+#summary(mod)
 
-mod <- feols(mean_dist.trait~ n | site+expgroup+treatment_year, data = subset(n.df, n != 0))
+mod <- feols(mean_dist.trait~ n | site+expgroup+as.character(treatment_year), data = subset(n.df, n != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.trait~ n, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(n.df, n != 0))
+#summary(mod)
 
 ggplot(n.df, aes(x=n, y=mean_dist.comp, color=trt_type))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
   scale_color_manual(values = c("black", "#0099f6"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
 ggplot(n.df, aes(x=n, y=mean_dist.trait))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
+  geom_smooth(method="lm", se = FALSE)+
   scale_color_manual(values = c("black", "#0099f6"))+
   geom_hline(yintercept = 0)+
   theme_base()
@@ -883,21 +1216,30 @@ ggplot(n.df, aes(x=n, y=mean_dist.trait))+
 
 ##P gradient
 
-mod <- feols(mean_dist.comp~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
+mod <- feols(mean_dist.comp~ p | site+expgroup+as.character(treatment_year), data = subset(p.df, p != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.comp~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
+#summary(mod)
 
-mod <- feols(mean_dist.trait~ p | site+expgroup+treatment_year, data = subset(p.df, p != 0))
+mod <- feols(mean_dist.trait~ p | site+expgroup+as.character(treatment_year), data = subset(p.df, p != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.trait~ p, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(p.df, p != 0))
+#summary(mod)
 
 ggplot(p.df, aes(x=p, y=mean_dist.comp, color = trt_type))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
+  geom_smooth(method="lm", se = FALSE)+
   scale_color_manual(values = c("black", "#00b844"))+
   geom_hline(yintercept = 0)+
   theme_base()
 
 ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
-  facet_wrap(~treatment_year)+
+  #facet_wrap(~treatment_year)+
   geom_point()+
   scale_color_manual(values = c("black", "#00b844"))+
   geom_hline(yintercept = 0)+
@@ -905,11 +1247,17 @@ ggplot(p.df, aes(x=p, y=mean_dist.trait, color = trt_type))+
 
 
 ##irr 
-mod <- feols(mean_dist.comp~ precip | site+expgroup+treatment_year, data = subset(irr.df, plot_mani != 0))
+mod <- feols(mean_dist.comp~ precip | site+expgroup+as.character(treatment_year), data = subset(irr.df, plot_mani != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+#mod <- lme(mean_dist.comp~ precip, random = list(site=~1,site=~1,expgroup=~1,treatment_year=~1), data = subset(irr.df, plot_mani != 0))
+#summary(mod)
 
-mod <- feols(mean_dist.trait~ precip | site+expgroup+treatment_year, data = subset(irr.df, plot_mani != 0))
+mod <- feols(mean_dist.trait~ precip | site+expgroup+as.character(treatment_year), data = subset(irr.df, plot_mani != 0))
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 
 ggplot(irr.df, aes(x=precip, y=mean_dist.comp, color=trt_type))+
   facet_wrap(~treatment_year)+
@@ -926,22 +1274,34 @@ ggplot(irr.df, aes(x=precip, y=mean_dist.trait, color=trt_type))+
   theme_base()
 
 
+
+
+
+
 ###BIG FIGURE PUT IN ALL TOGETHER BABY PLOT MANI FOR THE WIN
 #comp stats
-mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+treatment_year, data = mean.dist.both)
+mod <- feols(mean_dist.comp~ plot_mani | site+expgroup+as.character(treatment_year), data = mean.dist.both)
 summary(mod)
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+df.residual(mod)
+#mod <- lme(mean_dist.comp~ plot_mani, random = list(site=~1,expgroup=~1,treatment_year=~1), data = mean.dist.both)
+#summary(mod)
+#mod2 <- lme(mean_dist.comp~ plot_mani+poly(plot_mani,2), random = list(site=~1,expgroup=~1,treatment_year=~1), data = mean.dist.both)
+#summary(mod2)
 
 #local comp figure
 x <- ggpredict(mod, "plot_mani")
 mean.dist.both%>%
-  group_by(plot_mani)%>%
-  dplyr::summarize(mean = mean(mean_dist.comp), se = sd(mean_dist.comp)/sqrt(n()), sd = sd(mean_dist.comp), conf = se*1.96)%>%
+  group_by(plot_mani, site)%>%
+  dplyr::summarize(mean = mean(mean_dist.comp))%>%
   ggplot( aes(plot_mani, mean))+
-  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
-  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
-  xlab("Number of manipulations")+
-  ylab("Distance between replciates within sites")+
-  ylim(0,0.5)+
+  geom_smooth(aes(group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
+  #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
+  xlab("Number of unique resource additions")+
+  ylab("Taxonomic dispersion within sites")+
+  #ylim(0,0.17)+
   theme_base()
 
 ggsave(
@@ -959,22 +1319,37 @@ ggsave(
 
 
 #trait stats
-mod <- feols(mean_dist.trait~ plot_mani |site+expgroup+treatment_year, data = mean.dist.both)
+mod <- feols(mean_dist.trait~ plot_mani |site+expgroup+as.character(treatment_year), data = mean.dist.both)
 summary(mod)
-#mod <- lme(mean_dist.trait~ plot_mani, random = list(expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
+coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
+coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+df.residual(mod)
+#mod <- lme(mean_dist.trait~ plot_mani, random = list(site =~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
 #summary(mod)
+#mod2 <- lme(mean_dist.trait~ plot_mani+poly(plot_mani,2), random = list(site=~1,expgroup=~1, treatment_year=~1), data = mean.dist.both)#lme says same thing as feols
+#summary(mod2)
+
 
 #local trait figure
 x <- ggpredict(mod, "plot_mani")
+#mean.dist.both%>%
+#  group_by(plot_mani)%>%
+#  dplyr::summarize(mean = mean(mean_dist.trait), se = sd(mean_dist.trait)/sqrt(n()), sd = sd(mean_dist.trait), conf = se*1.96)%>%
+#mean.dist.both%>%
+#  group_by(plot_mani, site)%>%
+#  dplyr::summarize(mean = mean(mean_dist.trait))%>%
+#  group_by(plot_mani)%>%
+#  dplyr::summarize(mean = mean(mean), se = sd(mean)/sqrt(n()), sd = sd(mean), conf = se*1.96)%>%
 mean.dist.both%>%
-  group_by(plot_mani)%>%
-  dplyr::summarize(mean = mean(mean_dist.trait), se = sd(mean_dist.trait)/sqrt(n()), sd = sd(mean_dist.trait), conf = se*1.96)%>%
+  group_by(plot_mani, site)%>%
+  dplyr::summarize(mean = mean(mean_dist.trait))%>%
   ggplot( aes(plot_mani, mean))+
-  geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
-  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
-  xlab("Number of manipulations")+
-  ylab("Distance between replciates within sites")+
-  #ylim(0,0.17)+
+  geom_smooth(aes(group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
+  #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black", size = 1.5)+
+  xlab("Number of unique resource additions")+
+  ylab("Functional dispersion within sites")+
+  ylim(0,0.2)+
   theme_base()
 
 ggsave(
@@ -1023,7 +1398,7 @@ mean.dist.both%>%
   geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(method = "loess")+
   xlab("Treatment year")+
-  ylab("Distance between replciates within sites")+
+  ylab("Distance among replciates within sites")+
   #ylim(0,0.5)+
   theme_base()
 
@@ -1037,6 +1412,7 @@ mean.dist.both%>%
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
   geom_smooth(method = "lm", se = FALSE)+
   xlab("Treatment year")+
-  ylab("Distance between replciates within sites")+
+  ylab("Distance among replciates within sites")+
   #ylim(0,0.5)+
   theme_base()
+

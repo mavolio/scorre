@@ -48,9 +48,7 @@ for (i in 1:length(sites)){ #loop to calculate metrics for each site independent
   
   comm2 <- comm %>% 
     filter(site_code == sites[i]) %>%  #subset plots within each site
-    # filter(treatment_year>0) %>% #only keep treatment data
     select(plot_id2, species, relcov) %>% 
-    # mutate(relcov=ifelse(relcov>0, 1, 0)) %>% 
     unique() %>% 
     group_by(plot_id2, species) %>% 
     summarize(relcov=mean(relcov)) %>% 

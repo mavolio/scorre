@@ -1,3 +1,5 @@
+#The intention is to replicate all the same stuff from the global analysis but without scaling the traits
+
 library(tidyverse)
 library(tidyr)
 library(ggplot2)
@@ -40,7 +42,7 @@ cols <- c(
   "SRL"
 )
 
-traits[cols] <- scale(traits[cols])
+#traits[cols] <- scale(traits[cols])
 
 traits <- left_join(traits, traits_cat, by = "species_matched")#merge w/ categorical traits
 
@@ -174,7 +176,7 @@ summarize.cwm <-
 
 
 cor(summarize.cwm%>%ungroup%>%dplyr::select(SLA.cwm,LDMC.cwm,leaf_N.cwm,plant_height_vegetative.cwm,seed_dry_mass.cwm,SRL.cwm#,growth_form.cwm,photosynthetic_pathway.cwm,lifespan.cwm,clonal.cwm,mycorrhizal_type.cwm,n_fixation_type.cwm
-                                            ), method = "pearson", use = "complete.obs")
+), method = "pearson", use = "complete.obs")
 
 #loop
 trt_vector <- unique(summarize.cwm$trt_type)
@@ -184,20 +186,19 @@ for(i in 1:length(trt_vector)) {
   
   site.list <- subset(summarize.cwm,  trt_type == trt_vector[i])%>%dplyr::select(expgroup)%>%unique()
   
-temp.df <- subset(subset(summarize.cwm,  expgroup%in%site.list$expgroup), trt_type == "control"|trt_type == trt_vector[i])
+  temp.df <- subset(subset(summarize.cwm,  expgroup%in%site.list$expgroup), trt_type == "control"|trt_type == trt_vector[i])
   
-temp.gow <- gowdis(temp.df[6:ncol(temp.df)])
-temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
-tdistances_temp <- data.frame(site = separate(temp.df,expgroup, into = c("site", "project", "community"), sep = "::")$site,
-  expgroup = temp.df$expgroup, trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani, treatment_year = temp.df$treatment_year)
-
-assign(paste0("df", trt_vector[i]),tdistances_temp)
+  temp.gow <- gowdis(temp.df[6:ncol(temp.df)])
+  temp.beta <- betadisper(temp.gow, group = temp.df$trt_type, type = "centroid")
+  tdistances_temp <- data.frame(site = separate(temp.df,expgroup, into = c("site", "project", "community"), sep = "::")$site,
+                                expgroup = temp.df$expgroup, trt_type = temp.df$trt_type, treatment = temp.df$treatment,  dist = temp.beta$dist, plot_mani = temp.df$plot_mani, treatment_year = temp.df$treatment_year)
+  
+  assign(paste0("df", trt_vector[i]),tdistances_temp)
 }
 
 
 mod <- feols(dist~trt_type | site+expgroup +as.character(treatment_year), data = dfN)
 summary(mod)
-coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 treatment_se <- coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
@@ -216,7 +217,7 @@ n_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
 n_stats$set <- "N"
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_N.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_N_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -250,7 +251,7 @@ p_stats$set <- "P"
 
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_P.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_P_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -284,7 +285,7 @@ mult_stats$set <- "mult"
 
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_mult.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_mult_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -318,7 +319,7 @@ irr_stats$set <- "irr"
 
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_irr.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_irr_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -352,7 +353,7 @@ co2_stats <- data.frame(x=x$x, predicted = x$predicted, std.error = x$std.error)
 co2_stats$set <- "co2"
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_co2.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_co2_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -387,7 +388,7 @@ nxirr_stats$set <- "nxirr"
 
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_Nirr.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_Nirr_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -424,7 +425,7 @@ trait_stats%>%
 
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_trait_alltreats.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_trait_alltreats_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -451,13 +452,12 @@ trait_stats%>%
   scale_color_manual(values = c("#f2c300","#df0000", "darkorange1",  "#0099f6","purple", "#00b844"))+
   xlab("")+
   ylab("Functional dispersion across sites (trt-ctrl)")+
-  ylim(-0.025,0.03)+
   theme_base()+
   theme(legend.position = "None")
 
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_trait_alltreats_trtminuscon.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_trait_alltreats_trtminuscon_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -490,20 +490,19 @@ x <- ggpredict(mod, "plot_mani")
 tdistances_temp%>%
   group_by(plot_mani)%>%
   dplyr::summarize(mean = mean(dist), se = sd(dist)/sqrt(n()), sd = sd(dist), conf = se*1.96)%>%
-ggplot( aes(plot_mani, mean))+
+  ggplot( aes(plot_mani, mean))+
   #geom_pointrange( aes(ymax=mean+conf, ymin=mean-conf))+
-  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black",size = 1.5)+
+  geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE, color = "black")+
   geom_smooth(data=tdistances_temp, aes(y = dist,group = site),method = "lm",size = 0.5, se = FALSE, color = "lightgrey")+
-#  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
+  #  geom_smooth(data=x, aes(x=x, y=predicted-std.error), se = FALSE, linetype = "dashed")+
   #geom_smooth(method = "loess")+
-  ylim(0,0.2)+
-  xlab("Number of unique resource additions")+
+  xlab("Number of manipulations")+
   ylab("Functional dispersion across sites")+
   theme_base()
 
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_plotmani.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_plotmani_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -521,6 +520,7 @@ mod <- feols(dist~plot_mani*treatment_year | site + expgroup , data = tdistances
 summary(mod)
 coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))
 coeftest(mod, vcov = NeweyWest(mod, lag = 4))
+df.residual(mod)
 #x <- ggpredict(mod, c("plot_mani", "treatment_year"))
 #tdistances_temp%>%
 #  group_by(plot_mani)%>%
@@ -528,10 +528,10 @@ coeftest(mod, vcov = NeweyWest(mod, lag = 4))
 #ggplot( aes(plot_mani, mean))+
 #  facet_wrap(~treatment_year)+
 #  geom_pointrange(alpha = 0.1)+
-  #geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
+#geom_smooth(data=x, aes(x=x, y=predicted), se = FALSE)+
 #  geom_smooth(method = "loess")+
 #  theme_base()
-  
+
 
 tdistances_temp$any.treatment <-revalue(tdistances_temp$trt_type, c(N = "treatment",P = "treatment",irr = "treatment",mult_nutrient = "treatment",`irr*CO2` = "treatment",`N*irr*CO2` = "treatment",`mult_nutrient*irr` = "treatment",`N*CO2` = "treatment", `N*irr` = "treatment", CO2 = "treatment"
 ))
@@ -549,7 +549,6 @@ ggplot(x, aes(x, predicted))+
   scale_shape_manual(values = c(1,16))+
   xlab("")+
   ylab("Functional dispersion across sites")+
-  ylim(0.1,0.16)+
   theme_base()+
   theme(legend.position = "none")
 
@@ -563,7 +562,7 @@ ggplot(x, aes(x, predicted))+
 #  theme_base()
 
 ggsave(
-  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_overall.pdf",
+  "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/figures/global_overall_noscale.pdf",
   plot = last_plot(),
   device = "pdf",
   path = NULL,
@@ -579,38 +578,3 @@ ggsave(
 forsites <- rbind(dfN,dfP,dfmult_nutrient,`dfmult_nutrient*irr`,dfCO2, dfirr, `dfirr*CO2`, `dfN*CO2`,`dfN*irr`,`dfN*irr*CO2`)
 
 #write.csv(forsites%>%ungroup%>%separate(expgroup, into = c("site1", "project", "community"), sep = "::")%>% dplyr::select( site,project)%>%unique(), "C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/sites_table_global.csv")
-
-#treatment duration
-mod <- feols(dist~trt_type+trt_type*treatment_year | site+expgroup, data = dfN)
-summary(mod)
-coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
-coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-
-mod <- feols(dist~trt_type+trt_type*treatment_year | site+expgroup, data = dfP)
-summary(mod)
-coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
-coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-
-mod <- feols(dist~trt_type+trt_type*treatment_year | site+expgroup, data = dfmult_nutrient)
-summary(mod)
-coeftest(mod, vcov = kernHAC(mod, kernel = "Bartlett"))[1,2]
-coeftest(mod, vcov = NeweyWest(mod, lag = 4))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
