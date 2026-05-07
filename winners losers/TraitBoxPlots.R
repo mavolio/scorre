@@ -8,6 +8,7 @@ make_boxplot = function(toplot_data = toplot, # data to plot
                         trt.labels_data = trt.labels, # treatment labels
                         trait.labels_data=trait.labels, # trait labels
                         p_alpha = 0.025, # alpha value for significance tests
+                        p_alpha_whisker = 0.025, #95% CI
                         groupbytrait = FALSE, # should individual panels include multiple traits?
                         legend_line_length = 1.55, # length of lines in legend
                         legend_cex = 0.9, # text size in legend
@@ -21,12 +22,18 @@ make_boxplot = function(toplot_data = toplot, # data to plot
                         group_colors = NULL,  # optional vector of colors for backgrounds of individual panels
                         xtit = "Effect Size, DCi diff. vs. Standardized ln(Trait)", # axis title
                         xlm = NULL,  # optional x-axis limits
-                        collst = NULL, # optional vector of colors for the bars
+                        collst = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+                                   "#0072B2", "#D55E00", "#CC79A7", "#999999"), # Okabe-Ito colors
                         autopar = TRUE, # should par settings be handled automatically?
                         axisside = 1+flipaxes, # which side should the axis labels be plotted on?
                         n_table = NULL, ncex = 0.6, yadj_text = 0) { # optional table of n values to be plotted; size for plotted text; vertical adjustment for text
   lwd_lines = 2.5
   lwd_diff_fact = 0.5
+  
+  # If no separate whisker alpha specified, use the significance alpha
+  if(is.null(p_alpha_whisker)) {
+    p_alpha_whisker = p_alpha
+  }
   
   # get significance based on estimate, se, and desired alpha
   tmp = pnorm(0, abs(toplot_data$Estimate), toplot_data$SE) <= p_alpha
@@ -125,39 +132,39 @@ make_boxplot = function(toplot_data = toplot, # data to plot
       yv = c(toplot_data$Estimate[ps]-toplot_data$SE[ps],
              toplot_data$Estimate[ps],
              toplot_data$Estimate[ps]+toplot_data$SE[ps],
-             qnorm(p_alpha, toplot_data$Estimate[ps], toplot_data$SE[ps]),
-             qnorm(1-p_alpha, toplot_data$Estimate[ps], toplot_data$SE[ps]))
+             qnorm(p_alpha_whisker, toplot_data$Estimate[ps], toplot_data$SE[ps]),
+             qnorm(1-p_alpha_whisker, toplot_data$Estimate[ps], toplot_data$SE[ps]))
       
       if(flipaxes) {
-        segments(yv[1], xv, yv[3], xv,
-                 col = collst[j], lwd = lwd_lines, lend = 2)
+        # segments(yv[1], xv, yv[3], xv,
+        #          col = collst[j], lwd = lwd_lines, lend = 2)
         segments(yv[4], xv, yv[5], xv,
                  col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
         segments(yv[c(4,5)], xv+whisker_length, yv[c(4,5)], xv-whisker_length,
                  col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
-        points(yv[2], xv, col = collst[j], pch = 16, cex = 0.7)
+        points(yv[2], xv, col = collst[j], pch = 16, cex = 1.2)
       } else {
-        segments(xv, yv[1], xv, yv[3],
-                 col = collst[j], lwd = lwd_lines, lend = 2)
+        # segments(xv, yv[1], xv, yv[3],
+        #          col = collst[j], lwd = lwd_lines, lend = 2)
         segments(xv, yv[4], xv, yv[5],
                  col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
         segments(xv-whisker_length, yv[c(4,5)], xv+whisker_length, yv[c(4,5)],
                  col = collst[j], lwd = lwd_lines*lwd_diff_fact, lend = 2)
-        points(xv, yv[2], col = collst[j], pch = 16, cex = 0.7)
+        points(xv, yv[2], col = collst[j], pch = 16, cex = 1.2)
       }
       ## add significance marker
       if(sum(ps)>0) {
         if(flipaxes) {
           if(all(yv[1:3]<0)) {
             text(yv[4], xv+sigadj, sig[ps], pos = 2,
-                 cex = 0.8, offset = 0.1)
+                 cex = 1.3, offset = 0.1)
           } else {
             text(yv[5], xv+sigadj, sig[ps], pos = 4,
-                 cex = 0.8, offset = 0.1)
+                 cex = 1.3, offset = 0.1)
           }
         } else {
           text(xv+sigadj, yv[3], sig[ps], pos = 3,
-               cex = 0.8, offset = 0)
+               cex = 1.3, offset = 0)
         }
       }
       
