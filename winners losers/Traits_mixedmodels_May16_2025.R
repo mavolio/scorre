@@ -3,7 +3,7 @@
 ##### code to study how species traits affect response to GCDs
 ##### code by M.Avolio with help from Adam Clark and Tamara Munkemuller
 #### created summer 2021, updated with new trait dataset June 20, 2022
-#### updated 14.12.2022 by A. Clark
+#### updated 14.12.2022 by A. Clark. Update to Figures May 2026
 ######
 rm(list=ls())
 
@@ -224,6 +224,8 @@ toplot<-toplot.SLA%>%
   mutate(trt_type2=factor(trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
   mutate(min=Estimate-SE, max=Estimate+SE)
 
+##bonferoni correction p = 0.008
+
 # Continuous plot ---------------------------------------------------------
 
 trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
@@ -232,7 +234,7 @@ trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
-pdf("traits_by_treat_contMay2025.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_contMay2026.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplot,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -241,16 +243,19 @@ make_boxplot(toplot_data = toplot,
                         legend_textwidth = 0.012,
                         legend_yadj = 0.175,
                         legend_xadj = -0.002,
-                        p_alpha = 0.05,
+                        p_alpha = 0.0083, #corrected p-value
+                        p_alpha_whisker = 0.025, #95% CI
                         lower_margin = 6.8,
                         sigadj = -0.03,
                         traitorder = rev(c(2,1,6,4,3,5)),#number refers to position in trt label vector, do in reverse
-                        group_colors = adjustcolor(rev(c("darkgreen",
-                                                         "darkgreen",
-                                                         "darkgreen",
-                                                         "red",
-                                                         "blue",
-                                                         "orange")), alpha.f = 0.08))
+             xlm = c(-0.04, 0.03)
+                        # group_colors = adjustcolor(rev(c("darkgreen",
+                        #                                  "darkgreen",
+                        #                                  "darkgreen",
+                        #                                  "red",
+                        #                                  "blue",
+                        #                                  "orange")), alpha.f = 0.08)
+             )
 dev.off()
 
 
@@ -455,7 +460,7 @@ toplotesacat$trait = toplotesacat$value
 ##############
 # new plot
 ##############
-gcol = adjustcolor(rev(c(rep("gray",1),
+#gcol = adjustcolor(rev(c(rep("gray",1),
                          rep("black", 3),
                          rep("darkgreen",2),
                          rep("purple",4),
@@ -477,7 +482,7 @@ tord = rev(c(12, 6,
              13,1))
 
 if(FALSE) {
-pdf("traits_by_treat_catMay2025.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_catMay2026.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -487,11 +492,12 @@ make_boxplot(toplot_data = toplotesacat,
                         legend_cex = 0.9,
                         legend_yadj = 0.1,
                         legend_xadj = -0.01,
-                        p_alpha = 0.05,
+                        p_alpha = 0.007, # corrected p-value
+                        p_alpha_whisker = 0.025, #95% CI
                         lower_margin = 6.8,
                         sigadj = -0.09,
                         traitorder = tord,
-                        group_colors = gcol,
+                        #group_colors = gcol,
              xtit = "Effect Size, Mean DCi diff. by. Trait",
              n_table = cat_n_data)
 dev.off()
@@ -501,19 +507,19 @@ dev.off()
 # tord2 = rev(c(3,8,10,1,9,6,13))
 tord1 = rev(c(12,5,2,11,7,4,13))
 tord2 = rev(c(6,14,3,8,10,9,1))
-gcol_split1 = adjustcolor(rev(c(rep("gray", 1),
-                               rep("yellow", 1),
-                               rep("darkgreen",1),
-                         rep("purple",2),
-                         rep("orange",2))), alpha.f = 0.08)
+# gcol_split1 = adjustcolor(rev(c(rep("gray", 1),
+#                                rep("yellow", 1),
+#                                rep("darkgreen",1),
+#                          rep("purple",2),
+#                          rep("orange",2))), alpha.f = 0.08)
+# 
+# gcol_split2 = adjustcolor(rev(c(rep("yellow", 2),
+#                                 rep("darkgreen",1),
+#                                 rep("purple",2),
+#                                 rep("orange",2))), alpha.f = 0.08)
 
-gcol_split2 = adjustcolor(rev(c(rep("yellow", 2),
-                                rep("darkgreen",1),
-                                rep("purple",2),
-                                rep("orange",2))), alpha.f = 0.08)
 
-
-pdf("traits_by_treat_cat_2colMay2025.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colMay2026.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -524,11 +530,12 @@ make_boxplot(toplot_data = toplotesacat,
              legend_cex = 1.2,
              legend_yadj = 0.185,
              legend_xadj = 0.14,
-             p_alpha = 0.05,
+             p_alpha = 0.007, # corrected p-value
+             p_alpha_whisker = 0.025, #95% CI
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord1,
-             group_colors = gcol_split1, 
+             #group_colors = gcol_split1, 
              xtit = "", autopar = FALSE, n_table = cat_n_data3)
 
 par(mar=c(2,0.2,3.5,6.8))
@@ -541,11 +548,12 @@ make_boxplot(toplot_data = toplotesacat,
              legend_cex = 0.9,
              legend_yadj = 10,
              legend_xadj = -0.01,
-             p_alpha = 0.05,
+             p_alpha = 0.007, # corrected p-value
+             p_alpha_whisker = 0.025, #95% CI
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord2,
-             group_colors = gcol_split2,
+             #group_colors = gcol_split2,
              xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data3)
 mtext("Effect Size, Mean DCi diff. by. Trait", side = 1, outer = TRUE, line = 1.2, cex = 1.7)
 dev.off()
