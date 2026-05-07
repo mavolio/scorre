@@ -396,10 +396,10 @@ allmult_sp<-CT_diff %>%
 
 famInvest<-CT_diff %>% 
   left_join(fam) %>% 
-  select(species_matched, family, diff, CO2, drought, irg, temp, n, p, multnuts, multtrts) %>% 
+  dplyr::select(species_matched, family, diff, CO2, drought, irg, temp, n, p, multnuts, multtrts) %>% 
   pivot_longer(CO2:multtrts, names_to = "trt", values_to = "present") %>% 
   filter(present==1) %>% 
-  select(species_matched, family, trt) %>% 
+  dplyr::select(species_matched, family, trt) %>% 
   unique() %>% 
   group_by(family, trt) %>% 
   summarise(n=length(species_matched))
@@ -454,6 +454,25 @@ Fulldataset<-allmult_mean%>%
   bind_rows(allnut_mean, co2_mean, drt_mean, irg_mean, n_mean, p_mean, temp_mean)
 
 write.csv(Fulldataset, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper/data/Species_DCiDiff_March2024.csv", row.names=F)
+
+
+###full dataset, which families are in what treatment
+famPres<-Fulldataset %>% 
+  left_join(fam) %>% 
+  group_by(family, trt_type2) %>% 
+  summarise(n=length(species_matched), sum=sum(nobs))
+
+FamilySp<-famPres %>% 
+  select(-sum) %>%
+  pivot_wider(names_from = trt_type2, values_from = n, values_fill = 0)
+
+write.csv(FamilySp, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\Manuscript\\SI Trees 2025\\SpPerFamily.csv", row.names=F)
+  
+FamilyObs<-famPres %>% 
+  select(-n) %>%
+  pivot_wider(names_from = trt_type2, values_from = sum, values_fill = 0)
+
+write.csv(FamilyObs, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\Manuscript\\SI Trees 2025\\ObsPerFamily.csv", row.names=F)
 
 toplot<-Fulldataset %>% 
   mutate(trt_type3=factor(trt_type2, levels=c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'all nuts', 'all mult')))
@@ -914,6 +933,6 @@ Fulldataset_mixedmodels<-CT_Sp_allint%>%
   bind_rows(CT_Sp_co2, CT_Sp_drt, CT_Sp_irg, CT_Sp_N, CT_Sp_P, CT_Sp_temp, CT_Sp_multnuts)%>%
   select(site_code, project_name, community_type, species_matched, treatment, trt_type2, diff)
 
-write.csv(Fulldataset_mixedmodels, "C://Users//mavolio2//Dropbox//sDiv_sCoRRE_shared//WinnersLosers paper//data//Species_DCiDiff_formixedmodelsMarch2024.csv", row.names=F)
+#write.csv(Fulldataset_mixedmodels, "C://Users//mavolio2//Dropbox//sDiv_sCoRRE_shared//WinnersLosers paper//data//Species_DCiDiff_formixedmodelsMarch2024.csv", row.names=F)
 
 
