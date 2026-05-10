@@ -549,22 +549,55 @@ toplot<-Fulldataset %>%
 
 labels<-c(
   'all mult'='Interact.',
-  'CO2'='CO2',
-  'drt'='Drt',
-  'irg'='Irg.', 
+  'co2'='CO2',
+  'drt'='Drought',
+  'irg'='Irrigation', 
   'all nuts'='Mult. Nut.',
   'n'='N',
   'p'='P',
-  'temp'='Temp.')
+  'temp'='Temperature')
 
 #histograms of number of obs per species
-hist<-ggplot(data=toplot, aes(x=nobs))+
+theme_set(theme_bw(12))
+
+histsp<-ggplot(data=toplot, aes(x=nobs))+
   geom_histogram()+
-  facet_wrap(~trt_type3, scales='free', ncol=4, labeller = labeller(trt_type3=labels))+
+  facet_wrap(~trt_type3, scales='free_x', ncol=4, labeller = labeller(trt_type3=labels))+
+  scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1)))))) +
   labs(x='Number of experiments', y='Species Count')+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='snow'), strip.text.x = element_text(face='bold'))
+histsp
 
-ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\histSpCount.jpg', hist, units = 'in', width=7, height=4)
+famPres2<-famPres %>% 
+  mutate(label=ifelse(family %in% c("Poaceae", "Brassicaceae", "Solanaceae", "Cyperaceae", "Polemoniaceae", "Gentianaceae", "Plantaginaceae", "Euphorbiaceae", "Amaranthaceae", "Orchidaceae", "Fabaceae", "Gentianaceae", "Orobanchaceae", "Lamiaceae"), family, 'Other Family')) %>% 
+  mutate(trt_type3=factor(trt_type2, levels=c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'all nuts', 'all mult')))
+
+fam_numbers<-ggplot(data=famPres2, aes(x=family, y=sum, fill=label))+
+  geom_bar(stat='identity')+
+  facet_wrap(~trt_type3, scales='free', ncol=4, labeller = labeller(trt_type3=labels))+
+   labs(x='', y='Number of Observations')+
+  scale_fill_manual(name='Family', breaks=c("Amaranthaceae", "Brassicaceae","Cyperaceae","Euphorbiaceae","Fabaceae","Gentianaceae", "Lamiaceae","Orchidaceae", "Orobanchaceae", "Plantaginaceae","Poaceae","Polemoniaceae",     "Solanaceae", "Other Family"), values=c(c(
+    "#56B4E9", # Sky Blue
+    "#E69F00", # Orange
+    "#009E73", # Bluish Green
+    "#F0E442", # Yellow
+    "#0072B2", # Blue
+    "#D55E00", # Vermillion
+    "#CC79A7", # Reddish Purple
+    "#5C2D91", # Dark Purple
+    "#4A3728", # Dark Brown
+    "#004949", # Dark Teal
+    "#006ddb", # Dark Blue
+    "#920000", # Dark Maroon
+    "#556B2F", # Medium Gray
+    "#696969"  # Dark Gray
+  )))+
+  theme(axis.text.x=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='snow'), strip.text.x = element_text(face='bold'), legend.position = 'bottom')
+fam_numbers
+
+figs2<-grid.arrange(histsp, fam_numbers)
+
+ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\histSpCount.jpg', figs2, units = 'in', width=8, height=9)
 
 ###checking normality of DCI values
 ggplot(data=Fulldataset, aes(x=ave_diff))+
