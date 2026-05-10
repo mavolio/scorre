@@ -78,7 +78,7 @@ map
 
 figs1<-grid.arrange(map, site_byTreat)
 
-ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Map.jpg', figs1, units = 'in', width=7, height=8)
+ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Map2.jpg', figs1, units = 'in', width=7, height=8)
 
 
 ###mapping families
@@ -118,11 +118,13 @@ familydatTrt<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLose
   pivot_longer(n:temp, names_to = 'treatment', values_to = 'amount') %>% 
   filter(amount!=0)
 
-site_byFamTrt<-ggplot(data=familydatTrt, aes(x=MAP, y=MAT))+
-  geom_point(size=2, color='gray')+
+site_byFamTrt<-ggplot(data=familydatTrt, aes(x=MAP, y=MAT, color=treatment))+
+  geom_point(size=2)+
+  geom_jitter()+
   labs(x="MAP (mm)", y='MAT (\u00B0C)')+
-  facet_grid(family~treatment)+
+  facet_wrap(~family)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='gray'), strip.text.x = element_text(face='bold'))
+
 site_byFamTrt
 
 Family_byTrt<-ggplot(data=familydatTrt, aes(x=MAP, y=amount, color=family))+

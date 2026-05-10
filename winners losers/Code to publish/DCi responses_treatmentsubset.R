@@ -3,6 +3,8 @@
 
 library(tidyverse)
 library(gridExtra)
+library(lme4)
+library(emmeans)
 
 theme_set(theme_bw(12))
 
@@ -234,9 +236,9 @@ box<-ggplot(data=CT_diff2, aes(x=diff))+
   scale_fill_manual(values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
                          "#0072B2", "#D55E00", "#CC79A7", "#999999"))+
   xlab("DCi Difference")+
-  #ylab("Count")+
+  ylab("Frequency")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = 'none', strip.background = element_rect(fill='white'))+
-  geom_vline(xintercept = 0)+
+  geom_vline(xintercept = 0, linetype='dashed')+
   facet_wrap(~trt_type2, labeller=labeller(trt_type2=labels), scales='free_y', ncol=1, strip.position='left')
 
 
@@ -246,14 +248,13 @@ summary(overall)
 
 plot.overall<-as.data.frame(emmeans(overall, ~ trt_type2)) %>% 
   mutate(trait='overall') %>% 
-  left_join(ct_diff_means) %>% 
   mutate(trt_type2=factor(trt_type2, levels = c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'multnuts', 'allmults')))
 
 meansplot<-ggplot(data=plot.overall, aes(y=emmean, x=1))+
   geom_point(aes(color=trt_type2, size = 2))+
   scale_color_manual(values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
                              "#0072B2", "#D55E00", "#CC79A7", "#999999"))+
-  geom_errorbar(aes(min=emmean-1.96*CI, ymax=emmean+1.96*CI, colour = trt_type2), width=0.25, size=1)+
+  geom_errorbar(aes(min=emmean-1.96*SE, ymax=emmean+1.96*SE, colour = trt_type2), width=0.25, size=1)+
   coord_flip()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank(), legend.position = 'none',strip.background = element_blank(),
         strip.text= element_blank())+
@@ -263,8 +264,13 @@ meansplot<-ggplot(data=plot.overall, aes(y=emmean, x=1))+
   geom_hline(yintercept=0, linetype="dashed")+
   facet_wrap(~trt_type2, ncol=1, labeller=labeller(trt_type2=labels), strip.position='left')
 
-grid.arrange(box, meansplot, ncol=2)
+Fig1<-grid.arrange(box, meansplot, ncol=2, widths=c(1, 0.75))
 
+ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Fig1.jpeg', Fig1, width=5, height=8, units='in')
+
+examples<-CT_diff2 %>% 
+  select(site_code, project_name, trt_type2) %>% 
+  unique()
 
 #dataset of treatment responses, ave, se, and how often species is found for phylogenetic analyses. and calculating number of sites and experiments at treatment is at.
 
