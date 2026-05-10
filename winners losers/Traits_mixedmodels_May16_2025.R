@@ -676,4 +676,114 @@ make_boxplot(toplot_data = toplotsynd,
 dev.off()
 
                  
+#######figures for appendix
 
+alldata<-alldat_cat %>% 
+  mutate(value=case_when(
+    trait=='photosynthetic_pathway'&trait_value2=='C3'~0,
+    trait=='photosynthetic_pathway'&trait_value2=='C4/CAM'~1,
+    trait=='lifespan'&trait_value2=='annual'~0,
+    trait=='lifespan'&trait_value2=='Perenn./Bienn.'~1,
+    trait=='n_fixation_type'&trait_value2=='none'~0,
+    trait=='n_fixation_type'&trait_value2=='none'~0,
+    trait=='n_fixation_type'&trait_value2=='N-fixer'~1,
+    trait=='mycorrhizal_type'&trait_value2=='none'~0,
+    trait=='mycorrhizal_type'&trait_value2=='yes'~1,
+    trait=='clonal'&trait_value2=='no'~0,
+    trait=='clonal'&trait_value2=='yes'~1,
+    trait=='growth_form'&trait_value2=='forb'~0,
+    trait=='growth_form'&trait_value2=='graminoid'~1,
+    trait=='growth_form'&trait_value2=='woody'~2,
+    .default =999
+  )) %>% 
+  filter(value!=999) %>% 
+  select(-trait_value2) %>% 
+  bind_rows(alldat_cont)
+
+labels<-c(
+  'clonal'='Clonal',
+  'growth_form'='Growth Form',
+  'LDMC' = 'Leaf Dry Matter Content',
+  'leaf_N'='Leaf N',
+  'lifespan'='Lifespan', 
+  'mycorrhizal_type'='Mycorrhizal',
+  'n_fixation_type'='Nitrogen Fixer',
+  'photosynthetic_pathway'='Photosynthetic Pathway',
+  'plant_height_vegetative'='Plant Vegetative Height', 
+  'seed_dry_mass' = 'Seed Dry Mass',
+  'SLA'='Specific Leaf Area',
+  'SRL'= 'Specific Root Length')
+
+CO2<-
+  ggplot(data=subset(alldata, trt_type2=='co2'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('CO2')+
+  geom_smooth(method = 'lm', se=F)
+Irg<-
+  ggplot(data=subset(alldata, trt_type2=='irrigation'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Irrigation')+
+  geom_smooth(method = 'lm', se=F)
+Drt<-
+  ggplot(data=subset(alldata, trt_type2=='drought'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Drought')+
+  geom_smooth(method = 'lm', se=F)
+temp<-
+  ggplot(data=subset(alldata, trt_type2=='temp'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Elevated Temperature')+
+  geom_smooth(method = 'lm', se=F)
+n<-
+  ggplot(data=subset(alldata, trt_type2=='n'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Nitrogen Addition')+
+  geom_smooth(method = 'lm', se=F)
+p<-
+  ggplot(data=subset(alldata, trt_type2=='p'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Phosphorus Addition')+
+  geom_smooth(method = 'lm', se=F)
+allnuts<-
+  ggplot(data=subset(alldata, trt_type2=='multnuts'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Multiple Nutrient Addition')+
+  geom_smooth(method = 'lm', se=F)
+inter<-
+  ggplot(data=subset(alldata, trt_type2=='all mult'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Interacting Drivers')+
+  geom_smooth(method = 'lm', se=F)
+
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/CO2.jpg', CO2, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/irg.jpg', Irg, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/drt.jpg', Drt, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/temp.jpg', temp, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/nit.jpg', n, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/phos.jpg', p, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/nuts.jpg', allnuts, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/inter.jpg', inter, width = 10, height=8, units='in')
