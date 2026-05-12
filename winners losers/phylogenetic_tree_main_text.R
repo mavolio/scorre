@@ -40,12 +40,14 @@ list.nod1<-NULL
 for (i in 1:length(list.r)) {
   #print(i)
   tips3 <- as.vector(subset(fam, family == list.r[i])$species_matched) #vector with all species belonging to the given family
+  tips3 <- tips3[tips3 %in% tree$tip.label]#had to add this May 2026 bc some species in tip3 were not in tree$tip.label
   if (length(tips3)>1) {
     num <- findMRCA(tree, tips3) #get node that contain those species
     num <-data.frame(list.r[i], num) #assign family name to node
     list.nod1<-rbind(list.nod1, num) #save and merge with other families
   } 
 }
+
 
 #clean-up the result and merge with previous table:
 names(list.nod1)[1]<-paste("Var1")
@@ -195,7 +197,7 @@ p <-
 
 
 
-####
+p####
 #run pie2_function first
 
 trt<-c("CO2", "Drt.","Irg.", "Temp.", "N", "P", " Mult.","Inter.")
@@ -204,7 +206,8 @@ value<-c(1,1,1,1,1,1,1,1)
 pie<-data.frame(trt, value)
 
 ##doing this in baseR
-collst = RColorBrewer::brewer.pal(n = 8, name = "Dark2")
+collst = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+             "#0072B2", "#D55E00", "#CC79A7", "#999999")
 
 #make Legend
 lg<-as.grob(~pie2(pie$value, labels=trt2, col=collst, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
@@ -212,112 +215,112 @@ lg<-as.grob(~pie2(pie$value, labels=trt2, col=collst, border="white",line_length
 #for orchidaceae
 labellistorc<-c("  ", "  ","  ","  ", "  ","  ","-","  ")
 colactive<-collst
-colactive[labellistorc==""]="darkgray"
+colactive[labellistorc==""]="lightgray"
 colactive[labellistorc=="  "]=NA
 orc<-as.grob(~pie2(pie$value, labels=labellistorc, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for cyperaceae
 labellistcyp<-c("", "","","", "+","","+","")
 colactive<-collst
-colactive[labellistcyp==""]="darkgray"
+colactive[labellistcyp==""]="lightgray"
 colactive[labellistcyp=="  "]=NA
 cyp<-as.grob(~pie2(pie$value, labels=labellistcyp, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for poaceae overall
 labellistpoa<-c("", "","","", "","","+","+")
 colactive<-collst
-colactive[labellistpoa==""]="darkgray"
+colactive[labellistpoa==""]="lightgray"
 colactive[labellistpoa=="  "]=NA
 pot<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for poaceae sub1
 labellistpoa<-c("  ", "","","", "","+","","")
 colactive<-collst
-colactive[labellistpoa==""]="darkgray"
+colactive[labellistpoa==""]="lightgray"
 colactive[labellistpoa=="  "]=NA
 po1<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for poaceae sub2
 labellistpoa<-c("", "-","","", "","","","")
 colactive<-collst
-colactive[labellistpoa==""]="darkgray"
+colactive[labellistpoa==""]="lightgray"
 colactive[labellistpoa=="  "]=NA
 po2<-as.grob(~pie2(pie$value, labels=labellistpoa, col=colactive, border="white",line_length = 1, text_center = 0.8, textcol = "white"))
 
 #for Brassicaceae
 labellistbra<-c("", "","","", "","","+","")
 colactive<-collst
-colactive[labellistbra==""]="darkgray"
+colactive[labellistbra==""]="lightgray"
 colactive[labellistbra=="  "]=NA
 bra<-as.grob(~pie2(pie$value, labels=labellistbra, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Euphorbiaceae
 labellisteup<-c("  ", "","","+", "","","","")
 colactive<-collst
-colactive[labellisteup==""]="darkgray"
+colactive[labellisteup==""]="lightgray"
 colactive[labellisteup=="  "]=NA
 eup<-as.grob(~pie2(pie$value, labels=labellisteup, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Fabaceae
 labellistfab<-c("", "-","+","", "-","","-","")
 colactive<-collst
-colactive[labellistfab==""]="darkgray"
+colactive[labellistfab==""]="lightgray"
 colactive[labellistfab=="  "]=NA
 fab<-as.grob(~pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for section Fabaceae
 labellistfab<-c("", "-","+", "", "", "", "","")
 colactive<-collst
-colactive[labellistfab==""]="darkgray"
+colactive[labellistfab==""]="lightgray"
 colactive[labellistfab=="  "]=NA
 fab1<-as.grob(~pie2(pie$value, labels=labellistfab, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for asteraceae sub1
 labellistast<-c("  ", "  ","","", "-","","","")
 colactive<-collst
-colactive[labellistast==""]="darkgray"
+colactive[labellistast==""]="lightgray"
 colactive[labellistast=="  "]=NA
 ast1<-as.grob(~pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for asteraceae sub2
 labellistast<-c("  ", "","+","", "","","","")
 colactive<-collst
-colactive[labellistast==""]="darkgray"
+colactive[labellistast==""]="lightgray"
 colactive[labellistast=="  "]=NA
 ast2<-as.grob(~pie2(pie$value, labels=labellistast, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Lamiacea and Orobanaceae and Polimoniaceae
 labellistLO<-c("  ", "","","", "-","","","")
 colactive<-collst
-colactive[labellistLO==""]="darkgray"
+colactive[labellistLO==""]="lightgray"
 colactive[labellistLO=="  "]=NA
 lop<-as.grob(~pie2(pie$value, labels=labellistLO, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Plantaginaceae
 labellistpla<-c("", "","","", "","","","-")
 colactive<-collst
-colactive[labellistpla==""]="darkgray"
+colactive[labellistpla==""]="lightgray"
 colactive[labellistpla=="  "]=NA
 plt<-as.grob(~pie2(pie$value, labels=labellistpla, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Gentinaceae
 labellistgen<-c("  ", "  ","","", "-","","-","-")
 colactive<-collst
-colactive[labellistgen==""]="darkgray"
+colactive[labellistgen==""]="lightgray"
 colactive[labellistgen=="  "]=NA
 gen<-as.grob(~pie2(pie$value, labels=labellistgen, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Solaneaceae
 labellistsol<-c("  ", "","","", "+","","+","")
 colactive<-collst
-colactive[labellistsol==""]="darkgray"
+colactive[labellistsol==""]="lightgray"
 colactive[labellistsol=="  "]=NA
 sol<-as.grob(~pie2(pie$value, labels=labellistsol, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
 #for Amaranth
 labellistama<-c("", "+","-","", "+","-","","")
 colactive<-collst
-colactive[labellistama==""]="darkgray"
+colactive[labellistama==""]="lightgray"
 colactive[labellistama=="  "]=NA
 ama<-as.grob(~pie2(pie$value, labels=labellistama, col=colactive, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
 
@@ -346,7 +349,7 @@ p2<- h + draw_grob(lg, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)
          draw_grob(ast1, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
 
 #Save output:
-png("phylo_ring_main.png", res=600,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\phylo_ring_main_May2026.png", res=600,height=8,width=8,units="in"); 
 p2
 grid.text("Tribes Trifolieae,\nFabeae & Galegeae", x = unit(0.12, "npc"), y = unit(0.4, "npc"), rot=13, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
 grid.text("Tribe Cardueae", x = unit(0.787, "npc"), y = unit(0.125, "npc"), rot=305, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
