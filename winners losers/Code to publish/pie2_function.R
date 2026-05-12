@@ -65,3 +65,4 @@ pie2 = function (x, labels = names(x), edges = 200, radius = 0.8, clockwise = FA
 pie(c(1,1,1), lab = letters[1:3])
 pie2(c(1,1,1), lab = letters[1:3], line_length = 1, text_center = 0.5, textcol = "white")
 pie2(c(1,1,1), lab = "+", line_length = 1, text_center = 0.5, textcol = "white", doubleplot_text = TRUE)
+
