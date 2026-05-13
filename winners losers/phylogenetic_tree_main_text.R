@@ -207,8 +207,8 @@ value<-c(1,1,1,1,1,1,1,1)
 pie<-data.frame(trt, value)
 
 ##doing this in baseR
-collst = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
-             "#0072B2", "#D55E00", "#CC79A7", "#999999")
+collst = c("#009E73","#E69F00", "#56B4E9",  "#F0E442", 
+           "#D55E00", "#0072B2", "#CC79A7", "#999999")
 
 #make Legend
 lg<-as.grob(~pie2(pie$value, labels=trt2, col=collst, border="white",line_length = 1, text_center = 0.6, textcol = "white"))
@@ -359,6 +359,4 @@ grid.text("Tribe Poeae", x = unit(0.49, "npc"), y = unit(0.925, "npc"), rot=90, 
 grid.text("Subfamily Pooidae", x = unit(0.62, "npc"), y = unit(0.925, "npc"), rot=75, gp=gpar(fontsize=6.5, col="gray23"))
 dev.off()
 
-#clean-up:
-rm(list = ls())
 
