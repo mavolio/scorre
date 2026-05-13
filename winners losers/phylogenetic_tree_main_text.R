@@ -94,10 +94,11 @@ famf<-join(famf,list.nod)
 ###
 
 #get vector with names of families containing more species:
-toplot<-as.character(head(famf$Var1, n=70)) #select the top 9 families with 5 for more species
+toplot<-as.character(head(famf$Var1, n=70)) #select the top families with most species
 
 #get groups by nodes:
-tree2 <- groupClade(tree, c(list.nod1$num, 2597, 2381, 2725)) #the two extra nodes are from Asteraceae 
+tree2 <- groupClade(tree, c(list.nod1$num)) #IMPORTANT!! We need to update line 101 with the right nodes and delete this one
+#tree2 <- groupClade(tree, c(list.nod1$num, 2597, 2381, 2725)) #the extra nodes are from Asteraceae 
 
 # Plot tree:
 p <- 
@@ -107,87 +108,87 @@ p <-
   
   geom_cladelabel(node=subset(famf, Var1==toplot[1])$num, label=toplot[1], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[2])$num, label=toplot[2], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[3])$num, label=toplot[3], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 7) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[3])$num, label=toplot[3], offset=1, fontsize=2.8, fontface="bold", hjust=1, angle = 4) +
   geom_cladelabel(node=subset(famf, Var1==toplot[4])$num, label=toplot[4], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[5])$num, label=toplot[5], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 349) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[5])$num, label=toplot[5], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+167) +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[6])$num, label=toplot[6], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 313) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[6])$num, label=toplot[6], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 180+131) +
   geom_cladelabel(node=subset(famf, Var1==toplot[7])$num, label=toplot[7], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[8])$num, label=toplot[8], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 285) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[9])$num, label=toplot[9], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 42) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[10])$num, label=toplot[10], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[8])$num, label=toplot[8], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 40.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[9])$num, label=toplot[9], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[10])$num, label=toplot[10], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+102) +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[11])$num, label=toplot[11], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 24) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[12])$num, label=toplot[12], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 85) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[13])$num, label=toplot[13], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 300) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[14])$num, label=toplot[14], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 325) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[15])$num, label=toplot[15], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 35) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[11])$num, label=toplot[11], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 84) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[12])$num, label=toplot[12], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+117) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[13])$num, label=toplot[13], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 21) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[14])$num, label=toplot[14], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 33.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[15])$num, label=toplot[15], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 180+143.5) +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[16])$num, label=toplot[16], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 78) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[17])$num, label=toplot[17], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 73) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[18])$num, label=toplot[18], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[19])$num, label=toplot[19], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 50) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[20])$num, label=toplot[20], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 62) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[16])$num, label=toplot[16], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 77.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[17])$num, label=toplot[17], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[18])$num, label=toplot[18], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 72.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[19])$num, label=toplot[19], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 49) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[20])$num, label=toplot[20], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 61.5) +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[21])$num, label=toplot[21], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 66) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[22])$num, label=toplot[22], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 334) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[23])$num, label=toplot[23], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[24])$num, label=toplot[24], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 56) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[25])$num, label=toplot[25], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 295) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[21])$num, label=toplot[21], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+152.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[22])$num, label=toplot[22], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, hjust=1, angle = 55.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[23])$num, label=toplot[23], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 65.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[24])$num, label=toplot[24], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+111) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[25])$num, label=toplot[25], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 69) +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[26])$num, label=toplot[26], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 69) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[27])$num, label=toplot[27], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 308) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[26])$num, label=toplot[26], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[27])$num, label=toplot[27], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   geom_cladelabel(node=subset(famf, Var1==toplot[28])$num, label=toplot[28], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[29])$num, label=toplot[29], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[29])$num, label=toplot[29], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+124.5) +
   geom_cladelabel(node=subset(famf, Var1==toplot[30])$num, label=toplot[30], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[31])$num, label=toplot[31], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 59) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[32])$num, label=toplot[32], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 54) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[33])$num, label=toplot[33], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 337) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[34])$num, label=toplot[34], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 32) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[35])$num, label=toplot[35], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[31])$num, label=toplot[31], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 58.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[32])$num, label=toplot[32], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 29.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[33])$num, label=toplot[33], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 52.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[34])$num, label=toplot[34], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+149.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[35])$num, label=toplot[35], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+108) +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[36])$num, label=toplot[36], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 331) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[37])$num, label=toplot[37], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 291) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[38])$num, label=toplot[38], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[39])$num, label=toplot[39], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 334) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[40])$num, label=toplot[40], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[36])$num, label=toplot[36], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[37])$num, label=toplot[37], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 25.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[38])$num, label=toplot[38], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+157) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[39])$num, label=toplot[39], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[40])$num, label=toplot[40], offset=1, fontsize=2.8, fontface="bold", barsize = 0.2, angle = "auto") +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[41])$num, label=toplot[41], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[42])$num, label=toplot[42], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 28) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[43])$num, label=toplot[43], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 321) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[44])$num, label=toplot[44], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[41])$num, label=toplot[41], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+134) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[42])$num, label=toplot[42], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+155) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[43])$num, label=toplot[43], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[44])$num, label=toplot[44], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 89) +
   geom_cladelabel(node=subset(famf, Var1==toplot[45])$num, label=toplot[45], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[46])$num, label=toplot[46], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[47])$num, label=toplot[47], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 46) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[48])$num, label=toplot[48], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[49])$num, label=toplot[49], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 304) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[50])$num, label=toplot[50], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 290) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[46])$num, label=toplot[46], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+106.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[47])$num, label=toplot[47], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+121) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[48])$num, label=toplot[48], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 45.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[49])$num, label=toplot[49], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  #geom_cladelabel(node=subset(famf, Var1==toplot[50])$num, label=toplot[50], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
   geom_cladelabel(node=subset(famf, Var1==toplot[51])$num, label=toplot[51], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[52])$num, label=toplot[52], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  #geom_cladelabel(node=subset(famf, Var1==toplot[53])$num, label=toplot[53], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[54])$num, label=toplot[54], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[55])$num, label=toplot[55], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 329) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[52])$num, label=toplot[52], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+147) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[53])$num, label=toplot[53], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+173) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[54])$num, label=toplot[54], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+160.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[55])$num, label=toplot[55], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
   #geom_cladelabel(node=subset(famf, Var1==toplot[56])$num, label=toplot[56], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[57])$num, label=toplot[57], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 355) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[58])$num, label=toplot[58], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 342) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[59])$num, label=toplot[59], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[57])$num, label=toplot[57], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+122.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[58])$num, label=toplot[58], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 17.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[59])$num, label=toplot[59], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+158.5) +
   #geom_cladelabel(node=subset(famf, Var1==toplot[60])$num, label=toplot[60], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
-  geom_cladelabel(node=subset(famf, Var1==toplot[61])$num, label=toplot[61], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 306) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[61])$num, label=toplot[61], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 27) +
   geom_cladelabel(node=subset(famf, Var1==toplot[62])$num, label=toplot[62], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[63])$num, label=toplot[63], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 20) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[64])$num, label=toplot[64], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 339) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[65])$num, label=toplot[65], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 29) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[63])$num, label=toplot[63], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+132) +
+  #geom_cladelabel(node=subset(famf, Var1==toplot[64])$num, label=toplot[64], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[65])$num, label=toplot[65], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
   #geom_cladelabel(node=subset(famf, Var1==toplot[66])$num, label=toplot[66], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  geom_cladelabel(node=subset(famf, Var1==toplot[67])$num, label=toplot[67], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 293) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[68])$num, label=toplot[68], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 319) +
-  geom_cladelabel(node=subset(famf, Var1==toplot[69])$num, label=toplot[69], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
-  #geom_cladelabel(node=subset(famf, Var1==toplot[70])$num, label=toplot[70], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  #geom_cladelabel(node=subset(famf, Var1==toplot[67])$num, label=toplot[67], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
+  geom_cladelabel(node=subset(famf, Var1==toplot[68])$num, label=toplot[68], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+113.5) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[69])$num, label=toplot[69], offset=1, fontsize=2.8, barsize = 0.2, hjust=1, angle = 180+98) +
+  geom_cladelabel(node=subset(famf, Var1==toplot[70])$num, label=toplot[70], offset=1, fontsize=2.8, barsize = 0.2, angle = "auto") +
   
   theme(plot.title = element_text(size = 23, face = "bold", hjust=0.5),
         legend.title=element_blank(), 
@@ -330,28 +331,28 @@ h <- ggdraw(p)
 
 # Add pie charts to the tree:
 p2<- h + draw_grob(lg, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)+ #central one
-         draw_grob(orc, x=.76, y=.57, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(cyp, x=.756, y=.655, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(pot, x=.70, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(po2, x=.59, y=.80, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(po1, x=.49, y=.835, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(bra, x=.31, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(eup, x=.26, y=.65, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(fab, x=.24, y=.50, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(fab1, x=.20, y=.44, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(ama, x=.27, y=.315, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(lop, x=.31, y=.26, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(sol, x=.372, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(gen, x=.428, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(plt, x=.494, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(lop, x=.554, y=.177, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(ast2, x=.72, y=.25, width=.12, height=.12, hjust=0.5, vjust=0.5)+
-         draw_grob(ast1, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
+  draw_grob(orc, x=.765, y=.56, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(cyp, x=.763, y=.647, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(pot, x=.70, y=.71, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(po2, x=.603, y=.795, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(po1, x=.505, y=.834, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(bra, x=.315, y=.725, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(eup, x=.27, y=.665, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(fab, x=.24, y=.515, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(fab1, x=.20, y=.455, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(ama, x=.268, y=.325, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(lop, x=.304, y=.266, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(sol, x=.366, y=.235, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(gen, x=.4205, y=.197, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(plt, x=.494, y=.204, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(lop, x=.554, y=.177, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(ast2, x=.72, y=.25, width=.12, height=.12, hjust=0.5, vjust=0.5)+
+  draw_grob(ast1, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
 
 #Save output:
 png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\phylo_ring_main_May2026.png", res=600,height=8,width=8,units="in"); 
 p2
-grid.text("Tribes Trifolieae,\nFabeae & Galegeae", x = unit(0.12, "npc"), y = unit(0.4, "npc"), rot=13, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
+grid.text("Tribes Trifolieae,\nFabeae & Galegeae", x = unit(0.12, "npc"), y = unit(0.4, "npc"), rot=12.5, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
 grid.text("Tribe Cardueae", x = unit(0.787, "npc"), y = unit(0.125, "npc"), rot=305, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
 grid.text("Tribe Gnaphalieae", x = unit(0.862, "npc"), y = unit(0.25, "npc"), rot=328,  gp=gpar(fontsize=6.5, col="gray23"))
 grid.text("Tribe Poeae", x = unit(0.49, "npc"), y = unit(0.925, "npc"), rot=90, gp=gpar(fontsize=6.5, col="gray23"))
