@@ -233,8 +233,8 @@ labels<-c(
   
 box<-ggplot(data=CT_diff2, aes(x=diff))+
   geom_histogram(binwidth = .08, aes(fill=trt_type2))+
-  scale_fill_manual(values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
-                         "#0072B2", "#D55E00", "#CC79A7", "#999999"))+
+  scale_fill_manual(values=c("#009E73","#E69F00", "#56B4E9",  "#F0E442", 
+                             "#D55E00", "#0072B2", "#CC79A7", "#999999"))+
   xlab("DCi Difference")+
   ylab("Frequency")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = 'none', strip.background = element_rect(fill='white'))+
@@ -252,8 +252,8 @@ plot.overall<-as.data.frame(emmeans(overall, ~ trt_type2)) %>%
 
 meansplot<-ggplot(data=plot.overall, aes(y=emmean, x=1))+
   geom_point(aes(color=trt_type2, size = 2))+
-  scale_color_manual(values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
-                             "#0072B2", "#D55E00", "#CC79A7", "#999999"))+
+  scale_color_manual(values=c("#009E73","#E69F00", "#56B4E9",  "#F0E442", 
+                                       "#D55E00", "#0072B2", "#CC79A7", "#999999"))+
   geom_errorbar(aes(min=emmean-1.96*SE, ymax=emmean+1.96*SE, colour = trt_type2), width=0.25, size=1)+
   coord_flip()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank(), legend.position = 'none',strip.background = element_blank(),
