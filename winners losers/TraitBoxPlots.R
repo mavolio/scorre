@@ -22,8 +22,7 @@ make_boxplot = function(toplot_data = toplot, # data to plot
                         group_colors = NULL,  # optional vector of colors for backgrounds of individual panels
                         xtit = "Effect Size, DCi diff. vs. Standardized ln(Trait)", # axis title
                         xlm = NULL,  # optional x-axis limits
-                        collst = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
-                                   "#0072B2", "#D55E00", "#CC79A7", "#999999"), # Okabe-Ito colors
+                        collst =c("#009E73","#E69F00", "#56B4E9", "#F0E442", "#D55E00", "#0072B2", "#CC79A7", "#999999"), # Okabe-Ito colors
                         autopar = TRUE, # should par settings be handled automatically?
                         axisside = 1+flipaxes, # which side should the axis labels be plotted on?
                         n_table = NULL, ncex = 0.6, yadj_text = 0) { # optional table of n values to be plotted; size for plotted text; vertical adjustment for text
