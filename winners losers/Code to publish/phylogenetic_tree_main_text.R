@@ -379,11 +379,11 @@ p2<- h + draw_grob(lg, x=.38, y=.5, width=.35, height=.35, hjust=0.5, vjust=0.5)
   draw_grob(ast1, x=.765, y=.30, width=.12, height=.12, hjust=0.5, vjust=0.5)
 
 #Save output:
-png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\phylo_ring_main_May2026.png", res=600,height=8,width=8,units="in"); 
+png("C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\phylo_ring_main_May2026_2.png", res=600,height=8,width=8,units="in"); 
 p2
 grid.text("Tribes Trifolieae,\nFabeae & Galegeae", x = unit(0.12, "npc"), y = unit(0.4, "npc"), rot=12.5, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
-grid.text("Tribe Cardueae", x = unit(0.787, "npc"), y = unit(0.125, "npc"), rot=305, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
-grid.text("Tribe Gnaphalieae", x = unit(0.862, "npc"), y = unit(0.25, "npc"), rot=328,  gp=gpar(fontsize=6.5, col="gray23"))
+grid.text("Tribe Cardueae", x = unit(0.77, "npc"), y = unit(0.12, "npc"), rot=305, hjust=1, gp=gpar(fontsize=6.5, col="gray23"))
+grid.text("Tribe Gnaphalieae", x = unit(0.85, "npc"), y = unit(0.24, "npc"), rot=325,  gp=gpar(fontsize=6.5, col="gray23"))
 grid.text("Tribe Poeae", x = unit(0.49, "npc"), y = unit(0.925, "npc"), rot=90, gp=gpar(fontsize=6.5, col="gray23"))
 grid.text("Subfamily Pooidae", x = unit(0.62, "npc"), y = unit(0.925, "npc"), rot=75, gp=gpar(fontsize=6.5, col="gray23"))
 dev.off()
