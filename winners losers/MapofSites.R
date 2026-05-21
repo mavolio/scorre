@@ -84,8 +84,23 @@ ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\m
 ###mapping families
 family<-read.csv('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\CoRRE data\\trait data\\species_families_trees_2021.csv')
 
-familydat<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsMarch2024.csv") %>% 
-  left_join(family) %>% 
+spperfam<-family %>% 
+  group_by(family) %>% 
+  summarise(Species=length(family))
+
+familydat1<-read.csv("C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/data/Species_DCiDiff_formixedmodelsMarch2024.csv") %>% 
+  left_join(family) 
+
+obsperfam<-familydat1 %>% 
+  group_by(family) %>% 
+  summarize(Observations=length(family))
+
+faminfo<-obsperfam %>% 
+  left_join(spperfam)
+
+write.csv(faminfo,'C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\family.csv', row.names=F)
+
+familydat<-familydat1 %>% 
   filter(family %in% c("Poaceae", "Brassicaceae", "Solanaceae", "Cyperaceae", "Polemoniaceae", "Gentianaceae", "Plantaginaceae", "Euphorbiaceae", "Amaranthaceae", "Orchidaceae", "Fabaceae", "Gentianaceae", "Orobanchaceae", "Lamiaceae")) %>% 
   select(site_code, family) %>% 
   unique() %>% 
