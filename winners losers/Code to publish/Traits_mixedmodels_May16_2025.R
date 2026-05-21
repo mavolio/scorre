@@ -507,11 +507,11 @@ dev.off()
 # tord2 = rev(c(3,8,10,1,9,6,13))
 tord1 = rev(c(12,5,2,11,7,4,13))
 tord2 = rev(c(6,14,3,8,10,9,1))
-# gcol_split1 = adjustcolor(rev(c(rep("gray", 1),
-#                                rep("yellow", 1),
-#                                rep("darkgreen",1),
-#                          rep("purple",2),
-#                          rep("orange",2))), alpha.f = 0.08)
+gcol_split1 = adjustcolor(rev(c(rep("darkgray", 1),
+                               rep("darkgray", 1),
+                               rep("darkgray",1),
+                         rep("darkgray",2),
+                         rep("darkgray",2))), alpha.f = 0.1)
 # 
 # gcol_split2 = adjustcolor(rev(c(rep("yellow", 2),
 #                                 rep("darkgreen",1),
@@ -519,7 +519,7 @@ tord2 = rev(c(6,14,3,8,10,9,1))
 #                                 rep("orange",2))), alpha.f = 0.08)
 
 
-pdf("traits_by_treat_cat_2colMay2026.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colMay2026_2.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -535,7 +535,7 @@ make_boxplot(toplot_data = toplotesacat,
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord1,
-             #group_colors = gcol_split1, 
+             group_colors = gcol_split1, 
              xtit = "", autopar = FALSE, n_table = cat_n_data3)
 
 par(mar=c(2,0.2,3.5,6.8))
