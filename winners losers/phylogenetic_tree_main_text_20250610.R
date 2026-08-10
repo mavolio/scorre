@@ -16,7 +16,7 @@ library(grid)
 #set directory.
 my.wd<-"/Users/padulles/Documents/PD_MasarykU/sCoRRE/sCoRre/"
 #my.wd<-"E:\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
-#my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
+my.wd<-"C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\data\\"
 
 # Load the tree:
 tree<-read.tree(paste(my.wd, "scorre.phylo.tree.S3.tre", sep="")) #why not using the original tree? I detected that some species are missing from the other.
@@ -56,7 +56,7 @@ names(list.nod1)[1]<-paste("Var1")
 ###
 
 #load family data and clean-up:
-fam<-read.table(paste(my.wd, "species_families_trees_2021.csv",sep=""), header=T, sep=",", fill = TRUE)[,-c(3)] #load data
+fam<-read.table(paste(my.wd, "species_families_trees_2024.csv",sep=""), header=T, sep=",", fill = TRUE)[,-c(3)] #load data
 fam$species_matched<-gsub(" ", "_", fam$species_matched) #adapt species nomenclature
 fam$family[fam$family=="Compositae"]<-"Asteraceae" #replace family name
 fam$family[fam$family=="Leguminosae"]<-"Fabaceae" #replace family name

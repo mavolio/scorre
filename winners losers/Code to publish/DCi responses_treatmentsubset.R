@@ -3,6 +3,8 @@
 
 library(tidyverse)
 library(gridExtra)
+library(lme4)
+library(emmeans)
 
 theme_set(theme_bw(12))
 
@@ -202,6 +204,74 @@ ggplot(data=CT_diff, aes(x=diff))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 0)
 
+
+CT_diff2<-CT_diff %>% 
+  mutate(trt_type2=case_when(
+    temp==1 ~ 'temp',
+    CO2==1 ~ 'CO2',
+    irg==1 ~ 'irg',
+    drought==1 ~ 'drt',
+    n==1 ~ 'n',
+    p==1 ~ 'p',
+    multtrts==1 ~ 'allmults',
+    multnuts==1 ~ 'multnuts',
+    .default = 'mistake'
+  ),
+  trt_type2=factor(trt_type2, levels = c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'multnuts', 'allmults')))
+
+labels<-c(
+  'allmults'='Interact.',
+  'CO2'='CO2',
+  'drt'='Drought',
+  'irg'='Irrigation', 
+  'multnuts'='Mult. Nut.',
+  'n'='N',
+  'p'='P',
+  'temp'='Temperature')
+  
+#Boxplots:
+  
+box<-ggplot(data=CT_diff2, aes(x=diff))+
+  geom_histogram(binwidth = .08, aes(fill=trt_type2))+
+  scale_fill_manual(values=c("#009E73","#E69F00", "#56B4E9",  "#F0E442", 
+                             "#D55E00", "#0072B2", "#CC79A7", "#999999"))+
+  xlab("DCi Difference")+
+  ylab("Frequency")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = 'none', strip.background = element_rect(fill='white'))+
+  geom_vline(xintercept = 0, linetype='dashed')+
+  facet_wrap(~trt_type2, labeller=labeller(trt_type2=labels), scales='free_y', ncol=1, strip.position='left')
+
+
+
+overall<-lmer(diff ~ -1 + trt_type2 + (1|species_matched) + (1|site_code), data=CT_diff2)
+summary(overall)
+
+plot.overall<-as.data.frame(emmeans(overall, ~ trt_type2)) %>% 
+  mutate(trait='overall') %>% 
+  mutate(trt_type2=factor(trt_type2, levels = c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'multnuts', 'allmults')))
+
+meansplot<-ggplot(data=plot.overall, aes(y=emmean, x=1))+
+  geom_point(aes(color=trt_type2, size = 2))+
+  scale_color_manual(values=c("#009E73","#E69F00", "#56B4E9",  "#F0E442", 
+                                       "#D55E00", "#0072B2", "#CC79A7", "#999999"))+
+  geom_errorbar(aes(min=emmean-1.96*SE, ymax=emmean+1.96*SE, colour = trt_type2), width=0.25, size=1)+
+  coord_flip()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y=element_blank(), legend.position = 'none',strip.background = element_blank(),
+        strip.text= element_blank())+
+  ylab("DCi Difference")+
+  xlab("")+
+  scale_x_continuous(limits=c(0, 2))+
+  geom_hline(yintercept=0, linetype="dashed")+
+  facet_wrap(~trt_type2, ncol=1, labeller=labeller(trt_type2=labels), strip.position='left')
+
+Fig1<-grid.arrange(box, meansplot, ncol=2, widths=c(1, 0.75))
+
+ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\Fig1.jpeg', Fig1, width=5, height=8, units='in')
+
+examples<-CT_diff2 %>% 
+  select(site_code, project_name, trt_type2) %>% 
+  unique()
+
 #dataset of treatment responses, ave, se, and how often species is found for phylogenetic analyses. and calculating number of sites and experiments at treatment is at.
 
 ##Temperature
@@ -396,10 +466,10 @@ allmult_sp<-CT_diff %>%
 
 famInvest<-CT_diff %>% 
   left_join(fam) %>% 
-  select(species_matched, family, diff, CO2, drought, irg, temp, n, p, multnuts, multtrts) %>% 
+  dplyr::select(species_matched, family, diff, CO2, drought, irg, temp, n, p, multnuts, multtrts) %>% 
   pivot_longer(CO2:multtrts, names_to = "trt", values_to = "present") %>% 
   filter(present==1) %>% 
-  select(species_matched, family, trt) %>% 
+  dplyr::select(species_matched, family, trt) %>% 
   unique() %>% 
   group_by(family, trt) %>% 
   summarise(n=length(species_matched))
@@ -455,27 +525,79 @@ Fulldataset<-allmult_mean%>%
 
 write.csv(Fulldataset, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper/data/Species_DCiDiff_March2024.csv", row.names=F)
 
+
+###full dataset, which families are in what treatment
+famPres<-Fulldataset %>% 
+  left_join(fam) %>% 
+  group_by(family, trt_type2) %>% 
+  summarise(n=length(species_matched), sum=sum(nobs))
+
+FamilySp<-famPres %>% 
+  select(-sum) %>%
+  pivot_wider(names_from = trt_type2, values_from = n, values_fill = 0)
+
+write.csv(FamilySp, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\Manuscript\\SI Trees 2025\\SpPerFamily.csv", row.names=F)
+  
+FamilyObs<-famPres %>% 
+  select(-n) %>%
+  pivot_wider(names_from = trt_type2, values_from = sum, values_fill = 0)
+
+write.csv(FamilyObs, "C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\Manuscript\\SI Trees 2025\\ObsPerFamily.csv", row.names=F)
+
 toplot<-Fulldataset %>% 
   mutate(trt_type3=factor(trt_type2, levels=c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'all nuts', 'all mult')))
 
 labels<-c(
   'all mult'='Interact.',
-  'CO2'='CO2',
-  'drt'='Drt',
-  'irg'='Irg.', 
+  'co2'='CO2',
+  'drt'='Drought',
+  'irg'='Irrigation', 
   'all nuts'='Mult. Nut.',
   'n'='N',
   'p'='P',
-  'temp'='Temp.')
+  'temp'='Temperature')
 
 #histograms of number of obs per species
-hist<-ggplot(data=toplot, aes(x=nobs))+
+theme_set(theme_bw(12))
+
+histsp<-ggplot(data=toplot, aes(x=nobs))+
   geom_histogram()+
-  facet_wrap(~trt_type3, scales='free', ncol=4, labeller = labeller(trt_type3=labels))+
+  facet_wrap(~trt_type3, scales='free_x', ncol=4, labeller = labeller(trt_type3=labels))+
+  scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1)))))) +
   labs(x='Number of experiments', y='Species Count')+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='snow'), strip.text.x = element_text(face='bold'))
+histsp
 
-ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\histSpCount.jpg', hist, units = 'in', width=7, height=4)
+famPres2<-famPres %>% 
+  mutate(label=ifelse(family %in% c("Poaceae", "Brassicaceae", "Solanaceae", "Cyperaceae", "Polemoniaceae", "Gentianaceae", "Plantaginaceae", "Euphorbiaceae", "Amaranthaceae", "Orchidaceae", "Fabaceae", "Gentianaceae", "Orobanchaceae", "Lamiaceae"), family, 'Other Family')) %>% 
+  mutate(trt_type3=factor(trt_type2, levels=c('CO2', 'drt', 'irg', 'temp', 'n', 'p', 'all nuts', 'all mult')))
+
+fam_numbers<-ggplot(data=famPres2, aes(x=family, y=sum, fill=label))+
+  geom_bar(stat='identity')+
+  facet_wrap(~trt_type3, scales='free', ncol=4, labeller = labeller(trt_type3=labels))+
+   labs(x='', y='Number of Observations')+
+  scale_fill_manual(name='Family', breaks=c("Amaranthaceae", "Brassicaceae","Cyperaceae","Euphorbiaceae","Fabaceae","Gentianaceae", "Lamiaceae","Orchidaceae", "Orobanchaceae", "Plantaginaceae","Poaceae","Polemoniaceae",     "Solanaceae", "Other Family"), values=c(c(
+    "#56B4E9", # Sky Blue
+    "#E69F00", # Orange
+    "#009E73", # Bluish Green
+    "#F0E442", # Yellow
+    "#0072B2", # Blue
+    "#D55E00", # Vermillion
+    "#CC79A7", # Reddish Purple
+    "#5C2D91", # Dark Purple
+    "#4A3728", # Dark Brown
+    "#004949", # Dark Teal
+    "#006ddb", # Dark Blue
+    "#920000", # Dark Maroon
+    "#556B2F", # Medium Gray
+    "#696969"  # Dark Gray
+  )))+
+  theme(axis.text.x=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(fill='snow'), strip.text.x = element_text(face='bold'), legend.position = 'bottom')
+fam_numbers
+
+figs2<-grid.arrange(histsp, fam_numbers)
+
+ggsave('C:\\Users\\mavolio2\\Dropbox\\sDiv_sCoRRE_shared\\WinnersLosers paper\\manuscript\\histSpCount.jpg', figs2, units = 'in', width=8, height=9)
 
 ###checking normality of DCI values
 ggplot(data=Fulldataset, aes(x=ave_diff))+
@@ -914,6 +1036,6 @@ Fulldataset_mixedmodels<-CT_Sp_allint%>%
   bind_rows(CT_Sp_co2, CT_Sp_drt, CT_Sp_irg, CT_Sp_N, CT_Sp_P, CT_Sp_temp, CT_Sp_multnuts)%>%
   select(site_code, project_name, community_type, species_matched, treatment, trt_type2, diff)
 
-write.csv(Fulldataset_mixedmodels, "C://Users//mavolio2//Dropbox//sDiv_sCoRRE_shared//WinnersLosers paper//data//Species_DCiDiff_formixedmodelsMarch2024.csv", row.names=F)
+#write.csv(Fulldataset_mixedmodels, "C://Users//mavolio2//Dropbox//sDiv_sCoRRE_shared//WinnersLosers paper//data//Species_DCiDiff_formixedmodelsMarch2024.csv", row.names=F)
 
 

@@ -3,7 +3,7 @@
 ##### code to study how species traits affect response to GCDs
 ##### code by M.Avolio with help from Adam Clark and Tamara Munkemuller
 #### created summer 2021, updated with new trait dataset June 20, 2022
-#### updated 14.12.2022 by A. Clark
+#### updated 14.12.2022 by A. Clark. Update to Figures May 2026
 ######
 rm(list=ls())
 
@@ -224,6 +224,8 @@ toplot<-toplot.SLA%>%
   mutate(trt_type2=factor(trt_type, levels=c("co2", "drought", "irrigation", "temp", "n", "p", "multnuts", "all mult"))) %>% 
   mutate(min=Estimate-SE, max=Estimate+SE)
 
+##bonferoni correction p = 0.008
+
 # Continuous plot ---------------------------------------------------------
 
 trt.labels=c(co2="CO2", drought="Drt", irrigation="Irg.", temp="Temp.", n="N", p="P", multnuts="Mult. Nut.","all mult" ="Interact.")
@@ -232,7 +234,7 @@ trait.labels=c(LDMC="LDMC", LeafN="Leaf N",
                "Seed Mass"="Seed Mass", SLA="SLA")
 
 
-pdf("traits_by_treat_contMay2025.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_contMay2026.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplot,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -241,16 +243,19 @@ make_boxplot(toplot_data = toplot,
                         legend_textwidth = 0.012,
                         legend_yadj = 0.175,
                         legend_xadj = -0.002,
-                        p_alpha = 0.05,
+                        p_alpha = 0.0083, #corrected p-value
+                        p_alpha_whisker = 0.025, #95% CI
                         lower_margin = 6.8,
                         sigadj = -0.03,
                         traitorder = rev(c(2,1,6,4,3,5)),#number refers to position in trt label vector, do in reverse
-                        group_colors = adjustcolor(rev(c("darkgreen",
-                                                         "darkgreen",
-                                                         "darkgreen",
-                                                         "red",
-                                                         "blue",
-                                                         "orange")), alpha.f = 0.08))
+             xlm = c(-0.04, 0.03)
+                        # group_colors = adjustcolor(rev(c("darkgreen",
+                        #                                  "darkgreen",
+                        #                                  "darkgreen",
+                        #                                  "red",
+                        #                                  "blue",
+                        #                                  "orange")), alpha.f = 0.08)
+             )
 dev.off()
 
 
@@ -455,7 +460,7 @@ toplotesacat$trait = toplotesacat$value
 ##############
 # new plot
 ##############
-gcol = adjustcolor(rev(c(rep("gray",1),
+#gcol = adjustcolor(rev(c(rep("gray",1),
                          rep("black", 3),
                          rep("darkgreen",2),
                          rep("purple",4),
@@ -477,7 +482,7 @@ tord = rev(c(12, 6,
              13,1))
 
 if(FALSE) {
-pdf("traits_by_treat_catMay2025.pdf", width = 5.2, height=10)
+pdf("traits_by_treat_catMay2026.pdf", width = 5.2, height=10)
 make_boxplot(toplot_data = toplotesacat,
                         trt.labels_data = trt.labels,
                         trait.labels_data=trait.labels,
@@ -487,11 +492,12 @@ make_boxplot(toplot_data = toplotesacat,
                         legend_cex = 0.9,
                         legend_yadj = 0.1,
                         legend_xadj = -0.01,
-                        p_alpha = 0.05,
+                        p_alpha = 0.007, # corrected p-value
+                        p_alpha_whisker = 0.025, #95% CI
                         lower_margin = 6.8,
                         sigadj = -0.09,
                         traitorder = tord,
-                        group_colors = gcol,
+                        #group_colors = gcol,
              xtit = "Effect Size, Mean DCi diff. by. Trait",
              n_table = cat_n_data)
 dev.off()
@@ -501,19 +507,19 @@ dev.off()
 # tord2 = rev(c(3,8,10,1,9,6,13))
 tord1 = rev(c(12,5,2,11,7,4,13))
 tord2 = rev(c(6,14,3,8,10,9,1))
-gcol_split1 = adjustcolor(rev(c(rep("gray", 1),
-                               rep("yellow", 1),
-                               rep("darkgreen",1),
-                         rep("purple",2),
-                         rep("orange",2))), alpha.f = 0.08)
+gcol_split1 = adjustcolor(rev(c(rep("darkgray", 1),
+                               rep("darkgray", 1),
+                               rep("darkgray",1),
+                         rep("darkgray",2),
+                         rep("darkgray",2))), alpha.f = 0.1)
+# 
+# gcol_split2 = adjustcolor(rev(c(rep("yellow", 2),
+#                                 rep("darkgreen",1),
+#                                 rep("purple",2),
+#                                 rep("orange",2))), alpha.f = 0.08)
 
-gcol_split2 = adjustcolor(rev(c(rep("yellow", 2),
-                                rep("darkgreen",1),
-                                rep("purple",2),
-                                rep("orange",2))), alpha.f = 0.08)
 
-
-pdf("traits_by_treat_cat_2colMay2025.pdf", width = 10.4, height=10)
+pdf("traits_by_treat_cat_2colMay2026_2.pdf", width = 10.4, height=10)
 par(mar=c(2,6.8,3.5,0.2), oma =c(3,1,0,0), mfrow=c(1,2))#controlling margins of plots
 make_boxplot(toplot_data = toplotesacat,
              trt.labels_data = trt.labels,
@@ -524,7 +530,8 @@ make_boxplot(toplot_data = toplotesacat,
              legend_cex = 1.2,
              legend_yadj = 0.185,
              legend_xadj = 0.14,
-             p_alpha = 0.05,
+             p_alpha = 0.007, # corrected p-value
+             p_alpha_whisker = 0.025, #95% CI
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord1,
@@ -541,11 +548,12 @@ make_boxplot(toplot_data = toplotesacat,
              legend_cex = 0.9,
              legend_yadj = 10,
              legend_xadj = -0.01,
-             p_alpha = 0.05,
+             p_alpha = 0.007, # corrected p-value
+             p_alpha_whisker = 0.025, #95% CI
              sigadj = -0.04,
              xlm = c(-0.12,0.12),
              traitorder = tord2,
-             group_colors = gcol_split2,
+             #group_colors = gcol_split2,
              xtit = "", axisside = 4, autopar = FALSE, n_table = cat_n_data3)
 mtext("Effect Size, Mean DCi diff. by. Trait", side = 1, outer = TRUE, line = 1.2, cex = 1.7)
 dev.off()
@@ -668,3 +676,114 @@ make_boxplot(toplot_data = toplotsynd,
 dev.off()
 
                  
+#######figures for appendix
+
+alldata<-alldat_cat %>% 
+  mutate(value=case_when(
+    trait=='photosynthetic_pathway'&trait_value2=='C3'~0,
+    trait=='photosynthetic_pathway'&trait_value2=='C4/CAM'~1,
+    trait=='lifespan'&trait_value2=='annual'~0,
+    trait=='lifespan'&trait_value2=='Perenn./Bienn.'~1,
+    trait=='n_fixation_type'&trait_value2=='none'~0,
+    trait=='n_fixation_type'&trait_value2=='none'~0,
+    trait=='n_fixation_type'&trait_value2=='N-fixer'~1,
+    trait=='mycorrhizal_type'&trait_value2=='none'~0,
+    trait=='mycorrhizal_type'&trait_value2=='yes'~1,
+    trait=='clonal'&trait_value2=='no'~0,
+    trait=='clonal'&trait_value2=='yes'~1,
+    trait=='growth_form'&trait_value2=='forb'~0,
+    trait=='growth_form'&trait_value2=='graminoid'~1,
+    trait=='growth_form'&trait_value2=='woody'~2,
+    .default =999
+  )) %>% 
+  filter(value!=999) %>% 
+  select(-trait_value2) %>% 
+  bind_rows(alldat_cont)
+
+labels<-c(
+  'clonal'='Clonal',
+  'growth_form'='Growth Form',
+  'LDMC' = 'Leaf Dry Matter Content',
+  'leaf_N'='Leaf N',
+  'lifespan'='Lifespan', 
+  'mycorrhizal_type'='Mycorrhizal',
+  'n_fixation_type'='Nitrogen Fixer',
+  'photosynthetic_pathway'='Photosynthetic Pathway',
+  'plant_height_vegetative'='Plant Vegetative Height', 
+  'seed_dry_mass' = 'Seed Dry Mass',
+  'SLA'='Specific Leaf Area',
+  'SRL'= 'Specific Root Length')
+
+CO2<-
+  ggplot(data=subset(alldata, trt_type2=='co2'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('CO2')+
+  geom_smooth(method = 'lm', se=F)
+Irg<-
+  ggplot(data=subset(alldata, trt_type2=='irrigation'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Irrigation')+
+  geom_smooth(method = 'lm', se=F)
+Drt<-
+  ggplot(data=subset(alldata, trt_type2=='drought'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Drought')+
+  geom_smooth(method = 'lm', se=F)
+temp<-
+  ggplot(data=subset(alldata, trt_type2=='temp'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Elevated Temperature')+
+  geom_smooth(method = 'lm', se=F)
+n<-
+  ggplot(data=subset(alldata, trt_type2=='n'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Nitrogen Addition')+
+  geom_smooth(method = 'lm', se=F)
+p<-
+  ggplot(data=subset(alldata, trt_type2=='p'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Phosphorus Addition')+
+  geom_smooth(method = 'lm', se=F)
+allnuts<-
+  ggplot(data=subset(alldata, trt_type2=='multnuts'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Multiple Nutrient Addition')+
+  geom_smooth(method = 'lm', se=F)
+inter<-
+  ggplot(data=subset(alldata, trt_type2=='all mult'), aes(x=value, y=diff)) +
+  geom_point()+
+  facet_wrap(~trait, scales='free_x', labeller=labeller(trait=labels))+
+  ylab('DCi Difference')+
+  xlab('Trait Value')+
+  ggtitle('Interacting Drivers')+
+  geom_smooth(method = 'lm', se=F)
+
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/CO2.jpg', CO2, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/irg.jpg', Irg, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/drt.jpg', Drt, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/temp.jpg', temp, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/nit.jpg', n, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/phos.jpg', p, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/nuts.jpg', allnuts, width = 10, height=8, units='in')
+ggsave('C:/Users/mavolio2/Dropbox/sDiv_sCoRRE_shared/WinnersLosers paper/manuscript/inter.jpg', inter, width = 10, height=8, units='in')
