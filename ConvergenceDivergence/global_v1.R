@@ -19,13 +19,12 @@ library(lmtest)
 library(RcmdrMisc)
 
 #Read in trait data
-traits_cat <- read.csv('https://pasta.lternet.edu/package/data/eml/edi/1533/3/5ebbc389897a6a65dd0865094a8d0ffd')%>%
+traits_cat <- read.csv("C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/CoRRE_categoricalTraitData_Apr2026.csv")%>%
   dplyr::select(-family, -source, -error_risk_overall)%>%
   pivot_wider(names_from = trait, values_from = trait_value)%>%
   dplyr::rename(species_matched = species)
-#categorical trait data
 
-traits <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1533/3/169fc12d10ac20b0e504f8d5ca0b8ee8")%>% #continuous trait data
+traits <- read.csv("C:/Users/ohler/Dropbox/Tim Work/sCoRRE/Beta div/CoRRE_continuousTraitData_Apr2026.csv")%>% #continuous trait data
   mutate(species_matched = species)%>%
   dplyr::select(species_matched, trait, trait_value)%>%
   pivot_wider(names_from = trait, values_from = trait_value)
