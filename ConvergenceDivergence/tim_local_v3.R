@@ -958,7 +958,7 @@ mean.dist.both <- left_join(mean.dist.comp, mean.dist.trait, by = c("site", "pro
 
 ############
 ##BRING IN COVARIATES AND SEE IF THEY EXPLAIN BETA DIVERSITY
-CoRRE_siteLocationClimate_Dec2021 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/environmental data/CoRRE_siteLocationClimate_Dec2021.csv")
+CoRRE_siteLocationClimate_Dec2021 <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/environmental data/CoRRE_siteLocationClimate_July2022.csv")
 
 CoRRE_project_summary <- read.csv("C:/Users/ohler/Dropbox/sDiv_sCoRRE_shared/CoRRE data/CoRRE data/CoRRE_project_summary.csv")
 CoRRE_project_summary$project <- CoRRE_project_summary$project_name
